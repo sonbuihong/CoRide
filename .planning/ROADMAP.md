@@ -4,17 +4,21 @@ Dự án được chia thành 6 giai đoạn phát triển chính để đảm b
 
 ## Giai đoạn 1: Nền tảng & Xác thực (Foundation & Auth)
 **Mục tiêu:** Thiết lập cấu trúc Monorepo, Database Schema và hệ thống xác thực hoàn chỉnh.
-**Trạng thái:** [Đang thực hiện]
+**Trạng thái:** [Hoàn thành]
 **Plans:** 3 plans
-- [ ] 01-01-PLAN.md — Thiết lập Monorepo & Database Foundation.
-- [ ] 01-02-PLAN.md — Triển khai Backend Auth Core (TDD).
-- [ ] 01-03-PLAN.md — Xây dựng giao diện Web Auth UI (Tiếng Việt).
+- [x] 01-01-PLAN.md — Thiết lập Monorepo & Database Foundation.
+- [x] 01-02-PLAN.md — Triển khai Backend Auth Core (TDD).
+- [x] 01-03-PLAN.md — Xây dựng giao diện Web Auth UI (Tiếng Việt).
 
 ## Giai đoạn 2: Quản lý Hồ sơ & Chuyến đi (Profile & Ride Core)
-- [ ] API cập nhật thông tin người dùng và tải ảnh đại diện.
-- [ ] Triển khai API Đăng chuyến đi (Driver) với các trường dữ liệu đầy đủ.
-- [ ] API Tìm kiếm chuyến đi (Passenger) dựa trên các bộ lọc cơ bản.
-- [ ] UI cho trang cá nhân và trang tạo chuyến đi trên Web.
+**Mục tiêu:** Hoàn thiện hồ sơ người dùng (avatar/bio) và triển khai luồng Đăng/Tìm kiếm chuyến đi.
+**Trạng thái:** [Sẵn sàng]
+**Plans:** 5 plans
+- [ ] 02-01-PLAN.md — Thiết lập nền tảng dữ liệu (Prisma/Shared Schemas) & Cloudinary.
+- [ ] 02-02-PLAN.md — Triển khai API Quản lý hồ sơ & Tải ảnh đại diện (TDD).
+- [ ] 02-03-PLAN.md — Triển khai API Đăng và Tìm kiếm chuyến đi (TDD).
+- [ ] 02-04-PLAN.md — Xây dựng giao diện Quản lý hồ sơ (Web UI).
+- [ ] 02-05-PLAN.md — Xây dựng giao diện Đăng và Tìm kiếm chuyến đi (Web UI).
 
 ## Giai đoạn 3: Bản đồ & Tương tác (Maps & Booking)
 - [ ] Tích hợp Google Maps API/Mapbox cho Autocomplete địa chỉ.
