@@ -22,18 +22,23 @@ Dự án được chia thành 6 giai đoạn phát triển chính để đảm b
 
 ## Giai đoạn 3: Bản đồ & Tương tác (Maps & Booking)
 **Mục tiêu:** Tích hợp Google Maps và hệ thống đặt chỗ thông minh với quản lý số ghế thời gian thực.
-**Trạng thái:** [Đang thực hiện]
+**Trạng thái:** [Hoàn thành]
 **Plans:** 5 plans
-- [ ] 03-01-PLAN.md — Thiết lập Schema & Nền tảng Shared (Tọa độ + Booking).
-- [ ] 03-02-PLAN.md — Triển khai API Đặt chỗ (Booking Core) với TDD & Transaction.
-- [ ] 03-03-PLAN.md — Tích hợp Google Maps Autocomplete vào form Đăng chuyến đi.
-- [ ] 03-04-PLAN.md — Hiển thị lộ trình trên bản đồ và giao diện Đặt chỗ cho Hành khách.
-- [ ] 03-05-PLAN.md — Xây dựng giao diện Quản lý yêu cầu đặt chỗ cho Tài xế.
+- [x] 03-01-PLAN.md — Thiết lập Schema & Nền tảng Shared (Tọa độ + Booking).
+- [x] 03-02-PLAN.md — Triển khai API Đặt chỗ (Booking Core) với TDD & Transaction.
+- [x] 03-03-PLAN.md — Tích hợp Google Maps Autocomplete vào form Đăng chuyến đi.
+- [x] 03-04-PLAN.md — Hiển thị lộ trình trên bản đồ và giao diện Đặt chỗ cho Hành khách.
+- [x] 03-05-PLAN.md — Xây dựng giao diện Quản lý yêu cầu đặt chỗ cho Tài xế.
 
 ## Giai đoạn 4: Thông báo & Đánh giá (Notifications & Reviews)
-- [ ] Hệ thống thông báo thời gian thực (In-app) và email thông báo cơ bản.
-- [ ] Triển khai API đánh giá và tính điểm Rating trung bình của người dùng.
-- [ ] UI hiển thị danh sách đánh giá trong hồ sơ cá nhân.
+**Mục tiêu:** Triển khai hệ thống thông báo thời gian thực (SSE) và tính năng đánh giá người dùng (Rating).
+**Trạng thái:** [Đang thực hiện]
+**Plans:** 5 plans
+- [ ] 04-01-PLAN.md — Thiết lập nền tảng dữ liệu & hạ tầng thông báo (SSE Infrastructure).
+- [ ] 04-02-PLAN.md — Triển khai API Thông báo & Tích hợp Real-time (TDD).
+- [ ] 04-03-PLAN.md — Triển khai API Đánh giá & Logic tính điểm Rating tự động (TDD).
+- [ ] 04-04-PLAN.md — Xây dựng giao diện Trung tâm thông báo (Web UI).
+- [ ] 04-05-PLAN.md — Hoàn thiện giao diện Đánh giá & Hiển thị uy tín trên Profile.
 
 ## Giai đoạn 5: Phát triển Mobile (Mobile App Implementation)
 - [ ] Thiết lập môi trường Expo và đồng bộ hóa logic với Backend.
