@@ -12,19 +12,23 @@ Dự án được chia thành 6 giai đoạn phát triển chính để đảm b
 
 ## Giai đoạn 2: Quản lý Hồ sơ & Chuyến đi (Profile & Ride Core)
 **Mục tiêu:** Hoàn thiện hồ sơ người dùng (avatar/bio) và triển khai luồng Đăng/Tìm kiếm chuyến đi.
-**Trạng thái:** [Sẵn sàng]
+**Trạng thái:** [Hoàn thành]
 **Plans:** 5 plans
-- [ ] 02-01-PLAN.md — Thiết lập nền tảng dữ liệu (Prisma/Shared Schemas) & Cloudinary.
-- [ ] 02-02-PLAN.md — Triển khai API Quản lý hồ sơ & Tải ảnh đại diện (TDD).
-- [ ] 02-03-PLAN.md — Triển khai API Đăng và Tìm kiếm chuyến đi (TDD).
-- [ ] 02-04-PLAN.md — Xây dựng giao diện Quản lý hồ sơ (Web UI).
-- [ ] 02-05-PLAN.md — Xây dựng giao diện Đăng và Tìm kiếm chuyến đi (Web UI).
+- [x] 02-01-PLAN.md — Thiết lập nền tảng dữ liệu (Prisma/Shared Schemas) & Cloudinary.
+- [x] 02-02-PLAN.md — Triển khai API Quản lý hồ sơ & Tải ảnh đại diện (TDD).
+- [x] 02-03-PLAN.md — Triển khai API Đăng và Tìm kiếm chuyến đi (TDD).
+- [x] 02-04-PLAN.md — Xây dựng giao diện Quản lý hồ sơ (Web UI).
+- [x] 02-05-PLAN.md — Xây dựng giao diện Đăng và Tìm kiếm chuyến đi (Web UI).
 
 ## Giai đoạn 3: Bản đồ & Tương tác (Maps & Booking)
-- [ ] Tích hợp Google Maps API/Mapbox cho Autocomplete địa chỉ.
-- [ ] API Đặt chỗ (Booking) và quản lý trạng thái đơn hàng (Chấp nhận/Từ chối).
-- [ ] Hiển thị lộ trình (Route) trên bản đồ trong trang chi tiết chuyến đi.
-- [ ] UI cho trang kết quả tìm kiếm và trang chi tiết chuyến đi.
+**Mục tiêu:** Tích hợp Google Maps và hệ thống đặt chỗ thông minh với quản lý số ghế thời gian thực.
+**Trạng thái:** [Đang thực hiện]
+**Plans:** 5 plans
+- [ ] 03-01-PLAN.md — Thiết lập Schema & Nền tảng Shared (Tọa độ + Booking).
+- [ ] 03-02-PLAN.md — Triển khai API Đặt chỗ (Booking Core) với TDD & Transaction.
+- [ ] 03-03-PLAN.md — Tích hợp Google Maps Autocomplete vào form Đăng chuyến đi.
+- [ ] 03-04-PLAN.md — Hiển thị lộ trình trên bản đồ và giao diện Đặt chỗ cho Hành khách.
+- [ ] 03-05-PLAN.md — Xây dựng giao diện Quản lý yêu cầu đặt chỗ cho Tài xế.
 
 ## Giai đoạn 4: Thông báo & Đánh giá (Notifications & Reviews)
 - [ ] Hệ thống thông báo thời gian thực (In-app) và email thông báo cơ bản.
