@@ -2,17 +2,24 @@
 
 ## Current Position
 
-Phase: Phase 10 - Realtime Core
-Plan: 10-01
+Phase: Phase 12 - Driver Mobile App
+Plan: 12-01
 Status: Not Started
-Last activity: 2026-04-19 — Roadmap v1.2 Updated (Chuyển tiếp từ v1.1)
+Last activity: 2026-05-24 — Phase 12 Planned (4 plans created)
+
+## Giai đoạn hiện tại (Current Phase)
+- Mục tiêu: Xây dựng ứng dụng di động dành riêng cho Tài xế bằng Expo.
+- Trọng tâm: Tách biệt trải nghiệm Driver, tích hợp Auth bảo mật và Realtime Notification.
 
 ## Giai đoạn kế tiếp (Next Steps)
-- Dựng hệ thống Socket.IO vào Backend `server.ts` / Module độc lập.
-- Thiết kế context Provider cho Socket trong `apps/web`.
-- Làm tính năng Realtime Notification cho luồng Đặt Chuyến đi mới.
+- Khởi tạo project `apps/driver-mobile`.
+- Cấu hình Axios interceptor và Zustand store cho Auth.
+- Xây dựng màn hình Login và Schedule.
+
+## Lịch sử hoàn thành (History)
+- **Phase 10: Realtime Core** - Hoàn thành hệ thống Socket.IO và Messaging.
+- **Phase 11: Payment Gateway** - Hoàn thành tích hợp ZaloPay Sandbox và hệ thống Giao dịch.
 
 ## Ghi chú quan trọng (Important Notes)
-- CoRide đã thay đổi hoàn toàn hệ thống MAP sang Open Source (Leaflet, Nominatim, OSRM). Giúp zero-cost và không còn bị chặn CORS hoặc bắt khai báo Credit Card từ Google.
-- Trọng tâm hướng tới nay là **Realtime (WebSocket)** và sau đó sẽ là luồng **Payment (Thanh toán Sandbox)**.
-- Toàn bộ hệ thống duy trì ngôn ngữ Tiếng Việt 100% từ giao diện đến tài liệu.
+- CoRide hiện đã có đầy đủ hệ thống Backend, Web, và đang mở rộng sang Mobile Native.
+- Duy trì ngôn ngữ Tiếng Việt 100% cho mọi tài liệu và giao diện.
