@@ -1,52 +1,46 @@
 # ROADMAP: CoRide
 
-Dự án được chia thành 6 giai đoạn phát triển chính để đảm bảo tính ổn định và tiến độ.
+## Proposed Roadmap (Milestone v1.2)
 
-## Giai đoạn 1: Nền tảng & Xác thực (Foundation & Auth)
-**Mục tiêu:** Thiết lập cấu trúc Monorepo, Database Schema và hệ thống xác thực hoàn chỉnh.
-**Trạng thái:** [Hoàn thành]
+**3 phases** | **8 requirements mapped** | Realtime & Payment Focus
+
+| # | Phase | Goal | Requirements | Success Criteria |
+|---|-------|------|--------------|------------------|
+| 10 | Realtime Core | Thiết lập hệ thống Notification & liên lạc liên tục giữa Driver/Pass. | REAL-01, REAL-02, REAL-03 | 2 |
+| 11 | Payment Gateway | Thiết kế luồng Ví/Thanh toán. Tích hợp cổng thử nghiệm Sandbox. | PAY-01, PAY-02, PAY-03 | 2 |
+| 12 | Driver Mobile App | Port core functionality của Driver ra React Native app để cài trên đt. | MOBILE-01, MOBILE-02 | 1 |
+
+### Phase Details
+
+**Phase 10: Notification & Realtime Core**
+Goal: Phát triển một websocket server độc lập hoặc module chung để mọi thay đổi trạng thái của chuyến đi (đặt chỗ, hủy) đều được push trực tiếp lên thiết bị của tài xế và hành khách ngay tắp lự.
+Requirements: REAL-01, REAL-02, REAL-03
 **Plans:** 3 plans
-- [x] 01-01-PLAN.md — Thiết lập Monorepo & Database Foundation.
-- [x] 01-02-PLAN.md — Triển khai Backend Auth Core (TDD).
-- [x] 01-03-PLAN.md — Xây dựng giao diện Web Auth UI (Tiếng Việt).
+Plans:
+- [ ] 10-01-PLAN.md — Hạ tầng Socket.IO & Thông báo thời gian thực
+- [ ] 10-02-PLAN.md — Hệ thống Tin nhắn: Data & API
+- [ ] 10-03-PLAN.md — Hệ thống Tin nhắn: Realtime & Giao diện
+Success criteria:
+1. Khi Passenger nhấn Đặt Chuyến, màn hình của Driver nhận được Toast/chuông mà không cần tải lại trang.
+2. Có tính năng gửi tin nhắn text giữa 2 thiết bị liên quan đến cùng 1 mã chuyến đi.
 
-## Giai đoạn 2: Quản lý Hồ sơ & Chuyến đi (Profile & Ride Core)
-**Mục tiêu:** Hoàn thiện hồ sơ người dùng (avatar/bio) và triển khai luồng Đăng/Tìm kiếm chuyến đi.
-**Trạng thái:** [Hoàn thành]
-**Plans:** 5 plans
-- [x] 02-01-PLAN.md — Thiết lập nền tảng dữ liệu (Prisma/Shared Schemas) & Cloudinary.
-- [x] 02-02-PLAN.md — Triển khai API Quản lý hồ sơ & Tải ảnh đại diện (TDD).
-- [x] 02-03-PLAN.md — Triển khai API Đăng và Tìm kiếm chuyến đi (TDD).
-- [x] 02-04-PLAN.md — Xây dựng giao diện Quản lý hồ sơ (Web UI).
-- [x] 02-05-PLAN.md — Xây dựng giao diện Đăng và Tìm kiếm chuyến đi (Web UI).
+**Phase 11: Transaction & Payment Gateway**
+Goal: Từ nền tảng free (không kiểm soát tiền) trở thành nền tảng có Transaction flow (Mock Gateway ZaloPay/MoMo) đủ dùng bảo vệ DATN.
+Requirements: PAY-01, PAY-02, PAY-03
+**Plans:** 3 plans
+Plans:
+- [ ] 11-01-PLAN.md — Hệ thống Ví & Giao dịch (Database & Core)
+- [ ] 11-02-PLAN.md — Tích hợp Cổng thanh toán ZaloPay (Backend Integration)
+- [ ] 11-03-PLAN.md — Giao diện Thanh toán & Dashboard Admin
+Success criteria:
+1. Passenger chọn thanh toán điện tử, hệ thống đẩy sang trang giả lập thanh toán, sau khi thanh toán đổi status -> Đã Trả (PAID).
+2. Tồn tại Dashboard lịch sử nạp/rút hoặc giao dịch dành cho Admin.
 
-## Giai đoạn 3: Bản đồ & Tương tác (Maps & Booking)
-**Mục tiêu:** Tích hợp Google Maps và hệ thống đặt chỗ thông minh với quản lý số ghế thời gian thực.
-**Trạng thái:** [Hoàn thành]
-**Plans:** 5 plans
-- [x] 03-01-PLAN.md — Thiết lập Schema & Nền tảng Shared (Tọa độ + Booking).
-- [x] 03-02-PLAN.md — Triển khai API Đặt chỗ (Booking Core) với TDD & Transaction.
-- [x] 03-03-PLAN.md — Tích hợp Google Maps Autocomplete vào form Đăng chuyến đi.
-- [x] 03-04-PLAN.md — Hiển thị lộ trình trên bản đồ và giao diện Đặt chỗ cho Hành khách.
-- [x] 03-05-PLAN.md — Xây dựng giao diện Quản lý yêu cầu đặt chỗ cho Tài xế.
+**Phase 12: Mobile MVP (Driver App) - Optional**
+Goal: Xây dựng App cho thiết bị di động bằng React Native. Đồ án sẽ trở nên "xịn" hơn rất nhiều nếu có app Native thay vì chỉ trình duyệt Web.
+Requirements: MOBILE-01, MOBILE-02
+Success criteria:
+1. Đăng nhập thành công trên điện thoại thật/giả lập. Hiển thị thông báo (Phase 10) lên màn hình Mobile.
 
-## Giai đoạn 4: Thông báo & Đánh giá (Notifications & Reviews)
-**Mục tiêu:** Triển khai hệ thống thông báo thời gian thực (SSE) và tính năng đánh giá người dùng (Rating).
-**Trạng thái:** [Đang thực hiện]
-**Plans:** 5 plans
-- [ ] 04-01-PLAN.md — Thiết lập nền tảng dữ liệu & hạ tầng thông báo (SSE Infrastructure).
-- [ ] 04-02-PLAN.md — Triển khai API Thông báo & Tích hợp Real-time (TDD).
-- [ ] 04-03-PLAN.md — Triển khai API Đánh giá & Logic tính điểm Rating tự động (TDD).
-- [ ] 04-04-PLAN.md — Xây dựng giao diện Trung tâm thông báo (Web UI).
-- [ ] 04-05-PLAN.md — Hoàn thiện giao diện Đánh giá & Hiển thị uy tín trên Profile.
-
-## Giai đoạn 5: Phát triển Mobile (Mobile App Implementation)
-- [ ] Thiết lập môi trường Expo và đồng bộ hóa logic với Backend.
-- [ ] Xây dựng giao diện App cho các luồng chính: Tìm xe, Đăng xe, Hồ sơ.
-- [ ] Tích hợp Push Notifications trên Mobile (sử dụng Expo Notifications/FCM).
-
-## Giai đoạn 6: Hoàn thiện & Triển khai (Polish & Deployment)
-- [ ] Kiểm thử toàn diện (E2E Testing) cho các luồng đặt xe và thanh toán.
-- [ ] Tối ưu hóa hiệu năng và bảo mật (Rate limiting, Input Validation).
-- [ ] Triển khai Backend (Vercel/DigitalOcean) và Frontend (Vercel/Amplify).
-- [ ] Đóng gói và phát hành bản Beta.
+---
+*(Phần Roadmap cũ Milestone v1.1 - Open Source Maps Component đã hoàn thành và lưu trữ)*

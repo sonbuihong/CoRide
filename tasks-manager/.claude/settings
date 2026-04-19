@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "project": "tasks-manager",
+  "description": "Module quản lý công việc trong hệ thống CoRide",
+  "model": {
+    "default": "claude-sonnet-4-5",
+    "temperature": 0.3,
+    "maxTokens": 8192
+  },
+  "permissions": {
+    "allow": [
+      "Read project files",
+      "Write to src/",
+      "Write to test/",
+      "Run npm scripts",
+      "Run git commands (read-only)"
+    ],
+    "deny": [
+      "Modify .env files",
+      "Delete database files",
+      "Push to remote git"
+    ]
+  },
+  "context": {
+    "alwaysRead": [
+      ".claude/CLAUDE.md",
+      ".claude/rules/api-conventions.md",
+      ".claude/rules/code-style.md"
+    ],
+    "ignore": [
+      "node_modules/",
+      "dist/",
+      "coverage/",
+      ".env",
+      ".env.local"
+    ]
+  }
+}
