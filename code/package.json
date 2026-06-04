@@ -1,0 +1,28 @@
+{
+  "name": "coride-monorepo",
+  "version": "1.0.0",
+  "packageManager": "npm@10.2.3",
+  "private": true,
+  "description": "Monorepo for CoRide Project",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "eslint": "^8.50.0",
+    "prettier": "^3.0.3",
+    "prisma": "^5.22.0",
+    "turbo": "latest",
+    "typescript": "^5.0.0"
+  },
+  "prisma": {
+    "schema": "packages/database/prisma/schema.prisma"
+  }
+}

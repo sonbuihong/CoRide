@@ -1,0 +1,292 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum RideStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  REJECTED
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PAYMENT
+  RECEIVE_PAYMENT
+  REFUND
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+// Hành khách đánh giá tài xế hoặc tài xế đánh giá hành khách
+enum ReviewType {
+  DRIVER    // Hành khách → Tài xế
+  PASSENGER // Tài xế → Hành khách
+}
+
+// Trạng thái xét duyệt giấy tờ tài xế (Tiered KYC)
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  phone     String?
+  avatarUrl String?
+  bio       String?
+  role      Role     @default(USER)
+
+  // Tách biệt rating theo vai trò — tránh trộn lẫn chất lượng lái xe vs hành khách
+  driverRating         Float   @default(0)
+  driverRatingCount    Int     @default(0)
+  passengerRating      Float   @default(0)
+  passengerRatingCount Int     @default(0)
+
+  // Tiered KYC: mặc định false, chỉ true khi admin duyệt giấy tờ tài xế
+  isDriverVerified Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ridesAsDriver      Ride[]    @relation("DriverRides")
+  bookings           Booking[] @relation("PassengerBookings")
+  reviewsSent        Review[]  @relation("ReviewsSent")
+  reviewsReceived    Review[]  @relation("ReviewsReceived")
+  refreshTokens      RefreshToken[]
+  notifications      Notification[]
+  sentMessages       Message[] @relation("SentMessages")
+  receivedMessages   Message[] @relation("ReceivedMessages")
+  wallet             Wallet?
+  driverVerification DriverVerification?
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Số dư dùng để thanh toán khi đặt xe (passenger)
+  rideBalance    Float @default(0)
+  // Thu nhập từ việc lái xe, có thể rút về ngân hàng (driver)
+  driverEarnings Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  walletId    String
+  wallet      Wallet            @relation(fields: [walletId], references: [id])
+  amount      Float
+  type        TransactionType
+  status      TransactionStatus @default(PENDING)
+  description String?
+  externalId  String?           @unique
+  bookingId   String?
+  booking     Booking?          @relation(fields: [bookingId], references: [id])
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  rideId      String
+  ride        Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  type      String   // e.g., 'BOOKING_REQUEST', 'BOOKING_STATUS', 'RIDE_COMPLETED'
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Ride {
+  id              String     @id @default(uuid())
+  driverId        String
+  driver          User       @relation("DriverRides", fields: [driverId], references: [id])
+  origin          String
+  originLat       Float?
+  originLng       Float?
+  destination     String
+  destinationLat  Float?
+  destinationLng  Float?
+  distance        Float?
+  duration        Float?
+  departureTime   DateTime
+  availableSeats  Int
+  pricePerSeat    Float
+  status          RideStatus @default(SCHEDULED)
+  description     String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Structured address fields for origin
+  originHouseNumber    String?
+  originStreet         String?
+  originWard           String?
+  originDistrict       String?
+  originProvince       String?
+  originAddressType    String?   // 'OLD' or 'NEW' for province merger handling
+
+  // Structured address fields for destination
+  destHouseNumber      String?
+  destStreet           String?
+  destWard             String?
+  destDistrict         String?
+  destProvince         String?
+  destAddressType      String?
+
+  // Metadata
+  addressDetailLevel   String?   // 'FULL', 'WARD', 'DISTRICT' for precision level
+
+  // Relations
+  bookings Booking[]
+  reviews  Review[]
+  messages Message[]
+
+  @@index([origin, destination, departureTime])
+  @@index([originProvince, destProvince])
+}
+
+model Booking {
+  id           String        @id @default(uuid())
+  rideId       String
+  ride         Ride          @relation(fields: [rideId], references: [id])
+  passengerId  String
+  passenger    User          @relation("PassengerBookings", fields: [passengerId], references: [id])
+  seats        Int
+  totalPrice   Float
+  status       BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(UNPAID)
+  transactions  Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Review {
+  id          String     @id @default(uuid())
+  rideId      String
+  ride        Ride       @relation(fields: [rideId], references: [id])
+  reviewerId  String
+  reviewer    User       @relation("ReviewsSent", fields: [reviewerId], references: [id])
+  revieweeId  String
+  reviewee    User       @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  rating      Int
+  comment     String?
+  // Tự động xác định dựa trên vai trò reviewer trong chuyến đi
+  type        ReviewType
+  createdAt   DateTime   @default(now())
+}
+
+// Giấy tờ xác thực tài xế — Tiered KYC
+// Mỗi user chỉ có tối đa 1 bản ghi, khi bị reject có thể gửi lại (upsert)
+model DriverVerification {
+  id              String             @id @default(uuid())
+  userId          String             @unique
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Giấy tờ xác thực
+  licenseFrontImageUrl      String             // Bằng lái xe mặt trước
+  licenseBackImageUrl       String             // Bằng lái xe mặt sau
+  registrationFrontImageUrl String             // Giấy đăng ký xe mặt trước
+  registrationBackImageUrl  String             // Giấy đăng ký xe mặt sau
+  vehiclePlate              String             // Biển số xe
+  vehicleModel              String?            // Loại xe cụ thể (Honda Wave, Toyota Vios...)
+  vehicleType               String             @default("BIKE") // Loại phương tiện (BIKE hoặc CAR)
+
+  status                    VerificationStatus @default(PENDING)
+  rejectionReason           String?            // Lý do từ chối (nếu bị reject)
+  reviewedAt                DateTime?          // Thời điểm admin duyệt
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
+}
+
+model ProvinceMapping {
+  id           String   @id @default(uuid())
+  oldProvince  String
+  newProvince  String
+  effectiveDate DateTime
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([oldProvince, effectiveDate])
+  @@index([isActive])
+}
+
+// Lưu trữ địa điểm đã chọn từ Goong Place Detail API
+// Dùng placeId làm unique key để upsert — tránh lưu trùng cùng một địa điểm
+model Location {
+  id          String   @id @default(cuid())
+  placeId     String   @unique
+  name        String
+  address     String
+  latitude    Float
+  longitude   Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
