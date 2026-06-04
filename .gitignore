@@ -1,3 +1,4 @@
 .planning/**
 docs/
 tasks-manager/
+node_modules/
