@@ -11,9 +11,10 @@ router.use(authenticate);
 
 router.post('/', validate(createBookingSchema), bookingsController.createBooking);
 
-// Đặt `/my` và `/driver` TRƯỚC `/:id` để tránh bị match nhầm
+// Đặt `/my` và `/driver` và `/active` TRƯỚC `/:id` để tránh bị match nhầm
 router.get('/my', bookingsController.getMyBookings);
 router.get('/driver', bookingsController.getDriverBookings);
+router.get('/active', bookingsController.getActiveBooking);
 router.get('/ride/:rideId', bookingsController.getRideBookings);
 router.get('/:id', bookingsController.getBookingById);
 

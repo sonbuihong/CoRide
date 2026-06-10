@@ -109,3 +109,17 @@ export const getDriverBookings = async (
     next(error);
   }
 };
+
+export const getActiveBooking = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const result = await BookingsService.getActiveBooking(req.user!.id);
+    res.json({ activeBooking: result });
+  } catch (error) {
+    next(error);
+  }
+};
+

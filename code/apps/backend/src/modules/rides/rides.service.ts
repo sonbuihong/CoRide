@@ -2,6 +2,7 @@ import { extendedPrisma as prisma } from '@repo/database';
 import { Prisma } from '@repo/database';
 import { CreateRideInput, SearchRideInput } from '@repo/shared';
 import { AppError } from '../../shared/errors/AppError';
+import { getIO } from '../../shared/socket/socket';
 
 const DRIVER_SELECT = {
   driver: {
@@ -312,11 +313,26 @@ export class RidesService {
       }
     }
 
-    return prisma.ride.update({
+    const updatedRide = await prisma.ride.update({
       where: { id },
       data: { status },
       include: DRIVER_SELECT,
     });
+
+    // Broadcast status change đến tất cả participants trong ride room
+    // Passengers nhận realtime thay vì chờ polling 10s
+    try {
+      getIO().to(`ride:${id}`).emit('ride:status', {
+        rideId: id,
+        status,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (socketError) {
+      // Socket chưa init (test environment) → skip, không ảnh hưởng logic chính
+      console.warn('[RidesService] Socket emit skipped:', socketError);
+    }
+
+    return updatedRide;
   }
 }
 

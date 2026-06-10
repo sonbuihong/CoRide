@@ -401,4 +401,104 @@ export class BookingsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  /**
+   * Lấy booking đang active cho user hiện tại.
+   * Tự detect vai trò: kiểm tra cả role passenger lẫn driver.
+   * Ưu tiên: ride ONGOING > ride SCHEDULED
+   * Trả về null nếu không có booking active nào.
+   */
+  static async getActiveBooking(userId: string) {
+    // 1. Kiểm tra user có phải passenger đang có booking CONFIRMED
+    // Ưu tiên tìm ride ONGOING trước
+    let passengerBooking = await prisma.booking.findFirst({
+      where: {
+        passengerId: userId,
+        status: BookingStatus.CONFIRMED,
+        ride: {
+          status: { in: ['ONGOING', 'SCHEDULED'] },
+        },
+      },
+      include: {
+        ride: {
+          include: {
+            driver: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                phone: true,
+                avatarUrl: true,
+                driverRating: true,
+                driverRatingCount: true,
+              },
+            },
+          },
+        },
+        passenger: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+          },
+        },
+      },
+      // Ưu tiên ride ONGOING (đang chạy) trước SCHEDULED (chưa bắt đầu)
+      orderBy: { ride: { departureTime: 'asc' } },
+    });
+
+    if (passengerBooking) {
+      return { ...passengerBooking, userRole: 'PASSENGER' as const };
+    }
+
+    // 2. Kiểm tra user có phải driver có ride đang active kèm booking CONFIRMED
+    const driverRide = await prisma.ride.findFirst({
+      where: {
+        driverId: userId,
+        status: { in: ['ONGOING', 'SCHEDULED'] },
+        bookings: {
+          some: { status: BookingStatus.CONFIRMED },
+        },
+      },
+      include: {
+        driver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+            driverRating: true,
+            driverRatingCount: true,
+          },
+        },
+        bookings: {
+          where: { status: BookingStatus.CONFIRMED },
+          include: {
+            passenger: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                phone: true,
+                avatarUrl: true,
+                passengerRating: true,
+                passengerRatingCount: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { departureTime: 'asc' },
+    });
+
+    if (driverRide) {
+      return { ride: driverRide, userRole: 'DRIVER' as const };
+    }
+
+    return null;
+  }
 }
+

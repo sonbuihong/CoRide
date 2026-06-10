@@ -39,7 +39,6 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
-    "@prisma/client": "^5.22.0",
     "@repo/database": "1.0.0",
     "@repo/shared": "1.0.0",
     "axios": "^1.15.1",

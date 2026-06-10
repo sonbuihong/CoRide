@@ -2,6 +2,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import http from 'http';
 import * as jose from 'jose';
 import { ChatService } from '../../modules/chat/chat.service';
+import { extendedPrisma as prisma } from '@repo/database';
 
 /**
  * Module Socket.IO Singleton — Quản lý kết nối WebSocket toàn cục.
@@ -88,6 +89,69 @@ export const initSocket = (server: http.Server): SocketIOServer => {
         console.error('[Socket Chat Error]:', error);
         socket.emit('chat:error', { message: 'Không thể gửi tin nhắn' });
       }
+    });
+
+    // ─── Ride Tracking Realtime ─────────────────────────────────────
+    // Cache vai trò user trong mỗi ride room — tránh query DB trên mỗi location event (5s)
+    socket.data.rideRoles = {} as Record<string, string>;
+
+    // Client join vào room ride:{rideId}
+    // Kiểm tra quyền: chỉ driver hoặc passenger CONFIRMED mới được join
+    socket.on('ride:join', async (rideId: string) => {
+      if (typeof rideId !== 'string' || !rideId) return;
+
+      try {
+        const ride = await prisma.ride.findFirst({
+          where: {
+            id: rideId,
+            OR: [
+              { driverId: userId },
+              { bookings: { some: { passengerId: userId, status: 'CONFIRMED' } } },
+            ],
+          },
+          select: { driverId: true },
+        });
+
+        if (!ride) {
+          socket.emit('error', { message: 'Bạn không thuộc chuyến đi này' });
+          return;
+        }
+
+        const roomName = `ride:${rideId}`;
+        socket.join(roomName);
+        // Cache vai trò để verify driver:location nhanh (không cần query DB mỗi 5s)
+        socket.data.rideRoles[rideId] = ride.driverId === userId ? 'DRIVER' : 'PASSENGER';
+        console.log(`[Socket] User ${userId} joined ${roomName} as ${socket.data.rideRoles[rideId]}`);
+      } catch (error) {
+        console.error('[Socket] ride:join error:', error);
+        socket.emit('error', { message: 'Lỗi khi join ride room' });
+      }
+    });
+
+    // Client leave room khi rời màn hình
+    socket.on('ride:leave', (rideId: string) => {
+      if (typeof rideId !== 'string') return;
+      const roomName = `ride:${rideId}`;
+      socket.leave(roomName);
+      delete socket.data.rideRoles[rideId];
+      console.log(`[Socket] User ${userId} left ride room ${roomName}`);
+    });
+
+    // Driver gửi vị trí GPS mỗi 5 giây
+    // Chỉ user có vai trò DRIVER (đã verify khi join) mới được emit
+    socket.on('driver:location', (data: { rideId: string; latitude: number; longitude: number }) => {
+      // Input validation
+      if (!data || typeof data.rideId !== 'string' || typeof data.latitude !== 'number' || typeof data.longitude !== 'number') return;
+      // Kiểm tra quyền: chỉ driver thật mới được gửi vị trí
+      if (socket.data.rideRoles?.[data.rideId] !== 'DRIVER') return;
+
+      const roomName = `ride:${data.rideId}`;
+      // Dùng socket.to() thay vì io.to() — không gửi lại cho chính driver
+      socket.to(roomName).emit('driver:location', {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        timestamp: Date.now(),
+      });
     });
 
     // Khi client disconnect

@@ -45,4 +45,9 @@ export const rideService = {
     const response = await api.get('/rides/my-rides');
     return response.data;
   },
+
+  async updateRideStatus(id: string, status: 'ONGOING' | 'COMPLETED' | 'CANCELLED') {
+    const response = await api.patch(`/rides/${id}/status`, { status });
+    return response.data;
+  },
 };

@@ -83,6 +83,8 @@ function RootLayoutNav() {
           <Stack.Screen name="(auth)/register" options={{ headerShown: false, title: 'Đăng ký' }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="ride/[id]" options={{ title: 'Chi tiết chuyến đi' }} />
+          <Stack.Screen name="ride/active-ride" options={{ headerShown: false, title: 'Chuyến đi' }} />
+          <Stack.Screen name="booking/[id]" options={{ title: 'Chi tiết đặt chỗ' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         </Stack>
       </ThemeProvider>

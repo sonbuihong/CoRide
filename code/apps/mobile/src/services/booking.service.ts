@@ -25,4 +25,9 @@ export const bookingService = {
     const response = await api.post(`/bookings/${id}/cancel`);
     return response.data;
   },
+
+  async getActiveBooking() {
+    const response = await api.get('/bookings/active');
+    return response.data.activeBooking;
+  },
 };
