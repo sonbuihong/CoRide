@@ -10,6 +10,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useRoleMode } from '@/components/providers/role-mode-provider';
 import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
+import { useActiveRideLock } from '@/hooks/useActiveRideLock';
 
 // ==========================================
 // THIẾT KẾ APPLE: Utilities CSS — Passenger Mode (Light)
@@ -71,6 +72,11 @@ export const Header: React.FC = () => {
   const [rolePopupOpen, setRolePopupOpen] = useState(false);
   const [rolePopupContent, setRolePopupContent] = useState<{title: string, desc: string} | null>(null);
 
+  // Hook khóa trang nếu có chuyến đi active
+  useActiveRideLock();
+
+  const isOngoingPage = pathname === '/ongoing';
+
   const handleModeSwitch = (newMode: 'passenger' | 'driver') => {
     setMode(newMode);
     if (newMode === 'passenger') {
@@ -129,8 +135,8 @@ export const Header: React.FC = () => {
           </span>
         </Link>
 
-        {/* ROLE SWITCH TABS — chỉ hiện khi đã đăng nhập và không phải ADMIN */}
-        {user && !isAdmin && (
+        {/* ROLE SWITCH TABS — chỉ hiện khi đã đăng nhập, không phải ADMIN và KHÔNG Ở trang ongoing */}
+        {user && !isAdmin && !isOngoingPage && (
           <div className={`hidden md:flex items-center rounded-[980px] p-0.5 mr-6 ${isDriverMode ? 'bg-[rgba(255,255,255,0.08)]' : 'bg-[rgba(0,0,0,0.04)]'}`}>
             <button
               onClick={() => handleModeSwitch('passenger')}
@@ -150,59 +156,57 @@ export const Header: React.FC = () => {
         )}
 
         {/* CONTEXTUAL NAVIGATION */}
-        <nav className="hidden md:flex gap-6 items-center flex-1">
-          {user && isAdmin && (
-            <>
-              <Link className={getLinkClass('/admin')} href="/admin">
-                <LayoutDashboard className="h-3.5 w-3.5" /> Tổng quan
-              </Link>
-              <Link className={getLinkClass('/admin/driver-verifications')} href="/admin/driver-verifications">
-                <ShieldAlert className="h-3.5 w-3.5" /> Duyệt tài xế
-              </Link>
-              <Link className={getLinkClass('/admin/users')} href="/admin/users">
-                <Users className="h-3.5 w-3.5" /> Người dùng
-              </Link>
-              <Link className={getLinkClass('/admin/rides')} href="/admin/rides">
-                <Car className="h-3.5 w-3.5" /> Chuyến đi
-              </Link>
-              <Link className={getLinkClass('/admin/bookings')} href="/admin/bookings">
-                <BookOpen className="h-3.5 w-3.5" /> Đặt chỗ
-              </Link>
-              <Link className={getLinkClass('/admin/transactions')} href="/admin/transactions">
-                <CreditCard className="h-3.5 w-3.5" /> Giao dịch
-              </Link>
-            </>
-          )}
-          {user && !isAdmin && !isDriverMode && (
-            <>
-              <Link className={getLinkClass('/rides/search')} href="/rides/search">
-                <Search className="h-3.5 w-3.5" /> Tìm chuyến
-              </Link>
-              <Link className={getLinkClass('/book')} href="/book">
-                <CalendarCheck className="h-3.5 w-3.5" /> Đặt chuyến đi
-              </Link>
-              <Link className={getLinkClass('/my-bookings')} href="/my-bookings">
-                <Bookmark className="h-3.5 w-3.5" /> Chuyến đã đặt
-              </Link>
-            </>
-          )}
-          {user && !isAdmin && isDriverMode && (
-            <>
-              <Link className={getLinkClass('/rides/post')} href="/rides/post">
-                <PlusSquare className="h-3.5 w-3.5" /> Đăng chuyến mới
-              </Link>
-              <Link className={getLinkClass('/my-rides')} href="/my-rides">
-                <Car className="h-3.5 w-3.5" /> Chuyến đã tạo
-              </Link>
-              <Link className={getLinkClass('/booking-requests')} href="/booking-requests">
-                <Bookmark className="h-3.5 w-3.5" /> Yêu cầu đặt chỗ
-              </Link>
-            </>
-          )}
-          {!user && (
-            <Link className={getLinkClass('/rides/search')} href="/rides/search">
-              <Search className="h-3.5 w-3.5" /> Tìm chuyến đi
-            </Link>
+        <nav className={`hidden lg:flex items-center gap-1 ${isOngoingPage ? 'opacity-50 pointer-events-none' : ''}`}>
+          {!isOngoingPage && (
+            isAdmin ? (
+              <>
+                <Link href="/admin" className={getLinkClass('/admin')}>
+                  <LayoutDashboard className="h-4 w-4" /> Tổng quan
+                </Link>
+                <Link href="/admin/users" className={getLinkClass('/admin/users')}>
+                  <Users className="h-4 w-4" /> Người dùng
+                </Link>
+                <Link href="/admin/rides" className={getLinkClass('/admin/rides')}>
+                  <Car className="h-4 w-4" /> Chuyến đi
+                </Link>
+                <Link href="/admin/bookings" className={getLinkClass('/admin/bookings')}>
+                  <Bookmark className="h-4 w-4" /> Đặt chỗ
+                </Link>
+                <Link href="/admin/pricing" className={getLinkClass('/admin/pricing')}>
+                  <CreditCard className="h-4 w-4" /> Bảng giá
+                </Link>
+                <Link href="/admin/kyc" className={getLinkClass('/admin/kyc')}>
+                  <ShieldAlert className="h-4 w-4" /> Xác thực tài xế
+                </Link>
+              </>
+            ) : isDriverMode ? (
+              <>
+                <Link href="/rides/post" className={getLinkClass('/rides/post')}>
+                  <PlusSquare className="h-4 w-4" /> Đăng chuyến mới
+                </Link>
+                <Link href="/my-rides" className={getLinkClass('/my-rides')}>
+                  <Car className="h-4 w-4" /> Chuyến của tôi
+                </Link>
+                <Link href="/booking-requests" className={getLinkClass('/booking-requests')}>
+                  <Users className="h-4 w-4" /> Yêu cầu đặt chỗ
+                </Link>
+              </>
+            ) : (
+              user ? (
+                <>
+                  <Link href="/rides/search" className={getLinkClass('/rides/search')}>
+                    <Search className="h-4 w-4" /> Tìm chuyến
+                  </Link>
+                  <Link href="/my-bookings" className={getLinkClass('/my-bookings')}>
+                    <Bookmark className="h-4 w-4" /> Chuyến của tôi
+                  </Link>
+                </>
+              ) : (
+                <Link className={getLinkClass('/rides/search')} href="/rides/search">
+                  <Search className="h-3.5 w-3.5" /> Tìm chuyến đi
+                </Link>
+              )
+            )
           )}
         </nav>
 

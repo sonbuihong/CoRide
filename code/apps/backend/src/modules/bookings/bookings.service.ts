@@ -729,14 +729,11 @@ export class BookingsService {
       return { ...passengerBooking, userRole: 'PASSENGER' as const };
     }
 
-    // 2. Kiểm tra user có phải driver có ride đang active kèm booking CONFIRMED
+    // 2. Kiểm tra user có phải driver có ride đang active hay không
     const driverRide = await prisma.ride.findFirst({
       where: {
         driverId: userId,
         status: { in: ['ONGOING', 'SCHEDULED'] },
-        bookings: {
-          some: { status: BookingStatus.CONFIRMED },
-        },
       },
       include: {
         driver: {
@@ -751,7 +748,7 @@ export class BookingsService {
           },
         },
         bookings: {
-          where: { status: BookingStatus.CONFIRMED },
+          where: { status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] } },
           include: {
             passenger: {
               select: {
