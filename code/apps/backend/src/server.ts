@@ -1,6 +1,7 @@
 import http from 'http';
 import app from './app.js';
 import { initSocket } from './shared/socket/socket.js';
+import { connectRedis } from './shared/lib/redis.js';
 
 const port = Number(process.env.PORT ?? '5001');
 
@@ -12,6 +13,11 @@ if (process.env.NODE_ENV !== 'test') {
 
   // Khởi tạo Socket.IO server và gắn vào HTTP server
   initSocket(server);
+
+  // Kết nối Redis — chạy async, server vẫn hoạt động nếu Redis chưa sẵn sàng
+  connectRedis().catch((err) => {
+    console.error('[Redis] Startup connection failed:', err.message);
+  });
 
   server.listen(port, () => {
     console.log(`[server]: Running at http://localhost:${port}`);

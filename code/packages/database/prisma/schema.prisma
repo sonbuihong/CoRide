@@ -52,7 +52,7 @@ enum PaymentStatus {
 
 // Hành khách đánh giá tài xế hoặc tài xế đánh giá hành khách
 enum ReviewType {
-  DRIVER    // Hành khách → Tài xế
+  DRIVER // Hành khách → Tài xế
   PASSENGER // Tài xế → Hành khách
 }
 
@@ -63,22 +63,43 @@ enum VerificationStatus {
   REJECTED
 }
 
+// Trạng thái của TripRequest (luồng Ride-Hailing)
+// Tách riêng khỏi RideStatus vì lifecycle hoàn toàn khác:
+// Ride (Carpooling): SCHEDULED → ONGOING → COMPLETED
+// Trip (Ride-Hailing): PENDING → MATCHING → ACCEPTED → ARRIVING → IN_PROGRESS → COMPLETED
+enum TripStatus {
+  PENDING // Khách vừa gửi yêu cầu, chờ hệ thống xử lý
+  MATCHING // Waterfall đang phát cho tài xế lần lượt
+  ACCEPTED // Tài xế đã nhận cuốc
+  ARRIVING // Tài xế đang trên đường tới điểm đón
+  IN_PROGRESS // Đang trong chuyến đi
+  COMPLETED // Hoàn thành
+  CANCELLED // Bị hủy bởi khách hoặc tài xế
+  NO_DRIVER // Hết danh sách tài xế trong bán kính, không ai nhận
+}
+
+// Loại phương tiện — dùng chung cho cả TripRequest và PricingConfig
+enum VehicleType {
+  BIKE
+  CAR
+}
+
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String  @id @default(uuid())
+  email     String  @unique
   password  String
   firstName String?
   lastName  String?
   phone     String?
   avatarUrl String?
   bio       String?
-  role      Role     @default(USER)
+  role      Role    @default(USER)
 
   // Tách biệt rating theo vai trò — tránh trộn lẫn chất lượng lái xe vs hành khách
-  driverRating         Float   @default(0)
-  driverRatingCount    Int     @default(0)
-  passengerRating      Float   @default(0)
-  passengerRatingCount Int     @default(0)
+  driverRating         Float @default(0)
+  driverRatingCount    Int   @default(0)
+  passengerRating      Float @default(0)
+  passengerRatingCount Int   @default(0)
 
   // Tiered KYC: mặc định false, chỉ true khi admin duyệt giấy tờ tài xế
   isDriverVerified Boolean @default(false)
@@ -86,23 +107,29 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  ridesAsDriver      Ride[]    @relation("DriverRides")
-  bookings           Booking[] @relation("PassengerBookings")
-  reviewsSent        Review[]  @relation("ReviewsSent")
-  reviewsReceived    Review[]  @relation("ReviewsReceived")
+  // Relations — Carpooling
+  ridesAsDriver Ride[]    @relation("DriverRides")
+  bookings      Booking[] @relation("PassengerBookings")
+
+  // Relations — Ride-Hailing
+  tripsAsPassenger TripRequest[] @relation("PassengerTrips")
+  tripsAsDriver    TripRequest[] @relation("DriverTrips")
+
+  // Relations — Common
+  reviewsSent        Review[]            @relation("ReviewsSent")
+  reviewsReceived    Review[]            @relation("ReviewsReceived")
   refreshTokens      RefreshToken[]
   notifications      Notification[]
-  sentMessages       Message[] @relation("SentMessages")
-  receivedMessages   Message[] @relation("ReceivedMessages")
+  sentMessages       Message[]           @relation("SentMessages")
+  receivedMessages   Message[]           @relation("ReceivedMessages")
   wallet             Wallet?
   driverVerification DriverVerification?
 }
 
 model Wallet {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Số dư dùng để thanh toán khi đặt xe (passenger)
   rideBalance    Float @default(0)
@@ -131,16 +158,16 @@ model Transaction {
 }
 
 model Message {
-  id          String   @id @default(uuid())
-  rideId      String
-  ride        Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
-  senderId    String
-  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
-  receiverId  String
-  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  content     String
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  rideId     String
+  ride       Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }
 
 model RefreshToken {
@@ -159,49 +186,49 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   content   String
-  type      String   // e.g., 'BOOKING_REQUEST', 'BOOKING_STATUS', 'RIDE_COMPLETED'
+  type      String // e.g., 'BOOKING_REQUEST', 'BOOKING_STATUS', 'RIDE_COMPLETED'
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
 model Ride {
-  id              String     @id @default(uuid())
-  driverId        String
-  driver          User       @relation("DriverRides", fields: [driverId], references: [id])
-  origin          String
-  originLat       Float?
-  originLng       Float?
-  destination     String
-  destinationLat  Float?
-  destinationLng  Float?
-  distance        Float?
-  duration        Float?
-  departureTime   DateTime
-  availableSeats  Int
-  pricePerSeat    Float
-  status          RideStatus @default(SCHEDULED)
-  description     String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
+  id             String     @id @default(uuid())
+  driverId       String
+  driver         User       @relation("DriverRides", fields: [driverId], references: [id])
+  origin         String
+  originLat      Float?
+  originLng      Float?
+  destination    String
+  destinationLat Float?
+  destinationLng Float?
+  distance       Float?
+  duration       Float?
+  departureTime  DateTime
+  availableSeats Int
+  pricePerSeat   Float
+  status         RideStatus @default(SCHEDULED)
+  description    String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   // Structured address fields for origin
-  originHouseNumber    String?
-  originStreet         String?
-  originWard           String?
-  originDistrict       String?
-  originProvince       String?
-  originAddressType    String?   // 'OLD' or 'NEW' for province merger handling
+  originHouseNumber String?
+  originStreet      String?
+  originWard        String?
+  originDistrict    String?
+  originProvince    String?
+  originAddressType String? // 'OLD' or 'NEW' for province merger handling
 
   // Structured address fields for destination
-  destHouseNumber      String?
-  destStreet           String?
-  destWard             String?
-  destDistrict         String?
-  destProvince         String?
-  destAddressType      String?
+  destHouseNumber String?
+  destStreet      String?
+  destWard        String?
+  destDistrict    String?
+  destProvince    String?
+  destAddressType String?
 
   // Metadata
-  addressDetailLevel   String?   // 'FULL', 'WARD', 'DISTRICT' for precision level
+  addressDetailLevel String? // 'FULL', 'WARD', 'DISTRICT' for precision level
 
   // Relations
   bookings Booking[]
@@ -213,66 +240,66 @@ model Ride {
 }
 
 model Booking {
-  id           String        @id @default(uuid())
-  rideId       String
-  ride         Ride          @relation(fields: [rideId], references: [id])
-  passengerId  String
-  passenger    User          @relation("PassengerBookings", fields: [passengerId], references: [id])
-  seats        Int
-  totalPrice   Float
-  status       BookingStatus @default(PENDING)
+  id            String        @id @default(uuid())
+  rideId        String
+  ride          Ride          @relation(fields: [rideId], references: [id])
+  passengerId   String
+  passenger     User          @relation("PassengerBookings", fields: [passengerId], references: [id])
+  seats         Int
+  totalPrice    Float
+  status        BookingStatus @default(PENDING)
   paymentStatus PaymentStatus @default(UNPAID)
   transactions  Transaction[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Review {
-  id          String     @id @default(uuid())
-  rideId      String
-  ride        Ride       @relation(fields: [rideId], references: [id])
-  reviewerId  String
-  reviewer    User       @relation("ReviewsSent", fields: [reviewerId], references: [id])
-  revieweeId  String
-  reviewee    User       @relation("ReviewsReceived", fields: [revieweeId], references: [id])
-  rating      Int
-  comment     String?
+  id         String     @id @default(uuid())
+  rideId     String
+  ride       Ride       @relation(fields: [rideId], references: [id])
+  reviewerId String
+  reviewer   User       @relation("ReviewsSent", fields: [reviewerId], references: [id])
+  revieweeId String
+  reviewee   User       @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  rating     Int
+  comment    String?
   // Tự động xác định dựa trên vai trò reviewer trong chuyến đi
-  type        ReviewType
-  createdAt   DateTime   @default(now())
+  type       ReviewType
+  createdAt  DateTime   @default(now())
 }
 
 // Giấy tờ xác thực tài xế — Tiered KYC
 // Mỗi user chỉ có tối đa 1 bản ghi, khi bị reject có thể gửi lại (upsert)
 model DriverVerification {
-  id              String             @id @default(uuid())
-  userId          String             @unique
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Giấy tờ xác thực
-  licenseFrontImageUrl      String             // Bằng lái xe mặt trước
-  licenseBackImageUrl       String             // Bằng lái xe mặt sau
-  registrationFrontImageUrl String             // Giấy đăng ký xe mặt trước
-  registrationBackImageUrl  String             // Giấy đăng ký xe mặt sau
-  vehiclePlate              String             // Biển số xe
-  vehicleModel              String?            // Loại xe cụ thể (Honda Wave, Toyota Vios...)
-  vehicleType               String             @default("BIKE") // Loại phương tiện (BIKE hoặc CAR)
+  licenseFrontImageUrl      String // Bằng lái xe mặt trước
+  licenseBackImageUrl       String // Bằng lái xe mặt sau
+  registrationFrontImageUrl String // Giấy đăng ký xe mặt trước
+  registrationBackImageUrl  String // Giấy đăng ký xe mặt sau
+  vehiclePlate              String // Biển số xe
+  vehicleModel              String? // Loại xe cụ thể (Honda Wave, Toyota Vios...)
+  vehicleType               String  @default("BIKE") // Loại phương tiện (BIKE hoặc CAR)
 
-  status                    VerificationStatus @default(PENDING)
-  rejectionReason           String?            // Lý do từ chối (nếu bị reject)
-  reviewedAt                DateTime?          // Thời điểm admin duyệt
-  createdAt                 DateTime           @default(now())
-  updatedAt                 DateTime           @updatedAt
+  status          VerificationStatus @default(PENDING)
+  rejectionReason String? // Lý do từ chối (nếu bị reject)
+  reviewedAt      DateTime? // Thời điểm admin duyệt
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 }
 
 model ProvinceMapping {
-  id           String   @id @default(uuid())
-  oldProvince  String
-  newProvince  String
+  id            String   @id @default(uuid())
+  oldProvince   String
+  newProvince   String
   effectiveDate DateTime
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@unique([oldProvince, effectiveDate])
   @@index([isActive])
@@ -281,12 +308,86 @@ model ProvinceMapping {
 // Lưu trữ địa điểm đã chọn từ Goong Place Detail API
 // Dùng placeId làm unique key để upsert — tránh lưu trùng cùng một địa điểm
 model Location {
-  id          String   @id @default(cuid())
-  placeId     String   @unique
-  name        String
-  address     String
-  latitude    Float
-  longitude   Float
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  placeId   String   @unique
+  name      String
+  address   String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Ride-Hailing: Yêu cầu đặt xe từ hành khách ────────────────────────────
+// Tách biệt hoàn toàn với bảng Ride (Carpooling):
+// - Ride: Tài xế chủ động tạo lịch trình, hành khách đặt chỗ (Booking)
+// - TripRequest: Hành khách chủ động gọi xe, hệ thống tìm tài xế (Waterfall Matching)
+model TripRequest {
+  id String @id @default(uuid())
+
+  // Hành khách gọi xe — luôn có
+  passengerId String
+  passenger   User   @relation("PassengerTrips", fields: [passengerId], references: [id])
+
+  // Tài xế nhận cuốc — null cho đến khi có tài xế accept
+  driverId String?
+  driver   User?   @relation("DriverTrips", fields: [driverId], references: [id])
+
+  // Điểm đón
+  originAddress String
+  originLat     Float
+  originLng     Float
+
+  // Điểm đến
+  destAddress String
+  destLat     Float
+  destLng     Float
+
+  // Loại phương tiện yêu cầu
+  vehicleType VehicleType @default(BIKE)
+
+  // Kết quả tính toán từ Goong API + PricingConfig
+  estimatedDistance Float // Khoảng cách ước tính (km)
+  estimatedDuration Float // Thời gian ước tính (phút)
+  estimatedPrice    Float // Giá tiền ước tính (VND)
+  finalPrice        Float? // Giá cuối cùng (có thể khác nếu đường đi thực tế khác)
+
+  // Trạng thái lifecycle
+  status TripStatus @default(PENDING)
+
+  // Tracking quá trình matching Waterfall
+  matchAttempts Int   @default(0) // Số lần đã phát cho tài xế
+  maxAttempts   Int   @default(10) // Giới hạn số tài xế thử trước khi NO_DRIVER
+  matchRadius   Float @default(5) // Bán kính tìm kiếm (km)
+
+  // Thời điểm quan trọng
+  matchedAt    DateTime? // Khi tài xế accept
+  startedAt    DateTime? // Khi bắt đầu chuyến (tài xế đón được khách)
+  completedAt  DateTime? // Khi hoàn thành
+  cancelledAt  DateTime? // Khi bị hủy
+  cancelReason String? // Lý do hủy
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Index cho query phổ biến
+  @@index([passengerId, status]) // Khách xem trip đang active
+  @@index([driverId, status]) // Tài xế xem trip đang active
+  @@index([status, createdAt]) // Admin dashboard, thống kê
+  @@index([originLat, originLng]) // Tìm kiếm theo vị trí (fallback khi Redis down)
+}
+
+// ─── Cấu hình giá — Admin quản lý qua Dashboard ────────────────────────────
+// Mỗi VehicleType chỉ có 1 config active tại mỗi thời điểm
+// Công thức: totalPrice = baseFare + max(0, distance - baseDistance) * pricePerKm
+model PricingConfig {
+  id           String      @id @default(uuid())
+  vehicleType  VehicleType @unique // BIKE hoặc CAR — unique để đảm bảo 1 config/loại xe
+  baseFare     Float // Giá mở cửa (VND), VD: 12000
+  pricePerKm   Float // Giá mỗi km (VND), VD: 4500
+  baseDistance Float       @default(2) // Km đầu tiên đã tính trong baseFare, VD: 2km
+  minFare      Float       @default(0) // Giá tối thiểu (nếu khoảng cách quá ngắn)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 }

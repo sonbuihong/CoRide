@@ -3,6 +3,13 @@ import http from 'http';
 import * as jose from 'jose';
 import { ChatService } from '../../modules/chat/chat.service';
 import { extendedPrisma as prisma } from '@repo/database';
+import {
+  setDriverOnline,
+  setDriverOffline,
+  updateDriverLocation,
+  removeDriverLocation,
+  refreshDriverOnline,
+} from '../lib/redis';
 
 /**
  * Module Socket.IO Singleton — Quản lý kết nối WebSocket toàn cục.
@@ -91,7 +98,7 @@ export const initSocket = (server: http.Server): SocketIOServer => {
       }
     });
 
-    // ─── Ride Tracking Realtime ─────────────────────────────────────
+    // ─── Ride Tracking Realtime (Carpooling) ───────────────────────────
     // Cache vai trò user trong mỗi ride room — tránh query DB trên mỗi location event (5s)
     socket.data.rideRoles = {} as Record<string, string>;
 
@@ -137,7 +144,7 @@ export const initSocket = (server: http.Server): SocketIOServer => {
       console.log(`[Socket] User ${userId} left ride room ${roomName}`);
     });
 
-    // Driver gửi vị trí GPS mỗi 5 giây
+    // Driver gửi vị trí GPS mỗi 5 giây (Carpooling tracking)
     // Chỉ user có vai trò DRIVER (đã verify khi join) mới được emit
     socket.on('driver:location', (data: { rideId: string; latitude: number; longitude: number }) => {
       // Input validation
@@ -154,9 +161,104 @@ export const initSocket = (server: http.Server): SocketIOServer => {
       });
     });
 
+    // ─── Ride-Hailing: Driver Online/Offline & Location ─────────────────
+
+    // Tài xế bật trạng thái online — sẵn sàng nhận cuốc
+    socket.on('driver:go_online', async () => {
+      try {
+        // Kiểm tra KYC: chỉ tài xế đã xác thực mới được bật online
+        const driver = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { isDriverVerified: true },
+        });
+
+        if (!driver?.isDriverVerified) {
+          socket.emit('error', { message: 'Bạn cần xác thực tài xế trước khi bật chế độ nhận cuốc' });
+          return;
+        }
+
+        await setDriverOnline(userId);
+        socket.emit('driver:status', { online: true });
+        console.log(`[Socket] Driver ${userId} went ONLINE`);
+      } catch (error) {
+        console.error('[Socket] driver:go_online error:', error);
+        socket.emit('error', { message: 'Lỗi khi bật trạng thái online' });
+      }
+    });
+
+    // Tài xế tắt trạng thái online
+    socket.on('driver:go_offline', async () => {
+      try {
+        await setDriverOffline(userId);
+        await removeDriverLocation(userId);
+        socket.emit('driver:status', { online: false });
+        console.log(`[Socket] Driver ${userId} went OFFLINE`);
+      } catch (error) {
+        console.error('[Socket] driver:go_offline error:', error);
+      }
+    });
+
+    // Tài xế gửi vị trí GPS liên tục (Ride-Hailing mode)
+    // Cập nhật Redis Geo index + gia hạn TTL online
+    socket.on('driver:update_location', async (data: { latitude: number; longitude: number }) => {
+      if (!data || typeof data.latitude !== 'number' || typeof data.longitude !== 'number') return;
+
+      try {
+        await updateDriverLocation(userId, data.latitude, data.longitude);
+        await refreshDriverOnline(userId);
+      } catch (error) {
+        // Log nhưng không emit error — location update thất bại không critical
+        console.error('[Socket] driver:update_location error:', error);
+      }
+    });
+
+    // ─── Ride-Hailing: Trip Accept/Reject ───────────────────────────────
+
+    // Tài xế chấp nhận cuốc xe
+    socket.on('trip:accept', async (data: { tripId: string }) => {
+      if (!data?.tripId) return;
+
+      try {
+        const { MatchingService } = await import('../../modules/matching/matching.service');
+        await MatchingService.handleDriverAccept(data.tripId, userId);
+        socket.emit('trip:accept_confirmed', { tripId: data.tripId });
+        console.log(`[Socket] Driver ${userId} accepted trip ${data.tripId}`);
+      } catch (error) {
+        const appErr = error as { message?: string };
+        socket.emit('trip:accept_error', {
+          tripId: data.tripId,
+          message: appErr.message ?? 'Lỗi khi nhận cuốc xe',
+        });
+        console.error('[Socket] trip:accept error:', error);
+      }
+    });
+
+    // Tài xế từ chối cuốc xe
+    socket.on('trip:reject', async (data: { tripId: string }) => {
+      if (!data?.tripId) return;
+
+      try {
+        const { MatchingService } = await import('../../modules/matching/matching.service');
+        MatchingService.handleDriverReject(data.tripId, userId);
+        console.log(`[Socket] Driver ${userId} rejected trip ${data.tripId}`);
+      } catch (error) {
+        console.error('[Socket] trip:reject error:', error);
+      }
+    });
+
     // Khi client disconnect
-    socket.on('disconnect', (reason) => {
+    socket.on('disconnect', async (reason) => {
       console.log(`[Socket] Disconnected: user ${userId} (${reason})`);
+
+      // Tự động cleanup: xoá driver khỏi Redis khi disconnect
+      // TTL online (5 phút) sẽ tự expire, nhưng cleanup ngay cho sạch
+      try {
+        await setDriverOffline(userId);
+        await removeDriverLocation(userId);
+      } catch (error) {
+        // Không critical — TTL sẽ tự cleanup
+        console.warn('[Socket] Cleanup on disconnect failed:', error);
+      }
     });
   });
 
