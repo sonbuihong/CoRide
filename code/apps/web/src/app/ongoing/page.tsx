@@ -13,6 +13,7 @@ export default function OngoingPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [activeData, setActiveData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const fetchActiveRide = async () => {
     try {
@@ -58,26 +59,34 @@ export default function OngoingPage() {
   return (
     <div className="relative h-[calc(100vh-48px)] w-full overflow-hidden bg-gray-100 flex flex-col">
       {/* Map Section - Chiếm phần lớn màn hình */}
-      <div className="flex-1 w-full relative z-0">
+      <div className="flex-1 w-full relative z-0" onClick={() => setIsExpanded(false)}>
         <OngoingMap
           originLat={ride.originLat}
           originLng={ride.originLng}
-          destLat={ride.destLat}
-          destLng={ride.destLng}
+          destLat={ride.destinationLat}
+          destLng={ride.destinationLng}
         />
       </div>
 
       {/* Bottom Sheet Section - Lớp phủ lên bản đồ */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 w-full max-h-[85vh] overflow-y-auto bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-transform duration-300">
-        <div className="w-full flex justify-center pt-3 pb-1">
+      <div 
+        className={`absolute bottom-0 left-0 right-0 z-10 w-full bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out flex flex-col ${isExpanded ? 'h-[85vh]' : 'h-auto max-h-[45vh]'}`}
+      >
+        {/* Thanh điều khiển (Drag Handle) */}
+        <div 
+          className="w-full flex justify-center pt-4 pb-2 cursor-pointer sticky top-0 bg-white z-20 shrink-0"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
         
-        {role === 'DRIVER' ? (
-          <DriverView data={activeData} onRefresh={fetchActiveRide} />
-        ) : (
-          <PassengerView data={activeData} onRefresh={fetchActiveRide} />
-        )}
+        <div className={`flex-1 w-full ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+          {role === 'DRIVER' ? (
+            <DriverView data={activeData} onRefresh={fetchActiveRide} isExpanded={isExpanded} onExpand={() => setIsExpanded(true)} />
+          ) : (
+            <PassengerView data={activeData} onRefresh={fetchActiveRide} isExpanded={isExpanded} onExpand={() => setIsExpanded(true)} />
+          )}
+        </div>
       </div>
     </div>
   );
