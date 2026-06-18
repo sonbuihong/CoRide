@@ -41,6 +41,7 @@ export default function PostRidePage() {
   const [destinationCoords, setDestinationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [routeInfo, setRouteInfo] = useState<{ distanceKm: number; durationText: string; durationMinutes: number } | null>(null);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+  const [isScheduled, setIsScheduled] = useState(false);
   const router = useRouter();
   const { user, loading: authLoading, refreshUser } = useAuth();
   const [checkingVerification, setCheckingVerification] = useState(true);
@@ -181,6 +182,17 @@ export default function PostRidePage() {
       .catch((err: unknown) => console.error('[PostRide] Lỗi tính route:', err))
       .finally(() => setIsCalculatingRoute(false));
   }, [originCoords, destinationCoords]);
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!isScheduled) {
+      // Nếu Khởi hành ngay, tự set thời gian là 5 phút nữa để pass validation "tương lai"
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 5);
+      setValue('departureTime', now.toISOString());
+    }
+    handleSubmit(onSubmit)(e);
+  };
 
   const onSubmit = async (data: CreateRideInput) => {
     setLoading(true);
@@ -357,7 +369,7 @@ export default function PostRidePage() {
 
         {/* Form Container */}
         <div className="w-full">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
             
             {/* Origin & Destination */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -485,23 +497,57 @@ export default function PostRidePage() {
               </div>
             )}
 
-            {/* Departure Time */}
-            <div className="space-y-1">
-              <label htmlFor="departureTime" className={appleLabelClass}>
-                <Calendar className="mr-1.5 h-4 w-4 text-[rgba(0,0,0,0.48)] dark:text-[rgba(255,255,255,0.48)]" />
-                Thời gian khởi hành
+            {/* Khởi hành ngay / Đặt lịch */}
+            <div className="flex items-center justify-between bg-white dark:bg-[#1d1d1f] p-4 rounded-[16px] border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.05)] shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#0071e3]/10 flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-[#0071e3]" />
+                </div>
+                <div>
+                  <p className="text-[15px] font-semibold text-[#1d1d1f] dark:text-white">
+                    Lên lịch trình khởi hành
+                  </p>
+                  <p className="text-[13px] text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)]">
+                    {isScheduled ? 'Chọn thời gian khởi hành cụ thể' : 'Khởi hành ngay lập tức'}
+                  </p>
+                </div>
+              </div>
+              <label className="relative flex items-center cursor-pointer">
+                <input 
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={isScheduled}
+                  onChange={(e) => {
+                    setIsScheduled(e.target.checked);
+                    if (!e.target.checked) {
+                      setValue('departureTime', '');
+                    }
+                  }}
+                />
+                <div className="w-11 h-6 bg-[rgba(0,0,0,0.16)] dark:bg-[rgba(255,255,255,0.16)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[rgba(0,0,0,0.04)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0071e3]"></div>
               </label>
-              <input
-                id="departureTime"
-                type="datetime-local"
-                className={appleInputClass}
-                {...register('departureTime')}
-                disabled={loading}
-              />
-              {errors.departureTime && (
-                <p className="text-[12px] text-[#d93025] mt-1 ml-1">{errors.departureTime.message}</p>
-              )}
             </div>
+
+            {/* Departure Time Picker - Chỉ hiện khi isScheduled = true */}
+            {isScheduled && (
+              <div className="space-y-1 animate-in slide-in-from-top-2 fade-in duration-300">
+                <label htmlFor="departureTime" className={appleLabelClass}>
+                  <Calendar className="mr-1.5 h-4 w-4 text-[rgba(0,0,0,0.48)] dark:text-[rgba(255,255,255,0.48)]" />
+                  Thời gian khởi hành cụ thể
+                </label>
+                <input
+                  id="departureTime"
+                  type="datetime-local"
+                  className={appleInputClass}
+                  {...register('departureTime')}
+                  disabled={loading}
+                  min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                />
+                {errors.departureTime && (
+                  <p className="text-[12px] text-[#d93025] mt-1 ml-1">{errors.departureTime.message}</p>
+                )}
+              </div>
+            )}
 
             {/* Seats & Price */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

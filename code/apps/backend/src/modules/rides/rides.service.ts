@@ -35,87 +35,41 @@ export class RidesService {
       );
     }
 
-    // Kiểm tra xem tài xế có chuyến đi nào chưa kết thúc mà đã có khách đặt thành công (CONFIRMED) hay chưa
-    const activeRideWithConfirmedBooking = await prisma.ride.findFirst({
+    // 2. Kiểm tra không có chuyến đi nào đang hoạt động với vai trò tài xế
+    const activeDriverRide = await prisma.ride.findFirst({
       where: {
         driverId,
         status: { in: ['SCHEDULED', 'ONGOING'] },
-        bookings: {
-          some: {
-            status: 'CONFIRMED',
-          },
-        },
       },
     });
 
-    if (activeRideWithConfirmedBooking) {
+    if (activeDriverRide) {
       throw new AppError(
-        'Bạn đang có một chuyến đi đã được đặt thành công và chưa hoàn thành. Không thể đăng thêm chuyến đi mới.',
+        'Bạn đang có một chuyến đi chưa hoàn thành (vai trò tài xế). Vui lòng hoàn thành hoặc hủy chuyến đi hiện tại để đăng chuyến mới.',
         400
       );
     }
 
-    // 2. Time Conflict — kiểm tra tài xế không trùng lịch với chuyến đã có
-    const departureTime = new Date(data.departureTime);
-    // Ước tính thời gian kết thúc: duration (phút) hoặc mặc định 60 phút
-    const durationMs = (data.duration ?? 60) * 60 * 1000;
-    const estimatedEndTime = new Date(departureTime.getTime() + durationMs);
-
-    // Check trùng lịch khi đang là tài xế ở chuyến khác
-    // Dùng findMany thay vì findFirst — findFirst có thể trả về chuyến không trùng
-    // trong khi chuyến khác trong kết quả lại trùng (do Prisma không tính được estimatedEndTime trong WHERE)
-    const candidateDriverConflicts = await prisma.ride.findMany({
-      where: {
-        driverId,
-        status: { in: ['SCHEDULED', 'ONGOING'] },
-        departureTime: { lt: estimatedEndTime },
-      },
-    });
-
-    // Overlap logic đầy đủ: existingStart < newEnd AND existingEnd > newStart
-    const driverConflict = candidateDriverConflicts.find((ride) => {
-      const rideEnd = new Date(
-        ride.departureTime.getTime() + (ride.duration ?? 60) * 60 * 1000
-      );
-      return rideEnd > departureTime;
-    });
-
-    if (driverConflict) {
-      throw new AppError(
-        'Bạn đã có chuyến đi khác trong khung giờ này (vai trò tài xế). Vui lòng chọn thời gian khác.',
-        400
-      );
-    }
-
-    // Check trùng lịch khi đang là hành khách ở chuyến khác
-    const candidatePassengerConflicts = await prisma.booking.findMany({
+    // 3. Kiểm tra không có chuyến đi nào đang hoạt động với vai trò hành khách
+    const activePassengerBooking = await prisma.booking.findFirst({
       where: {
         passengerId: driverId,
         status: { in: ['PENDING', 'CONFIRMED'] },
         ride: {
           status: { in: ['SCHEDULED', 'ONGOING'] },
-          departureTime: { lt: estimatedEndTime },
         },
       },
-      include: { ride: true },
     });
 
-    const passengerConflict = candidatePassengerConflicts.find((booking) => {
-      const rideEnd = new Date(
-        booking.ride.departureTime.getTime() +
-        (booking.ride.duration ?? 60) * 60 * 1000
-      );
-      return rideEnd > departureTime;
-    });
-
-    if (passengerConflict) {
+    if (activePassengerBooking) {
       throw new AppError(
-        'Bạn đã đặt chỗ trên chuyến khác trong khung giờ này (vai trò hành khách). Vui lòng chọn thời gian khác.',
+        'Bạn đang có một chuyến đi chưa hoàn thành (vai trò hành khách). Vui lòng hoàn thành hoặc hủy chuyến đi hiện tại để đăng chuyến mới.',
         400
       );
     }
 
-    // 3. Tạo chuyến đi
+    // 4. Tạo chuyến đi
+    const departureTime = new Date(data.departureTime);
     return prisma.ride.create({
       data: {
         driverId,
@@ -223,68 +177,7 @@ export class RidesService {
       throw new AppError('Chỉ có thể sửa chuyến đang chờ khởi hành', 400);
     }
 
-    // Time Conflict — kiểm tra khi cập nhật departureTime hoặc duration
-    // Tránh tài xế dời chuyến sang khung giờ đã có chuyến khác
-    const hasTimeChange = data.departureTime !== undefined || data.duration !== undefined;
-    if (hasTimeChange) {
-      const newDepartureTime = data.departureTime
-        ? new Date(data.departureTime)
-        : ride.departureTime;
-      const newDurationMs = (data.duration ?? ride.duration ?? 60) * 60 * 1000;
-      const newEstimatedEndTime = new Date(newDepartureTime.getTime() + newDurationMs);
 
-      // Check trùng lịch vai trò tài xế (loại trừ chuyến đang sửa)
-      const candidateDriverConflicts = await prisma.ride.findMany({
-        where: {
-          driverId,
-          id: { not: id },
-          status: { in: ['SCHEDULED', 'ONGOING'] },
-          departureTime: { lt: newEstimatedEndTime },
-        },
-      });
-
-      const driverConflict = candidateDriverConflicts.find((r) => {
-        const rideEnd = new Date(
-          r.departureTime.getTime() + (r.duration ?? 60) * 60 * 1000
-        );
-        return rideEnd > newDepartureTime;
-      });
-
-      if (driverConflict) {
-        throw new AppError(
-          'Thời gian mới bị trùng với chuyến đi khác của bạn (vai trò tài xế). Vui lòng chọn thời gian khác.',
-          400
-        );
-      }
-
-      // Check trùng lịch vai trò hành khách
-      const candidatePassengerConflicts = await prisma.booking.findMany({
-        where: {
-          passengerId: driverId,
-          status: { in: ['PENDING', 'CONFIRMED'] },
-          ride: {
-            status: { in: ['SCHEDULED', 'ONGOING'] },
-            departureTime: { lt: newEstimatedEndTime },
-          },
-        },
-        include: { ride: true },
-      });
-
-      const passengerConflict = candidatePassengerConflicts.find((booking) => {
-        const rideEnd = new Date(
-          booking.ride.departureTime.getTime() +
-          (booking.ride.duration ?? 60) * 60 * 1000
-        );
-        return rideEnd > newDepartureTime;
-      });
-
-      if (passengerConflict) {
-        throw new AppError(
-          'Thời gian mới bị trùng với chuyến bạn đã đặt chỗ (vai trò hành khách). Vui lòng chọn thời gian khác.',
-          400
-        );
-      }
-    }
 
     return prisma.ride.update({
       where: { id },

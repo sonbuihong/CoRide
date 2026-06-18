@@ -269,8 +269,34 @@ export const deleteRide = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    await prisma.ride.delete({
-      where: { id: req.params.id as string },
+    const id = req.params.id as string;
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Xóa các đánh giá liên quan
+      await tx.review.deleteMany({ where: { rideId: id } });
+
+      // 2. Xóa các tin nhắn liên quan
+      await tx.message.deleteMany({ where: { rideId: id } });
+
+      // 3. Xử lý các booking
+      const bookings = await tx.booking.findMany({ where: { rideId: id } });
+      const bookingIds = bookings.map((b) => b.id);
+
+      if (bookingIds.length > 0) {
+        // Ngắt liên kết transaction với booking (set null) thay vì xóa lịch sử giao dịch
+        await tx.transaction.updateMany({
+          where: { bookingId: { in: bookingIds } },
+          data: { bookingId: null },
+        });
+
+        // Xóa các booking
+        await tx.booking.deleteMany({ where: { rideId: id } });
+      }
+
+      // 4. Xóa chuyến đi
+      await tx.ride.delete({
+        where: { id },
+      });
     });
 
     res.json({ message: 'Xóa chuyến đi thành công' });
@@ -393,8 +419,19 @@ export const deleteBooking = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    await prisma.booking.delete({
-      where: { id: req.params.id as string },
+    const id = req.params.id as string;
+
+    await prisma.$transaction(async (tx) => {
+      // Ngắt liên kết transaction trước
+      await tx.transaction.updateMany({
+        where: { bookingId: id },
+        data: { bookingId: null },
+      });
+
+      // Xóa booking
+      await tx.booking.delete({
+        where: { id },
+      });
     });
 
     res.json({ message: 'Xóa đặt chỗ thành công' });

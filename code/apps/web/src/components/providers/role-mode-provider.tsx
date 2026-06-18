@@ -15,7 +15,7 @@ type RoleMode = 'passenger' | 'driver';
 interface RoleModeContextValue {
   mode: RoleMode;
   setMode: (mode: RoleMode) => void;
-}
+} 
 
 const RoleModeContext = createContext<RoleModeContextValue | null>(null);
 

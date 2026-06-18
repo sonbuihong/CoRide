@@ -49,36 +49,35 @@ export class BookingsService {
       );
     }
 
-    // 5. Kiểm tra user chưa có booking đang active trên chuyến này
-    const existingBooking = await prisma.booking.findFirst({
+    // 5. Kiểm tra user không có chuyến đi nào đang hoạt động với vai trò tài xế
+    const activeDriverRide = await prisma.ride.findFirst({
       where: {
-        rideId,
-        passengerId,
-        status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+        driverId: passengerId,
+        status: { in: ['SCHEDULED', 'ONGOING'] },
       },
     });
 
-    if (existingBooking) {
+    if (activeDriverRide) {
       throw new AppError(
-        'Bạn đã có yêu cầu đặt chỗ đang chờ xử lý hoặc đã được xác nhận cho chuyến đi này',
+        'Bạn đang có một chuyến đi chưa hoàn thành (vai trò tài xế). Vui lòng hoàn thành hoặc hủy chuyến đi hiện tại để đặt chỗ mới.',
         400
       );
     }
 
-    // Kiểm tra hành khách có chuyến CONFIRMED đang active không
-    const activeBooking = await prisma.booking.findFirst({
+    // 6. Kiểm tra user không có chuyến đi nào đang hoạt động với vai trò hành khách
+    const activePassengerBooking = await prisma.booking.findFirst({
       where: {
         passengerId,
-        status: BookingStatus.CONFIRMED,
+        status: { in: ['PENDING', 'CONFIRMED'] },
         ride: {
           status: { in: ['SCHEDULED', 'ONGOING'] },
         },
       },
     });
 
-    if (activeBooking) {
+    if (activePassengerBooking) {
       throw new AppError(
-        'Bạn đang có một chuyến đi đã được xác nhận và chưa hoàn thành. Không thể đặt thêm chuyến đi mới.',
+        'Bạn đang có một chuyến đi chưa hoàn thành hoặc đang chờ xác nhận (vai trò hành khách). Vui lòng hoàn thành hoặc hủy chuyến đi hiện tại để đặt chỗ mới.',
         400
       );
     }
@@ -102,61 +101,6 @@ export class BookingsService {
     seats: number
   ) {
     const { rideId } = data;
-    const departureTime = ride.departureTime;
-    const durationMs = (ride.duration ?? 60) * 60 * 1000;
-    const estimatedEndTime = new Date(departureTime.getTime() + durationMs);
-
-    // Check trùng lịch khi đang là tài xế ở chuyến khác
-    const candidateDriverConflicts = await prisma.ride.findMany({
-      where: {
-        driverId: passengerId,
-        status: { in: ['SCHEDULED', 'ONGOING'] },
-        departureTime: { lt: estimatedEndTime },
-      },
-    });
-
-    const driverConflict = candidateDriverConflicts.find((r) => {
-      const rideEnd = new Date(
-        r.departureTime.getTime() + (r.duration ?? 60) * 60 * 1000
-      );
-      return rideEnd > departureTime;
-    });
-
-    if (driverConflict) {
-      throw new AppError(
-        'Bạn đã có chuyến đi khác trong khung giờ này (vai trò tài xế). Không thể đặt chỗ.',
-        400
-      );
-    }
-
-    // Check trùng lịch khi đang là hành khách ở chuyến khác
-    const candidatePassengerConflicts = await prisma.booking.findMany({
-      where: {
-        passengerId,
-        status: { in: ['PENDING', 'CONFIRMED'] },
-        ride: {
-          id: { not: rideId },
-          status: { in: ['SCHEDULED', 'ONGOING'] },
-          departureTime: { lt: estimatedEndTime },
-        },
-      },
-      include: { ride: true },
-    });
-
-    const passengerConflict = candidatePassengerConflicts.find((booking) => {
-      const rideEnd = new Date(
-        booking.ride.departureTime.getTime() +
-        (booking.ride.duration ?? 60) * 60 * 1000
-      );
-      return rideEnd > departureTime;
-    });
-
-    if (passengerConflict) {
-      throw new AppError(
-        'Bạn đã đặt chỗ trên chuyến khác trong khung giờ này. Không thể đặt thêm.',
-        400
-      );
-    }
 
     // Tạo booking với trạng thái PENDING (chờ tài xế duyệt)
     const booking = await prisma.booking.create({
