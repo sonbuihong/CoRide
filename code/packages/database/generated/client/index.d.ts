@@ -16289,6 +16289,7 @@ export namespace Prisma {
   export type PricingConfigAvgAggregateOutputType = {
     baseFare: number | null
     pricePerKm: number | null
+    pricePerMinute: number | null
     baseDistance: number | null
     minFare: number | null
   }
@@ -16296,6 +16297,7 @@ export namespace Prisma {
   export type PricingConfigSumAggregateOutputType = {
     baseFare: number | null
     pricePerKm: number | null
+    pricePerMinute: number | null
     baseDistance: number | null
     minFare: number | null
   }
@@ -16305,6 +16307,7 @@ export namespace Prisma {
     vehicleType: $Enums.VehicleType | null
     baseFare: number | null
     pricePerKm: number | null
+    pricePerMinute: number | null
     baseDistance: number | null
     minFare: number | null
     isActive: boolean | null
@@ -16317,6 +16320,7 @@ export namespace Prisma {
     vehicleType: $Enums.VehicleType | null
     baseFare: number | null
     pricePerKm: number | null
+    pricePerMinute: number | null
     baseDistance: number | null
     minFare: number | null
     isActive: boolean | null
@@ -16329,6 +16333,7 @@ export namespace Prisma {
     vehicleType: number
     baseFare: number
     pricePerKm: number
+    pricePerMinute: number
     baseDistance: number
     minFare: number
     isActive: number
@@ -16341,6 +16346,7 @@ export namespace Prisma {
   export type PricingConfigAvgAggregateInputType = {
     baseFare?: true
     pricePerKm?: true
+    pricePerMinute?: true
     baseDistance?: true
     minFare?: true
   }
@@ -16348,6 +16354,7 @@ export namespace Prisma {
   export type PricingConfigSumAggregateInputType = {
     baseFare?: true
     pricePerKm?: true
+    pricePerMinute?: true
     baseDistance?: true
     minFare?: true
   }
@@ -16357,6 +16364,7 @@ export namespace Prisma {
     vehicleType?: true
     baseFare?: true
     pricePerKm?: true
+    pricePerMinute?: true
     baseDistance?: true
     minFare?: true
     isActive?: true
@@ -16369,6 +16377,7 @@ export namespace Prisma {
     vehicleType?: true
     baseFare?: true
     pricePerKm?: true
+    pricePerMinute?: true
     baseDistance?: true
     minFare?: true
     isActive?: true
@@ -16381,6 +16390,7 @@ export namespace Prisma {
     vehicleType?: true
     baseFare?: true
     pricePerKm?: true
+    pricePerMinute?: true
     baseDistance?: true
     minFare?: true
     isActive?: true
@@ -16480,6 +16490,7 @@ export namespace Prisma {
     vehicleType: $Enums.VehicleType
     baseFare: number
     pricePerKm: number
+    pricePerMinute: number
     baseDistance: number
     minFare: number
     isActive: boolean
@@ -16511,6 +16522,7 @@ export namespace Prisma {
     vehicleType?: boolean
     baseFare?: boolean
     pricePerKm?: boolean
+    pricePerMinute?: boolean
     baseDistance?: boolean
     minFare?: boolean
     isActive?: boolean
@@ -16523,6 +16535,7 @@ export namespace Prisma {
     vehicleType?: boolean
     baseFare?: boolean
     pricePerKm?: boolean
+    pricePerMinute?: boolean
     baseDistance?: boolean
     minFare?: boolean
     isActive?: boolean
@@ -16535,6 +16548,7 @@ export namespace Prisma {
     vehicleType?: boolean
     baseFare?: boolean
     pricePerKm?: boolean
+    pricePerMinute?: boolean
     baseDistance?: boolean
     minFare?: boolean
     isActive?: boolean
@@ -16551,6 +16565,7 @@ export namespace Prisma {
       vehicleType: $Enums.VehicleType
       baseFare: number
       pricePerKm: number
+      pricePerMinute: number
       baseDistance: number
       minFare: number
       isActive: boolean
@@ -16953,6 +16968,7 @@ export namespace Prisma {
     readonly vehicleType: FieldRef<"PricingConfig", 'VehicleType'>
     readonly baseFare: FieldRef<"PricingConfig", 'Float'>
     readonly pricePerKm: FieldRef<"PricingConfig", 'Float'>
+    readonly pricePerMinute: FieldRef<"PricingConfig", 'Float'>
     readonly baseDistance: FieldRef<"PricingConfig", 'Float'>
     readonly minFare: FieldRef<"PricingConfig", 'Float'>
     readonly isActive: FieldRef<"PricingConfig", 'Boolean'>
@@ -17499,6 +17515,7 @@ export namespace Prisma {
     vehicleType: 'vehicleType',
     baseFare: 'baseFare',
     pricePerKm: 'pricePerKm',
+    pricePerMinute: 'pricePerMinute',
     baseDistance: 'baseDistance',
     minFare: 'minFare',
     isActive: 'isActive',
@@ -19002,6 +19019,7 @@ export namespace Prisma {
     vehicleType?: EnumVehicleTypeFilter<"PricingConfig"> | $Enums.VehicleType
     baseFare?: FloatFilter<"PricingConfig"> | number
     pricePerKm?: FloatFilter<"PricingConfig"> | number
+    pricePerMinute?: FloatFilter<"PricingConfig"> | number
     baseDistance?: FloatFilter<"PricingConfig"> | number
     minFare?: FloatFilter<"PricingConfig"> | number
     isActive?: BoolFilter<"PricingConfig"> | boolean
@@ -19014,6 +19032,7 @@ export namespace Prisma {
     vehicleType?: SortOrder
     baseFare?: SortOrder
     pricePerKm?: SortOrder
+    pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
     isActive?: SortOrder
@@ -19029,6 +19048,7 @@ export namespace Prisma {
     NOT?: PricingConfigWhereInput | PricingConfigWhereInput[]
     baseFare?: FloatFilter<"PricingConfig"> | number
     pricePerKm?: FloatFilter<"PricingConfig"> | number
+    pricePerMinute?: FloatFilter<"PricingConfig"> | number
     baseDistance?: FloatFilter<"PricingConfig"> | number
     minFare?: FloatFilter<"PricingConfig"> | number
     isActive?: BoolFilter<"PricingConfig"> | boolean
@@ -19041,6 +19061,7 @@ export namespace Prisma {
     vehicleType?: SortOrder
     baseFare?: SortOrder
     pricePerKm?: SortOrder
+    pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
     isActive?: SortOrder
@@ -19061,6 +19082,7 @@ export namespace Prisma {
     vehicleType?: EnumVehicleTypeWithAggregatesFilter<"PricingConfig"> | $Enums.VehicleType
     baseFare?: FloatWithAggregatesFilter<"PricingConfig"> | number
     pricePerKm?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    pricePerMinute?: FloatWithAggregatesFilter<"PricingConfig"> | number
     baseDistance?: FloatWithAggregatesFilter<"PricingConfig"> | number
     minFare?: FloatWithAggregatesFilter<"PricingConfig"> | number
     isActive?: BoolWithAggregatesFilter<"PricingConfig"> | boolean
@@ -20489,6 +20511,7 @@ export namespace Prisma {
     vehicleType: $Enums.VehicleType
     baseFare: number
     pricePerKm: number
+    pricePerMinute?: number
     baseDistance?: number
     minFare?: number
     isActive?: boolean
@@ -20501,6 +20524,7 @@ export namespace Prisma {
     vehicleType: $Enums.VehicleType
     baseFare: number
     pricePerKm: number
+    pricePerMinute?: number
     baseDistance?: number
     minFare?: number
     isActive?: boolean
@@ -20513,6 +20537,7 @@ export namespace Prisma {
     vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
     baseFare?: FloatFieldUpdateOperationsInput | number
     pricePerKm?: FloatFieldUpdateOperationsInput | number
+    pricePerMinute?: FloatFieldUpdateOperationsInput | number
     baseDistance?: FloatFieldUpdateOperationsInput | number
     minFare?: FloatFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
@@ -20525,6 +20550,7 @@ export namespace Prisma {
     vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
     baseFare?: FloatFieldUpdateOperationsInput | number
     pricePerKm?: FloatFieldUpdateOperationsInput | number
+    pricePerMinute?: FloatFieldUpdateOperationsInput | number
     baseDistance?: FloatFieldUpdateOperationsInput | number
     minFare?: FloatFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
@@ -20537,6 +20563,7 @@ export namespace Prisma {
     vehicleType: $Enums.VehicleType
     baseFare: number
     pricePerKm: number
+    pricePerMinute?: number
     baseDistance?: number
     minFare?: number
     isActive?: boolean
@@ -20549,6 +20576,7 @@ export namespace Prisma {
     vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
     baseFare?: FloatFieldUpdateOperationsInput | number
     pricePerKm?: FloatFieldUpdateOperationsInput | number
+    pricePerMinute?: FloatFieldUpdateOperationsInput | number
     baseDistance?: FloatFieldUpdateOperationsInput | number
     minFare?: FloatFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
@@ -20561,6 +20589,7 @@ export namespace Prisma {
     vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
     baseFare?: FloatFieldUpdateOperationsInput | number
     pricePerKm?: FloatFieldUpdateOperationsInput | number
+    pricePerMinute?: FloatFieldUpdateOperationsInput | number
     baseDistance?: FloatFieldUpdateOperationsInput | number
     minFare?: FloatFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
@@ -21777,6 +21806,7 @@ export namespace Prisma {
     vehicleType?: SortOrder
     baseFare?: SortOrder
     pricePerKm?: SortOrder
+    pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
     isActive?: SortOrder
@@ -21787,6 +21817,7 @@ export namespace Prisma {
   export type PricingConfigAvgOrderByAggregateInput = {
     baseFare?: SortOrder
     pricePerKm?: SortOrder
+    pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
   }
@@ -21796,6 +21827,7 @@ export namespace Prisma {
     vehicleType?: SortOrder
     baseFare?: SortOrder
     pricePerKm?: SortOrder
+    pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
     isActive?: SortOrder
@@ -21808,6 +21840,7 @@ export namespace Prisma {
     vehicleType?: SortOrder
     baseFare?: SortOrder
     pricePerKm?: SortOrder
+    pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
     isActive?: SortOrder
@@ -21818,6 +21851,7 @@ export namespace Prisma {
   export type PricingConfigSumOrderByAggregateInput = {
     baseFare?: SortOrder
     pricePerKm?: SortOrder
+    pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
   }

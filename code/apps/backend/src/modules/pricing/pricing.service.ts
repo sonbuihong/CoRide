@@ -24,6 +24,7 @@ export interface PriceEstimate {
   estimatedPrice: number;     // VND (đã làm tròn)
   baseFare: number;
   pricePerKm: number;
+  pricePerMinute: number;
 }
 
 export class PricingService {
@@ -75,7 +76,7 @@ export class PricingService {
     const durationMin = leg.duration.value / 60;
 
     // 3. Tính giá theo công thức
-    const price = this.calculatePrice(distanceKm, config);
+    const price = this.calculatePrice(distanceKm, durationMin, config);
 
     return {
       vehicleType,
@@ -84,6 +85,7 @@ export class PricingService {
       estimatedPrice: price,
       baseFare: config.baseFare,
       pricePerKm: config.pricePerKm,
+      pricePerMinute: config.pricePerMinute,
     };
   }
 
@@ -93,11 +95,13 @@ export class PricingService {
    */
   static calculatePrice(
     distanceKm: number,
-    config: { baseFare: number; pricePerKm: number; baseDistance: number; minFare: number }
+    durationMin: number,
+    config: { baseFare: number; pricePerKm: number; pricePerMinute: number; baseDistance: number; minFare: number }
   ): number {
-    // Khoảng cách vượt quá base distance mới tính thêm
-    const extraDistance = Math.max(0, distanceKm - config.baseDistance);
-    const rawPrice = config.baseFare + extraDistance * config.pricePerKm;
+    // Tổng chi phí = Giá tối thiểu (baseFare) + (Số km x Đơn giá mỗi km) + (Thời gian x Đơn giá thời gian)
+    // Nếu vẫn muốn giữ baseDistance thì có thể dùng Math.max(0, distanceKm - config.baseDistance),
+    // nhưng theo công thức yêu cầu, ta nhân trực tiếp số km:
+    const rawPrice = config.baseFare + (distanceKm * config.pricePerKm) + (durationMin * config.pricePerMinute);
 
     // Áp dụng giá tối thiểu
     const finalPrice = Math.max(rawPrice, config.minFare);
@@ -148,6 +152,7 @@ export class PricingService {
     vehicleType: VehicleType;
     baseFare: number;
     pricePerKm: number;
+    pricePerMinute?: number;
     baseDistance?: number;
     minFare?: number;
     isActive?: boolean;
@@ -158,13 +163,15 @@ export class PricingService {
         vehicleType: data.vehicleType,
         baseFare: data.baseFare,
         pricePerKm: data.pricePerKm,
-        baseDistance: data.baseDistance ?? 2,
+        pricePerMinute: data.pricePerMinute ?? 0,
+        baseDistance: data.baseDistance ?? 0, // Đặt mặc định 0 vì tính trực tiếp theo số km
         minFare: data.minFare ?? 0,
         isActive: data.isActive ?? true,
       },
       update: {
         baseFare: data.baseFare,
         pricePerKm: data.pricePerKm,
+        ...(data.pricePerMinute !== undefined && { pricePerMinute: data.pricePerMinute }),
         ...(data.baseDistance !== undefined && { baseDistance: data.baseDistance }),
         ...(data.minFare !== undefined && { minFare: data.minFare }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),

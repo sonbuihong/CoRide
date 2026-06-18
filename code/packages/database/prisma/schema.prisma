@@ -387,12 +387,13 @@ model TripRequest {
 
 // ─── Cấu hình giá — Admin quản lý qua Dashboard ────────────────────────────
 // Mỗi VehicleType chỉ có 1 config active tại mỗi thời điểm
-// Công thức: totalPrice = baseFare + max(0, distance - baseDistance) * pricePerKm
+// Công thức: totalPrice = baseFare + max(0, distance - baseDistance) * pricePerKm + (duration * pricePerMinute)
 model PricingConfig {
   id           String      @id @default(uuid())
   vehicleType  VehicleType @unique // BIKE hoặc CAR — unique để đảm bảo 1 config/loại xe
   baseFare     Float // Giá mở cửa (VND), VD: 12000
   pricePerKm   Float // Giá mỗi km (VND), VD: 4500
+  pricePerMinute Float     @default(0) // Giá mỗi phút thời gian chờ/kẹt xe (VND), VD: 500
   baseDistance Float       @default(2) // Km đầu tiên đã tính trong baseFare, VD: 2km
   minFare      Float       @default(0) // Giá tối thiểu (nếu khoảng cách quá ngắn)
   isActive     Boolean     @default(true)

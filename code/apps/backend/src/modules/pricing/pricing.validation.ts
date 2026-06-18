@@ -29,6 +29,7 @@ export const upsertPricingConfigSchema = z.object({
     .min(0, 'Giá mở cửa không được âm'),
   pricePerKm: z.number({ required_error: 'Giá mỗi km là bắt buộc' })
     .min(0, 'Giá mỗi km không được âm'),
+  pricePerMinute: z.number().min(0, 'Giá mỗi phút không được âm').optional(),
   baseDistance: z.number().min(0).optional(),
   minFare: z.number().min(0).optional(),
   isActive: z.boolean().optional(),

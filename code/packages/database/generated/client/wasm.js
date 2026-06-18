@@ -322,6 +322,7 @@ exports.Prisma.PricingConfigScalarFieldEnum = {
   vehicleType: 'vehicleType',
   baseFare: 'baseFare',
   pricePerKm: 'pricePerKm',
+  pricePerMinute: 'pricePerMinute',
   baseDistance: 'baseDistance',
   minFare: 'minFare',
   isActive: 'isActive',
