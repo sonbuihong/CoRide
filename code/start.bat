@@ -24,10 +24,11 @@ echo    [5] Mobile: Expo Web Preview
 echo    [6] Mobile: Expo Start (QR Code cho Mobile App)
 echo    [7] Prisma Studio (Quan ly Database - localhost:5555)
 echo    [8] Cai dat lai thu vien (npm install)
+echo    [9] Dong tat ca dich vu dang chay
 echo    [0] Thoat
 echo.
 echo  ==============================================================
-set /p choice=" Chon tuy chon cua ban (0-8): "
+set /p choice=" Chon tuy chon cua ban (0-9): "
 
 if "%choice%"=="1" goto backend_web_prisma
 if "%choice%"=="2" goto all
@@ -37,15 +38,16 @@ if "%choice%"=="5" goto mobile_web
 if "%choice%"=="6" goto mobile_qr
 if "%choice%"=="7" goto prisma
 if "%choice%"=="8" goto reinstall
+if "%choice%"=="9" goto kill_all
 if "%choice%"=="0" exit
 goto menu
 
 :backend_web_prisma
 echo.
 echo [INFO] Dang khoi dong Backend + Web + Prisma...
-start cmd /k "title Prisma Studio & cd packages\database & npx prisma studio"
-start cmd /k "title Backend & cd apps\backend & npm run dev"
-start cmd /k "title Web Frontend & cd apps\web & npm run dev"
+start cmd /c "title Prisma Studio & cd packages\database & npx prisma studio"
+start cmd /c "title Backend & cd apps\backend & npm run dev"
+start cmd /c "title Web Frontend & cd apps\web & npm run dev"
 timeout /t 3 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
@@ -56,10 +58,10 @@ goto menu
 :all
 echo.
 echo [INFO] Dang khoi dong tat ca cac dich vu...
-start cmd /k "title Prisma Studio & cd packages\database & npx prisma studio"
-start cmd /k "title Backend & cd apps\backend & npm run dev"
-start cmd /k "title Web Frontend & cd apps\web & npm run dev"
-start cmd /k "title Mobile & cd apps\mobile & npm run start"
+start cmd /c "title Prisma Studio & cd packages\database & npx prisma studio"
+start cmd /c "title Backend & cd apps\backend & npm run dev"
+start cmd /c "title Web Frontend & cd apps\web & npm run dev"
+start cmd /c "title Mobile & cd apps\mobile & npm run start"
 timeout /t 3 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
@@ -70,7 +72,7 @@ goto menu
 :backend
 echo.
 echo [INFO] Dang khoi dong Backend...
-start cmd /k "title Backend & cd apps\backend & npm run dev"
+start cmd /c "title Backend & cd apps\backend & npm run dev"
 timeout /t 3 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 echo [SUCCESS] Da khoi dong Backend.
@@ -80,7 +82,7 @@ goto menu
 :web
 echo.
 echo [INFO] Dang khoi dong Web Frontend...
-start cmd /k "title Web Frontend & cd apps\web & npm run dev"
+start cmd /c "title Web Frontend & cd apps\web & npm run dev"
 timeout /t 3 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
@@ -117,5 +119,17 @@ echo.
 echo [INFO] Dang cai dat lai thu vien (npm install)...
 call npm install
 echo [SUCCESS] Da hoan tat cai dat.
+pause
+goto menu
+
+:kill_all
+echo.
+echo [INFO] Dang dong tat ca cac dich vu (Node.js va cac cua so terminal)...
+taskkill /F /FI "WINDOWTITLE eq Backend*" /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Web Frontend*" /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Mobile*" /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Prisma Studio*" /T > nul 2>&1
+taskkill /F /IM node.exe /T > nul 2>&1
+echo [SUCCESS] Da dong tat ca dich vu thanh cong.
 pause
 goto menu

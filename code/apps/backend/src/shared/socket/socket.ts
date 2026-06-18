@@ -246,6 +246,39 @@ export const initSocket = (server: http.Server): SocketIOServer => {
       }
     });
 
+    // ─── Carpooling ONGOING: Booking Accept/Reject ───────────────────────────────
+
+    // Tài xế xác nhận ghép chuyến
+    socket.on('booking:accept', async (data: { bookingId: string }) => {
+      if (!data?.bookingId) return;
+
+      try {
+        const { BookingsService } = await import('../../modules/bookings/bookings.service');
+        await BookingsService.handleDriverBookingConfirm(userId, data.bookingId);
+        console.log(`[Socket] Driver ${userId} accepted booking ${data.bookingId}`);
+      } catch (error) {
+        const appErr = error as { message?: string };
+        socket.emit('booking:error', {
+          bookingId: data.bookingId,
+          message: appErr.message ?? 'Lỗi khi xác nhận ghép chuyến',
+        });
+        console.error('[Socket] booking:accept error:', error);
+      }
+    });
+
+    // Tài xế từ chối ghép chuyến
+    socket.on('booking:reject', async (data: { bookingId: string }) => {
+      if (!data?.bookingId) return;
+
+      try {
+        const { BookingsService } = await import('../../modules/bookings/bookings.service');
+        await BookingsService.handleDriverBookingReject(userId, data.bookingId);
+        console.log(`[Socket] Driver ${userId} rejected booking ${data.bookingId}`);
+      } catch (error) {
+        console.error('[Socket] booking:reject error:', error);
+      }
+    });
+
     // Khi client disconnect
     socket.on('disconnect', async (reason) => {
       console.log(`[Socket] Disconnected: user ${userId} (${reason})`);

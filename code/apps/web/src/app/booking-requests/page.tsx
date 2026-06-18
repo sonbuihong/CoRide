@@ -165,7 +165,7 @@ export default function BookingRequestsPage() {
                         </div>
                         
                         {/* Action Area */}
-                        <div className="flex flex-col justify-between items-start md:items-end border-t border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.04)] pt-5 md:border-0 md:pt-0">
+                        <div className="flex flex-col justify-between items-start md:items-end border-t border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.04)] pt-5 md:border-0 md:pt-0 shrink-0 min-w-0 md:min-w-[300px]">
                           <div className="text-left md:text-right mb-4 w-full">
                             <p className="text-[12px] uppercase font-semibold text-[rgba(0,0,0,0.48)] dark:text-[rgba(255,255,255,0.48)] tracking-wider">Yêu cầu</p>
                             <div className="flex items-baseline md:justify-end gap-1 mt-1">
@@ -175,26 +175,26 @@ export default function BookingRequestsPage() {
                             <p className="text-[14px] font-medium text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)] mt-1.5">{request.totalPrice.toLocaleString('vi-VN')} đ</p>
                           </div>
                           
-                          <div className="flex space-x-3 w-full md:w-auto mt-3 md:mt-0">
+                          <div className="flex flex-wrap gap-3 w-full md:w-auto justify-start md:justify-end mt-3 md:mt-0">
                             <button 
-                              className="flex-1 md:flex-none border border-[#0071e3] text-[#0071e3] hover:bg-[#0071e3]/10 dark:text-[#2997ff] dark:border-[#2997ff] dark:hover:bg-[#2997ff]/10 px-5 py-2.5 rounded-[980px] text-[14px] font-medium transition-colors flex items-center justify-center items-center"
+                              className="flex-1 md:flex-none border border-[#0071e3] text-[#0071e3] hover:bg-[#0071e3]/10 dark:text-[#2997ff] dark:border-[#2997ff] dark:hover:bg-[#2997ff]/10 px-4 py-2.5 rounded-[980px] text-[14px] font-medium transition-colors flex items-center justify-center whitespace-nowrap"
                               onClick={() => setMapOpenFor(mapOpenFor === request.id ? null : request.id)}
                             >
-                              <Navigation className="mr-1.5 h-4 w-4" /> {mapOpenFor === request.id ? 'Đóng bản đồ' : 'Chỉ đường'}
+                              <Navigation className="mr-1.5 h-4 w-4 shrink-0" /> {mapOpenFor === request.id ? 'Đóng bản đồ' : 'Chỉ đường'}
                             </button>
                             <button 
-                              className="flex-1 md:flex-none border border-[#ff3b30] text-[#d93025] hover:bg-[#ff3b30]/10 dark:text-[#ff453a] dark:border-[#ff453a] dark:hover:bg-[#ff453a]/10 px-5 py-2.5 rounded-[980px] text-[14px] font-medium transition-colors flex items-center justify-center items-center"
+                              className="flex-1 md:flex-none border border-[#ff3b30] text-[#d93025] hover:bg-[#ff3b30]/10 dark:text-[#ff453a] dark:border-[#ff453a] dark:hover:bg-[#ff453a]/10 px-4 py-2.5 rounded-[980px] text-[14px] font-medium transition-colors flex items-center justify-center whitespace-nowrap"
                               onClick={() => handleUpdateStatus(request.id, 'REJECTED')}
                               disabled={processingId === request.id}
                             >
-                              {processingId === request.id ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <X className="mr-1.5 h-4 w-4" />} Từ chối
+                              {processingId === request.id ? <Loader2 className="mr-1.5 h-4 w-4 shrink-0 animate-spin" /> : <X className="mr-1.5 h-4 w-4 shrink-0" />} Từ chối
                             </button>
                             <button 
-                              className="flex-1 md:flex-none bg-[#34c759] text-white hover:bg-[#2eaa4e] px-5 py-2.5 rounded-[980px] text-[14px] font-medium transition-colors flex items-center justify-center shadow-[0_4px_14px_rgba(52,199,89,0.3)]"
+                              className="flex-1 md:flex-none bg-[#34c759] text-white hover:bg-[#2eaa4e] px-4 py-2.5 rounded-[980px] text-[14px] font-medium transition-colors flex items-center justify-center shadow-[0_4px_14px_rgba(52,199,89,0.3)] whitespace-nowrap"
                               onClick={() => handleUpdateStatus(request.id, 'CONFIRMED')}
                               disabled={processingId === request.id}
                             >
-                              {processingId === request.id ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Check className="mr-1.5 h-4 w-4" />} Chấp nhận
+                              {processingId === request.id ? <Loader2 className="mr-1.5 h-4 w-4 shrink-0 animate-spin" /> : <Check className="mr-1.5 h-4 w-4 shrink-0" />} Chấp nhận
                             </button>
                           </div>
                         </div>

@@ -233,6 +233,9 @@ exports.Prisma.BookingScalarFieldEnum = {
   totalPrice: 'totalPrice',
   status: 'status',
   paymentStatus: 'paymentStatus',
+  passengerLat: 'passengerLat',
+  passengerLng: 'passengerLng',
+  pickupAddress: 'pickupAddress',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -282,6 +285,46 @@ exports.Prisma.LocationScalarFieldEnum = {
   address: 'address',
   latitude: 'latitude',
   longitude: 'longitude',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TripRequestScalarFieldEnum = {
+  id: 'id',
+  passengerId: 'passengerId',
+  driverId: 'driverId',
+  originAddress: 'originAddress',
+  originLat: 'originLat',
+  originLng: 'originLng',
+  destAddress: 'destAddress',
+  destLat: 'destLat',
+  destLng: 'destLng',
+  vehicleType: 'vehicleType',
+  estimatedDistance: 'estimatedDistance',
+  estimatedDuration: 'estimatedDuration',
+  estimatedPrice: 'estimatedPrice',
+  finalPrice: 'finalPrice',
+  status: 'status',
+  matchAttempts: 'matchAttempts',
+  maxAttempts: 'maxAttempts',
+  matchRadius: 'matchRadius',
+  matchedAt: 'matchedAt',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  cancelledAt: 'cancelledAt',
+  cancelReason: 'cancelReason',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PricingConfigScalarFieldEnum = {
+  id: 'id',
+  vehicleType: 'vehicleType',
+  baseFare: 'baseFare',
+  pricePerKm: 'pricePerKm',
+  baseDistance: 'baseDistance',
+  minFare: 'minFare',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -350,6 +393,22 @@ exports.VerificationStatus = exports.$Enums.VerificationStatus = {
   REJECTED: 'REJECTED'
 };
 
+exports.VehicleType = exports.$Enums.VehicleType = {
+  BIKE: 'BIKE',
+  CAR: 'CAR'
+};
+
+exports.TripStatus = exports.$Enums.TripStatus = {
+  PENDING: 'PENDING',
+  MATCHING: 'MATCHING',
+  ACCEPTED: 'ACCEPTED',
+  ARRIVING: 'ARRIVING',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  NO_DRIVER: 'NO_DRIVER'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   Wallet: 'Wallet',
@@ -362,7 +421,9 @@ exports.Prisma.ModelName = {
   Review: 'Review',
   DriverVerification: 'DriverVerification',
   ProvinceMapping: 'ProvinceMapping',
-  Location: 'Location'
+  Location: 'Location',
+  TripRequest: 'TripRequest',
+  PricingConfig: 'PricingConfig'
 };
 
 /**

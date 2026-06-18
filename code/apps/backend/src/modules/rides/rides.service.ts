@@ -146,9 +146,8 @@ export class RidesService {
       // Tài xế xem chuyến đi của mình — không lọc theo status
       where.driverId = driverId;
     } else {
-      // Hành khách tìm chuyến — chỉ lấy chuyến SCHEDULED trong tương lai
-      where.status = 'SCHEDULED';
-      where.departureTime = { gte: new Date() };
+      // Hành khách tìm chuyến — chỉ lấy chuyến còn ghế
+      where.availableSeats = { gt: 0 };
     }
 
     if (origin) {
@@ -166,9 +165,31 @@ export class RidesService {
       const endOfDay = new Date(searchDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      // Nếu ngày tìm là hôm nay hoặc quá khứ, lấy từ thời điểm hiện tại
-      const fromTime = startOfDay > new Date() ? startOfDay : new Date();
-      where.departureTime = { gte: fromTime, lte: endOfDay };
+      const now = new Date();
+
+      if (!driverId) {
+        // Khách tìm: nếu tìm ngày hôm nay, lấy SCHEDULED từ now đến hết ngày
+        // VÀ lấy các chuyến ONGOING trong ngày hôm nay (dù khởi hành trước đó)
+        if (startOfDay <= now && endOfDay >= now) {
+          where.OR = [
+            { status: 'SCHEDULED', departureTime: { gte: now, lte: endOfDay } },
+            { status: 'ONGOING', departureTime: { gte: startOfDay, lte: endOfDay } }
+          ];
+        } else {
+          // Khách tìm ngày tương lai: chỉ lấy SCHEDULED
+          where.status = 'SCHEDULED';
+          where.departureTime = { gte: startOfDay, lte: endOfDay };
+        }
+      } else {
+        // Tài xế tìm: lấy toàn bộ trong ngày
+        where.departureTime = { gte: startOfDay, lte: endOfDay };
+      }
+    } else if (!driverId) {
+      // Không truyền date (mặc định lấy từ now)
+      where.OR = [
+        { status: 'SCHEDULED', departureTime: { gte: new Date() } },
+        { status: 'ONGOING' } // Lấy hết chuyến ONGOING (giả định chưa completed thì còn trong ngày)
+      ];
     }
 
     return prisma.ride.findMany({

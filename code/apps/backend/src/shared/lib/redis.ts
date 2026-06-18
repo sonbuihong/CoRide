@@ -201,3 +201,29 @@ export const refreshDriverOnline = async (driverId: string): Promise<void> => {
 
   await redisClient.expire(`${REDIS_KEYS.DRIVER_ONLINE_PREFIX}${driverId}`, 300);
 };
+
+/**
+ * Lấy toạ độ GPS hiện tại của tài xế từ Redis Geo Index.
+ * Dùng khi cần biết vị trí thực tế của tài xế (VD: tính "thuận đường" khi ghép chuyến ONGOING).
+ *
+ * Trả về null nếu tài xế chưa bật chia sẻ vị trí hoặc Redis không khả dụng.
+ */
+export const getDriverLocation = async (
+  driverId: string
+): Promise<{ latitude: number; longitude: number } | null> => {
+  if (!redisClient.isOpen) return null;
+
+  // GEOPOS trả về mảng [[longitude, latitude]] hoặc [null] nếu key không tồn tại
+  const positions = await redisClient.geoPos(REDIS_KEYS.DRIVER_LOCATIONS, driverId);
+
+  if (!positions || positions.length === 0 || !positions[0]) {
+    return null;
+  }
+
+  const pos = positions[0];
+  return {
+    longitude: pos.longitude,
+    latitude: pos.latitude,
+  };
+};
+

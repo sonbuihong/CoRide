@@ -250,6 +250,14 @@ model Booking {
   status        BookingStatus @default(PENDING)
   paymentStatus PaymentStatus @default(UNPAID)
   transactions  Transaction[]
+
+  // Toạ độ đón khách — chỉ có giá trị khi ghép vào chuyến đang ONGOING
+  // Khi ride ở trạng thái SCHEDULED, điểm đón = origin của ride
+  // Khi ride đang ONGOING, điểm đón là vị trí hiện tại của hành khách
+  passengerLat  Float?
+  passengerLng  Float?
+  pickupAddress String?  // Địa chỉ đón chi tiết để hiển thị cho tài xế
+
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }

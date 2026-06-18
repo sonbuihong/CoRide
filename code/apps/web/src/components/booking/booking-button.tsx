@@ -42,7 +42,7 @@ export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId 
       try {
         setCheckingActive(true);
         const res = await apiClient.get('/bookings/my');
-        const bookings = res.data.data || res.data || [];
+        const bookings = res.data?.bookings || [];
         
         // Tìm đặt chỗ được xác nhận (CONFIRMED) của chuyến đi chưa hoàn thành (SCHEDULED hoặc ONGOING)
         const active = bookings.find((b: any) => 

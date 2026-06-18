@@ -27,11 +27,14 @@ interface Booking {
   };
 }
 
+import { useSocket } from '@/components/providers/socket-provider';
+
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
+  const { socket } = useSocket();
 
   const fetchBookings = async () => {
     try {
@@ -48,6 +51,33 @@ export default function MyBookingsPage() {
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  // Real-time cập nhật danh sách đặt chỗ (hành khách không cần F5)
+  useEffect(() => {
+    if (!socket) return;
+
+    // Lắng nghe sự kiện tài xế accept/reject chuyến ONGOING
+    const handleBookingUpdate = () => {
+      fetchBookings();
+    };
+
+    // Lắng nghe notification trạng thái booking chung (dùng cho chuyến SCHEDULED)
+    const handleNotification = (notif: { type: string }) => {
+      if (notif.type === 'BOOKING_STATUS') {
+        fetchBookings();
+      }
+    };
+
+    socket.on('booking:confirmed', handleBookingUpdate);
+    socket.on('booking:rejected', handleBookingUpdate);
+    socket.on('notification:new', handleNotification);
+
+    return () => {
+      socket.off('booking:confirmed', handleBookingUpdate);
+      socket.off('booking:rejected', handleBookingUpdate);
+      socket.off('notification:new', handleNotification);
+    };
+  }, [socket]);
 
   const handleCancelBooking = async (bookingId: string) => {
     if (!confirm('Bạn có chắc chắn muốn hủy yêu cầu đặt chỗ này không?')) return;

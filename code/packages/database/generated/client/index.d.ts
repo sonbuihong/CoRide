@@ -73,6 +73,16 @@ export type ProvinceMapping = $Result.DefaultSelection<Prisma.$ProvinceMappingPa
  * 
  */
 export type Location = $Result.DefaultSelection<Prisma.$LocationPayload>
+/**
+ * Model TripRequest
+ * 
+ */
+export type TripRequest = $Result.DefaultSelection<Prisma.$TripRequestPayload>
+/**
+ * Model PricingConfig
+ * 
+ */
+export type PricingConfig = $Result.DefaultSelection<Prisma.$PricingConfigPayload>
 
 /**
  * Enums
@@ -151,6 +161,28 @@ export const VerificationStatus: {
 
 export type VerificationStatus = (typeof VerificationStatus)[keyof typeof VerificationStatus]
 
+
+export const VehicleType: {
+  BIKE: 'BIKE',
+  CAR: 'CAR'
+};
+
+export type VehicleType = (typeof VehicleType)[keyof typeof VehicleType]
+
+
+export const TripStatus: {
+  PENDING: 'PENDING',
+  MATCHING: 'MATCHING',
+  ACCEPTED: 'ACCEPTED',
+  ARRIVING: 'ARRIVING',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  NO_DRIVER: 'NO_DRIVER'
+};
+
+export type TripStatus = (typeof TripStatus)[keyof typeof TripStatus]
+
 }
 
 export type Role = $Enums.Role
@@ -184,6 +216,14 @@ export const ReviewType: typeof $Enums.ReviewType
 export type VerificationStatus = $Enums.VerificationStatus
 
 export const VerificationStatus: typeof $Enums.VerificationStatus
+
+export type VehicleType = $Enums.VehicleType
+
+export const VehicleType: typeof $Enums.VehicleType
+
+export type TripStatus = $Enums.TripStatus
+
+export const TripStatus: typeof $Enums.TripStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -427,6 +467,26 @@ export class PrismaClient<
     * ```
     */
   get location(): Prisma.LocationDelegate<ExtArgs>;
+
+  /**
+   * `prisma.tripRequest`: Exposes CRUD operations for the **TripRequest** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TripRequests
+    * const tripRequests = await prisma.tripRequest.findMany()
+    * ```
+    */
+  get tripRequest(): Prisma.TripRequestDelegate<ExtArgs>;
+
+  /**
+   * `prisma.pricingConfig`: Exposes CRUD operations for the **PricingConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PricingConfigs
+    * const pricingConfigs = await prisma.pricingConfig.findMany()
+    * ```
+    */
+  get pricingConfig(): Prisma.PricingConfigDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -879,7 +939,9 @@ export namespace Prisma {
     Review: 'Review',
     DriverVerification: 'DriverVerification',
     ProvinceMapping: 'ProvinceMapping',
-    Location: 'Location'
+    Location: 'Location',
+    TripRequest: 'TripRequest',
+    PricingConfig: 'PricingConfig'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -895,7 +957,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "wallet" | "transaction" | "message" | "refreshToken" | "notification" | "ride" | "booking" | "review" | "driverVerification" | "provinceMapping" | "location"
+      modelProps: "user" | "wallet" | "transaction" | "message" | "refreshToken" | "notification" | "ride" | "booking" | "review" | "driverVerification" | "provinceMapping" | "location" | "tripRequest" | "pricingConfig"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1739,6 +1801,146 @@ export namespace Prisma {
           }
         }
       }
+      TripRequest: {
+        payload: Prisma.$TripRequestPayload<ExtArgs>
+        fields: Prisma.TripRequestFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TripRequestFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TripRequestPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TripRequestFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TripRequestPayload>
+          }
+          findFirst: {
+            args: Prisma.TripRequestFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TripRequestPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TripRequestFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TripRequestPayload>
+          }
+          findMany: {
+            args: Prisma.TripRequestFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TripRequestPayload>[]
+          }
+          create: {
+            args: Prisma.TripRequestCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TripRequestPayload>
+          }
+          createMany: {
+            args: Prisma.TripRequestCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TripRequestCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TripRequestPayload>[]
+          }
+          delete: {
+            args: Prisma.TripRequestDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TripRequestPayload>
+          }
+          update: {
+            args: Prisma.TripRequestUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TripRequestPayload>
+          }
+          deleteMany: {
+            args: Prisma.TripRequestDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TripRequestUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.TripRequestUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TripRequestPayload>
+          }
+          aggregate: {
+            args: Prisma.TripRequestAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTripRequest>
+          }
+          groupBy: {
+            args: Prisma.TripRequestGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TripRequestGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TripRequestCountArgs<ExtArgs>
+            result: $Utils.Optional<TripRequestCountAggregateOutputType> | number
+          }
+        }
+      }
+      PricingConfig: {
+        payload: Prisma.$PricingConfigPayload<ExtArgs>
+        fields: Prisma.PricingConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PricingConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PricingConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.PricingConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PricingConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingConfigPayload>
+          }
+          findMany: {
+            args: Prisma.PricingConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingConfigPayload>[]
+          }
+          create: {
+            args: Prisma.PricingConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingConfigPayload>
+          }
+          createMany: {
+            args: Prisma.PricingConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PricingConfigCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingConfigPayload>[]
+          }
+          delete: {
+            args: Prisma.PricingConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingConfigPayload>
+          }
+          update: {
+            args: Prisma.PricingConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.PricingConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PricingConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.PricingConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PricingConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.PricingConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePricingConfig>
+          }
+          groupBy: {
+            args: Prisma.PricingConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PricingConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PricingConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<PricingConfigCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1902,6 +2104,8 @@ export namespace Prisma {
   export type UserCountOutputType = {
     ridesAsDriver: number
     bookings: number
+    tripsAsPassenger: number
+    tripsAsDriver: number
     reviewsSent: number
     reviewsReceived: number
     refreshTokens: number
@@ -1913,6 +2117,8 @@ export namespace Prisma {
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ridesAsDriver?: boolean | UserCountOutputTypeCountRidesAsDriverArgs
     bookings?: boolean | UserCountOutputTypeCountBookingsArgs
+    tripsAsPassenger?: boolean | UserCountOutputTypeCountTripsAsPassengerArgs
+    tripsAsDriver?: boolean | UserCountOutputTypeCountTripsAsDriverArgs
     reviewsSent?: boolean | UserCountOutputTypeCountReviewsSentArgs
     reviewsReceived?: boolean | UserCountOutputTypeCountReviewsReceivedArgs
     refreshTokens?: boolean | UserCountOutputTypeCountRefreshTokensArgs
@@ -1944,6 +2150,20 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountBookingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BookingWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountTripsAsPassengerArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TripRequestWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountTripsAsDriverArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TripRequestWhereInput
   }
 
   /**
@@ -2404,6 +2624,8 @@ export namespace Prisma {
     updatedAt?: boolean
     ridesAsDriver?: boolean | User$ridesAsDriverArgs<ExtArgs>
     bookings?: boolean | User$bookingsArgs<ExtArgs>
+    tripsAsPassenger?: boolean | User$tripsAsPassengerArgs<ExtArgs>
+    tripsAsDriver?: boolean | User$tripsAsDriverArgs<ExtArgs>
     reviewsSent?: boolean | User$reviewsSentArgs<ExtArgs>
     reviewsReceived?: boolean | User$reviewsReceivedArgs<ExtArgs>
     refreshTokens?: boolean | User$refreshTokensArgs<ExtArgs>
@@ -2456,6 +2678,8 @@ export namespace Prisma {
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ridesAsDriver?: boolean | User$ridesAsDriverArgs<ExtArgs>
     bookings?: boolean | User$bookingsArgs<ExtArgs>
+    tripsAsPassenger?: boolean | User$tripsAsPassengerArgs<ExtArgs>
+    tripsAsDriver?: boolean | User$tripsAsDriverArgs<ExtArgs>
     reviewsSent?: boolean | User$reviewsSentArgs<ExtArgs>
     reviewsReceived?: boolean | User$reviewsReceivedArgs<ExtArgs>
     refreshTokens?: boolean | User$refreshTokensArgs<ExtArgs>
@@ -2473,6 +2697,8 @@ export namespace Prisma {
     objects: {
       ridesAsDriver: Prisma.$RidePayload<ExtArgs>[]
       bookings: Prisma.$BookingPayload<ExtArgs>[]
+      tripsAsPassenger: Prisma.$TripRequestPayload<ExtArgs>[]
+      tripsAsDriver: Prisma.$TripRequestPayload<ExtArgs>[]
       reviewsSent: Prisma.$ReviewPayload<ExtArgs>[]
       reviewsReceived: Prisma.$ReviewPayload<ExtArgs>[]
       refreshTokens: Prisma.$RefreshTokenPayload<ExtArgs>[]
@@ -2865,6 +3091,8 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     ridesAsDriver<T extends User$ridesAsDriverArgs<ExtArgs> = {}>(args?: Subset<T, User$ridesAsDriverArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RidePayload<ExtArgs>, T, "findMany"> | Null>
     bookings<T extends User$bookingsArgs<ExtArgs> = {}>(args?: Subset<T, User$bookingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany"> | Null>
+    tripsAsPassenger<T extends User$tripsAsPassengerArgs<ExtArgs> = {}>(args?: Subset<T, User$tripsAsPassengerArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "findMany"> | Null>
+    tripsAsDriver<T extends User$tripsAsDriverArgs<ExtArgs> = {}>(args?: Subset<T, User$tripsAsDriverArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "findMany"> | Null>
     reviewsSent<T extends User$reviewsSentArgs<ExtArgs> = {}>(args?: Subset<T, User$reviewsSentArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany"> | Null>
     reviewsReceived<T extends User$reviewsReceivedArgs<ExtArgs> = {}>(args?: Subset<T, User$reviewsReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany"> | Null>
     refreshTokens<T extends User$refreshTokensArgs<ExtArgs> = {}>(args?: Subset<T, User$refreshTokensArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RefreshTokenPayload<ExtArgs>, T, "findMany"> | Null>
@@ -3269,6 +3497,46 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: BookingScalarFieldEnum | BookingScalarFieldEnum[]
+  }
+
+  /**
+   * User.tripsAsPassenger
+   */
+  export type User$tripsAsPassengerArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    where?: TripRequestWhereInput
+    orderBy?: TripRequestOrderByWithRelationInput | TripRequestOrderByWithRelationInput[]
+    cursor?: TripRequestWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TripRequestScalarFieldEnum | TripRequestScalarFieldEnum[]
+  }
+
+  /**
+   * User.tripsAsDriver
+   */
+  export type User$tripsAsDriverArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    where?: TripRequestWhereInput
+    orderBy?: TripRequestOrderByWithRelationInput | TripRequestOrderByWithRelationInput[]
+    cursor?: TripRequestWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TripRequestScalarFieldEnum | TripRequestScalarFieldEnum[]
   }
 
   /**
@@ -9748,11 +10016,15 @@ export namespace Prisma {
   export type BookingAvgAggregateOutputType = {
     seats: number | null
     totalPrice: number | null
+    passengerLat: number | null
+    passengerLng: number | null
   }
 
   export type BookingSumAggregateOutputType = {
     seats: number | null
     totalPrice: number | null
+    passengerLat: number | null
+    passengerLng: number | null
   }
 
   export type BookingMinAggregateOutputType = {
@@ -9763,6 +10035,9 @@ export namespace Prisma {
     totalPrice: number | null
     status: $Enums.BookingStatus | null
     paymentStatus: $Enums.PaymentStatus | null
+    passengerLat: number | null
+    passengerLng: number | null
+    pickupAddress: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -9775,6 +10050,9 @@ export namespace Prisma {
     totalPrice: number | null
     status: $Enums.BookingStatus | null
     paymentStatus: $Enums.PaymentStatus | null
+    passengerLat: number | null
+    passengerLng: number | null
+    pickupAddress: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -9787,6 +10065,9 @@ export namespace Prisma {
     totalPrice: number
     status: number
     paymentStatus: number
+    passengerLat: number
+    passengerLng: number
+    pickupAddress: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -9796,11 +10077,15 @@ export namespace Prisma {
   export type BookingAvgAggregateInputType = {
     seats?: true
     totalPrice?: true
+    passengerLat?: true
+    passengerLng?: true
   }
 
   export type BookingSumAggregateInputType = {
     seats?: true
     totalPrice?: true
+    passengerLat?: true
+    passengerLng?: true
   }
 
   export type BookingMinAggregateInputType = {
@@ -9811,6 +10096,9 @@ export namespace Prisma {
     totalPrice?: true
     status?: true
     paymentStatus?: true
+    passengerLat?: true
+    passengerLng?: true
+    pickupAddress?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -9823,6 +10111,9 @@ export namespace Prisma {
     totalPrice?: true
     status?: true
     paymentStatus?: true
+    passengerLat?: true
+    passengerLng?: true
+    pickupAddress?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -9835,6 +10126,9 @@ export namespace Prisma {
     totalPrice?: true
     status?: true
     paymentStatus?: true
+    passengerLat?: true
+    passengerLng?: true
+    pickupAddress?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -9934,6 +10228,9 @@ export namespace Prisma {
     totalPrice: number
     status: $Enums.BookingStatus
     paymentStatus: $Enums.PaymentStatus
+    passengerLat: number | null
+    passengerLng: number | null
+    pickupAddress: string | null
     createdAt: Date
     updatedAt: Date
     _count: BookingCountAggregateOutputType | null
@@ -9965,6 +10262,9 @@ export namespace Prisma {
     totalPrice?: boolean
     status?: boolean
     paymentStatus?: boolean
+    passengerLat?: boolean
+    passengerLng?: boolean
+    pickupAddress?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     ride?: boolean | RideDefaultArgs<ExtArgs>
@@ -9981,6 +10281,9 @@ export namespace Prisma {
     totalPrice?: boolean
     status?: boolean
     paymentStatus?: boolean
+    passengerLat?: boolean
+    passengerLng?: boolean
+    pickupAddress?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     ride?: boolean | RideDefaultArgs<ExtArgs>
@@ -9995,6 +10298,9 @@ export namespace Prisma {
     totalPrice?: boolean
     status?: boolean
     paymentStatus?: boolean
+    passengerLat?: boolean
+    passengerLng?: boolean
+    pickupAddress?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -10025,6 +10331,9 @@ export namespace Prisma {
       totalPrice: number
       status: $Enums.BookingStatus
       paymentStatus: $Enums.PaymentStatus
+      passengerLat: number | null
+      passengerLng: number | null
+      pickupAddress: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["booking"]>
@@ -10430,6 +10739,9 @@ export namespace Prisma {
     readonly totalPrice: FieldRef<"Booking", 'Float'>
     readonly status: FieldRef<"Booking", 'BookingStatus'>
     readonly paymentStatus: FieldRef<"Booking", 'PaymentStatus'>
+    readonly passengerLat: FieldRef<"Booking", 'Float'>
+    readonly passengerLng: FieldRef<"Booking", 'Float'>
+    readonly pickupAddress: FieldRef<"Booking", 'String'>
     readonly createdAt: FieldRef<"Booking", 'DateTime'>
     readonly updatedAt: FieldRef<"Booking", 'DateTime'>
   }
@@ -14695,6 +15007,2246 @@ export namespace Prisma {
 
 
   /**
+   * Model TripRequest
+   */
+
+  export type AggregateTripRequest = {
+    _count: TripRequestCountAggregateOutputType | null
+    _avg: TripRequestAvgAggregateOutputType | null
+    _sum: TripRequestSumAggregateOutputType | null
+    _min: TripRequestMinAggregateOutputType | null
+    _max: TripRequestMaxAggregateOutputType | null
+  }
+
+  export type TripRequestAvgAggregateOutputType = {
+    originLat: number | null
+    originLng: number | null
+    destLat: number | null
+    destLng: number | null
+    estimatedDistance: number | null
+    estimatedDuration: number | null
+    estimatedPrice: number | null
+    finalPrice: number | null
+    matchAttempts: number | null
+    maxAttempts: number | null
+    matchRadius: number | null
+  }
+
+  export type TripRequestSumAggregateOutputType = {
+    originLat: number | null
+    originLng: number | null
+    destLat: number | null
+    destLng: number | null
+    estimatedDistance: number | null
+    estimatedDuration: number | null
+    estimatedPrice: number | null
+    finalPrice: number | null
+    matchAttempts: number | null
+    maxAttempts: number | null
+    matchRadius: number | null
+  }
+
+  export type TripRequestMinAggregateOutputType = {
+    id: string | null
+    passengerId: string | null
+    driverId: string | null
+    originAddress: string | null
+    originLat: number | null
+    originLng: number | null
+    destAddress: string | null
+    destLat: number | null
+    destLng: number | null
+    vehicleType: $Enums.VehicleType | null
+    estimatedDistance: number | null
+    estimatedDuration: number | null
+    estimatedPrice: number | null
+    finalPrice: number | null
+    status: $Enums.TripStatus | null
+    matchAttempts: number | null
+    maxAttempts: number | null
+    matchRadius: number | null
+    matchedAt: Date | null
+    startedAt: Date | null
+    completedAt: Date | null
+    cancelledAt: Date | null
+    cancelReason: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TripRequestMaxAggregateOutputType = {
+    id: string | null
+    passengerId: string | null
+    driverId: string | null
+    originAddress: string | null
+    originLat: number | null
+    originLng: number | null
+    destAddress: string | null
+    destLat: number | null
+    destLng: number | null
+    vehicleType: $Enums.VehicleType | null
+    estimatedDistance: number | null
+    estimatedDuration: number | null
+    estimatedPrice: number | null
+    finalPrice: number | null
+    status: $Enums.TripStatus | null
+    matchAttempts: number | null
+    maxAttempts: number | null
+    matchRadius: number | null
+    matchedAt: Date | null
+    startedAt: Date | null
+    completedAt: Date | null
+    cancelledAt: Date | null
+    cancelReason: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TripRequestCountAggregateOutputType = {
+    id: number
+    passengerId: number
+    driverId: number
+    originAddress: number
+    originLat: number
+    originLng: number
+    destAddress: number
+    destLat: number
+    destLng: number
+    vehicleType: number
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice: number
+    status: number
+    matchAttempts: number
+    maxAttempts: number
+    matchRadius: number
+    matchedAt: number
+    startedAt: number
+    completedAt: number
+    cancelledAt: number
+    cancelReason: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TripRequestAvgAggregateInputType = {
+    originLat?: true
+    originLng?: true
+    destLat?: true
+    destLng?: true
+    estimatedDistance?: true
+    estimatedDuration?: true
+    estimatedPrice?: true
+    finalPrice?: true
+    matchAttempts?: true
+    maxAttempts?: true
+    matchRadius?: true
+  }
+
+  export type TripRequestSumAggregateInputType = {
+    originLat?: true
+    originLng?: true
+    destLat?: true
+    destLng?: true
+    estimatedDistance?: true
+    estimatedDuration?: true
+    estimatedPrice?: true
+    finalPrice?: true
+    matchAttempts?: true
+    maxAttempts?: true
+    matchRadius?: true
+  }
+
+  export type TripRequestMinAggregateInputType = {
+    id?: true
+    passengerId?: true
+    driverId?: true
+    originAddress?: true
+    originLat?: true
+    originLng?: true
+    destAddress?: true
+    destLat?: true
+    destLng?: true
+    vehicleType?: true
+    estimatedDistance?: true
+    estimatedDuration?: true
+    estimatedPrice?: true
+    finalPrice?: true
+    status?: true
+    matchAttempts?: true
+    maxAttempts?: true
+    matchRadius?: true
+    matchedAt?: true
+    startedAt?: true
+    completedAt?: true
+    cancelledAt?: true
+    cancelReason?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TripRequestMaxAggregateInputType = {
+    id?: true
+    passengerId?: true
+    driverId?: true
+    originAddress?: true
+    originLat?: true
+    originLng?: true
+    destAddress?: true
+    destLat?: true
+    destLng?: true
+    vehicleType?: true
+    estimatedDistance?: true
+    estimatedDuration?: true
+    estimatedPrice?: true
+    finalPrice?: true
+    status?: true
+    matchAttempts?: true
+    maxAttempts?: true
+    matchRadius?: true
+    matchedAt?: true
+    startedAt?: true
+    completedAt?: true
+    cancelledAt?: true
+    cancelReason?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TripRequestCountAggregateInputType = {
+    id?: true
+    passengerId?: true
+    driverId?: true
+    originAddress?: true
+    originLat?: true
+    originLng?: true
+    destAddress?: true
+    destLat?: true
+    destLng?: true
+    vehicleType?: true
+    estimatedDistance?: true
+    estimatedDuration?: true
+    estimatedPrice?: true
+    finalPrice?: true
+    status?: true
+    matchAttempts?: true
+    maxAttempts?: true
+    matchRadius?: true
+    matchedAt?: true
+    startedAt?: true
+    completedAt?: true
+    cancelledAt?: true
+    cancelReason?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TripRequestAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TripRequest to aggregate.
+     */
+    where?: TripRequestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TripRequests to fetch.
+     */
+    orderBy?: TripRequestOrderByWithRelationInput | TripRequestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TripRequestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TripRequests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TripRequests.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TripRequests
+    **/
+    _count?: true | TripRequestCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TripRequestAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TripRequestSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TripRequestMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TripRequestMaxAggregateInputType
+  }
+
+  export type GetTripRequestAggregateType<T extends TripRequestAggregateArgs> = {
+        [P in keyof T & keyof AggregateTripRequest]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTripRequest[P]>
+      : GetScalarType<T[P], AggregateTripRequest[P]>
+  }
+
+
+
+
+  export type TripRequestGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TripRequestWhereInput
+    orderBy?: TripRequestOrderByWithAggregationInput | TripRequestOrderByWithAggregationInput[]
+    by: TripRequestScalarFieldEnum[] | TripRequestScalarFieldEnum
+    having?: TripRequestScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TripRequestCountAggregateInputType | true
+    _avg?: TripRequestAvgAggregateInputType
+    _sum?: TripRequestSumAggregateInputType
+    _min?: TripRequestMinAggregateInputType
+    _max?: TripRequestMaxAggregateInputType
+  }
+
+  export type TripRequestGroupByOutputType = {
+    id: string
+    passengerId: string
+    driverId: string | null
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice: number | null
+    status: $Enums.TripStatus
+    matchAttempts: number
+    maxAttempts: number
+    matchRadius: number
+    matchedAt: Date | null
+    startedAt: Date | null
+    completedAt: Date | null
+    cancelledAt: Date | null
+    cancelReason: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: TripRequestCountAggregateOutputType | null
+    _avg: TripRequestAvgAggregateOutputType | null
+    _sum: TripRequestSumAggregateOutputType | null
+    _min: TripRequestMinAggregateOutputType | null
+    _max: TripRequestMaxAggregateOutputType | null
+  }
+
+  type GetTripRequestGroupByPayload<T extends TripRequestGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TripRequestGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TripRequestGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TripRequestGroupByOutputType[P]>
+            : GetScalarType<T[P], TripRequestGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TripRequestSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    passengerId?: boolean
+    driverId?: boolean
+    originAddress?: boolean
+    originLat?: boolean
+    originLng?: boolean
+    destAddress?: boolean
+    destLat?: boolean
+    destLng?: boolean
+    vehicleType?: boolean
+    estimatedDistance?: boolean
+    estimatedDuration?: boolean
+    estimatedPrice?: boolean
+    finalPrice?: boolean
+    status?: boolean
+    matchAttempts?: boolean
+    maxAttempts?: boolean
+    matchRadius?: boolean
+    matchedAt?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    cancelledAt?: boolean
+    cancelReason?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    passenger?: boolean | UserDefaultArgs<ExtArgs>
+    driver?: boolean | TripRequest$driverArgs<ExtArgs>
+  }, ExtArgs["result"]["tripRequest"]>
+
+  export type TripRequestSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    passengerId?: boolean
+    driverId?: boolean
+    originAddress?: boolean
+    originLat?: boolean
+    originLng?: boolean
+    destAddress?: boolean
+    destLat?: boolean
+    destLng?: boolean
+    vehicleType?: boolean
+    estimatedDistance?: boolean
+    estimatedDuration?: boolean
+    estimatedPrice?: boolean
+    finalPrice?: boolean
+    status?: boolean
+    matchAttempts?: boolean
+    maxAttempts?: boolean
+    matchRadius?: boolean
+    matchedAt?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    cancelledAt?: boolean
+    cancelReason?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    passenger?: boolean | UserDefaultArgs<ExtArgs>
+    driver?: boolean | TripRequest$driverArgs<ExtArgs>
+  }, ExtArgs["result"]["tripRequest"]>
+
+  export type TripRequestSelectScalar = {
+    id?: boolean
+    passengerId?: boolean
+    driverId?: boolean
+    originAddress?: boolean
+    originLat?: boolean
+    originLng?: boolean
+    destAddress?: boolean
+    destLat?: boolean
+    destLng?: boolean
+    vehicleType?: boolean
+    estimatedDistance?: boolean
+    estimatedDuration?: boolean
+    estimatedPrice?: boolean
+    finalPrice?: boolean
+    status?: boolean
+    matchAttempts?: boolean
+    maxAttempts?: boolean
+    matchRadius?: boolean
+    matchedAt?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    cancelledAt?: boolean
+    cancelReason?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TripRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    passenger?: boolean | UserDefaultArgs<ExtArgs>
+    driver?: boolean | TripRequest$driverArgs<ExtArgs>
+  }
+  export type TripRequestIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    passenger?: boolean | UserDefaultArgs<ExtArgs>
+    driver?: boolean | TripRequest$driverArgs<ExtArgs>
+  }
+
+  export type $TripRequestPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TripRequest"
+    objects: {
+      passenger: Prisma.$UserPayload<ExtArgs>
+      driver: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      passengerId: string
+      driverId: string | null
+      originAddress: string
+      originLat: number
+      originLng: number
+      destAddress: string
+      destLat: number
+      destLng: number
+      vehicleType: $Enums.VehicleType
+      estimatedDistance: number
+      estimatedDuration: number
+      estimatedPrice: number
+      finalPrice: number | null
+      status: $Enums.TripStatus
+      matchAttempts: number
+      maxAttempts: number
+      matchRadius: number
+      matchedAt: Date | null
+      startedAt: Date | null
+      completedAt: Date | null
+      cancelledAt: Date | null
+      cancelReason: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["tripRequest"]>
+    composites: {}
+  }
+
+  type TripRequestGetPayload<S extends boolean | null | undefined | TripRequestDefaultArgs> = $Result.GetResult<Prisma.$TripRequestPayload, S>
+
+  type TripRequestCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<TripRequestFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: TripRequestCountAggregateInputType | true
+    }
+
+  export interface TripRequestDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TripRequest'], meta: { name: 'TripRequest' } }
+    /**
+     * Find zero or one TripRequest that matches the filter.
+     * @param {TripRequestFindUniqueArgs} args - Arguments to find a TripRequest
+     * @example
+     * // Get one TripRequest
+     * const tripRequest = await prisma.tripRequest.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TripRequestFindUniqueArgs>(args: SelectSubset<T, TripRequestFindUniqueArgs<ExtArgs>>): Prisma__TripRequestClient<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one TripRequest that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {TripRequestFindUniqueOrThrowArgs} args - Arguments to find a TripRequest
+     * @example
+     * // Get one TripRequest
+     * const tripRequest = await prisma.tripRequest.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TripRequestFindUniqueOrThrowArgs>(args: SelectSubset<T, TripRequestFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TripRequestClient<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first TripRequest that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TripRequestFindFirstArgs} args - Arguments to find a TripRequest
+     * @example
+     * // Get one TripRequest
+     * const tripRequest = await prisma.tripRequest.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TripRequestFindFirstArgs>(args?: SelectSubset<T, TripRequestFindFirstArgs<ExtArgs>>): Prisma__TripRequestClient<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first TripRequest that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TripRequestFindFirstOrThrowArgs} args - Arguments to find a TripRequest
+     * @example
+     * // Get one TripRequest
+     * const tripRequest = await prisma.tripRequest.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TripRequestFindFirstOrThrowArgs>(args?: SelectSubset<T, TripRequestFindFirstOrThrowArgs<ExtArgs>>): Prisma__TripRequestClient<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more TripRequests that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TripRequestFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TripRequests
+     * const tripRequests = await prisma.tripRequest.findMany()
+     * 
+     * // Get first 10 TripRequests
+     * const tripRequests = await prisma.tripRequest.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const tripRequestWithIdOnly = await prisma.tripRequest.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TripRequestFindManyArgs>(args?: SelectSubset<T, TripRequestFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a TripRequest.
+     * @param {TripRequestCreateArgs} args - Arguments to create a TripRequest.
+     * @example
+     * // Create one TripRequest
+     * const TripRequest = await prisma.tripRequest.create({
+     *   data: {
+     *     // ... data to create a TripRequest
+     *   }
+     * })
+     * 
+     */
+    create<T extends TripRequestCreateArgs>(args: SelectSubset<T, TripRequestCreateArgs<ExtArgs>>): Prisma__TripRequestClient<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many TripRequests.
+     * @param {TripRequestCreateManyArgs} args - Arguments to create many TripRequests.
+     * @example
+     * // Create many TripRequests
+     * const tripRequest = await prisma.tripRequest.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TripRequestCreateManyArgs>(args?: SelectSubset<T, TripRequestCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TripRequests and returns the data saved in the database.
+     * @param {TripRequestCreateManyAndReturnArgs} args - Arguments to create many TripRequests.
+     * @example
+     * // Create many TripRequests
+     * const tripRequest = await prisma.tripRequest.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TripRequests and only return the `id`
+     * const tripRequestWithIdOnly = await prisma.tripRequest.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TripRequestCreateManyAndReturnArgs>(args?: SelectSubset<T, TripRequestCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a TripRequest.
+     * @param {TripRequestDeleteArgs} args - Arguments to delete one TripRequest.
+     * @example
+     * // Delete one TripRequest
+     * const TripRequest = await prisma.tripRequest.delete({
+     *   where: {
+     *     // ... filter to delete one TripRequest
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TripRequestDeleteArgs>(args: SelectSubset<T, TripRequestDeleteArgs<ExtArgs>>): Prisma__TripRequestClient<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one TripRequest.
+     * @param {TripRequestUpdateArgs} args - Arguments to update one TripRequest.
+     * @example
+     * // Update one TripRequest
+     * const tripRequest = await prisma.tripRequest.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TripRequestUpdateArgs>(args: SelectSubset<T, TripRequestUpdateArgs<ExtArgs>>): Prisma__TripRequestClient<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more TripRequests.
+     * @param {TripRequestDeleteManyArgs} args - Arguments to filter TripRequests to delete.
+     * @example
+     * // Delete a few TripRequests
+     * const { count } = await prisma.tripRequest.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TripRequestDeleteManyArgs>(args?: SelectSubset<T, TripRequestDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TripRequests.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TripRequestUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TripRequests
+     * const tripRequest = await prisma.tripRequest.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TripRequestUpdateManyArgs>(args: SelectSubset<T, TripRequestUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one TripRequest.
+     * @param {TripRequestUpsertArgs} args - Arguments to update or create a TripRequest.
+     * @example
+     * // Update or create a TripRequest
+     * const tripRequest = await prisma.tripRequest.upsert({
+     *   create: {
+     *     // ... data to create a TripRequest
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TripRequest we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TripRequestUpsertArgs>(args: SelectSubset<T, TripRequestUpsertArgs<ExtArgs>>): Prisma__TripRequestClient<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of TripRequests.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TripRequestCountArgs} args - Arguments to filter TripRequests to count.
+     * @example
+     * // Count the number of TripRequests
+     * const count = await prisma.tripRequest.count({
+     *   where: {
+     *     // ... the filter for the TripRequests we want to count
+     *   }
+     * })
+    **/
+    count<T extends TripRequestCountArgs>(
+      args?: Subset<T, TripRequestCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TripRequestCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TripRequest.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TripRequestAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TripRequestAggregateArgs>(args: Subset<T, TripRequestAggregateArgs>): Prisma.PrismaPromise<GetTripRequestAggregateType<T>>
+
+    /**
+     * Group by TripRequest.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TripRequestGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TripRequestGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TripRequestGroupByArgs['orderBy'] }
+        : { orderBy?: TripRequestGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TripRequestGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTripRequestGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TripRequest model
+   */
+  readonly fields: TripRequestFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TripRequest.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TripRequestClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    passenger<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    driver<T extends TripRequest$driverArgs<ExtArgs> = {}>(args?: Subset<T, TripRequest$driverArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TripRequest model
+   */ 
+  interface TripRequestFieldRefs {
+    readonly id: FieldRef<"TripRequest", 'String'>
+    readonly passengerId: FieldRef<"TripRequest", 'String'>
+    readonly driverId: FieldRef<"TripRequest", 'String'>
+    readonly originAddress: FieldRef<"TripRequest", 'String'>
+    readonly originLat: FieldRef<"TripRequest", 'Float'>
+    readonly originLng: FieldRef<"TripRequest", 'Float'>
+    readonly destAddress: FieldRef<"TripRequest", 'String'>
+    readonly destLat: FieldRef<"TripRequest", 'Float'>
+    readonly destLng: FieldRef<"TripRequest", 'Float'>
+    readonly vehicleType: FieldRef<"TripRequest", 'VehicleType'>
+    readonly estimatedDistance: FieldRef<"TripRequest", 'Float'>
+    readonly estimatedDuration: FieldRef<"TripRequest", 'Float'>
+    readonly estimatedPrice: FieldRef<"TripRequest", 'Float'>
+    readonly finalPrice: FieldRef<"TripRequest", 'Float'>
+    readonly status: FieldRef<"TripRequest", 'TripStatus'>
+    readonly matchAttempts: FieldRef<"TripRequest", 'Int'>
+    readonly maxAttempts: FieldRef<"TripRequest", 'Int'>
+    readonly matchRadius: FieldRef<"TripRequest", 'Float'>
+    readonly matchedAt: FieldRef<"TripRequest", 'DateTime'>
+    readonly startedAt: FieldRef<"TripRequest", 'DateTime'>
+    readonly completedAt: FieldRef<"TripRequest", 'DateTime'>
+    readonly cancelledAt: FieldRef<"TripRequest", 'DateTime'>
+    readonly cancelReason: FieldRef<"TripRequest", 'String'>
+    readonly createdAt: FieldRef<"TripRequest", 'DateTime'>
+    readonly updatedAt: FieldRef<"TripRequest", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TripRequest findUnique
+   */
+  export type TripRequestFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    /**
+     * Filter, which TripRequest to fetch.
+     */
+    where: TripRequestWhereUniqueInput
+  }
+
+  /**
+   * TripRequest findUniqueOrThrow
+   */
+  export type TripRequestFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    /**
+     * Filter, which TripRequest to fetch.
+     */
+    where: TripRequestWhereUniqueInput
+  }
+
+  /**
+   * TripRequest findFirst
+   */
+  export type TripRequestFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    /**
+     * Filter, which TripRequest to fetch.
+     */
+    where?: TripRequestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TripRequests to fetch.
+     */
+    orderBy?: TripRequestOrderByWithRelationInput | TripRequestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TripRequests.
+     */
+    cursor?: TripRequestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TripRequests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TripRequests.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TripRequests.
+     */
+    distinct?: TripRequestScalarFieldEnum | TripRequestScalarFieldEnum[]
+  }
+
+  /**
+   * TripRequest findFirstOrThrow
+   */
+  export type TripRequestFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    /**
+     * Filter, which TripRequest to fetch.
+     */
+    where?: TripRequestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TripRequests to fetch.
+     */
+    orderBy?: TripRequestOrderByWithRelationInput | TripRequestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TripRequests.
+     */
+    cursor?: TripRequestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TripRequests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TripRequests.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TripRequests.
+     */
+    distinct?: TripRequestScalarFieldEnum | TripRequestScalarFieldEnum[]
+  }
+
+  /**
+   * TripRequest findMany
+   */
+  export type TripRequestFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    /**
+     * Filter, which TripRequests to fetch.
+     */
+    where?: TripRequestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TripRequests to fetch.
+     */
+    orderBy?: TripRequestOrderByWithRelationInput | TripRequestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TripRequests.
+     */
+    cursor?: TripRequestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TripRequests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TripRequests.
+     */
+    skip?: number
+    distinct?: TripRequestScalarFieldEnum | TripRequestScalarFieldEnum[]
+  }
+
+  /**
+   * TripRequest create
+   */
+  export type TripRequestCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TripRequest.
+     */
+    data: XOR<TripRequestCreateInput, TripRequestUncheckedCreateInput>
+  }
+
+  /**
+   * TripRequest createMany
+   */
+  export type TripRequestCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TripRequests.
+     */
+    data: TripRequestCreateManyInput | TripRequestCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TripRequest createManyAndReturn
+   */
+  export type TripRequestCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many TripRequests.
+     */
+    data: TripRequestCreateManyInput | TripRequestCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TripRequest update
+   */
+  export type TripRequestUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TripRequest.
+     */
+    data: XOR<TripRequestUpdateInput, TripRequestUncheckedUpdateInput>
+    /**
+     * Choose, which TripRequest to update.
+     */
+    where: TripRequestWhereUniqueInput
+  }
+
+  /**
+   * TripRequest updateMany
+   */
+  export type TripRequestUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TripRequests.
+     */
+    data: XOR<TripRequestUpdateManyMutationInput, TripRequestUncheckedUpdateManyInput>
+    /**
+     * Filter which TripRequests to update
+     */
+    where?: TripRequestWhereInput
+  }
+
+  /**
+   * TripRequest upsert
+   */
+  export type TripRequestUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TripRequest to update in case it exists.
+     */
+    where: TripRequestWhereUniqueInput
+    /**
+     * In case the TripRequest found by the `where` argument doesn't exist, create a new TripRequest with this data.
+     */
+    create: XOR<TripRequestCreateInput, TripRequestUncheckedCreateInput>
+    /**
+     * In case the TripRequest was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TripRequestUpdateInput, TripRequestUncheckedUpdateInput>
+  }
+
+  /**
+   * TripRequest delete
+   */
+  export type TripRequestDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    /**
+     * Filter which TripRequest to delete.
+     */
+    where: TripRequestWhereUniqueInput
+  }
+
+  /**
+   * TripRequest deleteMany
+   */
+  export type TripRequestDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TripRequests to delete
+     */
+    where?: TripRequestWhereInput
+  }
+
+  /**
+   * TripRequest.driver
+   */
+  export type TripRequest$driverArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * TripRequest without action
+   */
+  export type TripRequestDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PricingConfig
+   */
+
+  export type AggregatePricingConfig = {
+    _count: PricingConfigCountAggregateOutputType | null
+    _avg: PricingConfigAvgAggregateOutputType | null
+    _sum: PricingConfigSumAggregateOutputType | null
+    _min: PricingConfigMinAggregateOutputType | null
+    _max: PricingConfigMaxAggregateOutputType | null
+  }
+
+  export type PricingConfigAvgAggregateOutputType = {
+    baseFare: number | null
+    pricePerKm: number | null
+    baseDistance: number | null
+    minFare: number | null
+  }
+
+  export type PricingConfigSumAggregateOutputType = {
+    baseFare: number | null
+    pricePerKm: number | null
+    baseDistance: number | null
+    minFare: number | null
+  }
+
+  export type PricingConfigMinAggregateOutputType = {
+    id: string | null
+    vehicleType: $Enums.VehicleType | null
+    baseFare: number | null
+    pricePerKm: number | null
+    baseDistance: number | null
+    minFare: number | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PricingConfigMaxAggregateOutputType = {
+    id: string | null
+    vehicleType: $Enums.VehicleType | null
+    baseFare: number | null
+    pricePerKm: number | null
+    baseDistance: number | null
+    minFare: number | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PricingConfigCountAggregateOutputType = {
+    id: number
+    vehicleType: number
+    baseFare: number
+    pricePerKm: number
+    baseDistance: number
+    minFare: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PricingConfigAvgAggregateInputType = {
+    baseFare?: true
+    pricePerKm?: true
+    baseDistance?: true
+    minFare?: true
+  }
+
+  export type PricingConfigSumAggregateInputType = {
+    baseFare?: true
+    pricePerKm?: true
+    baseDistance?: true
+    minFare?: true
+  }
+
+  export type PricingConfigMinAggregateInputType = {
+    id?: true
+    vehicleType?: true
+    baseFare?: true
+    pricePerKm?: true
+    baseDistance?: true
+    minFare?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PricingConfigMaxAggregateInputType = {
+    id?: true
+    vehicleType?: true
+    baseFare?: true
+    pricePerKm?: true
+    baseDistance?: true
+    minFare?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PricingConfigCountAggregateInputType = {
+    id?: true
+    vehicleType?: true
+    baseFare?: true
+    pricePerKm?: true
+    baseDistance?: true
+    minFare?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PricingConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PricingConfig to aggregate.
+     */
+    where?: PricingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PricingConfigs to fetch.
+     */
+    orderBy?: PricingConfigOrderByWithRelationInput | PricingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PricingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PricingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PricingConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PricingConfigs
+    **/
+    _count?: true | PricingConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PricingConfigAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PricingConfigSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PricingConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PricingConfigMaxAggregateInputType
+  }
+
+  export type GetPricingConfigAggregateType<T extends PricingConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregatePricingConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePricingConfig[P]>
+      : GetScalarType<T[P], AggregatePricingConfig[P]>
+  }
+
+
+
+
+  export type PricingConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PricingConfigWhereInput
+    orderBy?: PricingConfigOrderByWithAggregationInput | PricingConfigOrderByWithAggregationInput[]
+    by: PricingConfigScalarFieldEnum[] | PricingConfigScalarFieldEnum
+    having?: PricingConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PricingConfigCountAggregateInputType | true
+    _avg?: PricingConfigAvgAggregateInputType
+    _sum?: PricingConfigSumAggregateInputType
+    _min?: PricingConfigMinAggregateInputType
+    _max?: PricingConfigMaxAggregateInputType
+  }
+
+  export type PricingConfigGroupByOutputType = {
+    id: string
+    vehicleType: $Enums.VehicleType
+    baseFare: number
+    pricePerKm: number
+    baseDistance: number
+    minFare: number
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: PricingConfigCountAggregateOutputType | null
+    _avg: PricingConfigAvgAggregateOutputType | null
+    _sum: PricingConfigSumAggregateOutputType | null
+    _min: PricingConfigMinAggregateOutputType | null
+    _max: PricingConfigMaxAggregateOutputType | null
+  }
+
+  type GetPricingConfigGroupByPayload<T extends PricingConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PricingConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PricingConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PricingConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], PricingConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PricingConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    vehicleType?: boolean
+    baseFare?: boolean
+    pricePerKm?: boolean
+    baseDistance?: boolean
+    minFare?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["pricingConfig"]>
+
+  export type PricingConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    vehicleType?: boolean
+    baseFare?: boolean
+    pricePerKm?: boolean
+    baseDistance?: boolean
+    minFare?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["pricingConfig"]>
+
+  export type PricingConfigSelectScalar = {
+    id?: boolean
+    vehicleType?: boolean
+    baseFare?: boolean
+    pricePerKm?: boolean
+    baseDistance?: boolean
+    minFare?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+
+  export type $PricingConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PricingConfig"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      vehicleType: $Enums.VehicleType
+      baseFare: number
+      pricePerKm: number
+      baseDistance: number
+      minFare: number
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["pricingConfig"]>
+    composites: {}
+  }
+
+  type PricingConfigGetPayload<S extends boolean | null | undefined | PricingConfigDefaultArgs> = $Result.GetResult<Prisma.$PricingConfigPayload, S>
+
+  type PricingConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<PricingConfigFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: PricingConfigCountAggregateInputType | true
+    }
+
+  export interface PricingConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PricingConfig'], meta: { name: 'PricingConfig' } }
+    /**
+     * Find zero or one PricingConfig that matches the filter.
+     * @param {PricingConfigFindUniqueArgs} args - Arguments to find a PricingConfig
+     * @example
+     * // Get one PricingConfig
+     * const pricingConfig = await prisma.pricingConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PricingConfigFindUniqueArgs>(args: SelectSubset<T, PricingConfigFindUniqueArgs<ExtArgs>>): Prisma__PricingConfigClient<$Result.GetResult<Prisma.$PricingConfigPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one PricingConfig that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {PricingConfigFindUniqueOrThrowArgs} args - Arguments to find a PricingConfig
+     * @example
+     * // Get one PricingConfig
+     * const pricingConfig = await prisma.pricingConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PricingConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, PricingConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PricingConfigClient<$Result.GetResult<Prisma.$PricingConfigPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first PricingConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingConfigFindFirstArgs} args - Arguments to find a PricingConfig
+     * @example
+     * // Get one PricingConfig
+     * const pricingConfig = await prisma.pricingConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PricingConfigFindFirstArgs>(args?: SelectSubset<T, PricingConfigFindFirstArgs<ExtArgs>>): Prisma__PricingConfigClient<$Result.GetResult<Prisma.$PricingConfigPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first PricingConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingConfigFindFirstOrThrowArgs} args - Arguments to find a PricingConfig
+     * @example
+     * // Get one PricingConfig
+     * const pricingConfig = await prisma.pricingConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PricingConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, PricingConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__PricingConfigClient<$Result.GetResult<Prisma.$PricingConfigPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more PricingConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PricingConfigs
+     * const pricingConfigs = await prisma.pricingConfig.findMany()
+     * 
+     * // Get first 10 PricingConfigs
+     * const pricingConfigs = await prisma.pricingConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const pricingConfigWithIdOnly = await prisma.pricingConfig.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PricingConfigFindManyArgs>(args?: SelectSubset<T, PricingConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PricingConfigPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a PricingConfig.
+     * @param {PricingConfigCreateArgs} args - Arguments to create a PricingConfig.
+     * @example
+     * // Create one PricingConfig
+     * const PricingConfig = await prisma.pricingConfig.create({
+     *   data: {
+     *     // ... data to create a PricingConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends PricingConfigCreateArgs>(args: SelectSubset<T, PricingConfigCreateArgs<ExtArgs>>): Prisma__PricingConfigClient<$Result.GetResult<Prisma.$PricingConfigPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many PricingConfigs.
+     * @param {PricingConfigCreateManyArgs} args - Arguments to create many PricingConfigs.
+     * @example
+     * // Create many PricingConfigs
+     * const pricingConfig = await prisma.pricingConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PricingConfigCreateManyArgs>(args?: SelectSubset<T, PricingConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PricingConfigs and returns the data saved in the database.
+     * @param {PricingConfigCreateManyAndReturnArgs} args - Arguments to create many PricingConfigs.
+     * @example
+     * // Create many PricingConfigs
+     * const pricingConfig = await prisma.pricingConfig.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PricingConfigs and only return the `id`
+     * const pricingConfigWithIdOnly = await prisma.pricingConfig.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PricingConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, PricingConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PricingConfigPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a PricingConfig.
+     * @param {PricingConfigDeleteArgs} args - Arguments to delete one PricingConfig.
+     * @example
+     * // Delete one PricingConfig
+     * const PricingConfig = await prisma.pricingConfig.delete({
+     *   where: {
+     *     // ... filter to delete one PricingConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PricingConfigDeleteArgs>(args: SelectSubset<T, PricingConfigDeleteArgs<ExtArgs>>): Prisma__PricingConfigClient<$Result.GetResult<Prisma.$PricingConfigPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one PricingConfig.
+     * @param {PricingConfigUpdateArgs} args - Arguments to update one PricingConfig.
+     * @example
+     * // Update one PricingConfig
+     * const pricingConfig = await prisma.pricingConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PricingConfigUpdateArgs>(args: SelectSubset<T, PricingConfigUpdateArgs<ExtArgs>>): Prisma__PricingConfigClient<$Result.GetResult<Prisma.$PricingConfigPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more PricingConfigs.
+     * @param {PricingConfigDeleteManyArgs} args - Arguments to filter PricingConfigs to delete.
+     * @example
+     * // Delete a few PricingConfigs
+     * const { count } = await prisma.pricingConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PricingConfigDeleteManyArgs>(args?: SelectSubset<T, PricingConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PricingConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PricingConfigs
+     * const pricingConfig = await prisma.pricingConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PricingConfigUpdateManyArgs>(args: SelectSubset<T, PricingConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one PricingConfig.
+     * @param {PricingConfigUpsertArgs} args - Arguments to update or create a PricingConfig.
+     * @example
+     * // Update or create a PricingConfig
+     * const pricingConfig = await prisma.pricingConfig.upsert({
+     *   create: {
+     *     // ... data to create a PricingConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PricingConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PricingConfigUpsertArgs>(args: SelectSubset<T, PricingConfigUpsertArgs<ExtArgs>>): Prisma__PricingConfigClient<$Result.GetResult<Prisma.$PricingConfigPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of PricingConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingConfigCountArgs} args - Arguments to filter PricingConfigs to count.
+     * @example
+     * // Count the number of PricingConfigs
+     * const count = await prisma.pricingConfig.count({
+     *   where: {
+     *     // ... the filter for the PricingConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends PricingConfigCountArgs>(
+      args?: Subset<T, PricingConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PricingConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PricingConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PricingConfigAggregateArgs>(args: Subset<T, PricingConfigAggregateArgs>): Prisma.PrismaPromise<GetPricingConfigAggregateType<T>>
+
+    /**
+     * Group by PricingConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PricingConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PricingConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PricingConfigGroupByArgs['orderBy'] }
+        : { orderBy?: PricingConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PricingConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPricingConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PricingConfig model
+   */
+  readonly fields: PricingConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PricingConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PricingConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PricingConfig model
+   */ 
+  interface PricingConfigFieldRefs {
+    readonly id: FieldRef<"PricingConfig", 'String'>
+    readonly vehicleType: FieldRef<"PricingConfig", 'VehicleType'>
+    readonly baseFare: FieldRef<"PricingConfig", 'Float'>
+    readonly pricePerKm: FieldRef<"PricingConfig", 'Float'>
+    readonly baseDistance: FieldRef<"PricingConfig", 'Float'>
+    readonly minFare: FieldRef<"PricingConfig", 'Float'>
+    readonly isActive: FieldRef<"PricingConfig", 'Boolean'>
+    readonly createdAt: FieldRef<"PricingConfig", 'DateTime'>
+    readonly updatedAt: FieldRef<"PricingConfig", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PricingConfig findUnique
+   */
+  export type PricingConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which PricingConfig to fetch.
+     */
+    where: PricingConfigWhereUniqueInput
+  }
+
+  /**
+   * PricingConfig findUniqueOrThrow
+   */
+  export type PricingConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which PricingConfig to fetch.
+     */
+    where: PricingConfigWhereUniqueInput
+  }
+
+  /**
+   * PricingConfig findFirst
+   */
+  export type PricingConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which PricingConfig to fetch.
+     */
+    where?: PricingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PricingConfigs to fetch.
+     */
+    orderBy?: PricingConfigOrderByWithRelationInput | PricingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PricingConfigs.
+     */
+    cursor?: PricingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PricingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PricingConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PricingConfigs.
+     */
+    distinct?: PricingConfigScalarFieldEnum | PricingConfigScalarFieldEnum[]
+  }
+
+  /**
+   * PricingConfig findFirstOrThrow
+   */
+  export type PricingConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which PricingConfig to fetch.
+     */
+    where?: PricingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PricingConfigs to fetch.
+     */
+    orderBy?: PricingConfigOrderByWithRelationInput | PricingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PricingConfigs.
+     */
+    cursor?: PricingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PricingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PricingConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PricingConfigs.
+     */
+    distinct?: PricingConfigScalarFieldEnum | PricingConfigScalarFieldEnum[]
+  }
+
+  /**
+   * PricingConfig findMany
+   */
+  export type PricingConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which PricingConfigs to fetch.
+     */
+    where?: PricingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PricingConfigs to fetch.
+     */
+    orderBy?: PricingConfigOrderByWithRelationInput | PricingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PricingConfigs.
+     */
+    cursor?: PricingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PricingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PricingConfigs.
+     */
+    skip?: number
+    distinct?: PricingConfigScalarFieldEnum | PricingConfigScalarFieldEnum[]
+  }
+
+  /**
+   * PricingConfig create
+   */
+  export type PricingConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelect<ExtArgs> | null
+    /**
+     * The data needed to create a PricingConfig.
+     */
+    data: XOR<PricingConfigCreateInput, PricingConfigUncheckedCreateInput>
+  }
+
+  /**
+   * PricingConfig createMany
+   */
+  export type PricingConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PricingConfigs.
+     */
+    data: PricingConfigCreateManyInput | PricingConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PricingConfig createManyAndReturn
+   */
+  export type PricingConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many PricingConfigs.
+     */
+    data: PricingConfigCreateManyInput | PricingConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PricingConfig update
+   */
+  export type PricingConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelect<ExtArgs> | null
+    /**
+     * The data needed to update a PricingConfig.
+     */
+    data: XOR<PricingConfigUpdateInput, PricingConfigUncheckedUpdateInput>
+    /**
+     * Choose, which PricingConfig to update.
+     */
+    where: PricingConfigWhereUniqueInput
+  }
+
+  /**
+   * PricingConfig updateMany
+   */
+  export type PricingConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PricingConfigs.
+     */
+    data: XOR<PricingConfigUpdateManyMutationInput, PricingConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which PricingConfigs to update
+     */
+    where?: PricingConfigWhereInput
+  }
+
+  /**
+   * PricingConfig upsert
+   */
+  export type PricingConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelect<ExtArgs> | null
+    /**
+     * The filter to search for the PricingConfig to update in case it exists.
+     */
+    where: PricingConfigWhereUniqueInput
+    /**
+     * In case the PricingConfig found by the `where` argument doesn't exist, create a new PricingConfig with this data.
+     */
+    create: XOR<PricingConfigCreateInput, PricingConfigUncheckedCreateInput>
+    /**
+     * In case the PricingConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PricingConfigUpdateInput, PricingConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * PricingConfig delete
+   */
+  export type PricingConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelect<ExtArgs> | null
+    /**
+     * Filter which PricingConfig to delete.
+     */
+    where: PricingConfigWhereUniqueInput
+  }
+
+  /**
+   * PricingConfig deleteMany
+   */
+  export type PricingConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PricingConfigs to delete
+     */
+    where?: PricingConfigWhereInput
+  }
+
+  /**
+   * PricingConfig without action
+   */
+  export type PricingConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PricingConfig
+     */
+    select?: PricingConfigSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -14840,6 +17392,9 @@ export namespace Prisma {
     totalPrice: 'totalPrice',
     status: 'status',
     paymentStatus: 'paymentStatus',
+    passengerLat: 'passengerLat',
+    passengerLng: 'passengerLng',
+    pickupAddress: 'pickupAddress',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -14906,6 +17461,52 @@ export namespace Prisma {
   };
 
   export type LocationScalarFieldEnum = (typeof LocationScalarFieldEnum)[keyof typeof LocationScalarFieldEnum]
+
+
+  export const TripRequestScalarFieldEnum: {
+    id: 'id',
+    passengerId: 'passengerId',
+    driverId: 'driverId',
+    originAddress: 'originAddress',
+    originLat: 'originLat',
+    originLng: 'originLng',
+    destAddress: 'destAddress',
+    destLat: 'destLat',
+    destLng: 'destLng',
+    vehicleType: 'vehicleType',
+    estimatedDistance: 'estimatedDistance',
+    estimatedDuration: 'estimatedDuration',
+    estimatedPrice: 'estimatedPrice',
+    finalPrice: 'finalPrice',
+    status: 'status',
+    matchAttempts: 'matchAttempts',
+    maxAttempts: 'maxAttempts',
+    matchRadius: 'matchRadius',
+    matchedAt: 'matchedAt',
+    startedAt: 'startedAt',
+    completedAt: 'completedAt',
+    cancelledAt: 'cancelledAt',
+    cancelReason: 'cancelReason',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TripRequestScalarFieldEnum = (typeof TripRequestScalarFieldEnum)[keyof typeof TripRequestScalarFieldEnum]
+
+
+  export const PricingConfigScalarFieldEnum: {
+    id: 'id',
+    vehicleType: 'vehicleType',
+    baseFare: 'baseFare',
+    pricePerKm: 'pricePerKm',
+    baseDistance: 'baseDistance',
+    minFare: 'minFare',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PricingConfigScalarFieldEnum = (typeof PricingConfigScalarFieldEnum)[keyof typeof PricingConfigScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -15110,6 +17711,34 @@ export namespace Prisma {
    */
   export type ListEnumVerificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VerificationStatus[]'>
     
+
+
+  /**
+   * Reference to a field of type 'VehicleType'
+   */
+  export type EnumVehicleTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VehicleType'>
+    
+
+
+  /**
+   * Reference to a field of type 'VehicleType[]'
+   */
+  export type ListEnumVehicleTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VehicleType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'TripStatus'
+   */
+  export type EnumTripStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TripStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'TripStatus[]'
+   */
+  export type ListEnumTripStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TripStatus[]'>
+    
   /**
    * Deep Input Types
    */
@@ -15137,6 +17766,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"User"> | Date | string
     ridesAsDriver?: RideListRelationFilter
     bookings?: BookingListRelationFilter
+    tripsAsPassenger?: TripRequestListRelationFilter
+    tripsAsDriver?: TripRequestListRelationFilter
     reviewsSent?: ReviewListRelationFilter
     reviewsReceived?: ReviewListRelationFilter
     refreshTokens?: RefreshTokenListRelationFilter
@@ -15166,6 +17797,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     ridesAsDriver?: RideOrderByRelationAggregateInput
     bookings?: BookingOrderByRelationAggregateInput
+    tripsAsPassenger?: TripRequestOrderByRelationAggregateInput
+    tripsAsDriver?: TripRequestOrderByRelationAggregateInput
     reviewsSent?: ReviewOrderByRelationAggregateInput
     reviewsReceived?: ReviewOrderByRelationAggregateInput
     refreshTokens?: RefreshTokenOrderByRelationAggregateInput
@@ -15198,6 +17831,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"User"> | Date | string
     ridesAsDriver?: RideListRelationFilter
     bookings?: BookingListRelationFilter
+    tripsAsPassenger?: TripRequestListRelationFilter
+    tripsAsDriver?: TripRequestListRelationFilter
     reviewsSent?: ReviewListRelationFilter
     reviewsReceived?: ReviewListRelationFilter
     refreshTokens?: RefreshTokenListRelationFilter
@@ -15802,6 +18437,9 @@ export namespace Prisma {
     totalPrice?: FloatFilter<"Booking"> | number
     status?: EnumBookingStatusFilter<"Booking"> | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
+    passengerLat?: FloatNullableFilter<"Booking"> | number | null
+    passengerLng?: FloatNullableFilter<"Booking"> | number | null
+    pickupAddress?: StringNullableFilter<"Booking"> | string | null
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
     ride?: XOR<RideRelationFilter, RideWhereInput>
@@ -15817,6 +18455,9 @@ export namespace Prisma {
     totalPrice?: SortOrder
     status?: SortOrder
     paymentStatus?: SortOrder
+    passengerLat?: SortOrderInput | SortOrder
+    passengerLng?: SortOrderInput | SortOrder
+    pickupAddress?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     ride?: RideOrderByWithRelationInput
@@ -15835,6 +18476,9 @@ export namespace Prisma {
     totalPrice?: FloatFilter<"Booking"> | number
     status?: EnumBookingStatusFilter<"Booking"> | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
+    passengerLat?: FloatNullableFilter<"Booking"> | number | null
+    passengerLng?: FloatNullableFilter<"Booking"> | number | null
+    pickupAddress?: StringNullableFilter<"Booking"> | string | null
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
     ride?: XOR<RideRelationFilter, RideWhereInput>
@@ -15850,6 +18494,9 @@ export namespace Prisma {
     totalPrice?: SortOrder
     status?: SortOrder
     paymentStatus?: SortOrder
+    passengerLat?: SortOrderInput | SortOrder
+    passengerLng?: SortOrderInput | SortOrder
+    pickupAddress?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: BookingCountOrderByAggregateInput
@@ -15870,6 +18517,9 @@ export namespace Prisma {
     totalPrice?: FloatWithAggregatesFilter<"Booking"> | number
     status?: EnumBookingStatusWithAggregatesFilter<"Booking"> | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusWithAggregatesFilter<"Booking"> | $Enums.PaymentStatus
+    passengerLat?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
+    passengerLng?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
+    pickupAddress?: StringNullableWithAggregatesFilter<"Booking"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Booking"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Booking"> | Date | string
   }
@@ -16184,6 +18834,240 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"Location"> | Date | string
   }
 
+  export type TripRequestWhereInput = {
+    AND?: TripRequestWhereInput | TripRequestWhereInput[]
+    OR?: TripRequestWhereInput[]
+    NOT?: TripRequestWhereInput | TripRequestWhereInput[]
+    id?: StringFilter<"TripRequest"> | string
+    passengerId?: StringFilter<"TripRequest"> | string
+    driverId?: StringNullableFilter<"TripRequest"> | string | null
+    originAddress?: StringFilter<"TripRequest"> | string
+    originLat?: FloatFilter<"TripRequest"> | number
+    originLng?: FloatFilter<"TripRequest"> | number
+    destAddress?: StringFilter<"TripRequest"> | string
+    destLat?: FloatFilter<"TripRequest"> | number
+    destLng?: FloatFilter<"TripRequest"> | number
+    vehicleType?: EnumVehicleTypeFilter<"TripRequest"> | $Enums.VehicleType
+    estimatedDistance?: FloatFilter<"TripRequest"> | number
+    estimatedDuration?: FloatFilter<"TripRequest"> | number
+    estimatedPrice?: FloatFilter<"TripRequest"> | number
+    finalPrice?: FloatNullableFilter<"TripRequest"> | number | null
+    status?: EnumTripStatusFilter<"TripRequest"> | $Enums.TripStatus
+    matchAttempts?: IntFilter<"TripRequest"> | number
+    maxAttempts?: IntFilter<"TripRequest"> | number
+    matchRadius?: FloatFilter<"TripRequest"> | number
+    matchedAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    startedAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    cancelledAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    cancelReason?: StringNullableFilter<"TripRequest"> | string | null
+    createdAt?: DateTimeFilter<"TripRequest"> | Date | string
+    updatedAt?: DateTimeFilter<"TripRequest"> | Date | string
+    passenger?: XOR<UserRelationFilter, UserWhereInput>
+    driver?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }
+
+  export type TripRequestOrderByWithRelationInput = {
+    id?: SortOrder
+    passengerId?: SortOrder
+    driverId?: SortOrderInput | SortOrder
+    originAddress?: SortOrder
+    originLat?: SortOrder
+    originLng?: SortOrder
+    destAddress?: SortOrder
+    destLat?: SortOrder
+    destLng?: SortOrder
+    vehicleType?: SortOrder
+    estimatedDistance?: SortOrder
+    estimatedDuration?: SortOrder
+    estimatedPrice?: SortOrder
+    finalPrice?: SortOrderInput | SortOrder
+    status?: SortOrder
+    matchAttempts?: SortOrder
+    maxAttempts?: SortOrder
+    matchRadius?: SortOrder
+    matchedAt?: SortOrderInput | SortOrder
+    startedAt?: SortOrderInput | SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    cancelReason?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    passenger?: UserOrderByWithRelationInput
+    driver?: UserOrderByWithRelationInput
+  }
+
+  export type TripRequestWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TripRequestWhereInput | TripRequestWhereInput[]
+    OR?: TripRequestWhereInput[]
+    NOT?: TripRequestWhereInput | TripRequestWhereInput[]
+    passengerId?: StringFilter<"TripRequest"> | string
+    driverId?: StringNullableFilter<"TripRequest"> | string | null
+    originAddress?: StringFilter<"TripRequest"> | string
+    originLat?: FloatFilter<"TripRequest"> | number
+    originLng?: FloatFilter<"TripRequest"> | number
+    destAddress?: StringFilter<"TripRequest"> | string
+    destLat?: FloatFilter<"TripRequest"> | number
+    destLng?: FloatFilter<"TripRequest"> | number
+    vehicleType?: EnumVehicleTypeFilter<"TripRequest"> | $Enums.VehicleType
+    estimatedDistance?: FloatFilter<"TripRequest"> | number
+    estimatedDuration?: FloatFilter<"TripRequest"> | number
+    estimatedPrice?: FloatFilter<"TripRequest"> | number
+    finalPrice?: FloatNullableFilter<"TripRequest"> | number | null
+    status?: EnumTripStatusFilter<"TripRequest"> | $Enums.TripStatus
+    matchAttempts?: IntFilter<"TripRequest"> | number
+    maxAttempts?: IntFilter<"TripRequest"> | number
+    matchRadius?: FloatFilter<"TripRequest"> | number
+    matchedAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    startedAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    cancelledAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    cancelReason?: StringNullableFilter<"TripRequest"> | string | null
+    createdAt?: DateTimeFilter<"TripRequest"> | Date | string
+    updatedAt?: DateTimeFilter<"TripRequest"> | Date | string
+    passenger?: XOR<UserRelationFilter, UserWhereInput>
+    driver?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }, "id">
+
+  export type TripRequestOrderByWithAggregationInput = {
+    id?: SortOrder
+    passengerId?: SortOrder
+    driverId?: SortOrderInput | SortOrder
+    originAddress?: SortOrder
+    originLat?: SortOrder
+    originLng?: SortOrder
+    destAddress?: SortOrder
+    destLat?: SortOrder
+    destLng?: SortOrder
+    vehicleType?: SortOrder
+    estimatedDistance?: SortOrder
+    estimatedDuration?: SortOrder
+    estimatedPrice?: SortOrder
+    finalPrice?: SortOrderInput | SortOrder
+    status?: SortOrder
+    matchAttempts?: SortOrder
+    maxAttempts?: SortOrder
+    matchRadius?: SortOrder
+    matchedAt?: SortOrderInput | SortOrder
+    startedAt?: SortOrderInput | SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    cancelReason?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TripRequestCountOrderByAggregateInput
+    _avg?: TripRequestAvgOrderByAggregateInput
+    _max?: TripRequestMaxOrderByAggregateInput
+    _min?: TripRequestMinOrderByAggregateInput
+    _sum?: TripRequestSumOrderByAggregateInput
+  }
+
+  export type TripRequestScalarWhereWithAggregatesInput = {
+    AND?: TripRequestScalarWhereWithAggregatesInput | TripRequestScalarWhereWithAggregatesInput[]
+    OR?: TripRequestScalarWhereWithAggregatesInput[]
+    NOT?: TripRequestScalarWhereWithAggregatesInput | TripRequestScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TripRequest"> | string
+    passengerId?: StringWithAggregatesFilter<"TripRequest"> | string
+    driverId?: StringNullableWithAggregatesFilter<"TripRequest"> | string | null
+    originAddress?: StringWithAggregatesFilter<"TripRequest"> | string
+    originLat?: FloatWithAggregatesFilter<"TripRequest"> | number
+    originLng?: FloatWithAggregatesFilter<"TripRequest"> | number
+    destAddress?: StringWithAggregatesFilter<"TripRequest"> | string
+    destLat?: FloatWithAggregatesFilter<"TripRequest"> | number
+    destLng?: FloatWithAggregatesFilter<"TripRequest"> | number
+    vehicleType?: EnumVehicleTypeWithAggregatesFilter<"TripRequest"> | $Enums.VehicleType
+    estimatedDistance?: FloatWithAggregatesFilter<"TripRequest"> | number
+    estimatedDuration?: FloatWithAggregatesFilter<"TripRequest"> | number
+    estimatedPrice?: FloatWithAggregatesFilter<"TripRequest"> | number
+    finalPrice?: FloatNullableWithAggregatesFilter<"TripRequest"> | number | null
+    status?: EnumTripStatusWithAggregatesFilter<"TripRequest"> | $Enums.TripStatus
+    matchAttempts?: IntWithAggregatesFilter<"TripRequest"> | number
+    maxAttempts?: IntWithAggregatesFilter<"TripRequest"> | number
+    matchRadius?: FloatWithAggregatesFilter<"TripRequest"> | number
+    matchedAt?: DateTimeNullableWithAggregatesFilter<"TripRequest"> | Date | string | null
+    startedAt?: DateTimeNullableWithAggregatesFilter<"TripRequest"> | Date | string | null
+    completedAt?: DateTimeNullableWithAggregatesFilter<"TripRequest"> | Date | string | null
+    cancelledAt?: DateTimeNullableWithAggregatesFilter<"TripRequest"> | Date | string | null
+    cancelReason?: StringNullableWithAggregatesFilter<"TripRequest"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"TripRequest"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TripRequest"> | Date | string
+  }
+
+  export type PricingConfigWhereInput = {
+    AND?: PricingConfigWhereInput | PricingConfigWhereInput[]
+    OR?: PricingConfigWhereInput[]
+    NOT?: PricingConfigWhereInput | PricingConfigWhereInput[]
+    id?: StringFilter<"PricingConfig"> | string
+    vehicleType?: EnumVehicleTypeFilter<"PricingConfig"> | $Enums.VehicleType
+    baseFare?: FloatFilter<"PricingConfig"> | number
+    pricePerKm?: FloatFilter<"PricingConfig"> | number
+    baseDistance?: FloatFilter<"PricingConfig"> | number
+    minFare?: FloatFilter<"PricingConfig"> | number
+    isActive?: BoolFilter<"PricingConfig"> | boolean
+    createdAt?: DateTimeFilter<"PricingConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"PricingConfig"> | Date | string
+  }
+
+  export type PricingConfigOrderByWithRelationInput = {
+    id?: SortOrder
+    vehicleType?: SortOrder
+    baseFare?: SortOrder
+    pricePerKm?: SortOrder
+    baseDistance?: SortOrder
+    minFare?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PricingConfigWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    vehicleType?: $Enums.VehicleType
+    AND?: PricingConfigWhereInput | PricingConfigWhereInput[]
+    OR?: PricingConfigWhereInput[]
+    NOT?: PricingConfigWhereInput | PricingConfigWhereInput[]
+    baseFare?: FloatFilter<"PricingConfig"> | number
+    pricePerKm?: FloatFilter<"PricingConfig"> | number
+    baseDistance?: FloatFilter<"PricingConfig"> | number
+    minFare?: FloatFilter<"PricingConfig"> | number
+    isActive?: BoolFilter<"PricingConfig"> | boolean
+    createdAt?: DateTimeFilter<"PricingConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"PricingConfig"> | Date | string
+  }, "id" | "vehicleType">
+
+  export type PricingConfigOrderByWithAggregationInput = {
+    id?: SortOrder
+    vehicleType?: SortOrder
+    baseFare?: SortOrder
+    pricePerKm?: SortOrder
+    baseDistance?: SortOrder
+    minFare?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PricingConfigCountOrderByAggregateInput
+    _avg?: PricingConfigAvgOrderByAggregateInput
+    _max?: PricingConfigMaxOrderByAggregateInput
+    _min?: PricingConfigMinOrderByAggregateInput
+    _sum?: PricingConfigSumOrderByAggregateInput
+  }
+
+  export type PricingConfigScalarWhereWithAggregatesInput = {
+    AND?: PricingConfigScalarWhereWithAggregatesInput | PricingConfigScalarWhereWithAggregatesInput[]
+    OR?: PricingConfigScalarWhereWithAggregatesInput[]
+    NOT?: PricingConfigScalarWhereWithAggregatesInput | PricingConfigScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"PricingConfig"> | string
+    vehicleType?: EnumVehicleTypeWithAggregatesFilter<"PricingConfig"> | $Enums.VehicleType
+    baseFare?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    pricePerKm?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    baseDistance?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    minFare?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    isActive?: BoolWithAggregatesFilter<"PricingConfig"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"PricingConfig"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PricingConfig"> | Date | string
+  }
+
   export type UserCreateInput = {
     id?: string
     email: string
@@ -16203,6 +19087,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -16232,6 +19118,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -16261,6 +19149,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -16290,6 +19180,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -16958,6 +19850,9 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     ride: RideCreateNestedOneWithoutBookingsInput
@@ -16973,6 +19868,9 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     transactions?: TransactionUncheckedCreateNestedManyWithoutBookingInput
@@ -16984,6 +19882,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ride?: RideUpdateOneRequiredWithoutBookingsNestedInput
@@ -16999,6 +19900,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     transactions?: TransactionUncheckedUpdateManyWithoutBookingNestedInput
@@ -17012,6 +19916,9 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -17022,6 +19929,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -17034,6 +19944,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -17377,6 +20290,284 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type TripRequestCreateInput = {
+    id?: string
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    passenger: UserCreateNestedOneWithoutTripsAsPassengerInput
+    driver?: UserCreateNestedOneWithoutTripsAsDriverInput
+  }
+
+  export type TripRequestUncheckedCreateInput = {
+    id?: string
+    passengerId: string
+    driverId?: string | null
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TripRequestUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    passenger?: UserUpdateOneRequiredWithoutTripsAsPassengerNestedInput
+    driver?: UserUpdateOneWithoutTripsAsDriverNestedInput
+  }
+
+  export type TripRequestUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    passengerId?: StringFieldUpdateOperationsInput | string
+    driverId?: NullableStringFieldUpdateOperationsInput | string | null
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TripRequestCreateManyInput = {
+    id?: string
+    passengerId: string
+    driverId?: string | null
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TripRequestUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TripRequestUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    passengerId?: StringFieldUpdateOperationsInput | string
+    driverId?: NullableStringFieldUpdateOperationsInput | string | null
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PricingConfigCreateInput = {
+    id?: string
+    vehicleType: $Enums.VehicleType
+    baseFare: number
+    pricePerKm: number
+    baseDistance?: number
+    minFare?: number
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PricingConfigUncheckedCreateInput = {
+    id?: string
+    vehicleType: $Enums.VehicleType
+    baseFare: number
+    pricePerKm: number
+    baseDistance?: number
+    minFare?: number
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PricingConfigUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    baseFare?: FloatFieldUpdateOperationsInput | number
+    pricePerKm?: FloatFieldUpdateOperationsInput | number
+    baseDistance?: FloatFieldUpdateOperationsInput | number
+    minFare?: FloatFieldUpdateOperationsInput | number
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PricingConfigUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    baseFare?: FloatFieldUpdateOperationsInput | number
+    pricePerKm?: FloatFieldUpdateOperationsInput | number
+    baseDistance?: FloatFieldUpdateOperationsInput | number
+    minFare?: FloatFieldUpdateOperationsInput | number
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PricingConfigCreateManyInput = {
+    id?: string
+    vehicleType: $Enums.VehicleType
+    baseFare: number
+    pricePerKm: number
+    baseDistance?: number
+    minFare?: number
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PricingConfigUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    baseFare?: FloatFieldUpdateOperationsInput | number
+    pricePerKm?: FloatFieldUpdateOperationsInput | number
+    baseDistance?: FloatFieldUpdateOperationsInput | number
+    minFare?: FloatFieldUpdateOperationsInput | number
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PricingConfigUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    baseFare?: FloatFieldUpdateOperationsInput | number
+    pricePerKm?: FloatFieldUpdateOperationsInput | number
+    baseDistance?: FloatFieldUpdateOperationsInput | number
+    minFare?: FloatFieldUpdateOperationsInput | number
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -17464,6 +20655,12 @@ export namespace Prisma {
     none?: BookingWhereInput
   }
 
+  export type TripRequestListRelationFilter = {
+    every?: TripRequestWhereInput
+    some?: TripRequestWhereInput
+    none?: TripRequestWhereInput
+  }
+
   export type ReviewListRelationFilter = {
     every?: ReviewWhereInput
     some?: ReviewWhereInput
@@ -17508,6 +20705,10 @@ export namespace Prisma {
   }
 
   export type BookingOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TripRequestOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -18120,6 +21321,9 @@ export namespace Prisma {
     totalPrice?: SortOrder
     status?: SortOrder
     paymentStatus?: SortOrder
+    passengerLat?: SortOrder
+    passengerLng?: SortOrder
+    pickupAddress?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -18127,6 +21331,8 @@ export namespace Prisma {
   export type BookingAvgOrderByAggregateInput = {
     seats?: SortOrder
     totalPrice?: SortOrder
+    passengerLat?: SortOrder
+    passengerLng?: SortOrder
   }
 
   export type BookingMaxOrderByAggregateInput = {
@@ -18137,6 +21343,9 @@ export namespace Prisma {
     totalPrice?: SortOrder
     status?: SortOrder
     paymentStatus?: SortOrder
+    passengerLat?: SortOrder
+    passengerLng?: SortOrder
+    pickupAddress?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -18149,6 +21358,9 @@ export namespace Prisma {
     totalPrice?: SortOrder
     status?: SortOrder
     paymentStatus?: SortOrder
+    passengerLat?: SortOrder
+    passengerLng?: SortOrder
+    pickupAddress?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -18156,6 +21368,8 @@ export namespace Prisma {
   export type BookingSumOrderByAggregateInput = {
     seats?: SortOrder
     totalPrice?: SortOrder
+    passengerLat?: SortOrder
+    passengerLng?: SortOrder
   }
 
   export type EnumBookingStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -18407,6 +21621,207 @@ export namespace Prisma {
     longitude?: SortOrder
   }
 
+  export type EnumVehicleTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.VehicleType | EnumVehicleTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.VehicleType[] | ListEnumVehicleTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VehicleType[] | ListEnumVehicleTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumVehicleTypeFilter<$PrismaModel> | $Enums.VehicleType
+  }
+
+  export type EnumTripStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TripStatus | EnumTripStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTripStatusFilter<$PrismaModel> | $Enums.TripStatus
+  }
+
+  export type UserNullableRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
+  export type TripRequestCountOrderByAggregateInput = {
+    id?: SortOrder
+    passengerId?: SortOrder
+    driverId?: SortOrder
+    originAddress?: SortOrder
+    originLat?: SortOrder
+    originLng?: SortOrder
+    destAddress?: SortOrder
+    destLat?: SortOrder
+    destLng?: SortOrder
+    vehicleType?: SortOrder
+    estimatedDistance?: SortOrder
+    estimatedDuration?: SortOrder
+    estimatedPrice?: SortOrder
+    finalPrice?: SortOrder
+    status?: SortOrder
+    matchAttempts?: SortOrder
+    maxAttempts?: SortOrder
+    matchRadius?: SortOrder
+    matchedAt?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    cancelledAt?: SortOrder
+    cancelReason?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TripRequestAvgOrderByAggregateInput = {
+    originLat?: SortOrder
+    originLng?: SortOrder
+    destLat?: SortOrder
+    destLng?: SortOrder
+    estimatedDistance?: SortOrder
+    estimatedDuration?: SortOrder
+    estimatedPrice?: SortOrder
+    finalPrice?: SortOrder
+    matchAttempts?: SortOrder
+    maxAttempts?: SortOrder
+    matchRadius?: SortOrder
+  }
+
+  export type TripRequestMaxOrderByAggregateInput = {
+    id?: SortOrder
+    passengerId?: SortOrder
+    driverId?: SortOrder
+    originAddress?: SortOrder
+    originLat?: SortOrder
+    originLng?: SortOrder
+    destAddress?: SortOrder
+    destLat?: SortOrder
+    destLng?: SortOrder
+    vehicleType?: SortOrder
+    estimatedDistance?: SortOrder
+    estimatedDuration?: SortOrder
+    estimatedPrice?: SortOrder
+    finalPrice?: SortOrder
+    status?: SortOrder
+    matchAttempts?: SortOrder
+    maxAttempts?: SortOrder
+    matchRadius?: SortOrder
+    matchedAt?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    cancelledAt?: SortOrder
+    cancelReason?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TripRequestMinOrderByAggregateInput = {
+    id?: SortOrder
+    passengerId?: SortOrder
+    driverId?: SortOrder
+    originAddress?: SortOrder
+    originLat?: SortOrder
+    originLng?: SortOrder
+    destAddress?: SortOrder
+    destLat?: SortOrder
+    destLng?: SortOrder
+    vehicleType?: SortOrder
+    estimatedDistance?: SortOrder
+    estimatedDuration?: SortOrder
+    estimatedPrice?: SortOrder
+    finalPrice?: SortOrder
+    status?: SortOrder
+    matchAttempts?: SortOrder
+    maxAttempts?: SortOrder
+    matchRadius?: SortOrder
+    matchedAt?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    cancelledAt?: SortOrder
+    cancelReason?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TripRequestSumOrderByAggregateInput = {
+    originLat?: SortOrder
+    originLng?: SortOrder
+    destLat?: SortOrder
+    destLng?: SortOrder
+    estimatedDistance?: SortOrder
+    estimatedDuration?: SortOrder
+    estimatedPrice?: SortOrder
+    finalPrice?: SortOrder
+    matchAttempts?: SortOrder
+    maxAttempts?: SortOrder
+    matchRadius?: SortOrder
+  }
+
+  export type EnumVehicleTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.VehicleType | EnumVehicleTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.VehicleType[] | ListEnumVehicleTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VehicleType[] | ListEnumVehicleTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumVehicleTypeWithAggregatesFilter<$PrismaModel> | $Enums.VehicleType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumVehicleTypeFilter<$PrismaModel>
+    _max?: NestedEnumVehicleTypeFilter<$PrismaModel>
+  }
+
+  export type EnumTripStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TripStatus | EnumTripStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTripStatusWithAggregatesFilter<$PrismaModel> | $Enums.TripStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTripStatusFilter<$PrismaModel>
+    _max?: NestedEnumTripStatusFilter<$PrismaModel>
+  }
+
+  export type PricingConfigCountOrderByAggregateInput = {
+    id?: SortOrder
+    vehicleType?: SortOrder
+    baseFare?: SortOrder
+    pricePerKm?: SortOrder
+    baseDistance?: SortOrder
+    minFare?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PricingConfigAvgOrderByAggregateInput = {
+    baseFare?: SortOrder
+    pricePerKm?: SortOrder
+    baseDistance?: SortOrder
+    minFare?: SortOrder
+  }
+
+  export type PricingConfigMaxOrderByAggregateInput = {
+    id?: SortOrder
+    vehicleType?: SortOrder
+    baseFare?: SortOrder
+    pricePerKm?: SortOrder
+    baseDistance?: SortOrder
+    minFare?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PricingConfigMinOrderByAggregateInput = {
+    id?: SortOrder
+    vehicleType?: SortOrder
+    baseFare?: SortOrder
+    pricePerKm?: SortOrder
+    baseDistance?: SortOrder
+    minFare?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PricingConfigSumOrderByAggregateInput = {
+    baseFare?: SortOrder
+    pricePerKm?: SortOrder
+    baseDistance?: SortOrder
+    minFare?: SortOrder
+  }
+
   export type RideCreateNestedManyWithoutDriverInput = {
     create?: XOR<RideCreateWithoutDriverInput, RideUncheckedCreateWithoutDriverInput> | RideCreateWithoutDriverInput[] | RideUncheckedCreateWithoutDriverInput[]
     connectOrCreate?: RideCreateOrConnectWithoutDriverInput | RideCreateOrConnectWithoutDriverInput[]
@@ -18419,6 +21834,20 @@ export namespace Prisma {
     connectOrCreate?: BookingCreateOrConnectWithoutPassengerInput | BookingCreateOrConnectWithoutPassengerInput[]
     createMany?: BookingCreateManyPassengerInputEnvelope
     connect?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+  }
+
+  export type TripRequestCreateNestedManyWithoutPassengerInput = {
+    create?: XOR<TripRequestCreateWithoutPassengerInput, TripRequestUncheckedCreateWithoutPassengerInput> | TripRequestCreateWithoutPassengerInput[] | TripRequestUncheckedCreateWithoutPassengerInput[]
+    connectOrCreate?: TripRequestCreateOrConnectWithoutPassengerInput | TripRequestCreateOrConnectWithoutPassengerInput[]
+    createMany?: TripRequestCreateManyPassengerInputEnvelope
+    connect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+  }
+
+  export type TripRequestCreateNestedManyWithoutDriverInput = {
+    create?: XOR<TripRequestCreateWithoutDriverInput, TripRequestUncheckedCreateWithoutDriverInput> | TripRequestCreateWithoutDriverInput[] | TripRequestUncheckedCreateWithoutDriverInput[]
+    connectOrCreate?: TripRequestCreateOrConnectWithoutDriverInput | TripRequestCreateOrConnectWithoutDriverInput[]
+    createMany?: TripRequestCreateManyDriverInputEnvelope
+    connect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
   }
 
   export type ReviewCreateNestedManyWithoutReviewerInput = {
@@ -18487,6 +21916,20 @@ export namespace Prisma {
     connectOrCreate?: BookingCreateOrConnectWithoutPassengerInput | BookingCreateOrConnectWithoutPassengerInput[]
     createMany?: BookingCreateManyPassengerInputEnvelope
     connect?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+  }
+
+  export type TripRequestUncheckedCreateNestedManyWithoutPassengerInput = {
+    create?: XOR<TripRequestCreateWithoutPassengerInput, TripRequestUncheckedCreateWithoutPassengerInput> | TripRequestCreateWithoutPassengerInput[] | TripRequestUncheckedCreateWithoutPassengerInput[]
+    connectOrCreate?: TripRequestCreateOrConnectWithoutPassengerInput | TripRequestCreateOrConnectWithoutPassengerInput[]
+    createMany?: TripRequestCreateManyPassengerInputEnvelope
+    connect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+  }
+
+  export type TripRequestUncheckedCreateNestedManyWithoutDriverInput = {
+    create?: XOR<TripRequestCreateWithoutDriverInput, TripRequestUncheckedCreateWithoutDriverInput> | TripRequestCreateWithoutDriverInput[] | TripRequestUncheckedCreateWithoutDriverInput[]
+    connectOrCreate?: TripRequestCreateOrConnectWithoutDriverInput | TripRequestCreateOrConnectWithoutDriverInput[]
+    createMany?: TripRequestCreateManyDriverInputEnvelope
+    connect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
   }
 
   export type ReviewUncheckedCreateNestedManyWithoutReviewerInput = {
@@ -18605,6 +22048,34 @@ export namespace Prisma {
     update?: BookingUpdateWithWhereUniqueWithoutPassengerInput | BookingUpdateWithWhereUniqueWithoutPassengerInput[]
     updateMany?: BookingUpdateManyWithWhereWithoutPassengerInput | BookingUpdateManyWithWhereWithoutPassengerInput[]
     deleteMany?: BookingScalarWhereInput | BookingScalarWhereInput[]
+  }
+
+  export type TripRequestUpdateManyWithoutPassengerNestedInput = {
+    create?: XOR<TripRequestCreateWithoutPassengerInput, TripRequestUncheckedCreateWithoutPassengerInput> | TripRequestCreateWithoutPassengerInput[] | TripRequestUncheckedCreateWithoutPassengerInput[]
+    connectOrCreate?: TripRequestCreateOrConnectWithoutPassengerInput | TripRequestCreateOrConnectWithoutPassengerInput[]
+    upsert?: TripRequestUpsertWithWhereUniqueWithoutPassengerInput | TripRequestUpsertWithWhereUniqueWithoutPassengerInput[]
+    createMany?: TripRequestCreateManyPassengerInputEnvelope
+    set?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    disconnect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    delete?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    connect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    update?: TripRequestUpdateWithWhereUniqueWithoutPassengerInput | TripRequestUpdateWithWhereUniqueWithoutPassengerInput[]
+    updateMany?: TripRequestUpdateManyWithWhereWithoutPassengerInput | TripRequestUpdateManyWithWhereWithoutPassengerInput[]
+    deleteMany?: TripRequestScalarWhereInput | TripRequestScalarWhereInput[]
+  }
+
+  export type TripRequestUpdateManyWithoutDriverNestedInput = {
+    create?: XOR<TripRequestCreateWithoutDriverInput, TripRequestUncheckedCreateWithoutDriverInput> | TripRequestCreateWithoutDriverInput[] | TripRequestUncheckedCreateWithoutDriverInput[]
+    connectOrCreate?: TripRequestCreateOrConnectWithoutDriverInput | TripRequestCreateOrConnectWithoutDriverInput[]
+    upsert?: TripRequestUpsertWithWhereUniqueWithoutDriverInput | TripRequestUpsertWithWhereUniqueWithoutDriverInput[]
+    createMany?: TripRequestCreateManyDriverInputEnvelope
+    set?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    disconnect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    delete?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    connect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    update?: TripRequestUpdateWithWhereUniqueWithoutDriverInput | TripRequestUpdateWithWhereUniqueWithoutDriverInput[]
+    updateMany?: TripRequestUpdateManyWithWhereWithoutDriverInput | TripRequestUpdateManyWithWhereWithoutDriverInput[]
+    deleteMany?: TripRequestScalarWhereInput | TripRequestScalarWhereInput[]
   }
 
   export type ReviewUpdateManyWithoutReviewerNestedInput = {
@@ -18737,6 +22208,34 @@ export namespace Prisma {
     update?: BookingUpdateWithWhereUniqueWithoutPassengerInput | BookingUpdateWithWhereUniqueWithoutPassengerInput[]
     updateMany?: BookingUpdateManyWithWhereWithoutPassengerInput | BookingUpdateManyWithWhereWithoutPassengerInput[]
     deleteMany?: BookingScalarWhereInput | BookingScalarWhereInput[]
+  }
+
+  export type TripRequestUncheckedUpdateManyWithoutPassengerNestedInput = {
+    create?: XOR<TripRequestCreateWithoutPassengerInput, TripRequestUncheckedCreateWithoutPassengerInput> | TripRequestCreateWithoutPassengerInput[] | TripRequestUncheckedCreateWithoutPassengerInput[]
+    connectOrCreate?: TripRequestCreateOrConnectWithoutPassengerInput | TripRequestCreateOrConnectWithoutPassengerInput[]
+    upsert?: TripRequestUpsertWithWhereUniqueWithoutPassengerInput | TripRequestUpsertWithWhereUniqueWithoutPassengerInput[]
+    createMany?: TripRequestCreateManyPassengerInputEnvelope
+    set?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    disconnect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    delete?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    connect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    update?: TripRequestUpdateWithWhereUniqueWithoutPassengerInput | TripRequestUpdateWithWhereUniqueWithoutPassengerInput[]
+    updateMany?: TripRequestUpdateManyWithWhereWithoutPassengerInput | TripRequestUpdateManyWithWhereWithoutPassengerInput[]
+    deleteMany?: TripRequestScalarWhereInput | TripRequestScalarWhereInput[]
+  }
+
+  export type TripRequestUncheckedUpdateManyWithoutDriverNestedInput = {
+    create?: XOR<TripRequestCreateWithoutDriverInput, TripRequestUncheckedCreateWithoutDriverInput> | TripRequestCreateWithoutDriverInput[] | TripRequestUncheckedCreateWithoutDriverInput[]
+    connectOrCreate?: TripRequestCreateOrConnectWithoutDriverInput | TripRequestCreateOrConnectWithoutDriverInput[]
+    upsert?: TripRequestUpsertWithWhereUniqueWithoutDriverInput | TripRequestUpsertWithWhereUniqueWithoutDriverInput[]
+    createMany?: TripRequestCreateManyDriverInputEnvelope
+    set?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    disconnect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    delete?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    connect?: TripRequestWhereUniqueInput | TripRequestWhereUniqueInput[]
+    update?: TripRequestUpdateWithWhereUniqueWithoutDriverInput | TripRequestUpdateWithWhereUniqueWithoutDriverInput[]
+    updateMany?: TripRequestUpdateManyWithWhereWithoutDriverInput | TripRequestUpdateManyWithWhereWithoutDriverInput[]
+    deleteMany?: TripRequestScalarWhereInput | TripRequestScalarWhereInput[]
   }
 
   export type ReviewUncheckedUpdateManyWithoutReviewerNestedInput = {
@@ -19305,6 +22804,44 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutDriverVerificationInput, UserUpdateWithoutDriverVerificationInput>, UserUncheckedUpdateWithoutDriverVerificationInput>
   }
 
+  export type UserCreateNestedOneWithoutTripsAsPassengerInput = {
+    create?: XOR<UserCreateWithoutTripsAsPassengerInput, UserUncheckedCreateWithoutTripsAsPassengerInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTripsAsPassengerInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutTripsAsDriverInput = {
+    create?: XOR<UserCreateWithoutTripsAsDriverInput, UserUncheckedCreateWithoutTripsAsDriverInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTripsAsDriverInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumVehicleTypeFieldUpdateOperationsInput = {
+    set?: $Enums.VehicleType
+  }
+
+  export type EnumTripStatusFieldUpdateOperationsInput = {
+    set?: $Enums.TripStatus
+  }
+
+  export type UserUpdateOneRequiredWithoutTripsAsPassengerNestedInput = {
+    create?: XOR<UserCreateWithoutTripsAsPassengerInput, UserUncheckedCreateWithoutTripsAsPassengerInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTripsAsPassengerInput
+    upsert?: UserUpsertWithoutTripsAsPassengerInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTripsAsPassengerInput, UserUpdateWithoutTripsAsPassengerInput>, UserUncheckedUpdateWithoutTripsAsPassengerInput>
+  }
+
+  export type UserUpdateOneWithoutTripsAsDriverNestedInput = {
+    create?: XOR<UserCreateWithoutTripsAsDriverInput, UserUncheckedCreateWithoutTripsAsDriverInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTripsAsDriverInput
+    upsert?: UserUpsertWithoutTripsAsDriverInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTripsAsDriverInput, UserUpdateWithoutTripsAsDriverInput>, UserUncheckedUpdateWithoutTripsAsDriverInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -19658,6 +23195,40 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type NestedEnumVehicleTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.VehicleType | EnumVehicleTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.VehicleType[] | ListEnumVehicleTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VehicleType[] | ListEnumVehicleTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumVehicleTypeFilter<$PrismaModel> | $Enums.VehicleType
+  }
+
+  export type NestedEnumTripStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TripStatus | EnumTripStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTripStatusFilter<$PrismaModel> | $Enums.TripStatus
+  }
+
+  export type NestedEnumVehicleTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.VehicleType | EnumVehicleTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.VehicleType[] | ListEnumVehicleTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VehicleType[] | ListEnumVehicleTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumVehicleTypeWithAggregatesFilter<$PrismaModel> | $Enums.VehicleType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumVehicleTypeFilter<$PrismaModel>
+    _max?: NestedEnumVehicleTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumTripStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TripStatus | EnumTripStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTripStatusWithAggregatesFilter<$PrismaModel> | $Enums.TripStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTripStatusFilter<$PrismaModel>
+    _max?: NestedEnumTripStatusFilter<$PrismaModel>
+  }
+
   export type RideCreateWithoutDriverInput = {
     id?: string
     origin: string
@@ -19744,6 +23315,9 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     ride: RideCreateNestedOneWithoutBookingsInput
@@ -19757,6 +23331,9 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     transactions?: TransactionUncheckedCreateNestedManyWithoutBookingInput
@@ -19769,6 +23346,134 @@ export namespace Prisma {
 
   export type BookingCreateManyPassengerInputEnvelope = {
     data: BookingCreateManyPassengerInput | BookingCreateManyPassengerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TripRequestCreateWithoutPassengerInput = {
+    id?: string
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    driver?: UserCreateNestedOneWithoutTripsAsDriverInput
+  }
+
+  export type TripRequestUncheckedCreateWithoutPassengerInput = {
+    id?: string
+    driverId?: string | null
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TripRequestCreateOrConnectWithoutPassengerInput = {
+    where: TripRequestWhereUniqueInput
+    create: XOR<TripRequestCreateWithoutPassengerInput, TripRequestUncheckedCreateWithoutPassengerInput>
+  }
+
+  export type TripRequestCreateManyPassengerInputEnvelope = {
+    data: TripRequestCreateManyPassengerInput | TripRequestCreateManyPassengerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TripRequestCreateWithoutDriverInput = {
+    id?: string
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    passenger: UserCreateNestedOneWithoutTripsAsPassengerInput
+  }
+
+  export type TripRequestUncheckedCreateWithoutDriverInput = {
+    id?: string
+    passengerId: string
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TripRequestCreateOrConnectWithoutDriverInput = {
+    where: TripRequestWhereUniqueInput
+    create: XOR<TripRequestCreateWithoutDriverInput, TripRequestUncheckedCreateWithoutDriverInput>
+  }
+
+  export type TripRequestCreateManyDriverInputEnvelope = {
+    data: TripRequestCreateManyDriverInput | TripRequestCreateManyDriverInput[]
     skipDuplicates?: boolean
   }
 
@@ -20081,8 +23786,74 @@ export namespace Prisma {
     totalPrice?: FloatFilter<"Booking"> | number
     status?: EnumBookingStatusFilter<"Booking"> | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
+    passengerLat?: FloatNullableFilter<"Booking"> | number | null
+    passengerLng?: FloatNullableFilter<"Booking"> | number | null
+    pickupAddress?: StringNullableFilter<"Booking"> | string | null
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
+  }
+
+  export type TripRequestUpsertWithWhereUniqueWithoutPassengerInput = {
+    where: TripRequestWhereUniqueInput
+    update: XOR<TripRequestUpdateWithoutPassengerInput, TripRequestUncheckedUpdateWithoutPassengerInput>
+    create: XOR<TripRequestCreateWithoutPassengerInput, TripRequestUncheckedCreateWithoutPassengerInput>
+  }
+
+  export type TripRequestUpdateWithWhereUniqueWithoutPassengerInput = {
+    where: TripRequestWhereUniqueInput
+    data: XOR<TripRequestUpdateWithoutPassengerInput, TripRequestUncheckedUpdateWithoutPassengerInput>
+  }
+
+  export type TripRequestUpdateManyWithWhereWithoutPassengerInput = {
+    where: TripRequestScalarWhereInput
+    data: XOR<TripRequestUpdateManyMutationInput, TripRequestUncheckedUpdateManyWithoutPassengerInput>
+  }
+
+  export type TripRequestScalarWhereInput = {
+    AND?: TripRequestScalarWhereInput | TripRequestScalarWhereInput[]
+    OR?: TripRequestScalarWhereInput[]
+    NOT?: TripRequestScalarWhereInput | TripRequestScalarWhereInput[]
+    id?: StringFilter<"TripRequest"> | string
+    passengerId?: StringFilter<"TripRequest"> | string
+    driverId?: StringNullableFilter<"TripRequest"> | string | null
+    originAddress?: StringFilter<"TripRequest"> | string
+    originLat?: FloatFilter<"TripRequest"> | number
+    originLng?: FloatFilter<"TripRequest"> | number
+    destAddress?: StringFilter<"TripRequest"> | string
+    destLat?: FloatFilter<"TripRequest"> | number
+    destLng?: FloatFilter<"TripRequest"> | number
+    vehicleType?: EnumVehicleTypeFilter<"TripRequest"> | $Enums.VehicleType
+    estimatedDistance?: FloatFilter<"TripRequest"> | number
+    estimatedDuration?: FloatFilter<"TripRequest"> | number
+    estimatedPrice?: FloatFilter<"TripRequest"> | number
+    finalPrice?: FloatNullableFilter<"TripRequest"> | number | null
+    status?: EnumTripStatusFilter<"TripRequest"> | $Enums.TripStatus
+    matchAttempts?: IntFilter<"TripRequest"> | number
+    maxAttempts?: IntFilter<"TripRequest"> | number
+    matchRadius?: FloatFilter<"TripRequest"> | number
+    matchedAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    startedAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    cancelledAt?: DateTimeNullableFilter<"TripRequest"> | Date | string | null
+    cancelReason?: StringNullableFilter<"TripRequest"> | string | null
+    createdAt?: DateTimeFilter<"TripRequest"> | Date | string
+    updatedAt?: DateTimeFilter<"TripRequest"> | Date | string
+  }
+
+  export type TripRequestUpsertWithWhereUniqueWithoutDriverInput = {
+    where: TripRequestWhereUniqueInput
+    update: XOR<TripRequestUpdateWithoutDriverInput, TripRequestUncheckedUpdateWithoutDriverInput>
+    create: XOR<TripRequestCreateWithoutDriverInput, TripRequestUncheckedCreateWithoutDriverInput>
+  }
+
+  export type TripRequestUpdateWithWhereUniqueWithoutDriverInput = {
+    where: TripRequestWhereUniqueInput
+    data: XOR<TripRequestUpdateWithoutDriverInput, TripRequestUncheckedUpdateWithoutDriverInput>
+  }
+
+  export type TripRequestUpdateManyWithWhereWithoutDriverInput = {
+    where: TripRequestScalarWhereInput
+    data: XOR<TripRequestUpdateManyMutationInput, TripRequestUncheckedUpdateManyWithoutDriverInput>
   }
 
   export type ReviewUpsertWithWhereUniqueWithoutReviewerInput = {
@@ -20324,6 +24095,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -20352,6 +24125,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -20430,6 +24205,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -20458,6 +24235,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -20528,6 +24307,9 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     ride: RideCreateNestedOneWithoutBookingsInput
@@ -20542,6 +24324,9 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -20597,6 +24382,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ride?: RideUpdateOneRequiredWithoutBookingsNestedInput
@@ -20611,6 +24399,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -20709,6 +24500,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -20737,6 +24530,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -20770,6 +24565,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -20798,6 +24595,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -20923,6 +24722,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -20951,6 +24752,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -20990,6 +24793,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -21018,6 +24823,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -21046,6 +24853,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -21074,6 +24883,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -21118,6 +24929,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -21146,6 +24959,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -21174,6 +24989,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -21202,6 +25019,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -21246,6 +25065,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -21274,6 +25095,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -21301,6 +25124,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -21329,6 +25154,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -21350,6 +25177,9 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     passenger: UserCreateNestedOneWithoutBookingsInput
@@ -21363,6 +25193,9 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     transactions?: TransactionUncheckedCreateNestedManyWithoutBookingInput
@@ -21465,6 +25298,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -21493,6 +25328,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -21644,6 +25481,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -21672,6 +25511,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -21831,6 +25672,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -21859,6 +25702,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -21979,6 +25824,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -22007,6 +25854,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -22040,6 +25889,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -22068,6 +25919,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -22193,6 +26046,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -22221,6 +26076,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -22260,6 +26117,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -22288,6 +26147,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -22316,6 +26177,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
@@ -22344,6 +26207,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
     reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
     refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
@@ -22388,6 +26253,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
@@ -22416,6 +26283,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
     reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
     refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -22423,6 +26292,278 @@ export namespace Prisma {
     sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
     wallet?: WalletUncheckedUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutTripsAsPassengerInput = {
+    id?: string
+    email: string
+    password: string
+    firstName?: string | null
+    lastName?: string | null
+    phone?: string | null
+    avatarUrl?: string | null
+    bio?: string | null
+    role?: $Enums.Role
+    driverRating?: number
+    driverRatingCount?: number
+    passengerRating?: number
+    passengerRatingCount?: number
+    isDriverVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
+    reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
+    reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
+    refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    sentMessages?: MessageCreateNestedManyWithoutSenderInput
+    receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
+    wallet?: WalletCreateNestedOneWithoutUserInput
+    driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutTripsAsPassengerInput = {
+    id?: string
+    email: string
+    password: string
+    firstName?: string | null
+    lastName?: string | null
+    phone?: string | null
+    avatarUrl?: string | null
+    bio?: string | null
+    role?: $Enums.Role
+    driverRating?: number
+    driverRatingCount?: number
+    passengerRating?: number
+    passengerRatingCount?: number
+    isDriverVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
+    reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
+    reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
+    refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
+    wallet?: WalletUncheckedCreateNestedOneWithoutUserInput
+    driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutTripsAsPassengerInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTripsAsPassengerInput, UserUncheckedCreateWithoutTripsAsPassengerInput>
+  }
+
+  export type UserCreateWithoutTripsAsDriverInput = {
+    id?: string
+    email: string
+    password: string
+    firstName?: string | null
+    lastName?: string | null
+    phone?: string | null
+    avatarUrl?: string | null
+    bio?: string | null
+    role?: $Enums.Role
+    driverRating?: number
+    driverRatingCount?: number
+    passengerRating?: number
+    passengerRatingCount?: number
+    isDriverVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
+    reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
+    refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    sentMessages?: MessageCreateNestedManyWithoutSenderInput
+    receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
+    wallet?: WalletCreateNestedOneWithoutUserInput
+    driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutTripsAsDriverInput = {
+    id?: string
+    email: string
+    password: string
+    firstName?: string | null
+    lastName?: string | null
+    phone?: string | null
+    avatarUrl?: string | null
+    bio?: string | null
+    role?: $Enums.Role
+    driverRating?: number
+    driverRatingCount?: number
+    passengerRating?: number
+    passengerRatingCount?: number
+    isDriverVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
+    reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
+    refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
+    wallet?: WalletUncheckedCreateNestedOneWithoutUserInput
+    driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutTripsAsDriverInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTripsAsDriverInput, UserUncheckedCreateWithoutTripsAsDriverInput>
+  }
+
+  export type UserUpsertWithoutTripsAsPassengerInput = {
+    update: XOR<UserUpdateWithoutTripsAsPassengerInput, UserUncheckedUpdateWithoutTripsAsPassengerInput>
+    create: XOR<UserCreateWithoutTripsAsPassengerInput, UserUncheckedCreateWithoutTripsAsPassengerInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTripsAsPassengerInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTripsAsPassengerInput, UserUncheckedUpdateWithoutTripsAsPassengerInput>
+  }
+
+  export type UserUpdateWithoutTripsAsPassengerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    driverRating?: FloatFieldUpdateOperationsInput | number
+    driverRatingCount?: IntFieldUpdateOperationsInput | number
+    passengerRating?: FloatFieldUpdateOperationsInput | number
+    passengerRatingCount?: IntFieldUpdateOperationsInput | number
+    isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
+    reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
+    reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
+    refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    sentMessages?: MessageUpdateManyWithoutSenderNestedInput
+    receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
+    wallet?: WalletUpdateOneWithoutUserNestedInput
+    driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTripsAsPassengerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    driverRating?: FloatFieldUpdateOperationsInput | number
+    driverRatingCount?: IntFieldUpdateOperationsInput | number
+    passengerRating?: FloatFieldUpdateOperationsInput | number
+    passengerRatingCount?: IntFieldUpdateOperationsInput | number
+    isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
+    reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
+    reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
+    refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
+    wallet?: WalletUncheckedUpdateOneWithoutUserNestedInput
+    driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserUpsertWithoutTripsAsDriverInput = {
+    update: XOR<UserUpdateWithoutTripsAsDriverInput, UserUncheckedUpdateWithoutTripsAsDriverInput>
+    create: XOR<UserCreateWithoutTripsAsDriverInput, UserUncheckedCreateWithoutTripsAsDriverInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTripsAsDriverInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTripsAsDriverInput, UserUncheckedUpdateWithoutTripsAsDriverInput>
+  }
+
+  export type UserUpdateWithoutTripsAsDriverInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    driverRating?: FloatFieldUpdateOperationsInput | number
+    driverRatingCount?: IntFieldUpdateOperationsInput | number
+    passengerRating?: FloatFieldUpdateOperationsInput | number
+    passengerRatingCount?: IntFieldUpdateOperationsInput | number
+    isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
+    reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
+    refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    sentMessages?: MessageUpdateManyWithoutSenderNestedInput
+    receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
+    wallet?: WalletUpdateOneWithoutUserNestedInput
+    driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTripsAsDriverInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    driverRating?: FloatFieldUpdateOperationsInput | number
+    driverRatingCount?: IntFieldUpdateOperationsInput | number
+    passengerRating?: FloatFieldUpdateOperationsInput | number
+    passengerRatingCount?: IntFieldUpdateOperationsInput | number
+    isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
+    reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
+    refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
+    wallet?: WalletUncheckedUpdateOneWithoutUserNestedInput
+    driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
   }
 
   export type RideCreateManyDriverInput = {
@@ -22464,6 +26605,63 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TripRequestCreateManyPassengerInput = {
+    id?: string
+    driverId?: string | null
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TripRequestCreateManyDriverInput = {
+    id?: string
+    passengerId: string
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22631,6 +26829,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ride?: RideUpdateOneRequiredWithoutBookingsNestedInput
@@ -22644,6 +26845,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     transactions?: TransactionUncheckedUpdateManyWithoutBookingNestedInput
@@ -22656,6 +26860,171 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TripRequestUpdateWithoutPassengerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    driver?: UserUpdateOneWithoutTripsAsDriverNestedInput
+  }
+
+  export type TripRequestUncheckedUpdateWithoutPassengerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    driverId?: NullableStringFieldUpdateOperationsInput | string | null
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TripRequestUncheckedUpdateManyWithoutPassengerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    driverId?: NullableStringFieldUpdateOperationsInput | string | null
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TripRequestUpdateWithoutDriverInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    passenger?: UserUpdateOneRequiredWithoutTripsAsPassengerNestedInput
+  }
+
+  export type TripRequestUncheckedUpdateWithoutDriverInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    passengerId?: StringFieldUpdateOperationsInput | string
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TripRequestUncheckedUpdateManyWithoutDriverInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    passengerId?: StringFieldUpdateOperationsInput | string
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -22880,6 +27249,9 @@ export namespace Prisma {
     totalPrice: number
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -22909,6 +27281,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     passenger?: UserUpdateOneRequiredWithoutBookingsNestedInput
@@ -22922,6 +27297,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     transactions?: TransactionUncheckedUpdateManyWithoutBookingNestedInput
@@ -22934,6 +27312,9 @@ export namespace Prisma {
     totalPrice?: FloatFieldUpdateOperationsInput | number
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -23112,6 +27493,14 @@ export namespace Prisma {
      * @deprecated Use LocationDefaultArgs instead
      */
     export type LocationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LocationDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use TripRequestDefaultArgs instead
+     */
+    export type TripRequestArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = TripRequestDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use PricingConfigDefaultArgs instead
+     */
+    export type PricingConfigArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PricingConfigDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

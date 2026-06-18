@@ -63,6 +63,27 @@ enum VerificationStatus {
   REJECTED
 }
 
+// Trạng thái của TripRequest (luồng Ride-Hailing)
+// Tách riêng khỏi RideStatus vì lifecycle hoàn toàn khác:
+// Ride (Carpooling): SCHEDULED → ONGOING → COMPLETED
+// Trip (Ride-Hailing): PENDING → MATCHING → ACCEPTED → ARRIVING → IN_PROGRESS → COMPLETED
+enum TripStatus {
+  PENDING // Khách vừa gửi yêu cầu, chờ hệ thống xử lý
+  MATCHING // Waterfall đang phát cho tài xế lần lượt
+  ACCEPTED // Tài xế đã nhận cuốc
+  ARRIVING // Tài xế đang trên đường tới điểm đón
+  IN_PROGRESS // Đang trong chuyến đi
+  COMPLETED // Hoàn thành
+  CANCELLED // Bị hủy bởi khách hoặc tài xế
+  NO_DRIVER // Hết danh sách tài xế trong bán kính, không ai nhận
+}
+
+// Loại phương tiện — dùng chung cho cả TripRequest và PricingConfig
+enum VehicleType {
+  BIKE
+  CAR
+}
+
 model User {
   id        String  @id @default(uuid())
   email     String  @unique
@@ -86,9 +107,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  ridesAsDriver      Ride[]              @relation("DriverRides")
-  bookings           Booking[]           @relation("PassengerBookings")
+  // Relations — Carpooling
+  ridesAsDriver Ride[]    @relation("DriverRides")
+  bookings      Booking[] @relation("PassengerBookings")
+
+  // Relations — Ride-Hailing
+  tripsAsPassenger TripRequest[] @relation("PassengerTrips")
+  tripsAsDriver    TripRequest[] @relation("DriverTrips")
+
+  // Relations — Common
   reviewsSent        Review[]            @relation("ReviewsSent")
   reviewsReceived    Review[]            @relation("ReviewsReceived")
   refreshTokens      RefreshToken[]
@@ -223,8 +250,16 @@ model Booking {
   status        BookingStatus @default(PENDING)
   paymentStatus PaymentStatus @default(UNPAID)
   transactions  Transaction[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+
+  // Toạ độ đón khách — chỉ có giá trị khi ghép vào chuyến đang ONGOING
+  // Khi ride ở trạng thái SCHEDULED, điểm đón = origin của ride
+  // Khi ride đang ONGOING, điểm đón là vị trí hiện tại của hành khách
+  passengerLat  Float?
+  passengerLng  Float?
+  pickupAddress String? // Địa chỉ đón chi tiết để hiển thị cho tài xế
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Review {
@@ -289,4 +324,78 @@ model Location {
   longitude Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─── Ride-Hailing: Yêu cầu đặt xe từ hành khách ────────────────────────────
+// Tách biệt hoàn toàn với bảng Ride (Carpooling):
+// - Ride: Tài xế chủ động tạo lịch trình, hành khách đặt chỗ (Booking)
+// - TripRequest: Hành khách chủ động gọi xe, hệ thống tìm tài xế (Waterfall Matching)
+model TripRequest {
+  id String @id @default(uuid())
+
+  // Hành khách gọi xe — luôn có
+  passengerId String
+  passenger   User   @relation("PassengerTrips", fields: [passengerId], references: [id])
+
+  // Tài xế nhận cuốc — null cho đến khi có tài xế accept
+  driverId String?
+  driver   User?   @relation("DriverTrips", fields: [driverId], references: [id])
+
+  // Điểm đón
+  originAddress String
+  originLat     Float
+  originLng     Float
+
+  // Điểm đến
+  destAddress String
+  destLat     Float
+  destLng     Float
+
+  // Loại phương tiện yêu cầu
+  vehicleType VehicleType @default(BIKE)
+
+  // Kết quả tính toán từ Goong API + PricingConfig
+  estimatedDistance Float // Khoảng cách ước tính (km)
+  estimatedDuration Float // Thời gian ước tính (phút)
+  estimatedPrice    Float // Giá tiền ước tính (VND)
+  finalPrice        Float? // Giá cuối cùng (có thể khác nếu đường đi thực tế khác)
+
+  // Trạng thái lifecycle
+  status TripStatus @default(PENDING)
+
+  // Tracking quá trình matching Waterfall
+  matchAttempts Int   @default(0) // Số lần đã phát cho tài xế
+  maxAttempts   Int   @default(10) // Giới hạn số tài xế thử trước khi NO_DRIVER
+  matchRadius   Float @default(5) // Bán kính tìm kiếm (km)
+
+  // Thời điểm quan trọng
+  matchedAt    DateTime? // Khi tài xế accept
+  startedAt    DateTime? // Khi bắt đầu chuyến (tài xế đón được khách)
+  completedAt  DateTime? // Khi hoàn thành
+  cancelledAt  DateTime? // Khi bị hủy
+  cancelReason String? // Lý do hủy
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Index cho query phổ biến
+  @@index([passengerId, status]) // Khách xem trip đang active
+  @@index([driverId, status]) // Tài xế xem trip đang active
+  @@index([status, createdAt]) // Admin dashboard, thống kê
+  @@index([originLat, originLng]) // Tìm kiếm theo vị trí (fallback khi Redis down)
+}
+
+// ─── Cấu hình giá — Admin quản lý qua Dashboard ────────────────────────────
+// Mỗi VehicleType chỉ có 1 config active tại mỗi thời điểm
+// Công thức: totalPrice = baseFare + max(0, distance - baseDistance) * pricePerKm
+model PricingConfig {
+  id           String      @id @default(uuid())
+  vehicleType  VehicleType @unique // BIKE hoặc CAR — unique để đảm bảo 1 config/loại xe
+  baseFare     Float // Giá mở cửa (VND), VD: 12000
+  pricePerKm   Float // Giá mỗi km (VND), VD: 4500
+  baseDistance Float       @default(2) // Km đầu tiên đã tính trong baseFare, VD: 2km
+  minFare      Float       @default(0) // Giá tối thiểu (nếu khoảng cách quá ngắn)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 }

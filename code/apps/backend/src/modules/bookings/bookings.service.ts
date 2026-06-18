@@ -3,12 +3,22 @@ import { CreateBookingInput, UpdateBookingStatusInput } from '@repo/shared';
 import { BookingStatus } from '@repo/database';
 import { AppError } from '../../shared/errors/AppError';
 import { NotificationsService } from '../notifications/notifications.service';
+import { getDriverLocation } from '../../shared/lib/redis';
+import { getIO } from '../../shared/socket/socket';
+import { RouteMatchingService } from './route-matching.service';
+
+/** Ngưỡng lệch đường tối đa (km) — hành khách cách tuyến đường tài xế */
+const MAX_DETOUR_KM = 2;
+/** Ngưỡng lệch điểm đến tối đa (km) — điểm đến khách cách điểm đến tài xế */
+const MAX_DEST_DEVIATION_KM = 5;
+/** Thời gian chờ tài xế phản hồi popup (ms) */
+const DRIVER_CONFIRM_TIMEOUT_MS = 30_000;
 
 export class BookingsService {
   static async createBooking(passengerId: string, data: CreateBookingInput) {
     const { rideId, seats } = data;
 
-    // 1. Lấy chuyến đi kèm thông tin tài xế
+    // 1. Lấy chuyến đi kèm thông tin tài xế và điểm đến
     const ride = await prisma.ride.findUnique({
       where: { id: rideId },
       include: {
@@ -26,8 +36,8 @@ export class BookingsService {
       );
     }
 
-    // 3. Chuyến đi phải đang ở trạng thái SCHEDULED (chưa khởi hành)
-    if (ride.status !== 'SCHEDULED') {
+    // 3. Chuyến đi phải SCHEDULED hoặc ONGOING còn ghế trống
+    if (ride.status !== 'SCHEDULED' && ride.status !== 'ONGOING') {
       throw new AppError('Chuyến đi này không còn nhận đặt chỗ nữa', 400);
     }
 
@@ -55,7 +65,7 @@ export class BookingsService {
       );
     }
 
-    // Kiểm tra xem hành khách có bất kỳ chuyến đi nào đã được xác nhận (CONFIRMED) và chưa hoàn thành hay chưa
+    // Kiểm tra hành khách có chuyến CONFIRMED đang active không
     const activeBooking = await prisma.booking.findFirst({
       where: {
         passengerId,
@@ -73,9 +83,25 @@ export class BookingsService {
       );
     }
 
-    // 6. Time Conflict — kiểm tra hành khách không trùng lịch
-    // Dùng findMany thay vì findFirst — findFirst có thể trả về chuyến không trùng
-    // trong khi chuyến khác trong kết quả lại trùng (Prisma không tính được estimatedEndTime trong WHERE)
+    // ─── Nhánh ONGOING: kiểm tra "thuận đường" ──────────────────────────────
+    if (ride.status === 'ONGOING') {
+      return BookingsService.createOngoingBooking(passengerId, data, ride, seats);
+    }
+
+    // ─── Nhánh SCHEDULED: logic cũ với kiểm tra trùng lịch ─────────────────
+    return BookingsService.createScheduledBooking(passengerId, data, ride, seats);
+  }
+
+  /**
+   * Tạo booking cho chuyến đang SCHEDULED — giữ nguyên logic cũ (có kiểm tra trùng lịch).
+   */
+  private static async createScheduledBooking(
+    passengerId: string,
+    data: CreateBookingInput,
+    ride: any,
+    seats: number
+  ) {
+    const { rideId } = data;
     const departureTime = ride.departureTime;
     const durationMs = (ride.duration ?? 60) * 60 * 1000;
     const estimatedEndTime = new Date(departureTime.getTime() + durationMs);
@@ -89,7 +115,6 @@ export class BookingsService {
       },
     });
 
-    // Overlap logic đầy đủ: existingStart < newEnd AND existingEnd > newStart
     const driverConflict = candidateDriverConflicts.find((r) => {
       const rideEnd = new Date(
         r.departureTime.getTime() + (r.duration ?? 60) * 60 * 1000
@@ -133,7 +158,7 @@ export class BookingsService {
       );
     }
 
-    // 7. Tạo booking với trạng thái PENDING (chờ tài xế duyệt)
+    // Tạo booking với trạng thái PENDING (chờ tài xế duyệt)
     const booking = await prisma.booking.create({
       data: {
         rideId,
@@ -148,7 +173,7 @@ export class BookingsService {
       },
     });
 
-    // 7. Thông báo cho tài xế (background — không chặn response trả về client)
+    // Thông báo cho tài xế (background — không chặn response)
     NotificationsService.createNotification(
       ride.driverId,
       'Yêu cầu đặt chỗ mới',
@@ -157,6 +182,314 @@ export class BookingsService {
     ).catch((err) => console.error('[Notification Error]:', err));
 
     return booking;
+  }
+
+  /**
+   * Tạo booking cho chuyến đang ONGOING — có kiểm tra "thuận đường" + popup realtime.
+   *
+   * Luồng:
+   * 1. Kiểm tra hành khách cung cấp toạ độ đón
+   * 2. Lấy vị trí hiện tại tài xế từ Redis
+   * 3. Kiểm tra "thuận đường" bằng RouteMatchingService
+   * 4. Tạo Booking PENDING
+   * 5. Emit Socket popup cho tài xế (timeout 30 giây)
+   */
+  private static async createOngoingBooking(
+    passengerId: string,
+    data: CreateBookingInput,
+    ride: any,
+    seats: number
+  ) {
+    const { rideId } = data;
+
+    // Hành khách PHẢI cung cấp toạ độ khi đặt vào chuyến ONGOING
+    if (data.passengerLat === undefined || data.passengerLng === undefined) {
+      throw new AppError(
+        'Vui lòng chia sẻ vị trí hiện tại của bạn để ghép vào chuyến đang diễn ra',
+        400
+      );
+    }
+
+    // Ride ONGOING phải có điểm đến có toạ độ
+    if (ride.destinationLat === null || ride.destinationLng === null) {
+      throw new AppError(
+        'Chuyến đi này chưa có thông tin toạ độ điểm đến, không thể ghép',
+        400
+      );
+    }
+
+    // Lấy vị trí hiện tại của tài xế từ Redis Geo Index
+    const driverLocation = await getDriverLocation(ride.driverId);
+
+    if (!driverLocation) {
+      throw new AppError(
+        'Tài xế chưa bật chia sẻ vị trí GPS. Không thể ghép chuyến lúc này.',
+        400
+      );
+    }
+
+    // Kiểm tra "thuận đường" bằng Haversine + Point-to-Segment
+    const routeCheck = RouteMatchingService.checkRoute({
+      driverCurrentLat: driverLocation.latitude,
+      driverCurrentLng: driverLocation.longitude,
+      driverDestLat: ride.destinationLat,
+      driverDestLng: ride.destinationLng,
+      passengerPickupLat: data.passengerLat,
+      passengerPickupLng: data.passengerLng,
+      // Hành khách không cung cấp điểm đến riêng → dùng điểm đến của ride làm fallback
+      // Frontend có thể gửi thêm trường này trong tương lai
+      passengerDestLat: ride.destinationLat,
+      passengerDestLng: ride.destinationLng,
+      maxDetourKm: MAX_DETOUR_KM,
+      maxDestDeviationKm: MAX_DEST_DEVIATION_KM,
+    });
+
+    if (!routeCheck.isOnRoute) {
+      const reason =
+        routeCheck.detourKm > MAX_DETOUR_KM
+          ? `Vị trí của bạn lệch khỏi tuyến đường tài xế ${routeCheck.detourKm.toFixed(1)}km (giới hạn ${MAX_DETOUR_KM}km)`
+          : `Điểm đến của bạn cách điểm đến tài xế ${routeCheck.destDeviationKm.toFixed(1)}km (giới hạn ${MAX_DEST_DEVIATION_KM}km)`;
+
+      throw new AppError(`Không thể ghép chuyến: ${reason}`, 400);
+    }
+
+    // Tạo Booking PENDING với thông tin toạ độ đón
+    const booking = await prisma.booking.create({
+      data: {
+        rideId,
+        passengerId,
+        seats,
+        totalPrice: ride.pricePerSeat * seats,
+        status: BookingStatus.PENDING,
+        passengerLat: data.passengerLat,
+        passengerLng: data.passengerLng,
+        pickupAddress: data.pickupAddress ?? null,
+      },
+      include: {
+        ride: { select: { origin: true, destination: true } },
+        passenger: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+            passengerRating: true,
+            passengerRatingCount: true,
+          },
+        },
+      },
+    });
+
+    // Emit popup realtime tới tài xế — không await (không chặn response trả khách)
+    // Tài xế có DRIVER_CONFIRM_TIMEOUT_MS giây để phản hồi
+    BookingsService.notifyDriverForOngoingBooking(
+      ride.driverId,
+      booking,
+      routeCheck.detourKm,
+      DRIVER_CONFIRM_TIMEOUT_MS
+    ).catch((err) =>
+      console.error('[BookingsService] notifyDriverForOngoingBooking error:', err)
+    );
+
+    return booking;
+  }
+
+  /**
+   * Gửi popup realtime cho tài xế khi có khách muốn ghép vào chuyến ONGOING.
+   * Nếu tài xế không phản hồi trong timeout → tự động reject.
+   *
+   * Chạy hoàn toàn bất đồng bộ — không block response trả về hành khách.
+   */
+  private static async notifyDriverForOngoingBooking(
+    driverId: string,
+    booking: any,
+    detourKm: number,
+    timeoutMs: number
+  ): Promise<void> {
+    try {
+      const io = getIO();
+
+      // Phát popup cho tài xế
+      io.to(driverId).emit('booking:new_request', {
+        bookingId: booking.id,
+        passenger: booking.passenger,
+        pickupLat: booking.passengerLat,
+        pickupLng: booking.passengerLng,
+        pickupAddress: booking.pickupAddress,
+        seats: booking.seats,
+        totalPrice: booking.totalPrice,
+        detourKm: Math.round(detourKm * 10) / 10,
+        timeoutSeconds: Math.round(timeoutMs / 1000),
+        destination: booking.ride.destination,
+      });
+
+      // Đợi phản hồi bằng cách poll DB mỗi giây
+      const pollIntervalMs = 1000;
+      const maxPolls = timeoutMs / pollIntervalMs;
+
+      for (let i = 0; i < maxPolls; i++) {
+        await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+
+        const currentBooking = await prisma.booking.findUnique({
+          where: { id: booking.id },
+          select: { status: true },
+        });
+
+        if (!currentBooking) return; // Booking bị xoá
+
+        // Tài xế đã xử lý (accept hoặc reject) → dừng chờ
+        if (
+          currentBooking.status === BookingStatus.CONFIRMED ||
+          currentBooking.status === BookingStatus.REJECTED
+        ) {
+          return;
+        }
+
+        // Hành khách tự hủy
+        if (currentBooking.status === BookingStatus.CANCELLED) {
+          return;
+        }
+      }
+
+      // Timeout: tài xế không phản hồi → tự động reject để bảo vệ hành khách
+      console.log(
+        `[BookingsService] Booking ${booking.id}: Driver timeout → auto reject`
+      );
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: { status: BookingStatus.REJECTED },
+      });
+
+      // Thông báo hành khách tài xế không phản hồi
+      try {
+        io.to(booking.passenger.id).emit('booking:rejected', {
+          bookingId: booking.id,
+          reason: 'Tài xế không phản hồi trong thời gian quy định',
+        });
+      } catch (socketErr) {
+        console.warn('[BookingsService] Socket emit to passenger failed:', socketErr);
+      }
+    } catch (err) {
+      console.error('[BookingsService] notifyDriverForOngoingBooking failed:', err);
+    }
+  }
+
+  /**
+   * Tài xế xác nhận ghép khách khi đang ONGOING — gọi từ Socket handler.
+   * Atomic: giảm ghế + CONFIRMED trong cùng 1 transaction.
+   */
+  static async handleDriverBookingConfirm(driverId: string, bookingId: string) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        ride: true,
+        passenger: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+
+    if (!booking) throw new AppError('Không tìm thấy yêu cầu đặt chỗ', 404);
+    if (booking.ride.driverId !== driverId) {
+      throw new AppError('Bạn không có quyền xác nhận yêu cầu này', 403);
+    }
+    if (booking.status !== BookingStatus.PENDING) {
+      throw new AppError('Yêu cầu này không còn ở trạng thái chờ duyệt', 400);
+    }
+
+    // Atomic: kiểm tra ghế lần cuối + giảm ghế + cập nhật status
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      const currentRide = await tx.ride.findUnique({
+        where: { id: booking.rideId },
+      });
+
+      if (!currentRide || currentRide.availableSeats < booking.seats) {
+        throw new AppError('Không đủ số ghế trống để xác nhận', 400);
+      }
+
+      await tx.ride.update({
+        where: { id: booking.rideId },
+        data: { availableSeats: { decrement: booking.seats } },
+      });
+
+      return tx.booking.update({
+        where: { id: bookingId },
+        data: { status: BookingStatus.CONFIRMED },
+        include: {
+          passenger: {
+            select: { id: true, firstName: true, lastName: true, phone: true },
+          },
+        },
+      });
+    });
+
+    // Thông báo hành khách: đã được xác nhận + gửi vị trí tài xế để navigate
+    const driverLocation = await getDriverLocation(driverId);
+
+    try {
+      getIO().to(updatedBooking.passenger.id).emit('booking:confirmed', {
+        bookingId,
+        driverLat: driverLocation?.latitude ?? null,
+        driverLng: driverLocation?.longitude ?? null,
+        message: 'Tài xế đã xác nhận! Tài xế đang trên đường đến đón bạn.',
+      });
+    } catch (socketErr) {
+      console.warn('[BookingsService] Socket emit booking:confirmed failed:', socketErr);
+    }
+
+    // Thông báo push (background)
+    NotificationsService.createNotification(
+      updatedBooking.passenger.id,
+      'Yêu cầu đặt chỗ được xác nhận',
+      `Tài xế đã xác nhận ${booking.seats} ghế — ${booking.ride.origin} → ${booking.ride.destination}`,
+      'BOOKING_STATUS'
+    ).catch((err) => console.error('[Notification Error]:', err));
+
+    return updatedBooking;
+  }
+
+  /**
+   * Tài xế từ chối ghép khách khi đang ONGOING — gọi từ Socket handler.
+   */
+  static async handleDriverBookingReject(driverId: string, bookingId: string) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        ride: { select: { driverId: true, origin: true, destination: true } },
+        passenger: { select: { id: true } },
+      },
+    });
+
+    if (!booking) throw new AppError('Không tìm thấy yêu cầu đặt chỗ', 404);
+    if (booking.ride.driverId !== driverId) {
+      throw new AppError('Bạn không có quyền từ chối yêu cầu này', 403);
+    }
+    if (booking.status !== BookingStatus.PENDING) {
+      throw new AppError('Yêu cầu này không còn ở trạng thái chờ duyệt', 400);
+    }
+
+    const updatedBooking = await prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: BookingStatus.REJECTED },
+    });
+
+    // Thông báo hành khách
+    try {
+      getIO().to(booking.passenger.id).emit('booking:rejected', {
+        bookingId,
+        reason: 'Tài xế đã từ chối yêu cầu ghép chuyến',
+      });
+    } catch (socketErr) {
+      console.warn('[BookingsService] Socket emit booking:rejected failed:', socketErr);
+    }
+
+    NotificationsService.createNotification(
+      booking.passenger.id,
+      'Yêu cầu đặt chỗ bị từ chối',
+      `Rất tiếc, tài xế đã từ chối yêu cầu — ${booking.ride.origin} → ${booking.ride.destination}`,
+      'BOOKING_STATUS'
+    ).catch((err) => console.error('[Notification Error]:', err));
+
+    return updatedBooking;
   }
 
   static async updateBookingStatus(
@@ -365,7 +698,15 @@ export class BookingsService {
   static async getDriverBookings(userId: string) {
     return prisma.booking.findMany({
       where: { ride: { driverId: userId } },
-      include: {
+      select: {
+        id: true,
+        seats: true,
+        totalPrice: true,
+        status: true,
+        createdAt: true,
+        passengerLat: true,
+        passengerLng: true,
+        pickupAddress: true,
         ride: {
           select: {
             id: true,
@@ -388,15 +729,6 @@ export class BookingsService {
             avatarUrl: true,
           },
         },
-      },
-      select: {
-        id: true,
-        seats: true,
-        totalPrice: true,
-        status: true,
-        createdAt: true,
-        ride: true,
-        passenger: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -501,4 +833,3 @@ export class BookingsService {
     return null;
   }
 }
-
