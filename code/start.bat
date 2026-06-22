@@ -47,6 +47,8 @@ echo.
 echo [INFO] Dang khoi dong Backend + Web + Prisma...
 start cmd /c "title Prisma Studio & cd packages\database & npx prisma studio"
 start cmd /c "title Backend & cd apps\backend & npm run dev"
+start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
+start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
 start cmd /c "title Web Frontend & cd apps\web & npm run dev"
 timeout /t 3 /nobreak > nul
 start "" http://localhost:5001/api/docs/
@@ -60,6 +62,8 @@ echo.
 echo [INFO] Dang khoi dong tat ca cac dich vu...
 start cmd /c "title Prisma Studio & cd packages\database & npx prisma studio"
 start cmd /c "title Backend & cd apps\backend & npm run dev"
+start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
+start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
 start cmd /c "title Web Frontend & cd apps\web & npm run dev"
 start cmd /c "title Mobile & cd apps\mobile & npm run start"
 timeout /t 3 /nobreak > nul
@@ -73,6 +77,8 @@ goto menu
 echo.
 echo [INFO] Dang khoi dong Backend...
 start cmd /c "title Backend & cd apps\backend & npm run dev"
+start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
+start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
 timeout /t 3 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 echo [SUCCESS] Da khoi dong Backend.
@@ -125,6 +131,8 @@ goto menu
 :kill_all
 echo.
 echo [INFO] Dang dong tat ca cac dich vu (Node.js va cac cua so terminal)...
+taskkill /F /FI "WINDOWTITLE eq API Gateway*" /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Notification Service*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Backend*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Web Frontend*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Mobile*" /T > nul 2>&1

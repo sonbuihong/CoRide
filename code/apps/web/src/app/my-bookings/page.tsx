@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import apiClient from '../../lib/api-client';
-import { Loader2, Calendar, Users, DollarSign, XCircle, CheckCircle, Clock, Star } from 'lucide-react';
+import { Loader2, Calendar, Users, DollarSign, XCircle, CheckCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { ReviewDialog } from '../../components/rides/review-dialog';
@@ -36,7 +36,7 @@ export default function MyBookingsPage() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
   const { socket } = useSocket();
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       const response = await apiClient.get('/bookings/my');
       setBookings(response.data.bookings);
@@ -46,11 +46,11 @@ export default function MyBookingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
 
   // Real-time cập nhật danh sách đặt chỗ (hành khách không cần F5)
   useEffect(() => {
@@ -68,16 +68,51 @@ export default function MyBookingsPage() {
       }
     };
 
+    const handleRideChanged = (ride: { id?: string; rideId?: string; status?: Booking['ride']['status'] } = {}) => {
+      const rideId = ride.rideId ?? ride.id;
+      const rideStatus = ride.status;
+
+      if (!rideId || !rideStatus) {
+        fetchBookings();
+        return;
+      }
+
+      setBookings((prevBookings) =>
+        prevBookings.map((booking) =>
+          booking.rideId === rideId
+            ? { ...booking, ride: { ...booking.ride, status: rideStatus } }
+            : booking
+        )
+      );
+    };
+
+    const handleRideDeleted = (ride: { id?: string; rideId?: string } = {}) => {
+      const rideId = ride.rideId ?? ride.id;
+
+      if (!rideId) {
+        fetchBookings();
+        return;
+      }
+
+      setBookings((prevBookings) => prevBookings.filter((booking) => booking.rideId !== rideId));
+    };
+
     socket.on('booking:confirmed', handleBookingUpdate);
     socket.on('booking:rejected', handleBookingUpdate);
     socket.on('notification:new', handleNotification);
+    socket.on('ride:status', handleRideChanged);
+    socket.on('ride:updated', handleRideChanged);
+    socket.on('ride:deleted', handleRideDeleted);
 
     return () => {
       socket.off('booking:confirmed', handleBookingUpdate);
       socket.off('booking:rejected', handleBookingUpdate);
       socket.off('notification:new', handleNotification);
+      socket.off('ride:status', handleRideChanged);
+      socket.off('ride:updated', handleRideChanged);
+      socket.off('ride:deleted', handleRideDeleted);
     };
-  }, [socket]);
+  }, [socket, fetchBookings]);
 
   const handleCancelBooking = async (bookingId: string) => {
     if (!confirm('Bạn có chắc chắn muốn hủy yêu cầu đặt chỗ này không?')) return;
@@ -282,4 +317,3 @@ export default function MyBookingsPage() {
     </div>
   );
 }
-

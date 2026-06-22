@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { TripsService } from './trips.service';
 import { MatchingService } from '../matching/matching.service';
 import { createTripRequestSchema } from './trips.validation';
+import { getIO } from '../../shared/socket/socket';
 
 export class TripsController {
   /**
@@ -22,6 +23,13 @@ export class TripsController {
         console.error(`[Matching] Error for trip ${trip.id}:`, err);
       });
 
+      // 3. Phát event realtime cho Frontend
+      try {
+        getIO().to(userId).emit('trip:created', trip);
+      } catch (socketErr) {
+        console.error('[Socket] trip:created error:', socketErr);
+      }
+
       res.status(201).json({ success: true, data: trip });
     } catch (error) {
       next(error);
@@ -37,7 +45,17 @@ export class TripsController {
       const { id } = req.params;
       const { reason } = req.body;
 
-      const trip = await TripsService.cancelTrip(id, userId, reason);
+      const trip = await TripsService.cancelTrip(id as string, userId, reason as string);
+
+      try {
+        // Emit ID để Frontend xóa khỏi danh sách
+        getIO().to(trip.passengerId).emit('trip:deleted', { id: trip.id });
+        if (trip.driverId) {
+          getIO().to(trip.driverId).emit('trip:deleted', { id: trip.id });
+        }
+      } catch (socketErr) {
+        console.error('[Socket] trip:deleted error:', socketErr);
+      }
 
       res.json({ success: true, data: trip });
     } catch (error) {
@@ -82,7 +100,16 @@ export class TripsController {
       const { id } = req.params;
       const { status } = req.body;
 
-      const trip = await TripsService.updateTripStatus(id, userId, status);
+      const trip = await TripsService.updateTripStatus(id as string, userId, status as any);
+
+      try {
+        getIO().to(userId).emit('trip:updated', trip);
+        if (trip.passengerId && trip.passengerId !== userId) {
+          getIO().to(trip.passengerId).emit('trip:updated', trip);
+        }
+      } catch (socketErr) {
+        console.error('[Socket] trip:updated error:', socketErr);
+      }
 
       res.json({ success: true, data: trip });
     } catch (error) {

@@ -2,6 +2,7 @@ import http from 'http';
 import app from './app.js';
 import { initSocket } from './shared/socket/socket.js';
 import { connectRedis } from './shared/lib/redis.js';
+import { connectRabbitMQ } from './shared/lib/rabbitmq.js';
 
 const port = Number(process.env.PORT ?? '5001');
 
@@ -17,6 +18,11 @@ if (process.env.NODE_ENV !== 'test') {
   // Kết nối Redis — chạy async, server vẫn hoạt động nếu Redis chưa sẵn sàng
   connectRedis().catch((err) => {
     console.error('[Redis] Startup connection failed:', err.message);
+  });
+
+  // Kết nối RabbitMQ (Publisher)
+  connectRabbitMQ().catch((err) => {
+    console.error('[RabbitMQ] Startup connection failed:', err.message);
   });
 
   server.listen(port, () => {

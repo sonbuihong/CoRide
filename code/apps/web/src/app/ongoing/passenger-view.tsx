@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { User, Phone, MapPin, XCircle, Clock, ShieldCheck, Car, Map } from 'lucide-react';
+import { User, Phone, MapPin, XCircle, Clock, ShieldCheck, Car, Map, CheckCircle } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 
@@ -37,10 +37,20 @@ export default function PassengerView({ data, onRefresh, isExpanded = true, onEx
       statusText = 'Tài xế đã nhận. Đang chờ khởi hành';
       StatusIcon = ShieldCheck;
     } else if (ride.status === 'ONGOING') {
-      statusColor = 'text-[#34c759] bg-green-50';
-      statusText = 'Tài xế đang di chuyển';
-      StatusIcon = Car;
+      if (data.isPickedUp) {
+        statusColor = 'text-[#34c759] bg-green-50';
+        statusText = 'Bạn đang trên xe';
+        StatusIcon = Car;
+      } else {
+        statusColor = 'text-[#0071e3] bg-blue-50';
+        statusText = 'Tài xế đang đến đón bạn';
+        StatusIcon = MapPin;
+      }
     }
+  } else if (bookingStatus === 'COMPLETED') {
+    statusColor = 'text-gray-700 bg-gray-100';
+    statusText = 'Chuyến đi của bạn đã hoàn thành';
+    StatusIcon = CheckCircle;
   }
 
   return (

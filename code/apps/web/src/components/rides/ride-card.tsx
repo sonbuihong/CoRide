@@ -16,7 +16,11 @@ export interface Driver {
 export interface Ride {
   id: string;
   origin: string;
+  originLat: number | null;
+  originLng: number | null;
   destination: string;
+  destinationLat: number | null;
+  destinationLng: number | null;
   departureTime: string | Date;
   availableSeats: number;
   pricePerSeat: number;
@@ -25,9 +29,27 @@ export interface Ride {
 
 interface RideCardProps {
   ride: Ride;
+  userLocation?: { lat: number; lng: number } | null;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
-export function RideCard({ ride }: RideCardProps) {
+// Haversine formula to calculate distance in km
+function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+export function RideCard({ ride, userLocation, onMouseEnter, onMouseLeave }: RideCardProps) {
   const departureDate = new Date(ride.departureTime);
   const formattedDate = departureDate.toLocaleDateString('vi-VN', {
     weekday: 'short',
@@ -40,8 +62,22 @@ export function RideCard({ ride }: RideCardProps) {
     minute: '2-digit',
   });
 
+  let distanceToOrigin = null;
+  if (userLocation && ride.originLat && ride.originLng) {
+    distanceToOrigin = getDistanceFromLatLonInKm(
+      userLocation.lat,
+      userLocation.lng,
+      ride.originLat,
+      ride.originLng
+    );
+  }
+
   return (
-    <div className="group relative w-full bg-white dark:bg-[#1d1d1f] rounded-[24px] p-6 sm:p-8 transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-transparent hover:border-[rgba(0,0,0,0.04)] dark:hover:border-[rgba(255,255,255,0.05)] overflow-hidden">
+    <div 
+      className="group relative w-full bg-white dark:bg-[#1d1d1f] rounded-[24px] p-6 sm:p-8 transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-transparent hover:border-[rgba(0,0,0,0.04)] dark:hover:border-[rgba(255,255,255,0.05)] overflow-hidden"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
       
       <div className="flex flex-col md:flex-row gap-8 justify-between">
         
@@ -60,7 +96,14 @@ export function RideCard({ ride }: RideCardProps) {
             <div className="flex flex-col justify-between space-y-6">
               <div>
                 <p className="text-[12px] font-semibold tracking-wider uppercase text-[rgba(0,0,0,0.48)] dark:text-[rgba(255,255,255,0.48)] mb-0.5">Điểm đi</p>
-                <p className="text-[21px] font-semibold tracking-tight leading-none text-[#1d1d1f] dark:text-white">{ride.origin}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[21px] font-semibold tracking-tight leading-none text-[#1d1d1f] dark:text-white">{ride.origin}</p>
+                  {distanceToOrigin !== null && (
+                    <span className="text-[12px] font-medium text-[#0071e3] bg-[#0071e3]/10 px-2 py-0.5 rounded-full">
+                      Cách bạn {distanceToOrigin < 1 ? '< 1' : distanceToOrigin.toFixed(1)} km
+                    </span>
+                  )}
+                </div>
               </div>
               <div>
                 <p className="text-[12px] font-semibold tracking-wider uppercase text-[rgba(0,0,0,0.48)] dark:text-[rgba(255,255,255,0.48)] mb-0.5">Điểm đến</p>

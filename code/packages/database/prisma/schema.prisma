@@ -26,6 +26,7 @@ enum RideStatus {
 enum BookingStatus {
   PENDING
   CONFIRMED
+  COMPLETED
   CANCELLED
   REJECTED
 }
@@ -257,6 +258,10 @@ model Booking {
   passengerLat  Float?
   passengerLng  Float?
   pickupAddress String?  // Địa chỉ đón chi tiết để hiển thị cho tài xế
+
+  // Tài xế đã đón khách lên xe hay chưa — chỉ có ý nghĩa khi status = CONFIRMED và ride = ONGOING
+  // false: đang trên đường đến điểm đón | true: đã đón khách, đang di chuyển về đích
+  isPickedUp    Boolean  @default(false)
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt

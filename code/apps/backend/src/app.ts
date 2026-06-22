@@ -44,12 +44,13 @@ if (process.env.NODE_ENV !== 'production') {
 // ─── CORS — PHẢI đặt TRƯỚC rate limiter ───────────────────────────────────────
 // Lý do: khi rate limiter trả 429, response phải đã có CORS header
 // nếu không browser sẽ báo CORS error thay vì 429, rất khó debug.
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
-    credentials: true, // Cho phép cookie được gửi kèm request (cần cho refresh token)
-  })
-);
+// CORS đã được API Gateway xử lý (chặn Duplicate CORS Header)
+// app.use(
+//   cors({
+//     origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+//     credentials: true,
+//   })
+// );
 
 // ─── Security Middlewares ──────────────────────────────────────────────────────
 app.use(helmet());
@@ -91,7 +92,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/rides', ridesRouter);
 app.use('/api/bookings', bookingsRouter);
-app.use('/api/notifications', notificationsRouter);
+// [STRANGLER FIG] Đã tách sang Notification Service (Microservice)
+// app.use('/api/notifications', notificationsRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/payments', paymentsRouter);

@@ -69,3 +69,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Chuyển nút đóng (X) của Sonner toast sang góc phải */
+[data-sonner-toast] [data-close-button] {
+  left: auto !important;
+  right: -6px !important;
+}

@@ -19,7 +19,11 @@ interface Driver {
 interface Ride {
   id: string;
   origin: string;
+  originLat: number | null;
+  originLng: number | null;
   destination: string;
+  destinationLat: number | null;
+  destinationLng: number | null;
   departureTime: string | Date;
   availableSeats: number;
   pricePerSeat: number;
@@ -82,11 +86,15 @@ export default function MyRidesPage() {
     if (!confirm('Bạn có chắc chắn muốn hủy chuyến đi này không? Việc này không thể hoàn tác.')) return;
 
     try {
-      await apiClient.delete(`/rides/${rideId}`);
-      setRides(rides.filter(r => r.id !== rideId));
+      await apiClient.patch(`/rides/${rideId}/status`, { status: 'CANCELLED' });
+      setRides(prevRides =>
+        prevRides.map((ride) =>
+          ride.id === rideId ? { ...ride, status: 'CANCELLED' } : ride
+        )
+      );
       toast.success('Đã hủy chuyến đi thành công.');
     } catch (err: unknown) {
-      console.error('Lỗi khi xóa chuyến đi:', err);
+      console.error('Lỗi khi hủy chuyến đi:', err);
       toast.error(((err as { response?: { data?: { message?: string } } }).response)?.data?.message || 'Không thể hủy chuyến đi. Vui lòng thử lại.');
     }
   };
@@ -346,4 +354,3 @@ export default function MyRidesPage() {
     </div>
   );
 }
-

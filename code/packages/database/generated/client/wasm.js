@@ -236,6 +236,7 @@ exports.Prisma.BookingScalarFieldEnum = {
   passengerLat: 'passengerLat',
   passengerLng: 'passengerLng',
   pickupAddress: 'pickupAddress',
+  isPickedUp: 'isPickedUp',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -373,6 +374,7 @@ exports.RideStatus = exports.$Enums.RideStatus = {
 exports.BookingStatus = exports.$Enums.BookingStatus = {
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
+  COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
   REJECTED: 'REJECTED'
 };

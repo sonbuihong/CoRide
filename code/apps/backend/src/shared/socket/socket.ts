@@ -1,5 +1,7 @@
 import { Server as SocketIOServer } from 'socket.io';
 import http from 'http';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { createClient } from 'redis';
 import * as jose from 'jose';
 import { ChatService } from '../../modules/chat/chat.service';
 import { extendedPrisma as prisma } from '@repo/database';
@@ -34,11 +36,20 @@ const getJwtSecret = () =>
   );
 
 export const initSocket = (server: http.Server): SocketIOServer => {
+  const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+  const pubClient = createClient({ url: REDIS_URL });
+  const subClient = pubClient.duplicate();
+
+  // Connect clients asynchronously for Redis Pub/Sub
+  pubClient.connect().catch((err) => console.error('[Socket Redis Pub] Error:', err));
+  subClient.connect().catch((err) => console.error('[Socket Redis Sub] Error:', err));
+
   io = new SocketIOServer(server, {
     cors: {
       origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
       credentials: true,
     },
+    adapter: createAdapter(pubClient, subClient),
     // Ưu tiên websocket, fallback polling nếu cần (proxy chặn WS)
     transports: ['websocket', 'polling'],
   });

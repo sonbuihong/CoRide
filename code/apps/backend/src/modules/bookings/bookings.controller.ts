@@ -123,3 +123,34 @@ export const getActiveBooking = async (
   }
 };
 
+export const confirmPassengerPickup = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const booking = await BookingsService.confirmPassengerPickup(
+      req.user!.id,
+      req.params.id as string
+    );
+    res.json({ message: 'Đã xác nhận đón hành khách', booking });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const dropoffPassenger = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const booking = await BookingsService.dropoffPassenger(
+      req.user!.id,
+      req.params.id as string
+    );
+    res.json({ message: 'Đã hoàn thành trả khách', booking });
+  } catch (error) {
+    next(error);
+  }
+};

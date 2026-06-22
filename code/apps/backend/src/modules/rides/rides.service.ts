@@ -70,7 +70,7 @@ export class RidesService {
 
     // 4. Tạo chuyến đi
     const departureTime = new Date(data.departureTime);
-    return prisma.ride.create({
+    const newRide = await prisma.ride.create({
       data: {
         driverId,
         origin: data.origin || '',
@@ -88,6 +88,14 @@ export class RidesService {
       },
       include: DRIVER_SELECT,
     });
+
+    try {
+      getIO().emit('ride:created', newRide);
+    } catch (e) {
+      console.warn('[RidesService] Socket emit skipped:', e);
+    }
+
+    return newRide;
   }
 
   static async searchRides(filters: SearchRideInput) {
@@ -179,17 +187,24 @@ export class RidesService {
 
 
 
-    return prisma.ride.update({
+    const updatedRide = await prisma.ride.update({
       where: { id },
       data: {
         ...data,
-        // Chuyển string thành Date nếu departureTime được cập nhật
         ...(data.departureTime && {
           departureTime: new Date(data.departureTime),
         }),
       },
       include: DRIVER_SELECT,
     });
+
+    try {
+      getIO().emit('ride:updated', updatedRide);
+    } catch (e) {
+      console.warn('[RidesService] Socket emit skipped:', e);
+    }
+
+    return updatedRide;
   }
 
   static async deleteRide(id: string, driverId: string) {
@@ -202,7 +217,15 @@ export class RidesService {
       throw new AppError('Không thể xóa chuyến đang diễn ra', 400);
     }
 
-    return prisma.ride.delete({ where: { id } });
+    const deletedRide = await prisma.ride.delete({ where: { id } });
+
+    try {
+      getIO().emit('ride:deleted', { id });
+    } catch (e) {
+      console.warn('[RidesService] Socket emit skipped:', e);
+    }
+
+    return deletedRide;
   }
 
   static async updateRideStatus(id: string, driverId: string, status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED') {
@@ -241,6 +264,8 @@ export class RidesService {
         status,
         updatedAt: new Date().toISOString(),
       });
+      // Global event for UI refresh
+      getIO().emit('ride:updated', updatedRide);
     } catch (socketError) {
       // Socket chưa init (test environment) → skip, không ảnh hưởng logic chính
       console.warn('[RidesService] Socket emit skipped:', socketError);
@@ -249,4 +274,3 @@ export class RidesService {
     return updatedRide;
   }
 }
-

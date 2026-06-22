@@ -10,7 +10,7 @@ import {
   type RegisterInput,
 } from '@repo/shared';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useRoleMode } from '@/components/providers/role-mode-provider';
 import apiClient from '@/lib/api-client';
@@ -39,6 +39,7 @@ export function LoginForm() {
   const { login, user } = useAuth();
   const { setMode } = useRoleMode();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -97,13 +98,22 @@ export function LoginForm() {
 
         <div className="space-y-1 relative">
           <Label htmlFor="password" className={appleLabelClass}>Mật khẩu</Label>
-          <input
-            id="password"
-            type="password"
-            placeholder="Nhập mật khẩu của bạn"
-            className={`w-full ${appleInputClass}`}
-            {...register('password')}
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Nhập mật khẩu của bạn"
+              className={`w-full pr-10 ${appleInputClass}`}
+              {...register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
           {errors.password && (
             <p className="text-[12px] text-[#d93025] mt-1 ml-1">{errors.password.message}</p>
           )}
@@ -142,6 +152,8 @@ export function LoginForm() {
 export function RegisterForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -153,8 +165,7 @@ export function RegisterForm() {
   const onSubmit = async (data: RegisterInput) => {
     setLoading(true);
     try {
-      const { confirmPassword, ...registerData } = data;
-      await apiClient.post('/auth/register', registerData);
+      await apiClient.post('/auth/register', data);
       toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
       router.push('/login');
     } catch (err: unknown) {
@@ -169,7 +180,7 @@ export function RegisterForm() {
 
   return (
     <div className="w-full">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" autoComplete="off">
         {errors.root && (
           <div className="bg-destructive/10 p-3 rounded-[11px] text-[#d93025] text-[14px] font-medium text-center tracking-tight">
             {errors.root.message}
@@ -210,6 +221,7 @@ export function RegisterForm() {
             id="reg-email"
             placeholder="name@example.com"
             type="email"
+            autoComplete="off"
             className={`w-full ${appleInputClass}`}
             {...register('email')}
           />
@@ -233,13 +245,23 @@ export function RegisterForm() {
 
         <div className="space-y-1 text-left">
           <Label htmlFor="reg-password" className={appleLabelClass}>Mật khẩu</Label>
-          <input
-            id="reg-password"
-            type="password"
-            placeholder="Tạo mật khẩu"
-            className={`w-full ${appleInputClass}`}
-            {...register('password')}
-          />
+          <div className="relative">
+            <input
+              id="reg-password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Tạo mật khẩu"
+              autoComplete="new-password"
+              className={`w-full pr-10 ${appleInputClass}`}
+              {...register('password')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
           {errors.password && (
             <p className="text-[12px] text-[#d93025] mt-1 ml-1">{errors.password.message}</p>
           )}
@@ -247,13 +269,23 @@ export function RegisterForm() {
 
         <div className="space-y-1 text-left">
           <Label htmlFor="confirm-password" className={appleLabelClass}>Nhập lại mật khẩu</Label>
-          <input
-            id="confirm-password"
-            type="password"
-            placeholder="Nhập lại mật khẩu"
-            className={`w-full ${appleInputClass}`}
-            {...register('confirmPassword')}
-          />
+          <div className="relative">
+            <input
+              id="confirm-password"
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder="Nhập lại mật khẩu"
+              autoComplete="new-password"
+              className={`w-full pr-10 ${appleInputClass}`}
+              {...register('confirmPassword')}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
           {errors.confirmPassword && (
             <p className="text-[12px] text-[#d93025] mt-1 ml-1">{errors.confirmPassword.message}</p>
           )}

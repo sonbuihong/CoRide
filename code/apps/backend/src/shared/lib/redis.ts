@@ -222,8 +222,8 @@ export const getDriverLocation = async (
 
   const pos = positions[0];
   return {
-    longitude: pos.longitude,
-    latitude: pos.latitude,
+    longitude: Number(pos.longitude),
+    latitude: Number(pos.latitude),
   };
 };
 

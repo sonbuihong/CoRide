@@ -9,6 +9,8 @@ interface OngoingMapProps {
   originLng: number;
   destLat: number;
   destLng: number;
+  waypoints?: { lat: number; lng: number }[];
+  driverLocation?: { lat: number; lng: number } | null;
 }
 
 // Fix Leaflet's default icon issue
@@ -39,19 +41,37 @@ const destIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
+const waypointIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const driverIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
 // Helper component to adjust map bounds
-const MapBounds = ({ originPos, destPos }: { originPos: [number, number]; destPos: [number, number] }) => {
+const MapBounds = ({ originPos, destPos, waypoints = [] }: { originPos: [number, number]; destPos: [number, number]; waypoints?: [number, number][] }) => {
   const map = useMap();
   useEffect(() => {
     if (originPos && destPos) {
-      const bounds = L.latLngBounds([originPos, destPos]);
+      const bounds = L.latLngBounds([originPos, destPos, ...waypoints]);
       map.fitBounds(bounds, { padding: [50, 50] });
     }
-  }, [map, originPos, destPos]);
+  }, [map, originPos, destPos, waypoints]);
   return null;
 };
 
-const OngoingMap: React.FC<OngoingMapProps> = ({ originLat, originLng, destLat, destLng }) => {
+const OngoingMap: React.FC<OngoingMapProps> = ({ originLat, originLng, destLat, destLng, waypoints = [], driverLocation = null }) => {
   const [route, setRoute] = useState<[number, number][]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,8 +81,13 @@ const OngoingMap: React.FC<OngoingMapProps> = ({ originLat, originLng, destLat, 
       try {
         setLoading(true);
         // OSRM expects: longitude,latitude
+        const originStr = `${originLng},${originLat}`;
+        const destStr = `${destLng},${destLat}`;
+        const waypointsStr = waypoints.map(wp => `${wp.lng},${wp.lat}`).join(';');
+        const coordinatesStr = waypointsStr ? `${originStr};${waypointsStr};${destStr}` : `${originStr};${destStr}`;
+
         const response = await fetch(
-          `https://router.project-osrm.org/route/v1/driving/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson`
+          `https://router.project-osrm.org/route/v1/driving/${coordinatesStr}?overview=full&geometries=geojson`
         );
         const data = await response.json();
         if (data.code === 'Ok' && data.routes.length > 0) {
@@ -101,6 +126,7 @@ const OngoingMap: React.FC<OngoingMapProps> = ({ originLat, originLng, destLat, 
 
   const originPos: [number, number] = [originLat, originLng];
   const destPos: [number, number] = [destLat, destLng];
+  const waypointsPos: [number, number][] = waypoints.map(wp => [wp.lat, wp.lng]);
 
   return (
     <div className="h-full w-full z-0 relative">
@@ -116,10 +142,16 @@ const OngoingMap: React.FC<OngoingMapProps> = ({ originLat, originLng, destLat, 
         />
         <Marker position={originPos} icon={originIcon} />
         <Marker position={destPos} icon={destIcon} />
+        {waypointsPos.map((wp, i) => (
+          <Marker key={i} position={wp} icon={waypointIcon} />
+        ))}
+        {driverLocation && (
+          <Marker position={[driverLocation.lat, driverLocation.lng]} icon={driverIcon} />
+        )}
         {route.length > 0 && (
           <Polyline positions={route} color="#0071e3" weight={5} opacity={0.8} />
         )}
-        <MapBounds originPos={originPos} destPos={destPos} />
+        <MapBounds originPos={originPos} destPos={destPos} waypoints={waypointsPos} />
       </MapContainer>
     </div>
   );

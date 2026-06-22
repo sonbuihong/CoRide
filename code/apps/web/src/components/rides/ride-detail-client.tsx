@@ -19,6 +19,7 @@ import RideRouteMap from '@/components/rides/ride-route-map';
 import { BookingButton } from '@/components/booking/booking-button';
 import { ReviewDialog } from '@/components/rides/review-dialog';
 import { ChatWindow } from '@/components/chat/chat-window';
+import { useSocket } from '@/components/providers/socket-provider';
 
 interface RideDetailClientProps {
   rideId: string;
@@ -48,6 +49,7 @@ export default function RideDetailClient({ rideId }: RideDetailClientProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const { socket } = useSocket();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,6 +81,31 @@ export default function RideDetailClient({ rideId }: RideDetailClientProps) {
       fetchData();
     }
   }, [rideId]);
+
+  // Lắng nghe socket realtime: cập nhật số ghế + ẩn chuyến hết chỗ mà không cần reload
+  useEffect(() => {
+    if (!socket || !rideId) return;
+
+    const handleSeatsUpdated = (data: { rideId: string; availableSeats: number }) => {
+      // Chỉ xử lý event có liên quan đến chuyến đang xem
+      if (data.rideId !== rideId) return;
+      setRide((prev) => prev ? { ...prev, availableSeats: data.availableSeats } : prev);
+    };
+
+    const handleRideFull = (data: { rideId: string }) => {
+      if (data.rideId !== rideId) return;
+      // Ẩn nút đặt chỗ bằng cách set availableSeats = 0
+      setRide((prev) => prev ? { ...prev, availableSeats: 0 } : prev);
+    };
+
+    socket.on('ride:seats_updated', handleSeatsUpdated);
+    socket.on('ride:full', handleRideFull);
+
+    return () => {
+      socket.off('ride:seats_updated', handleSeatsUpdated);
+      socket.off('ride:full', handleRideFull);
+    };
+  }, [socket, rideId]);
 
   if (loading) {
     return (

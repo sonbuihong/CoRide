@@ -20,5 +20,7 @@ router.get('/:id', bookingsController.getBookingById);
 
 router.patch('/:id/status', validate(updateBookingStatusSchema), bookingsController.updateBookingStatus);
 router.patch('/:id/cancel', bookingsController.cancelBooking);
+router.patch('/:id/pickup', bookingsController.confirmPassengerPickup);
+router.patch('/:id/dropoff', bookingsController.dropoffPassenger);
 
 export default router;

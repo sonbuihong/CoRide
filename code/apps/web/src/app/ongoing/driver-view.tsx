@@ -30,12 +30,32 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
   };
 
   const pendingBookings = ride.bookings?.filter((b: any) => b.status === 'PENDING') || [];
-  const confirmedBookings = ride.bookings?.filter((b: any) => b.status === 'CONFIRMED') || [];
+  const confirmedBookings = ride.bookings?.filter((b: any) => b.status === 'CONFIRMED' || b.status === 'COMPLETED') || [];
   
   const handleBookingAction = async (bookingId: string, action: 'CONFIRMED' | 'REJECTED') => {
     try {
       await apiClient.patch(`/bookings/${bookingId}/status`, { status: action });
       toast.success(action === 'CONFIRMED' ? 'Đã nhận khách' : 'Đã từ chối khách');
+      onRefresh();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+    }
+  };
+
+  const handlePickupPassenger = async (bookingId: string) => {
+    try {
+      await apiClient.patch(`/bookings/${bookingId}/pickup`);
+      toast.success('Đã xác nhận đón khách');
+      onRefresh();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+    }
+  };
+
+  const handleDropoffPassenger = async (bookingId: string) => {
+    try {
+      await apiClient.patch(`/bookings/${bookingId}/dropoff`);
+      toast.success('Đã hoàn thành hành trình của khách hàng');
       onRefresh();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
@@ -86,72 +106,77 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
         </a>
       </div>
 
+      {/* Badge + compact controls - luôn hiện */}
       <div className="flex items-center justify-between mb-4 px-1">
         <div className="flex items-center gap-2 text-gray-600">
           <UsersIcon className="w-4 h-4" />
           <span className="text-sm font-medium">Hành khách: {confirmedBookings.length}</span>
         </div>
-        {!isExpanded && (
-          <button onClick={onExpand} className="text-xs text-blue-600 font-medium hover:underline">
-            Xem chi tiết
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Badge yêu cầu mới — luôn hiển thị để nhắc nhở tài xế */}
+          {pendingBookings.length > 0 && (
+            <span className="flex items-center gap-1 bg-orange-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full animate-pulse">
+              {pendingBookings.length} yêu cầu mới
+            </span>
+          )}
+          {!isExpanded && (
+            <button onClick={onExpand} className="text-xs text-blue-600 font-medium hover:underline">
+              Xem chi tiết
+            </button>
+          )}
+        </div>
       </div>
 
-      {isExpanded && (
-        <>
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-2">Hành khách đã nhận ({confirmedBookings.length})</h3>
-        {confirmedBookings.length === 0 ? (
-          <p className="text-xs text-gray-500 italic bg-gray-50 p-3 rounded-lg border border-gray-100">Chưa có hành khách nào.</p>
-        ) : (
-          <div className="space-y-2">
-            {confirmedBookings.map((b: any) => (
-              <div key={b.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-white shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                    {b.passenger.avatarUrl ? (
-                      <img src={b.passenger.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      <User className="w-5 h-5 text-gray-500" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{b.passenger.firstName} {b.passenger.lastName}</p>
-                    <p className="text-xs text-gray-500">{b.seats} chỗ • {b.price.toLocaleString('vi-VN')}đ</p>
-                  </div>
-                </div>
-                <a href={`tel:${b.passenger.phone}`} className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors">
-                  <Phone className="w-4 h-4" />
-                </a>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
+      {/* Yêu cầu PENDING — LUÔN HIỆN, không phụ thuộc isExpanded */}
+      {/* Tài xế cần thấy ngay khi có khách mới dù chưa kéo bottom sheet lên */}
       {pendingBookings.length > 0 && (
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-orange-600 mb-2">Yêu cầu mới ({pendingBookings.length})</h3>
-          <div className="space-y-2">
+        <div className="mb-4 border border-orange-200 rounded-2xl overflow-hidden">
+          <div className="bg-orange-500 px-4 py-2.5 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white">Khách muốn đặt chỗ ({pendingBookings.length})</h3>
+            <span className="text-[10px] text-orange-100 font-medium">Nhấn để phản hồi</span>
+          </div>
+          <div className="divide-y divide-orange-100 bg-orange-50">
             {pendingBookings.map((b: any) => (
-              <div key={b.id} className="p-3 rounded-xl border border-orange-200 bg-orange-50">
+              <div key={b.id} className="p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <User className="w-8 h-8 text-gray-400 bg-white p-1 rounded-full border border-gray-200" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border border-orange-200 shrink-0">
+                      {b.passenger.avatarUrl ? (
+                        <img src={b.passenger.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-5 h-5 text-gray-400" />
+                      )}
+                    </div>
                     <div>
-                      <p className="text-sm font-medium">{b.passenger.firstName} {b.passenger.lastName}</p>
-                      <p className="text-xs text-gray-600">{b.seats} chỗ</p>
+                      <p className="text-sm font-semibold text-gray-900">{b.passenger.firstName} {b.passenger.lastName}</p>
+                      <p className="text-xs text-gray-500">{b.seats} ghế • {(b.totalPrice ?? 0).toLocaleString('vi-VN')}đ</p>
                     </div>
                   </div>
-                  <span className="text-sm font-bold text-[#0071e3]">{b.price.toLocaleString('vi-VN')}đ</span>
+                  {b.passenger.phone && (
+                    <a href={`tel:${b.passenger.phone}`} className="p-2 bg-white text-blue-600 rounded-full border border-blue-100 hover:bg-blue-50 transition-colors shrink-0">
+                      <Phone className="w-4 h-4" />
+                    </a>
+                  )}
                 </div>
+                {b.pickupAddress && (
+                  <div className="flex items-start gap-1.5 mb-3">
+                    <MapPin className="w-3.5 h-3.5 text-orange-500 mt-0.5 shrink-0" />
+                    <p className="text-xs text-gray-600 line-clamp-2">{b.pickupAddress}</p>
+                  </div>
+                )}
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1 bg-white" onClick={() => handleBookingAction(b.id, 'REJECTED')}>
-                    Từ chối
+                  <Button
+                    variant="outline"
+                    className="flex-1 bg-white border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 h-10 text-sm font-semibold rounded-xl"
+                    onClick={() => handleBookingAction(b.id, 'REJECTED')}
+                  >
+                    <XCircle className="w-4 h-4 mr-1" /> Từ chối
                   </Button>
-                  <Button className="flex-1 bg-[#34c759] hover:bg-green-600 text-white" onClick={() => handleBookingAction(b.id, 'CONFIRMED')}>
-                    Chấp nhận
+                  <Button
+                    className="flex-1 bg-[#34c759] hover:bg-green-600 text-white h-10 text-sm font-semibold rounded-xl shadow-sm"
+                    onClick={() => handleBookingAction(b.id, 'CONFIRMED')}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" /> Chấp nhận
                   </Button>
                 </div>
               </div>
@@ -159,7 +184,67 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
           </div>
         </div>
       )}
-      </>
+
+      {isExpanded && (
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-2">Hành khách đã nhận ({confirmedBookings.length})</h3>
+          {confirmedBookings.length === 0 ? (
+            <p className="text-xs text-gray-500 italic bg-gray-50 p-3 rounded-lg border border-gray-100">Chưa có hành khách nào.</p>
+          ) : (
+            <div className="space-y-2">
+              {confirmedBookings.map((b: any) => (
+                <div key={b.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-white shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                      {b.passenger.avatarUrl ? (
+                        <img src={b.passenger.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-5 h-5 text-gray-500" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-gray-900">{b.passenger.firstName} {b.passenger.lastName}</p>
+                        {b.status === 'COMPLETED' ? (
+                          <span className="bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded font-bold">ĐÃ TRẢ KHÁCH</span>
+                        ) : b.isPickedUp ? (
+                          <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded font-bold">ĐÃ ĐÓN</span>
+                        ) : null}
+                      </div>
+                      <p className="text-xs text-gray-500">{b.seats} chỗ • {(b.price ?? 0).toLocaleString('vi-VN')}đ</p>
+                      {b.pickupAddress && !b.isPickedUp && b.status !== 'COMPLETED' && (
+                        <p className="text-[11px] text-orange-600 mt-0.5 line-clamp-1">{b.pickupAddress}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <a href={`tel:${b.passenger.phone}`} className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors">
+                      <Phone className="w-4 h-4" />
+                    </a>
+                    {!b.isPickedUp && b.status === 'CONFIRMED' && ride.status === 'ONGOING' && (
+                      <button
+                        onClick={() => handlePickupPassenger(b.id)}
+                        className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors"
+                        title="Xác nhận đã đón khách"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                      </button>
+                    )}
+                    {b.isPickedUp && b.status === 'CONFIRMED' && ride.status === 'ONGOING' && (
+                      <button
+                        onClick={() => handleDropoffPassenger(b.id)}
+                        className="p-2 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition-colors"
+                        title="Kết thúc hành trình (Trả khách)"
+                      >
+                        <MapPin className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       <div className="flex flex-col gap-2 mt-4 mb-2">

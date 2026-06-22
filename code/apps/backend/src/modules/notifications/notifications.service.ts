@@ -2,6 +2,7 @@ import { extendedPrisma as prisma } from '@repo/database';
 import { notificationEmitter } from '../../shared/lib/notification-emitter';
 import { getIO } from '../../shared/socket/socket';
 import { AppError } from '../../shared/errors/AppError';
+import { publishEvent } from '../../shared/lib/rabbitmq';
 
 export class NotificationsService {
   static async createNotification(
@@ -10,21 +11,21 @@ export class NotificationsService {
     content: string,
     type: string
   ) {
-    const notification = await prisma.notification.create({
-      data: { userId, title, content, type },
+    // [STRANGLER FIG] Thay vì ghi trực tiếp vào DB, chúng ta đẩy event lên RabbitMQ
+    // Microservice Notification sẽ consume event này và tự xử lý lưu DB + push Socket
+    await publishEvent('notification_events', {
+      userId,
+      title,
+      content,
+      type,
     });
-
-    // Kênh 1 (chính): Push qua Socket.IO — gửi tới room = userId
-    // try/catch vì Socket có thể chưa init (test environment)
-    try {
-      getIO().to(userId).emit('notification:new', notification);
-    } catch {
-      // Socket.IO chưa khởi tạo — bỏ qua (fallback SSE bên dưới vẫn hoạt động)
-    }
-
-    // Kênh 2 (backup): EventEmitter → SSE controller push về client
-    notificationEmitter.emit('notification', { userId, notification });
-    return notification;
+    
+    // (Legacy fallback) Để tạm thời không crash SSE nếu còn client cũ đang lắng nghe
+    // Tuy nhiên, Socket.io sẽ do Notification Service đảm nhiệm
+    const fakeNotification = { id: 'pending', userId, title, content, type, createdAt: new Date() };
+    notificationEmitter.emit('notification', { userId, notification: fakeNotification });
+    
+    return fakeNotification;
   }
 
 

@@ -129,6 +129,7 @@ export type RideStatus = (typeof RideStatus)[keyof typeof RideStatus]
 export const BookingStatus: {
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
+  COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
   REJECTED: 'REJECTED'
 };
@@ -10038,6 +10039,7 @@ export namespace Prisma {
     passengerLat: number | null
     passengerLng: number | null
     pickupAddress: string | null
+    isPickedUp: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -10053,6 +10055,7 @@ export namespace Prisma {
     passengerLat: number | null
     passengerLng: number | null
     pickupAddress: string | null
+    isPickedUp: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -10068,6 +10071,7 @@ export namespace Prisma {
     passengerLat: number
     passengerLng: number
     pickupAddress: number
+    isPickedUp: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -10099,6 +10103,7 @@ export namespace Prisma {
     passengerLat?: true
     passengerLng?: true
     pickupAddress?: true
+    isPickedUp?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -10114,6 +10119,7 @@ export namespace Prisma {
     passengerLat?: true
     passengerLng?: true
     pickupAddress?: true
+    isPickedUp?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -10129,6 +10135,7 @@ export namespace Prisma {
     passengerLat?: true
     passengerLng?: true
     pickupAddress?: true
+    isPickedUp?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -10231,6 +10238,7 @@ export namespace Prisma {
     passengerLat: number | null
     passengerLng: number | null
     pickupAddress: string | null
+    isPickedUp: boolean
     createdAt: Date
     updatedAt: Date
     _count: BookingCountAggregateOutputType | null
@@ -10265,6 +10273,7 @@ export namespace Prisma {
     passengerLat?: boolean
     passengerLng?: boolean
     pickupAddress?: boolean
+    isPickedUp?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     ride?: boolean | RideDefaultArgs<ExtArgs>
@@ -10284,6 +10293,7 @@ export namespace Prisma {
     passengerLat?: boolean
     passengerLng?: boolean
     pickupAddress?: boolean
+    isPickedUp?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     ride?: boolean | RideDefaultArgs<ExtArgs>
@@ -10301,6 +10311,7 @@ export namespace Prisma {
     passengerLat?: boolean
     passengerLng?: boolean
     pickupAddress?: boolean
+    isPickedUp?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -10334,6 +10345,7 @@ export namespace Prisma {
       passengerLat: number | null
       passengerLng: number | null
       pickupAddress: string | null
+      isPickedUp: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["booking"]>
@@ -10742,6 +10754,7 @@ export namespace Prisma {
     readonly passengerLat: FieldRef<"Booking", 'Float'>
     readonly passengerLng: FieldRef<"Booking", 'Float'>
     readonly pickupAddress: FieldRef<"Booking", 'String'>
+    readonly isPickedUp: FieldRef<"Booking", 'Boolean'>
     readonly createdAt: FieldRef<"Booking", 'DateTime'>
     readonly updatedAt: FieldRef<"Booking", 'DateTime'>
   }
@@ -17411,6 +17424,7 @@ export namespace Prisma {
     passengerLat: 'passengerLat',
     passengerLng: 'passengerLng',
     pickupAddress: 'pickupAddress',
+    isPickedUp: 'isPickedUp',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -18457,6 +18471,7 @@ export namespace Prisma {
     passengerLat?: FloatNullableFilter<"Booking"> | number | null
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
+    isPickedUp?: BoolFilter<"Booking"> | boolean
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
     ride?: XOR<RideRelationFilter, RideWhereInput>
@@ -18475,6 +18490,7 @@ export namespace Prisma {
     passengerLat?: SortOrderInput | SortOrder
     passengerLng?: SortOrderInput | SortOrder
     pickupAddress?: SortOrderInput | SortOrder
+    isPickedUp?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     ride?: RideOrderByWithRelationInput
@@ -18496,6 +18512,7 @@ export namespace Prisma {
     passengerLat?: FloatNullableFilter<"Booking"> | number | null
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
+    isPickedUp?: BoolFilter<"Booking"> | boolean
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
     ride?: XOR<RideRelationFilter, RideWhereInput>
@@ -18514,6 +18531,7 @@ export namespace Prisma {
     passengerLat?: SortOrderInput | SortOrder
     passengerLng?: SortOrderInput | SortOrder
     pickupAddress?: SortOrderInput | SortOrder
+    isPickedUp?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: BookingCountOrderByAggregateInput
@@ -18537,6 +18555,7 @@ export namespace Prisma {
     passengerLat?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     passengerLng?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     pickupAddress?: StringNullableWithAggregatesFilter<"Booking"> | string | null
+    isPickedUp?: BoolWithAggregatesFilter<"Booking"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Booking"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Booking"> | Date | string
   }
@@ -19875,6 +19894,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     ride: RideCreateNestedOneWithoutBookingsInput
@@ -19893,6 +19913,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     transactions?: TransactionUncheckedCreateNestedManyWithoutBookingInput
@@ -19907,6 +19928,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ride?: RideUpdateOneRequiredWithoutBookingsNestedInput
@@ -19925,6 +19947,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     transactions?: TransactionUncheckedUpdateManyWithoutBookingNestedInput
@@ -19941,6 +19964,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -19954,6 +19978,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -19969,6 +19994,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -21353,6 +21379,7 @@ export namespace Prisma {
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
+    isPickedUp?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -21375,6 +21402,7 @@ export namespace Prisma {
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
+    isPickedUp?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -21390,6 +21418,7 @@ export namespace Prisma {
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
+    isPickedUp?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -23352,6 +23381,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     ride: RideCreateNestedOneWithoutBookingsInput
@@ -23368,6 +23398,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     transactions?: TransactionUncheckedCreateNestedManyWithoutBookingInput
@@ -23823,6 +23854,7 @@ export namespace Prisma {
     passengerLat?: FloatNullableFilter<"Booking"> | number | null
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
+    isPickedUp?: BoolFilter<"Booking"> | boolean
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
   }
@@ -24344,6 +24376,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     ride: RideCreateNestedOneWithoutBookingsInput
@@ -24361,6 +24394,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -24419,6 +24453,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ride?: RideUpdateOneRequiredWithoutBookingsNestedInput
@@ -24436,6 +24471,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -25214,6 +25250,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     passenger: UserCreateNestedOneWithoutBookingsInput
@@ -25230,6 +25267,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     transactions?: TransactionUncheckedCreateNestedManyWithoutBookingInput
@@ -26642,6 +26680,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -26866,6 +26905,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ride?: RideUpdateOneRequiredWithoutBookingsNestedInput
@@ -26882,6 +26922,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     transactions?: TransactionUncheckedUpdateManyWithoutBookingNestedInput
@@ -26897,6 +26938,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -27286,6 +27328,7 @@ export namespace Prisma {
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    isPickedUp?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -27318,6 +27361,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     passenger?: UserUpdateOneRequiredWithoutBookingsNestedInput
@@ -27334,6 +27378,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     transactions?: TransactionUncheckedUpdateManyWithoutBookingNestedInput
@@ -27349,6 +27394,7 @@ export namespace Prisma {
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

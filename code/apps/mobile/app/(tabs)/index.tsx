@@ -1,17 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { rideService } from '../../src/services/ride.service';
+import { getSocket, connectSocket } from '../../src/services/socket.service';
 import { RideCard } from '../../src/components/RideCard';
 import { Search, MapPin, SlidersHorizontal } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const queryClient = useQueryClient();
   
   const { data: rides, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['rides', searchQuery],
     queryFn: () => rideService.getRides({ destination: searchQuery }),
   });
+
+  useEffect(() => {
+    let isActive = true;
+    let socket = getSocket();
+
+    const handleRideEvent = () => {
+      if (isActive) refetch();
+    };
+
+    const handleRideDeleted = (data: { id: string }) => {
+      if (!isActive) return;
+      queryClient.setQueryData(['rides', searchQuery], (oldRides: any) => {
+        if (!oldRides) return oldRides;
+        return oldRides.filter((ride: any) => ride.id !== data.id);
+      });
+    };
+
+    const handleRideStatus = (data: { rideId: string; status: string }) => {
+      if (!isActive) return;
+      if (data.status === 'CANCELLED' || data.status === 'COMPLETED') {
+        queryClient.setQueryData(['rides', searchQuery], (oldRides: any) => {
+          if (!oldRides) return oldRides;
+          return oldRides.filter((ride: any) => ride.id !== data.rideId);
+        });
+      } else {
+        refetch();
+      }
+    };
+
+    const setupSocket = async () => {
+      if (!socket) {
+        socket = await connectSocket();
+      }
+      if (!socket || !isActive) return;
+
+      socket.on('ride:created', handleRideEvent);
+      socket.on('ride:updated', handleRideEvent);
+      socket.on('ride:deleted', handleRideDeleted);
+      socket.on('ride:status', handleRideStatus);
+    };
+
+    setupSocket();
+
+    return () => {
+      isActive = false;
+      if (socket) {
+        socket.off('ride:created', handleRideEvent);
+        socket.off('ride:updated', handleRideEvent);
+        socket.off('ride:deleted', handleRideDeleted);
+        socket.off('ride:status', handleRideStatus);
+      }
+    };
+  }, [refetch, queryClient, searchQuery]);
+
+
 
   return (
     <ScrollView 

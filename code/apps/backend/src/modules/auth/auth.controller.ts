@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service';
 
-// Cấu hình cookie cho refresh token — HttpOnly ngăn JS client đọc (chống XSS)
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  sameSite: 'lax' as const,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày (ms)
 };
 

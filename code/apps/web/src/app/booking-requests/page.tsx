@@ -57,18 +57,29 @@ export default function BookingRequestsPage() {
     fetchRequests();
   }, [fetchRequests]);
 
-  // Real-time cập nhật danh sách yêu cầu khi có thông báo mới (ví dụ khi khách vừa đặt)
+  // Real-time cập nhật danh sách yêu cầu khi có thông báo mới
   useEffect(() => {
     if (!socket) return;
+
+    // Cập nhật khi nhận notification push (fallback)
     const handleNewNotification = (notif: { type: string }) => {
       if (notif.type === 'BOOKING_REQUEST') {
-        // Tải lại danh sách yêu cầu nếu có người mới đặt
         fetchRequests();
       }
     };
+
+    // Cập nhật ngay khi nhận trực tiếp socket event booking:new_request
+    // Nhanh hơn notification vì không qua DB notification pipeline
+    const handleNewBookingRequest = () => {
+      fetchRequests();
+    };
+
     socket.on('notification:new', handleNewNotification);
+    socket.on('booking:new_request', handleNewBookingRequest);
+
     return () => {
       socket.off('notification:new', handleNewNotification);
+      socket.off('booking:new_request', handleNewBookingRequest);
     };
   }, [socket, fetchRequests]);
 
