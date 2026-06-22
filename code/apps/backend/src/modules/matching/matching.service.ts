@@ -5,7 +5,7 @@ import {
   isDriverBusy,
   setDriverBusy,
 } from '../../shared/lib/redis';
-import { getIO } from '../../shared/socket/socket';
+import { getIO } from '../../socket/socket.server';
 import { AppError } from '../../shared/errors/AppError';
 
 /**

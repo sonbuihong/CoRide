@@ -148,8 +148,8 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
         break;
       case 'Enter':
         e.preventDefault();
-        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-          handleSelect(suggestions[selectedIndex]);
+        if (suggestions.length > 0) {
+          handleSelect(suggestions[Math.max(0, selectedIndex)]);
         }
         break;
       case 'Escape':

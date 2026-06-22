@@ -1,6 +1,6 @@
 import { extendedPrisma as prisma } from '@repo/database';
 import { notificationEmitter } from '../../shared/lib/notification-emitter';
-import { getIO } from '../../shared/socket/socket';
+import { getIO } from '../../socket/socket.server';
 import { AppError } from '../../shared/errors/AppError';
 import { publishEvent } from '../../shared/lib/rabbitmq';
 

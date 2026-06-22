@@ -9,6 +9,7 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 import { RoleModeProvider } from "@/components/providers/role-mode-provider";
 import { SocketProvider } from "@/components/providers/socket-provider";
 import { BookingRequestPopup } from "@/components/booking/booking-request-popup";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -42,20 +43,22 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background`}
       >
-        {/* AuthProvider bọc toàn bộ app để Header và mọi page đều có user context */}
-        <AuthProvider>
-          {/* RoleModeProvider — quản lý chế độ vai trò (Passenger/Driver) */}
-          <RoleModeProvider>
-            {/* SocketProvider nằm trong AuthProvider — cần token từ localStorage */}
-            <SocketProvider>
-              <Toaster position="top-center" richColors closeButton />
-              {/* BookingRequestPopup luôn active toàn ứng dụng — tài xế nhận popup ngay khi có yêu cầu */}
-              <BookingRequestPopup />
-              <Header />
-              {children}
-            </SocketProvider>
-          </RoleModeProvider>
-        </AuthProvider>
+        <ReactQueryProvider>
+          {/* AuthProvider bọc toàn bộ app để Header và mọi page đều có user context */}
+          <AuthProvider>
+            {/* RoleModeProvider — quản lý chế độ vai trò (Passenger/Driver) */}
+            <RoleModeProvider>
+              {/* SocketProvider nằm trong AuthProvider — cần token từ localStorage */}
+              <SocketProvider>
+                <Toaster position="top-center" richColors closeButton />
+                {/* BookingRequestPopup luôn active toàn ứng dụng — tài xế nhận popup ngay khi có yêu cầu */}
+                <BookingRequestPopup />
+                <Header />
+                {children}
+              </SocketProvider>
+            </RoleModeProvider>
+          </AuthProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );

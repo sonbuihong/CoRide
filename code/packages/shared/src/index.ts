@@ -13,3 +13,5 @@ export type {
   GoongPlaceDetailResult,
   GoongPlaceDetailResponse,
 } from './goong';
+
+export * from './socket.events';

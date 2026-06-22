@@ -2,7 +2,7 @@ import { extendedPrisma as prisma } from '@repo/database';
 import { Prisma } from '@repo/database';
 import { CreateRideInput, SearchRideInput } from '@repo/shared';
 import { AppError } from '../../shared/errors/AppError';
-import { getIO } from '../../shared/socket/socket';
+import { getIO } from '../../socket/socket.server';
 
 const DRIVER_SELECT = {
   driver: {

@@ -9,6 +9,7 @@ import { SearchRideInput } from '@repo/shared';
 import { Loader2, Car, AlertCircle, Map } from 'lucide-react';
 import RideRouteMap from '@/components/rides/ride-route-map';
 import { useSocket } from '@/components/providers/socket-provider';
+import { toast } from 'sonner';
 
 function SearchResults() {
   const searchParams = useSearchParams();
@@ -55,7 +56,9 @@ function SearchResults() {
       setError(null);
     }
     try {
-      const response = await apiClient.get('/rides', { params: filters });
+      const response = await apiClient.get('/rides', { 
+        params: { ...filters, _t: Date.now() } 
+      });
       setRides(response.data.rides ?? []);
     } catch (err: unknown) {
       if (!showLoading) {
@@ -99,6 +102,11 @@ function SearchResults() {
       fetchRides(getCurrentFilters(), { showLoading: false });
     };
 
+    const handleRideCreated = (newRide: any) => {
+      toast.success('Có chuyến đi mới vừa được đăng, đang cập nhật danh sách...');
+      handleRideRefresh();
+    };
+
     const handleRideDeleted = (data: { id: string }) => {
       setRides((prevRides) => prevRides.filter((ride) => ride.id !== data.id));
       setHoveredRide((prev) => (prev?.id === data.id ? null : prev));
@@ -115,7 +123,7 @@ function SearchResults() {
 
     socket.on('ride:seats_updated', handleSeatsUpdated);
     socket.on('ride:full', handleRideFull);
-    socket.on('ride:created', handleRideRefresh);
+    socket.on('ride:created', handleRideCreated);
     socket.on('ride:updated', handleRideRefresh);
     socket.on('ride:deleted', handleRideDeleted);
     socket.on('ride:status', handleRideStatus);
@@ -123,7 +131,7 @@ function SearchResults() {
     return () => {
       socket.off('ride:seats_updated', handleSeatsUpdated);
       socket.off('ride:full', handleRideFull);
-      socket.off('ride:created', handleRideRefresh);
+      socket.off('ride:created', handleRideCreated);
       socket.off('ride:updated', handleRideRefresh);
       socket.off('ride:deleted', handleRideDeleted);
       socket.off('ride:status', handleRideStatus);

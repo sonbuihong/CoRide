@@ -1,6 +1,6 @@
 import http from 'http';
 import app from './app.js';
-import { initSocket } from './shared/socket/socket.js';
+import { initSocket } from './socket/socket.server.js';
 import { connectRedis } from './shared/lib/redis.js';
 import { connectRabbitMQ } from './shared/lib/rabbitmq.js';
 

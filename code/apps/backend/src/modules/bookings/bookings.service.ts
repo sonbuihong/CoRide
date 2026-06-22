@@ -4,7 +4,7 @@ import { BookingStatus } from '@repo/database';
 import { AppError } from '../../shared/errors/AppError';
 import { NotificationsService } from '../notifications/notifications.service';
 import { getDriverLocation } from '../../shared/lib/redis';
-import { getIO } from '../../shared/socket/socket';
+import { getIO } from '../../socket/socket.server';
 import { RouteMatchingService } from './route-matching.service';
 
 /** Ngưỡng lệch đường tối đa (km) — hành khách cách tuyến đường tài xế */

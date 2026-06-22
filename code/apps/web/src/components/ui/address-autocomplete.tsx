@@ -283,6 +283,13 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     );
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && showSuggestions && suggestions.length > 0) {
+      e.preventDefault();
+      handleSelect(suggestions[0]);
+    }
+  };
+
   return (
     <div ref={containerRef} className={cn('relative w-full', className)}>
       <div className="flex gap-2">
@@ -291,6 +298,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
             type="text"
             value={inputValue}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             placeholder={placeholder}
             className={cn(

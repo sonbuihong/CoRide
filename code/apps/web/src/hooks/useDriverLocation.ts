@@ -1,30 +1,42 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { getSocket } from '@/lib/socket';
+import { useSocket } from '@/components/providers/socket-provider';
+import { SocketEvents, TripLocationUpdatedPayload } from '@repo/shared';
 
-export const useDriverLocation = (driverId: string | null | undefined) => {
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+interface DriverLocation {
+  latitude: number;
+  longitude: number;
+  heading?: number;
+  speed?: number;
+  updatedAt: string;
+}
+
+export const useDriverLocation = (tripId: string | null | undefined) => {
+  const { socket, isConnected } = useSocket();
+  const [driverLocation, setDriverLocation] = useState<DriverLocation | null>(null);
 
   useEffect(() => {
-    if (!driverId) return;
+    if (!socket || !isConnected || !tripId) return;
 
-    const socket = getSocket();
-    
-    // We don't necessarily join a driver room, backend sends to the passenger based on trip or ride, 
-    // but based on backend `driver:location`, we listen to it.
-    // In backend: 
-    // `socket.to(roomName).emit('driver:location', { latitude: data.latitude, longitude: data.longitude, timestamp: Date.now() });`
-    
-    const handleLocationUpdate = (data: { latitude: number, longitude: number, timestamp: number }) => {
-      setLocation({ latitude: data.latitude, longitude: data.longitude });
+    // Lắng nghe vị trí tài xế từ socket server phát ra cho room chuyến đi
+    const handleLocationUpdated = (payload: TripLocationUpdatedPayload) => {
+      if (payload.tripId !== tripId) return;
+      
+      setDriverLocation({
+        latitude: payload.latitude,
+        longitude: payload.longitude,
+        heading: payload.heading,
+        speed: payload.speed,
+        updatedAt: payload.updatedAt,
+      });
     };
 
-    socket.on('driver:location', handleLocationUpdate);
+    socket.on(SocketEvents.TRIP_LOCATION_UPDATED, handleLocationUpdated);
 
     return () => {
-      socket.off('driver:location', handleLocationUpdate);
+      socket.off(SocketEvents.TRIP_LOCATION_UPDATED, handleLocationUpdated);
     };
-  }, [driverId]);
+  }, [socket, isConnected, tripId]);
 
-  return location;
+  return driverLocation;
 };

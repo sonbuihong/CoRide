@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { TripsService } from './trips.service';
 import { MatchingService } from '../matching/matching.service';
 import { createTripRequestSchema } from './trips.validation';
-import { getIO } from '../../shared/socket/socket';
+import { getIO } from '../../socket/socket.server';
 
 export class TripsController {
   /**
