@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Car, User, LogOut, Search, PlusSquare, Bookmark, MapPin, LayoutDashboard, Users, BookOpen, CreditCard, ShieldAlert, CalendarCheck } from 'lucide-react';
+import { Car, User, LogOut, Search, PlusSquare, Bookmark, MapPin, LayoutDashboard, Users, BookOpen, CreditCard, ShieldAlert, CalendarCheck, Menu } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { NotificationCenter } from './notification-center';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useRoleMode } from '@/components/providers/role-mode-provider';
@@ -155,7 +156,7 @@ export const Header: React.FC = () => {
           </div>
         )}
 
-        {/* CONTEXTUAL NAVIGATION */}
+        {/* CONTEXTUAL NAVIGATION (DESKTOP) */}
         <nav className={`hidden lg:flex items-center gap-1 ${isOngoingPage ? 'opacity-50 pointer-events-none' : ''}`}>
           {!isOngoingPage && (
             isAdmin ? (
@@ -218,7 +219,7 @@ export const Header: React.FC = () => {
             <>
               {/* Mobile Role Switch */}
               {user && !isAdmin && (
-                <div className="flex md:hidden items-center gap-1">
+                <div className="flex lg:hidden items-center gap-1">
                   <button
                     onClick={() => handleModeSwitch(isDriverMode ? 'passenger' : 'driver')}
                     className={`px-2.5 py-1 rounded-[980px] text-[11px] font-medium transition-all duration-300 ${isDriverMode
@@ -232,43 +233,143 @@ export const Header: React.FC = () => {
               )}
 
               {user && !isAdmin && (
-                <div className={`mx-1 h-3 border-l ${isDriverMode ? 'border-[rgba(255,255,255,0.2)]' : 'border-[rgba(0,0,0,0.2)]'}`} />
+                <div className={`mx-1 h-3 border-l ${isDriverMode ? 'border-[rgba(255,255,255,0.2)]' : 'border-[rgba(0,0,0,0.2)]'} lg:hidden`} />
               )}
 
-              {/* NOTIFICATIONS */}
-              <NotificationCenter />
+              {/* Desktop Utilities (Notification, Profile, Logout) ẩn ở Mobile */}
+              <div className="hidden lg:flex items-center gap-3">
+                {/* NOTIFICATIONS */}
+                <NotificationCenter />
 
-              {/* USER PROFILE */}
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                  title="Hồ sơ cá nhân"
-                >
-                  <div className={`h-6 w-6 rounded-full flex items-center justify-center overflow-hidden ${isDriverMode || isAdmin ? 'bg-[rgba(255,255,255,0.1)]' : 'bg-[rgba(0,0,0,0.04)]'
-                    }`}>
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt="Avatar"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <User className={`h-3.5 w-3.5 ${isDriverMode || isAdmin ? 'text-white' : 'text-[#1d1d1f]'}`} />
-                    )}
-                  </div>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className={`p-1.5 transition-colors rounded-full ${isDriverMode || isAdmin
-                      ? 'text-[rgba(255,255,255,0.56)] hover:text-[#ff453a] hover:bg-[rgba(255,255,255,0.1)]'
-                      : 'text-[rgba(0,0,0,0.56)] hover:text-[#d93025] hover:bg-[rgba(0,0,0,0.04)]'
-                    }`}
-                  title="Đăng xuất"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                </button>
+                {/* USER PROFILE */}
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                    title="Hồ sơ cá nhân"
+                  >
+                    <div className={`h-6 w-6 rounded-full flex items-center justify-center overflow-hidden ${isDriverMode || isAdmin ? 'bg-[rgba(255,255,255,0.1)]' : 'bg-[rgba(0,0,0,0.04)]'}`}>
+                      {user.avatarUrl ? (
+                        <img src={user.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                      ) : (
+                        <User className={`h-3.5 w-3.5 ${isDriverMode || isAdmin ? 'text-white' : 'text-[#1d1d1f]'}`} />
+                      )}
+                    </div>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className={`p-1.5 transition-colors rounded-full ${isDriverMode || isAdmin ? 'text-[rgba(255,255,255,0.56)] hover:text-[#ff453a] hover:bg-[rgba(255,255,255,0.1)]' : 'text-[rgba(0,0,0,0.56)] hover:text-[#d93025] hover:bg-[rgba(0,0,0,0.04)]'}`}
+                    title="Đăng xuất"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
+
+              {/* MOBILE MENU TRIGGER */}
+              <Sheet>
+                <SheetTrigger render={<button className={`lg:hidden p-1.5 rounded-full transition-colors ${isDriverMode || isAdmin ? 'text-[rgba(255,255,255,0.8)] hover:text-white hover:bg-[rgba(255,255,255,0.1)]' : 'text-[rgba(0,0,0,0.8)] hover:text-black hover:bg-[rgba(0,0,0,0.04)]'}`} />}>
+                  <Menu className="h-5 w-5" />
+                </SheetTrigger>
+                <SheetContent side="right" className={`w-[85vw] sm:w-[350px] border-l ${isAdmin ? 'bg-[#1d1d1f] border-[#333] text-white' : isDriverMode ? 'bg-[#0a1e3c] border-[rgba(255,255,255,0.1)] text-white' : 'bg-[#f5f5f7] border-gray-200'}`}>
+                  <SheetHeader className="text-left mb-6 pt-4">
+                    <SheetTitle className={isAdmin || isDriverMode ? 'text-white' : 'text-[#1d1d1f]'}>
+                      Menu
+                    </SheetTitle>
+                  </SheetHeader>
+                  <nav className="flex flex-col gap-2">
+                    {!isOngoingPage && (
+                      isAdmin ? (
+                        <>
+                          <Link href="/admin" className={getLinkClass('/admin')}>
+                            <LayoutDashboard className="h-4 w-4" /> Tổng quan
+                          </Link>
+                          <Link href="/admin/users" className={getLinkClass('/admin/users')}>
+                            <Users className="h-4 w-4" /> Người dùng
+                          </Link>
+                          <Link href="/admin/rides" className={getLinkClass('/admin/rides')}>
+                            <Car className="h-4 w-4" /> Chuyến đi
+                          </Link>
+                          <Link href="/admin/bookings" className={getLinkClass('/admin/bookings')}>
+                            <Bookmark className="h-4 w-4" /> Đặt chỗ
+                          </Link>
+                          <Link href="/admin/pricing" className={getLinkClass('/admin/pricing')}>
+                            <CreditCard className="h-4 w-4" /> Bảng giá
+                          </Link>
+                          <Link href="/admin/kyc" className={getLinkClass('/admin/kyc')}>
+                            <ShieldAlert className="h-4 w-4" /> Xác thực tài xế
+                          </Link>
+                        </>
+                      ) : isDriverMode ? (
+                        <>
+                          <Link href="/rides/post" className={getLinkClass('/rides/post')}>
+                            <PlusSquare className="h-4 w-4" /> Đăng chuyến mới
+                          </Link>
+                          <Link href="/my-rides" className={getLinkClass('/my-rides')}>
+                            <Car className="h-4 w-4" /> Chuyến của tôi
+                          </Link>
+                          <Link href="/booking-requests" className={getLinkClass('/booking-requests')}>
+                            <Users className="h-4 w-4" /> Yêu cầu đặt chỗ
+                          </Link>
+                        </>
+                      ) : (
+                        user ? (
+                          <>
+                            <Link href="/rides/search" className={getLinkClass('/rides/search')}>
+                              <Search className="h-4 w-4" /> Tìm chuyến
+                            </Link>
+                            <Link href="/my-bookings" className={getLinkClass('/my-bookings')}>
+                              <Bookmark className="h-4 w-4" /> Chuyến của tôi
+                            </Link>
+                          </>
+                        ) : (
+                          <Link className={getLinkClass('/rides/search')} href="/rides/search">
+                            <Search className="h-3.5 w-3.5" /> Tìm chuyến đi
+                          </Link>
+                        )
+                      )
+                    )}
+
+                    {/* Tiện ích cá nhân trên Mobile Menu */}
+                    {user && (
+                      <div className="mt-6 pt-6 border-t border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] flex flex-col gap-2">
+                        <div className={getLinkClass('') + " !px-2 justify-start pointer-events-none"}>
+                          <NotificationCenter /> 
+                          <span className="ml-1 pointer-events-auto cursor-pointer" onClick={() => {
+                            // Focus on notification center if clicked on text
+                            const btn = document.querySelector('[data-radix-popover-trigger]') as HTMLButtonElement;
+                            if (btn) btn.click();
+                          }}>Thông báo</span>
+                        </div>
+
+                        <Link href="/profile" className={getLinkClass('/profile') + " justify-start"}>
+                          <div className={`h-5 w-5 rounded-full overflow-hidden mr-0.5 flex items-center justify-center ${isDriverMode || isAdmin ? 'bg-[rgba(255,255,255,0.1)]' : 'bg-[rgba(0,0,0,0.04)]'}`}>
+                            {user.avatarUrl ? <img src={user.avatarUrl} className="w-full h-full object-cover" /> : <User className="h-3 w-3" />}
+                          </div>
+                          Hồ sơ cá nhân
+                        </Link>
+
+                        {!isAdmin && (
+                          <button 
+                            onClick={() => handleModeSwitch(isDriverMode ? 'passenger' : 'driver')} 
+                            className={getLinkClass('') + " justify-start text-left w-full"}
+                          >
+                            <Car className="h-4 w-4" /> 
+                            Chuyển sang {isDriverMode ? 'Hành khách' : 'Tài xế'}
+                          </button>
+                        )}
+
+                        <button 
+                          onClick={handleLogout} 
+                          className="px-3 py-2 mt-2 rounded-[8px] text-[13px] font-semibold tracking-[-0.12px] text-[#ff453a] hover:bg-[rgba(255,59,48,0.08)] flex items-center gap-1.5 transition-colors justify-start w-full"
+                        >
+                          <LogOut className="h-4 w-4" /> Đăng xuất
+                        </button>
+                      </div>
+                    )}
+                  </nav>
+                </SheetContent>
+              </Sheet>
             </>
           ) : (
             <div className="flex gap-2 items-center">

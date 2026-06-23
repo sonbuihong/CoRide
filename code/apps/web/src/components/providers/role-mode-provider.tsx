@@ -8,6 +8,7 @@ import React, {
   useCallback,
   ReactNode,
 } from 'react';
+import { usePathname } from 'next/navigation';
 
 // Hai chế độ vai trò: hành khách hoặc tài xế
 type RoleMode = 'passenger' | 'driver';
@@ -24,9 +25,11 @@ const STORAGE_KEY = 'coride-role-mode';
 /**
  * RoleModeProvider — quản lý chế độ vai trò hiện tại (Passenger/Driver).
  * Lưu trạng thái vào localStorage để giữ giữa các lần reload.
+ * Tự động đồng bộ chế độ theo URL nếu chuyển bằng back/forward hoặc nhập link.
  */
 export function RoleModeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<RoleMode>('passenger');
+  const pathname = usePathname();
 
   // Khôi phục mode từ localStorage khi mount
   useEffect(() => {
@@ -35,6 +38,32 @@ export function RoleModeProvider({ children }: { children: ReactNode }) {
       setModeState(saved);
     }
   }, []);
+
+  // Đồng bộ mode với đường dẫn hiện tại (nếu user gõ URL hoặc back/forward)
+  useEffect(() => {
+    if (!pathname) return;
+
+    const driverRoutes = ['/rides/post', '/my-rides', '/booking-requests'];
+    const passengerRoutes = ['/rides/search', '/my-bookings'];
+
+    if (driverRoutes.some((route) => pathname.startsWith(route))) {
+      setModeState((prev) => {
+        if (prev !== 'driver') {
+          localStorage.setItem(STORAGE_KEY, 'driver');
+          return 'driver';
+        }
+        return prev;
+      });
+    } else if (passengerRoutes.some((route) => pathname.startsWith(route))) {
+      setModeState((prev) => {
+        if (prev !== 'passenger') {
+          localStorage.setItem(STORAGE_KEY, 'passenger');
+          return 'passenger';
+        }
+        return prev;
+      });
+    }
+  }, [pathname]);
 
   const setMode = useCallback((newMode: RoleMode) => {
     setModeState(newMode);

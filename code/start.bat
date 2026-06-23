@@ -39,7 +39,7 @@ if "%choice%"=="6" goto mobile_qr
 if "%choice%"=="7" goto prisma
 if "%choice%"=="8" goto reinstall
 if "%choice%"=="9" goto kill_all
-if "%choice%"=="0" exit
+if "%choice%"=="0" goto kill_all_and_exit
 goto menu
 
 :backend_web_prisma
@@ -141,3 +141,16 @@ taskkill /F /IM node.exe /T > nul 2>&1
 echo [SUCCESS] Da dong tat ca dich vu thanh cong.
 pause
 goto menu
+
+:kill_all_and_exit
+echo.
+echo [INFO] Dang dong tat ca cac dich vu (Node.js va cac cua so terminal)...
+taskkill /F /FI "WINDOWTITLE eq API Gateway*" /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Notification Service*" /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Backend*" /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Web Frontend*" /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Mobile*" /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE eq Prisma Studio*" /T > nul 2>&1
+taskkill /F /IM node.exe /T > nul 2>&1
+echo [SUCCESS] Da dong tat ca dich vu va thoat.
+exit

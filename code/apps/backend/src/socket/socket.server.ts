@@ -37,6 +37,8 @@ export const initSocket = (server: http.Server): SocketIOServer => {
     if (userId) {
       // Tự động join vào room mang tên userId
       socket.join(`user:${userId}`);
+      // Dành cho các event emit trực tiếp đến `to(userId)` không qua tiền tố `user:`
+      socket.join(userId);
 
       // Đăng ký các handler cụ thể của từng module
       registerTripsSocket(io, socket, userId);
