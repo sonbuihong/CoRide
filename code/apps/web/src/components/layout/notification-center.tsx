@@ -27,8 +27,10 @@ export const NotificationCenter: React.FC = () => {
   const fetchNotifications = useCallback(async () => {
     try {
       const response = await apiClient.get('/notifications');
-      setNotifications(response.data.notifications);
-      setUnreadCount(response.data.notifications.filter((n: { isRead: boolean }) => !n.isRead).length);
+      // Defensive fallback: API có thể trả về format khác hoặc notifications = undefined
+      const notificationList: Notification[] = response.data?.notifications || response.data || [];
+      setNotifications(notificationList);
+      setUnreadCount(notificationList.filter((n) => !n.isRead).length);
     } catch (error) {
       console.error('Lỗi khi lấy thông báo:', error);
     }

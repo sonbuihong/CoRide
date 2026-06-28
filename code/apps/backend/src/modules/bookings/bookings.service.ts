@@ -664,7 +664,7 @@ export class BookingsService {
     return updatedBooking;
   }
 
-  static async cancelBooking(userId: string, bookingId: string) {
+  static async cancelBooking(userId: string, bookingId: string, cancelReason?: string) {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: { ride: true },
@@ -684,6 +684,10 @@ export class BookingsService {
       throw new AppError('Yêu cầu đã được hủy hoặc từ chối trước đó', 400);
     }
 
+    if (!cancelReason) {
+      throw new AppError('Vui lòng cung cấp lý do hủy vé', 400);
+    }
+
     // Nếu đã CONFIRMED → phải hoàn lại ghế cho chuyến đi (atomic)
     if (booking.status === BookingStatus.CONFIRMED) {
       const [cancelledBooking, restoredRide] = await prisma.$transaction(async (tx) => {
@@ -694,7 +698,7 @@ export class BookingsService {
         });
         const cancelled = await tx.booking.update({
           where: { id: bookingId },
-          data: { status: BookingStatus.CANCELLED },
+          data: { status: BookingStatus.CANCELLED, cancelReason },
         });
         return [cancelled, rideAfterRestore];
       });
@@ -715,7 +719,7 @@ export class BookingsService {
     // Nếu còn PENDING → chỉ cần cập nhật status (ghế chưa bị trừ, không cần hoàn)
     return prisma.booking.update({
       where: { id: bookingId },
-      data: { status: BookingStatus.CANCELLED },
+      data: { status: BookingStatus.CANCELLED, cancelReason },
     });
   }
 

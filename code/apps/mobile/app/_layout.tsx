@@ -86,6 +86,8 @@ function RootLayoutNav() {
           <Stack.Screen name="ride/active-ride" options={{ headerShown: false, title: 'Chuyến đi' }} />
           <Stack.Screen name="booking/[id]" options={{ title: 'Chi tiết đặt chỗ' }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="report-modal" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="cancel-modal" options={{ presentation: 'modal', headerShown: false }} />
         </Stack>
       </ThemeProvider>
     </QueryClientProvider>

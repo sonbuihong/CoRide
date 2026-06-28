@@ -61,9 +61,11 @@ export const cancelBooking = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const { cancelReason } = req.body;
     const booking = await BookingsService.cancelBooking(
       req.user!.id,
-      (req.params.id as string)
+      (req.params.id as string),
+      cancelReason
     );
     res.json({ message: 'Đã hủy yêu cầu đặt chỗ', booking });
   } catch (error) {

@@ -228,7 +228,7 @@ export class RidesService {
     return deletedRide;
   }
 
-  static async updateRideStatus(id: string, driverId: string, status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED') {
+  static async updateRideStatus(id: string, driverId: string, status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED', cancelReason?: string) {
     const ride = await prisma.ride.findUnique({ where: { id } });
     if (!ride) throw new AppError('Không tìm thấy chuyến đi', 404);
     if (ride.driverId !== driverId) {
@@ -248,12 +248,34 @@ export class RidesService {
       if (ride.status !== 'SCHEDULED') {
         throw new AppError('Chỉ có thể hủy chuyến đi chưa khởi hành', 400);
       }
+      if (!cancelReason) {
+        throw new AppError('Vui lòng cung cấp lý do hủy chuyến', 400);
+      }
     }
 
-    const updatedRide = await prisma.ride.update({
-      where: { id },
-      data: { status },
-      include: DRIVER_SELECT,
+    const updatedRide = await prisma.$transaction(async (tx) => {
+      // Nếu hủy chuyến, hủy toàn bộ các booking liên quan
+      if (status === 'CANCELLED') {
+        await tx.booking.updateMany({
+          where: {
+            rideId: id,
+            status: { in: ['PENDING', 'CONFIRMED'] }
+          },
+          data: {
+            status: 'CANCELLED',
+            cancelReason: 'Tài xế đã hủy chuyến đi',
+          }
+        });
+      }
+
+      return tx.ride.update({
+        where: { id },
+        data: { 
+          status,
+          ...(status === 'CANCELLED' && { cancelReason })
+        },
+        include: DRIVER_SELECT,
+      });
     });
 
     // Broadcast status change đến tất cả participants trong ride room

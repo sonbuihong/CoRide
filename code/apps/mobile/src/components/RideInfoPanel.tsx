@@ -1,11 +1,26 @@
 // Bottom panel hiển thị thông tin chuyến đi đang active
 // Hiển thị: điểm đi/đến, info driver/passenger (tùy role), giá, số ghế, nút gọi
+// Driver ONGOING: hiển thị thông tin khách đang đón + danh sách pickup status
 
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Linking, ScrollView } from 'react-native';
 import { MapPin, Phone, Clock, Users, ChevronUp, ChevronDown, Navigation } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+
+interface PickupInfo {
+  booking: {
+    id: string;
+    isPickedUp: boolean;
+    pickupAddress?: string | null;
+    passenger?: {
+      firstName?: string;
+      lastName?: string;
+      phone?: string;
+    };
+  };
+  distanceKm: number;
+}
 
 interface RideInfoPanelProps {
   ride: any;
@@ -14,6 +29,11 @@ interface RideInfoPanelProps {
   // Thông tin route
   distance?: number; // meters
   duration?: number; // seconds
+  // Pickup navigation info — chỉ dùng cho driver khi ONGOING
+  currentTargetType?: 'IDLE' | 'PICKUP' | 'DESTINATION';
+  currentBooking?: any | null;
+  pendingPickups?: PickupInfo[];
+  pickedUpBookings?: any[];
 }
 
 const formatDistance = (meters: number): string => {
@@ -39,6 +59,10 @@ export const RideInfoPanel: React.FC<RideInfoPanelProps> = ({
   userRole,
   distance,
   duration,
+  currentTargetType,
+  currentBooking,
+  pendingPickups = [],
+  pickedUpBookings = [],
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -106,6 +130,56 @@ export const RideInfoPanel: React.FC<RideInfoPanelProps> = ({
             </View>
           )}
         </View>
+
+        {/* Section đón khách — chỉ hiện cho driver khi đang ONGOING và có khách cần đón */}
+        {userRole === 'DRIVER' && currentTargetType === 'PICKUP' && currentBooking && (
+          <View className="bg-orange-50 p-4 rounded-2xl mb-3 border border-orange-200">
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="text-orange-700 font-bold text-sm">Đang đi đón khách</Text>
+              {(pendingPickups.length + pickedUpBookings.length) > 1 && (
+                <View className="bg-orange-100 px-2 py-0.5 rounded-full">
+                  <Text className="text-orange-700 text-xs font-bold">
+                    Khách {pickedUpBookings.length + 1}/{pickedUpBookings.length + pendingPickups.length}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View className="flex-row items-center">
+              <View className="w-8 h-8 bg-orange-100 rounded-full items-center justify-center mr-3">
+                <Text className="text-orange-600 font-bold text-xs">
+                  {currentBooking.passenger?.firstName?.charAt(0) || '?'}
+                </Text>
+              </View>
+              <View className="flex-1">
+                <Text className="text-gray-800 font-bold text-sm">
+                  {currentBooking.passenger?.firstName} {currentBooking.passenger?.lastName}
+                </Text>
+                {currentBooking.pickupAddress && (
+                  <Text className="text-gray-500 text-xs" numberOfLines={1}>
+                    {currentBooking.pickupAddress}
+                  </Text>
+                )}
+              </View>
+              {currentBooking.passenger?.phone && (
+                <TouchableOpacity
+                  onPress={() => Linking.openURL(`tel:${currentBooking.passenger.phone}`)}
+                  className="bg-green-50 p-2 rounded-full"
+                >
+                  <Phone size={16} color="#22C55E" />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Badge đã đón hết khách — hiện khi đang đi đến điểm đến */}
+        {userRole === 'DRIVER' && currentTargetType === 'DESTINATION' && pickedUpBookings.length > 0 && (
+          <View className="bg-green-50 p-3 rounded-2xl mb-3 border border-green-200">
+            <Text className="text-green-700 font-medium text-sm text-center">
+              Đã đón {pickedUpBookings.length} hành khách - Đang đi đến điểm đến
+            </Text>
+          </View>
+        )}
 
         {/* Điểm đi → Điểm đến */}
         <View className="bg-gray-50 p-4 rounded-2xl mb-3">
@@ -213,33 +287,57 @@ export const RideInfoPanel: React.FC<RideInfoPanelProps> = ({
               </View>
             )}
 
-            {/* Danh sách hành khách — cho driver */}
+            {/* Danh sách hành khách — cho driver (với trạng thái đón) */}
             {userRole === 'DRIVER' && ride.bookings && ride.bookings.length > 0 && (
               <View className="mt-2">
                 <Text className="text-gray-800 font-bold mb-2">Hành khách ({ride.bookings.length})</Text>
-                {ride.bookings.map((b: any) => (
-                  <View key={b.id} className="flex-row items-center py-2 border-b border-gray-50">
-                    <View className="w-8 h-8 bg-blue-50 rounded-full items-center justify-center mr-3">
-                      <Text className="text-blue-600 font-bold text-xs">
-                        {b.passenger?.firstName?.charAt(0) || '?'}
-                      </Text>
+                {ride.bookings.map((b: any) => {
+                  // Xác định trạng thái đón của khách
+                  const isPickedUp = b.isPickedUp === true;
+                  const isCompleted = b.status === 'COMPLETED';
+                  const statusLabel = isCompleted
+                    ? 'Đã trả'
+                    : isPickedUp
+                      ? 'Đã đón'
+                      : b.status === 'CONFIRMED'
+                        ? 'Chưa đón'
+                        : b.status;
+                  const statusColor = isCompleted
+                    ? 'text-gray-400'
+                    : isPickedUp
+                      ? 'text-green-600'
+                      : 'text-orange-600';
+
+                  return (
+                    <View key={b.id} className="flex-row items-center py-2 border-b border-gray-50">
+                      <View className={`w-8 h-8 rounded-full items-center justify-center mr-3 ${
+                        isPickedUp ? 'bg-green-50' : 'bg-blue-50'
+                      }`}>
+                        <Text className={`font-bold text-xs ${
+                          isPickedUp ? 'text-green-600' : 'text-blue-600'
+                        }`}>
+                          {b.passenger?.firstName?.charAt(0) || '?'}
+                        </Text>
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-gray-800 text-sm font-medium">
+                          {b.passenger?.firstName} {b.passenger?.lastName}
+                        </Text>
+                        <Text className={`text-xs ${statusColor}`}>
+                          {b.seats} ghế - {statusLabel}
+                        </Text>
+                      </View>
+                      {b.passenger?.phone && (
+                        <TouchableOpacity
+                          onPress={() => Linking.openURL(`tel:${b.passenger.phone}`)}
+                          className="p-2"
+                        >
+                          <Phone size={16} color="#22C55E" />
+                        </TouchableOpacity>
+                      )}
                     </View>
-                    <View className="flex-1">
-                      <Text className="text-gray-800 text-sm font-medium">
-                        {b.passenger?.firstName} {b.passenger?.lastName}
-                      </Text>
-                      <Text className="text-gray-400 text-xs">{b.seats} ghế</Text>
-                    </View>
-                    {b.passenger?.phone && (
-                      <TouchableOpacity
-                        onPress={() => Linking.openURL(`tel:${b.passenger.phone}`)}
-                        className="p-2"
-                      >
-                        <Phone size={16} color="#22C55E" />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             )}
           </View>

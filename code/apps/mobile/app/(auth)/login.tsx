@@ -74,8 +74,14 @@ export default function LoginScreen() {
             {errors.password && <Text className="text-red-500 text-xs mt-1 ml-1">{errors.password.message}</Text>}
           </View>
 
+          <View className="flex-row justify-end mt-2">
+            <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
+              <Text className="text-blue-600 font-medium text-sm">Quên mật khẩu?</Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity 
-            className="bg-blue-600 p-4 rounded-xl items-center mt-6 shadow-md"
+            className="bg-blue-600 p-4 rounded-xl items-center mt-4 shadow-md"
             onPress={handleSubmit(onSubmit)}
             disabled={isSubmitting}
           >

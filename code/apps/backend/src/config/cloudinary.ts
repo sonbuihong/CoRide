@@ -1,23 +1,24 @@
 import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+const CloudinaryStorage = require('multer-storage-cloudinary').CloudinaryStorage || require('multer-storage-cloudinary');
 
-/**
- * Cấu hình multer upload.
- * Hiện tại dùng disk storage (lưu vào thư mục uploads/ cục bộ).
- *
- * TODO: Khi muốn dùng Cloudinary để lưu ảnh trên cloud, cài đặt package và
- * cấu hình CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
- * trong .env, rồi thay thế storage bên dưới bằng CloudinaryStorage.
- */
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    // Đặt tên file: timestamp + tên gốc để tránh trùng lặp
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  },
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'demo',
+  api_key: process.env.CLOUDINARY_API_KEY || '123456789012345',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'secret'
 });
+
+// @ts-ignore
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req: any, file: any) => {
+    return {
+      folder: 'coride/uploads',
+      format: file.mimetype.split('/')[1], // giữ nguyên format
+      public_id: `${Date.now()}-${file.originalname.split('.')[0]}`
+    };
+  },
+}) as any;
 
 export const upload = multer({
   storage,
@@ -34,7 +35,6 @@ export const upload = multer({
   },
 });
 
-// Upload ảnh KYC: bất kỳ loại ảnh nào, không vượt quá 2MB
 export const uploadKycImage = multer({
   storage,
   limits: {

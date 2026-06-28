@@ -26,6 +26,7 @@ enum RideStatus {
 enum BookingStatus {
   PENDING
   CONFIRMED
+  COMPLETED
   CANCELLED
   REJECTED
 }
@@ -84,6 +85,17 @@ enum VehicleType {
   CAR
 }
 
+enum VehicleStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  REJECTED
+}
+
 model User {
   id        String  @id @default(uuid())
   email     String  @unique
@@ -124,6 +136,9 @@ model User {
   receivedMessages   Message[]           @relation("ReceivedMessages")
   wallet             Wallet?
   driverVerification DriverVerification?
+  vehicles           Vehicle[]
+  reportsSent        Report[]            @relation("ReportsSent")
+  reportsReceived    Report[]            @relation("ReportsReceived")
 }
 
 model Wallet {
@@ -230,10 +245,16 @@ model Ride {
   // Metadata
   addressDetailLevel String? // 'FULL', 'WARD', 'DISTRICT' for precision level
 
+  cancelReason String?
+
+  vehicleId String?
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+
   // Relations
   bookings Booking[]
   reviews  Review[]
   messages Message[]
+  reports  Report[]
 
   @@index([origin, destination, departureTime])
   @@index([originProvince, destProvince])
@@ -257,6 +278,12 @@ model Booking {
   passengerLat  Float?
   passengerLng  Float?
   pickupAddress String? // Địa chỉ đón chi tiết để hiển thị cho tài xế
+
+  // Tài xế đã đón khách lên xe hay chưa — chỉ có ý nghĩa khi status = CONFIRMED và ride = ONGOING
+  // false: đang trên đường đến điểm đón | true: đã đón khách, đang di chuyển về đích
+  isPickedUp Boolean @default(false)
+
+  cancelReason String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -378,6 +405,9 @@ model TripRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Relations
+  reports Report[]
+
   // Index cho query phổ biến
   @@index([passengerId, status]) // Khách xem trip đang active
   @@index([driverId, status]) // Tài xế xem trip đang active
@@ -387,15 +417,61 @@ model TripRequest {
 
 // ─── Cấu hình giá — Admin quản lý qua Dashboard ────────────────────────────
 // Mỗi VehicleType chỉ có 1 config active tại mỗi thời điểm
-// Công thức: totalPrice = baseFare + max(0, distance - baseDistance) * pricePerKm
+// Công thức: totalPrice = baseFare + max(0, distance - baseDistance) * pricePerKm + (duration * pricePerMinute)
 model PricingConfig {
-  id           String      @id @default(uuid())
-  vehicleType  VehicleType @unique // BIKE hoặc CAR — unique để đảm bảo 1 config/loại xe
-  baseFare     Float // Giá mở cửa (VND), VD: 12000
-  pricePerKm   Float // Giá mỗi km (VND), VD: 4500
-  baseDistance Float       @default(2) // Km đầu tiên đã tính trong baseFare, VD: 2km
-  minFare      Float       @default(0) // Giá tối thiểu (nếu khoảng cách quá ngắn)
-  isActive     Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id             String      @id @default(uuid())
+  vehicleType    VehicleType @unique // BIKE hoặc CAR — unique để đảm bảo 1 config/loại xe
+  baseFare       Float // Giá mở cửa (VND), VD: 12000
+  pricePerKm     Float // Giá mỗi km (VND), VD: 4500
+  pricePerMinute Float       @default(0) // Giá mỗi phút thời gian chờ/kẹt xe (VND), VD: 500
+  baseDistance   Float       @default(2) // Km đầu tiên đã tính trong baseFare, VD: 2km
+  minFare        Float       @default(0) // Giá tối thiểu (nếu khoảng cách quá ngắn)
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+// ─── Tính năng bổ sung ─────────────────────────────────────────────────────────
+
+model Vehicle {
+  id           String        @id @default(uuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  licensePlate String        @unique
+  type         VehicleType   @default(BIKE)
+  color        String?
+  status       VehicleStatus @default(ACTIVE)
+  imageUrl     String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  rides Ride[]
+}
+
+model OTP {
+  id        String   @id @default(uuid())
+  email     String
+  otp       String
+  isUsed    Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model Report {
+  id            String       @id @default(uuid())
+  reporterId    String
+  reporter      User         @relation("ReportsSent", fields: [reporterId], references: [id])
+  reportedId    String
+  reported      User         @relation("ReportsReceived", fields: [reportedId], references: [id])
+  rideId        String?
+  ride          Ride?        @relation(fields: [rideId], references: [id])
+  tripRequestId String?
+  tripRequest   TripRequest? @relation(fields: [tripRequestId], references: [id])
+  reason        String
+  detail        String?
+  status        ReportStatus @default(PENDING)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }

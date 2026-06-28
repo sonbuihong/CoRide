@@ -1,5 +1,6 @@
 // Bản đồ fullscreen hiển thị route chuyến đi đang active
 // Gồm: Polyline đường đi, Marker điểm đi (xanh), điểm đến (đỏ), vị trí driver (realtime)
+// Marker pickup points cho các hành khách cần đón (cam = chưa đón, xanh lá đậm = đang đón)
 
 import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
@@ -10,6 +11,14 @@ interface LatLng {
   longitude: number;
 }
 
+interface PickupMarker {
+  coordinate: LatLng;
+  label: string;
+  /** Khách đang được navigate đến (highlight) */
+  isActive: boolean;
+  bookingId: string;
+}
+
 interface ActiveRideMapProps {
   originCoords: LatLng;
   destinationCoords: LatLng;
@@ -17,6 +26,8 @@ interface ActiveRideMapProps {
   driverLocation?: LatLng | null;
   originLabel?: string;
   destinationLabel?: string;
+  /** Marker vị trí đón của từng hành khách — chỉ hiện khi ride ONGOING */
+  pickupMarkers?: PickupMarker[];
 }
 
 export const ActiveRideMap: React.FC<ActiveRideMapProps> = ({
@@ -26,6 +37,7 @@ export const ActiveRideMap: React.FC<ActiveRideMapProps> = ({
   driverLocation,
   originLabel = 'Điểm đi',
   destinationLabel = 'Điểm đến',
+  pickupMarkers = [],
 }) => {
   const mapRef = useRef<MapView>(null);
   // Flag tránh fit lại liên tục mỗi khi driver location thay đổi (mỗi 5s)
@@ -34,25 +46,36 @@ export const ActiveRideMap: React.FC<ActiveRideMapProps> = ({
   // Fit bản đồ khi route data sẵn sàng
   useEffect(() => {
     if (routeCoords.length > 0 && mapRef.current) {
-      mapRef.current.fitToCoordinates(routeCoords, {
+      // Gom tất cả điểm cần fit: route + pickup markers
+      const allCoords = [
+        ...routeCoords,
+        ...pickupMarkers.map((m) => m.coordinate),
+      ];
+
+      mapRef.current.fitToCoordinates(allCoords, {
         edgePadding: { top: 80, right: 50, bottom: 200, left: 50 },
         animated: true,
       });
       // Reset flag để fit lại khi nhận driver location lần đầu
       hasInitialDriverFit.current = false;
     }
-  }, [routeCoords]);
+  }, [routeCoords, pickupMarkers]);
 
   // Fit lại 1 lần khi nhận driver location lần đầu (marker có thể nằm ngoài viewport)
   useEffect(() => {
     if (driverLocation && routeCoords.length > 0 && !hasInitialDriverFit.current && mapRef.current) {
       hasInitialDriverFit.current = true;
-      mapRef.current.fitToCoordinates([...routeCoords, driverLocation], {
+      const allCoords = [
+        ...routeCoords,
+        driverLocation,
+        ...pickupMarkers.map((m) => m.coordinate),
+      ];
+      mapRef.current.fitToCoordinates(allCoords, {
         edgePadding: { top: 80, right: 50, bottom: 200, left: 50 },
         animated: true,
       });
     }
-  }, [driverLocation, routeCoords]);
+  }, [driverLocation, routeCoords, pickupMarkers]);
 
   return (
     <View style={styles.container}>
@@ -100,6 +123,17 @@ export const ActiveRideMap: React.FC<ActiveRideMapProps> = ({
             pinColor="#3B82F6"
           />
         )}
+
+        {/* Marker vị trí đón hành khách */}
+        {pickupMarkers.map((marker) => (
+          <Marker
+            key={marker.bookingId}
+            coordinate={marker.coordinate}
+            title={marker.label}
+            // Khách đang đón: xanh đậm (highlight), khách chờ: cam
+            pinColor={marker.isActive ? '#15803D' : '#F97316'}
+          />
+        ))}
       </MapView>
     </View>
   );

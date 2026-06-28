@@ -78,11 +78,12 @@ export const updateRideStatus = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { status } = req.body;
+    const { status, cancelReason } = req.body;
     const ride = await RidesService.updateRideStatus(
       (req.params.id as string),
       req.user!.id,
-      status
+      status,
+      cancelReason
     );
     res.json({ message: 'Cập nhật trạng thái chuyến đi thành công', ride });
   } catch (error) {

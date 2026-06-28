@@ -1,9 +1,14 @@
 // Màn hình chuyến đi đang active — fullscreen bản đồ + panel thông tin + driver actions
 // Phân biệt vai trò:
-//   - DRIVER: GPS tracking → emit location, nút Bắt đầu / Hoàn thành
+//   - DRIVER: GPS tracking → emit location, navigation đón khách → điểm đến
 //   - PASSENGER: Listen driver location → hiển thị marker realtime
+//
+// Luồng navigation tài xế (khi ONGOING):
+//   1. Có khách chưa đón → route đến pickup point gần nhất
+//   2. Tài xế nhấn "Đã đến điểm đón" → route đến pickup point tiếp theo (nếu có)
+//   3. Đã đón hết → route đến destination
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,6 +18,7 @@ import { ActiveRideMap } from '../../src/components/ActiveRideMap';
 import { RideInfoPanel } from '../../src/components/RideInfoPanel';
 import { DriverActionBar } from '../../src/components/DriverActionBar';
 import { useDriverTracking, usePassengerTrackDriver } from '../../src/hooks/useDriverLocation';
+import { usePickupNavigation } from '../../src/hooks/usePickupNavigation';
 import { bookingService } from '../../src/services/booking.service';
 import { getDirections } from '../../src/services/direction.service';
 import { disconnectSocket } from '../../src/services/socket.service';
@@ -68,7 +74,31 @@ export default function ActiveRideScreen() {
     ? driverOwnLocation
     : driverLocationFromSocket;
 
-  // Fetch directions  // Theo dõi tuyến đường
+  // Pickup navigation — chỉ active cho DRIVER
+  const confirmedBookings = (userRole === 'DRIVER' && ride?.bookings) || [];
+  const {
+    currentTarget,
+    currentTargetType,
+    currentBooking,
+    pendingPickups,
+    pickedUpBookings,
+    handlePickedUp,
+    isPickingUp,
+  } = usePickupNavigation(
+    confirmedBookings,
+    driverOwnLocation,
+    originCoords,
+    destinationCoords,
+    ride?.status || 'SCHEDULED'
+  );
+
+  // Tránh việc fetchDirections chạy lại mỗi 5s khi driverOwnLocation thay đổi
+  const driverLocRef = useRef<LatLng | null>(null);
+  useEffect(() => {
+    driverLocRef.current = driverOwnLocation;
+  }, [driverOwnLocation]);
+
+  // Fetch directions — thông minh theo trạng thái navigation
   const fetchDirections = useCallback(async () => {
     if (!originCoords || !destinationCoords) return;
 
@@ -76,12 +106,28 @@ export default function ActiveRideScreen() {
       let fromCoords: LatLng;
       let toCoords: LatLng;
 
-      if (userRole === 'DRIVER' && ride?.status === 'SCHEDULED' && driverOwnLocation) {
-        // Giai đoạn 1: Driver đang đi đón khách (từ vị trí driver hiện tại đến điểm đón)
-        fromCoords = driverOwnLocation;
-        toCoords = originCoords;
+      const currentDriverLoc = driverLocRef.current;
+
+      if (userRole === 'DRIVER') {
+        if (ride?.status === 'SCHEDULED' && currentDriverLoc) {
+          // Giai đoạn 0: Ride chưa bắt đầu → route từ driver đến origin
+          fromCoords = currentDriverLoc;
+          toCoords = originCoords;
+        } else if (ride?.status === 'ONGOING' && currentTargetType === 'PICKUP' && currentTarget && currentDriverLoc) {
+          // Giai đoạn 1: Đang đi đón khách → route từ driver đến pickup point
+          fromCoords = currentDriverLoc;
+          toCoords = currentTarget;
+        } else if (ride?.status === 'ONGOING' && currentTargetType === 'DESTINATION' && currentDriverLoc) {
+          // Giai đoạn 2: Đã đón hết → route từ driver đến destination
+          fromCoords = currentDriverLoc;
+          toCoords = destinationCoords;
+        } else {
+          // Fallback: origin → destination
+          fromCoords = originCoords;
+          toCoords = destinationCoords;
+        }
       } else {
-        // Giai đoạn 2 (ONGOING) hoặc Passenger: origin → destination
+        // Passenger: luôn hiện route origin → destination
         fromCoords = originCoords;
         toCoords = destinationCoords;
       }
@@ -96,19 +142,50 @@ export default function ActiveRideScreen() {
       console.error('[ActiveRide] Không thể lấy directions:', error);
     }
   }, [
-    originCoords?.latitude, 
-    originCoords?.longitude, 
-    destinationCoords?.latitude, 
+    originCoords?.latitude,
+    originCoords?.longitude,
+    destinationCoords?.latitude,
     destinationCoords?.longitude,
     userRole,
     ride?.status,
-    driverOwnLocation?.latitude,
-    driverOwnLocation?.longitude
+    currentTargetType,
+    currentTarget?.latitude,
+    currentTarget?.longitude,
   ]);
 
+  // Gọi fetchDirections khi các dependency thay đổi (route mới, target mới)
   useEffect(() => {
     fetchDirections();
   }, [fetchDirections]);
+
+  // Khi tài xế xác nhận đón khách → currentTarget thay đổi sang điểm đón tiếp theo
+  // hoặc sang DESTINATION → cần fetch lại route ngay lập tức
+  const prevTargetRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (userRole !== 'DRIVER') return;
+
+    // Tạo key để so sánh: kết hợp type + tọa độ
+    const targetKey = currentTarget
+      ? `${currentTargetType}:${currentTarget.latitude}:${currentTarget.longitude}`
+      : `${currentTargetType}:null`;
+
+    if (prevTargetRef.current !== null && prevTargetRef.current !== targetKey) {
+      // Target đã thay đổi (xác nhận đón khách xong → điểm đón tiếp hoặc destination)
+      console.log('[ActiveRide] Target thay đổi, cập nhật route:', prevTargetRef.current, '->', targetKey);
+      fetchDirections();
+    }
+
+    prevTargetRef.current = targetKey;
+  }, [currentTargetType, currentTarget?.latitude, currentTarget?.longitude, userRole, fetchDirections]);
+
+  // Đảm bảo fetch lại một lần đầu tiên khi driver có location để thay thế fallback
+  const hasFetchedWithDriverLoc = useRef(false);
+  useEffect(() => {
+    if (userRole === 'DRIVER' && driverOwnLocation && !hasFetchedWithDriverLoc.current) {
+      hasFetchedWithDriverLoc.current = true;
+      fetchDirections();
+    }
+  }, [driverOwnLocation, userRole, fetchDirections]);
 
   // Khi driver thay đổi status ride
   const handleStatusChange = useCallback((newStatus: string) => {
@@ -117,10 +194,20 @@ export default function ActiveRideScreen() {
       disconnectSocket();
       router.replace('/(tabs)');
     } else if (newStatus === 'ONGOING') {
-      // Recalculate route — lúc này chỉ cần origin → destination
+      // Recalculate route — lúc này cần xác định target (pickup hoặc destination)
       fetchDirections();
     }
   }, [router, fetchDirections]);
+
+  // Xây dựng pickup markers cho bản đồ (chỉ dành cho driver khi ONGOING)
+  const pickupMarkers = userRole === 'DRIVER' && ride?.status === 'ONGOING'
+    ? pendingPickups.map((p) => ({
+        coordinate: p.pickupCoords,
+        label: `Đón ${p.booking.passenger?.firstName || 'Khách'}`,
+        isActive: p.booking.id === currentBooking?.id,
+        bookingId: p.booking.id,
+      }))
+    : [];
 
   // Loading state
   if (isLoading) {
@@ -177,6 +264,7 @@ export default function ActiveRideScreen() {
           driverLocation={driverDisplayLocation}
           originLabel={ride.origin}
           destinationLabel={ride.destination}
+          pickupMarkers={pickupMarkers}
         />
 
         {/* Nút back overlay trên bản đồ */}
@@ -202,6 +290,10 @@ export default function ActiveRideScreen() {
         userRole={userRole}
         distance={routeDistance}
         duration={routeDuration}
+        currentTargetType={currentTargetType}
+        currentBooking={currentBooking}
+        pendingPickups={pendingPickups}
+        pickedUpBookings={pickedUpBookings}
       />
 
       {/* Action bar cho driver */}
@@ -210,6 +302,11 @@ export default function ActiveRideScreen() {
           rideId={ride.id}
           rideStatus={ride.status}
           onStatusChange={handleStatusChange}
+          currentTargetType={currentTargetType}
+          currentBooking={currentBooking}
+          onPickedUp={handlePickedUp}
+          isPickingUp={isPickingUp}
+          pendingPickupsCount={pendingPickups.length}
         />
       )}
     </View>

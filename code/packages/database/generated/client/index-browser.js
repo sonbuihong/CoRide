@@ -222,7 +222,9 @@ exports.Prisma.RideScalarFieldEnum = {
   destDistrict: 'destDistrict',
   destProvince: 'destProvince',
   destAddressType: 'destAddressType',
-  addressDetailLevel: 'addressDetailLevel'
+  addressDetailLevel: 'addressDetailLevel',
+  cancelReason: 'cancelReason',
+  vehicleId: 'vehicleId'
 };
 
 exports.Prisma.BookingScalarFieldEnum = {
@@ -237,6 +239,7 @@ exports.Prisma.BookingScalarFieldEnum = {
   passengerLng: 'passengerLng',
   pickupAddress: 'pickupAddress',
   isPickedUp: 'isPickedUp',
+  cancelReason: 'cancelReason',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -331,6 +334,40 @@ exports.Prisma.PricingConfigScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.VehicleScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  licensePlate: 'licensePlate',
+  type: 'type',
+  color: 'color',
+  status: 'status',
+  imageUrl: 'imageUrl',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OTPScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  otp: 'otp',
+  isUsed: 'isUsed',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  reportedId: 'reportedId',
+  rideId: 'rideId',
+  tripRequestId: 'tripRequestId',
+  reason: 'reason',
+  detail: 'detail',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -412,6 +449,17 @@ exports.TripStatus = exports.$Enums.TripStatus = {
   NO_DRIVER: 'NO_DRIVER'
 };
 
+exports.VehicleStatus = exports.$Enums.VehicleStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE'
+};
+
+exports.ReportStatus = exports.$Enums.ReportStatus = {
+  PENDING: 'PENDING',
+  RESOLVED: 'RESOLVED',
+  REJECTED: 'REJECTED'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   Wallet: 'Wallet',
@@ -426,7 +474,10 @@ exports.Prisma.ModelName = {
   ProvinceMapping: 'ProvinceMapping',
   Location: 'Location',
   TripRequest: 'TripRequest',
-  PricingConfig: 'PricingConfig'
+  PricingConfig: 'PricingConfig',
+  Vehicle: 'Vehicle',
+  OTP: 'OTP',
+  Report: 'Report'
 };
 
 /**

@@ -30,4 +30,14 @@ export const bookingService = {
     const response = await api.get('/bookings/active');
     return response.data.activeBooking;
   },
+
+  async confirmPickup(bookingId: string) {
+    const response = await api.patch(`/bookings/${bookingId}/pickup`);
+    return response.data;
+  },
+
+  async dropoffPassenger(bookingId: string) {
+    const response = await api.patch(`/bookings/${bookingId}/dropoff`);
+    return response.data;
+  },
 };

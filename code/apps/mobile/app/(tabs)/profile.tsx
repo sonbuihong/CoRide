@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { useAuth } from '../../src/hooks/useAuth';
-import { LogOut, Settings, ChevronRight, Star } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { LogOut, Settings, ChevronRight, Star, Car } from 'lucide-react-native';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
@@ -38,6 +40,17 @@ export default function ProfileScreen() {
         <Text className="text-gray-400 text-sm uppercase font-bold mb-3 ml-2">Cài đặt tài khoản</Text>
         
         <View className="bg-white rounded-2xl overflow-hidden shadow-sm">
+          <TouchableOpacity 
+            className="flex-row items-center p-4 border-b border-gray-50"
+            onPress={() => router.push('/profile/vehicles')}
+          >
+            <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center mr-4">
+              <Car size={20} color="#4B5563" />
+            </View>
+            <Text className="flex-1 text-gray-700 font-medium">Quản lý phương tiện</Text>
+            <ChevronRight size={20} color="#9CA3AF" />
+          </TouchableOpacity>
+
           <TouchableOpacity className="flex-row items-center p-4 border-b border-gray-50">
             <View className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center mr-4">
               <User size={20} color="#4B5563" />

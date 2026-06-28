@@ -117,6 +117,15 @@ export function LoginForm() {
           {errors.password && (
             <p className="text-[12px] text-[#d93025] mt-1 ml-1">{errors.password.message}</p>
           )}
+          <div className="flex justify-end mt-1">
+            <button
+              type="button"
+              onClick={() => router.push('/forgot-password')}
+              className={appleLinkClass}
+            >
+              Quên mật khẩu?
+            </button>
+          </div>
         </div>
 
         <div className="pt-2">

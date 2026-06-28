@@ -183,6 +183,23 @@ export default function ProfilePage() {
             </div>
           </div>
 
+          {/* Vehicles Section */}
+          <div className="bg-white dark:bg-[#1d1d1f] rounded-[24px] p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)] border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.05)] flex items-center justify-between">
+            <div>
+              <h3 className="text-[21px] font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
+                Phương tiện của bạn
+              </h3>
+              <p className="text-[14px] text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)] mt-1">
+                Quản lý các phương tiện bạn dùng để lái xe ghép.
+              </p>
+            </div>
+            <Link href="/profile/vehicles">
+              <button className="bg-[#0071e3]/10 text-[#0071e3] px-5 py-2 rounded-full text-sm font-medium hover:bg-[#0071e3]/20 transition-colors">
+                Quản lý xe
+              </button>
+            </Link>
+          </div>
+
           {/* Reviews Section */}
           <div className="bg-white dark:bg-[#1d1d1f] rounded-[24px] p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)] border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.05)]">
              <div className="flex items-center gap-2 mb-6">

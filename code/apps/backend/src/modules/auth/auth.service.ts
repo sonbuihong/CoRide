@@ -125,4 +125,59 @@ export class AuthService {
       .update({ where: { token }, data: { revoked: true } })
       .catch(() => null);
   }
+
+  static async forgotPassword(email: string) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new AppError('Email không tồn tại trong hệ thống', 404);
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await prisma.oTP.create({
+      data: {
+        email,
+        otp,
+        expiresAt,
+      },
+    });
+
+    // TODO: Tích hợp Nodemailer/Resend thực tế ở đây
+    console.log(`\n\n======================================`);
+    console.log(`[DEV MODE] OTP cho ${email}: ${otp}`);
+    console.log(`======================================\n\n`);
+
+    return { message: 'Mã OTP đã được gửi đến email của bạn' };
+  }
+
+  static async resetPassword(email: string, otp: string, newPassword: string) {
+    const otpRecord = await prisma.oTP.findFirst({
+      where: {
+        email,
+        otp,
+        isUsed: false,
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!otpRecord) {
+      throw new AppError('Mã OTP không hợp lệ hoặc đã hết hạn', 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { email },
+        data: { password: hashedPassword },
+      }),
+      prisma.oTP.update({
+        where: { id: otpRecord.id },
+        data: { isUsed: true },
+      }),
+    ]);
+
+    return { message: 'Đặt lại mật khẩu thành công' };
+  }
 }

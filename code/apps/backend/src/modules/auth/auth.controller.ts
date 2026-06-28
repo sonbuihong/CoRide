@@ -74,3 +74,40 @@ export const logout = async (
     next(error);
   }
 };
+
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ message: 'Vui lòng cung cấp email' });
+      return;
+    }
+    const result = await AuthService.forgotPassword(email);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      res.status(400).json({ message: 'Vui lòng cung cấp đủ thông tin email, otp và mật khẩu mới' });
+      return;
+    }
+    const result = await AuthService.resetPassword(email, otp, newPassword);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+

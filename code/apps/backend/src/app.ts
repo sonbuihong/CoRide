@@ -22,6 +22,9 @@ import adminRouter from './modules/admin/admin.router';
 import goongRouter from './modules/goong/goong.router';
 import tripsRouter from './modules/trips/trips.router';
 import pricingRouter from './modules/pricing/pricing.router';
+import vehiclesRouter from './modules/vehicles/vehicles.router';
+import storageRouter from './modules/storage/storage.router';
+import reportsRouter from './modules/reports/reports.router';
 
 // Global error handler — PHẢI import cuối cùng
 import { errorHandler } from './shared/errors/errorHandler';
@@ -101,6 +104,9 @@ app.use('/api/admin', adminRouter);
 app.use('/api/goong', goongRouter);
 app.use('/api/trips', tripsRouter);
 app.use('/api/pricing', pricingRouter);
+app.use('/api/vehicles', vehiclesRouter);
+app.use('/api/upload', storageRouter);
+app.use('/api/reports', reportsRouter);
 
 // ─── Global Error Handler ─────────────────────────────────────────────────────
 // Phải đặt CUỐI CÙNG — Express nhận diện error middleware qua 4 tham số (err, req, res, next)

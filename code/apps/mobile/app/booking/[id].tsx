@@ -28,6 +28,7 @@ export default function BookingManageScreen() {
       bookingService.updateBookingStatus(id as string, status),
     onSuccess: (_, status) => {
       queryClient.invalidateQueries({ queryKey: ['booking', id] });
+      queryClient.invalidateQueries({ queryKey: ['active-booking'] });
       Alert.alert(
         'Thành công', 
         status === 'CONFIRMED' ? 'Đã chấp nhận yêu cầu.' : 'Đã từ chối yêu cầu.',

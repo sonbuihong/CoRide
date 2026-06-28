@@ -20,33 +20,47 @@ export const useSocket = () => useContext(SocketContext);
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? (sessionStorage.getItem('accessToken') || localStorage.getItem('token')) : null;
-    
+    // Chờ auth loading xong mới xử lý socket
+    // Tránh race condition: connect với token rỗng khi app vừa mount
+    if (authLoading) return;
+
+    const token = typeof window !== 'undefined'
+      ? (sessionStorage.getItem('accessToken') || localStorage.getItem('token'))
+      : null;
+
+    // Không có user và không có token → ngắt socket nếu đang kết nối
+    if (!user && !token) {
+      disconnectSocket();
+      setSocketInstance(null);
+      setIsConnected(false);
+      return;
+    }
+
     const s = getSocket();
     setSocketInstance(s);
 
     if (s.connected) {
-      if (s.auth && typeof s.auth === 'object' && 'token' in s.auth && s.auth.token !== token) {
-         // Nếu token thay đổi (ví dụ login/logout) thì reconnect
-         s.disconnect();
-         if (token) {
-           s.auth = { token };
-         } else {
-           delete s.auth.token;
-         }
-         s.connect();
+      const currentToken = (s.auth && typeof s.auth === 'object' && 'token' in s.auth)
+        ? (s.auth as { token: string }).token
+        : null;
+
+      if (currentToken !== token) {
+        // Token thay đổi (login/logout/refresh) → reconnect với token mới
+        s.disconnect();
+        if (token) {
+          // Cập nhật auth object trong socket để reconnect dùng token mới
+          Object.assign(s.auth as object, { token });
+        }
+        s.connect();
       } else {
-         setIsConnected(true);
+        setIsConnected(true);
       }
     } else {
-      if (token) {
-        s.auth = { token };
-      } else if (s.auth && typeof s.auth === 'object' && 'token' in s.auth) {
-        delete s.auth.token;
-      }
+      // Chưa connect → connect với token hiện tại
+      // socket-client dùng auth callback nên token được lấy tại thời điểm connect
       s.connect();
     }
 
@@ -69,16 +83,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     s.on('disconnect', onDisconnect);
     s.on('connect_error', onConnectError);
 
-    // Cleanup listeners
     return () => {
       s.off('connect', onConnect);
       s.off('disconnect', onDisconnect);
       s.off('connect_error', onConnectError);
-      
-      // Không disconnect singleton ở đây vì có thể component khác vẫn cần. 
-      // Disconnect chỉ được gọi khi user logout (user == null ở useEffect).
+      // Singleton không disconnect ở đây — chỉ bỏ listeners
     };
-  }, [user]);
+  }, [user, authLoading]);
 
   return (
     <SocketContext.Provider value={{ socket: socketInstance, isConnected }}>
@@ -86,4 +97,3 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     </SocketContext.Provider>
   );
 };
-

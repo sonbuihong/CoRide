@@ -10,6 +10,7 @@ declare module 'express-serve-static-core' {
       firstName: string | null;
       lastName: string | null;
       phone: string | null;
+      role: string;
       createdAt: Date;
       updatedAt: Date;
     };
