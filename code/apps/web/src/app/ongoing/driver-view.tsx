@@ -1,84 +1,262 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { User, Phone, MapPin, Navigation, CheckCircle, XCircle, Users as UsersIcon, Map } from 'lucide-react';
+import {
+  User, Phone, MapPin, Navigation, CheckCircle, XCircle,
+  Users as UsersIcon, Map, Loader2
+} from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default function DriverView({ data, onRefresh, isExpanded = true, onExpand }: { data: any, onRefresh: () => void, isExpanded?: boolean, onExpand?: () => void }) {
-  const ride = data.ride;
-  
-  const handleUpdateStatus = async (status: string) => {
+// ─── Types ─────────────────────────────────────────────────────────────────
+
+interface Passenger {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  passengerRating?: number | null;
+  passengerRatingCount?: number | null;
+}
+
+interface Booking {
+  id: string;
+  seats: number;
+  totalPrice?: number;
+  price?: number;
+  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'REJECTED';
+  isPickedUp: boolean;
+  passengerLat?: number | null;
+  passengerLng?: number | null;
+  pickupAddress?: string | null;
+  passenger: Passenger;
+}
+
+interface Ride {
+  id: string;
+  origin: string;
+  originLat?: number | null;
+  originLng?: number | null;
+  destination: string;
+  destinationLat?: number | null;
+  destinationLng?: number | null;
+  status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+  bookings?: Booking[];
+}
+
+interface DriverViewProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any;
+  onRefresh: () => void;
+  isExpanded?: boolean;
+  onExpand?: () => void;
+}
+
+// ─── State Machine Logic ────────────────────────────────────────────────────
+
+/**
+ * Xác định hành động chính Driver cần thực hiện tiếp theo.
+ *
+ * State machine (không thay đổi DB schema):
+ * - SCHEDULED + có confirmed booking → nút "Đã đến vị trí đón khách"
+ * - SCHEDULED + isPickedUp → nút "Bắt đầu chuyến" (thực ra chưa xảy ra với SCHEDULED)
+ * - ONGOING → nút "Hoàn thành chuyến"
+ *
+ * Logic dùng isPickedUp để biết Driver đã đón khách hay chưa.
+ * Tài xế chỉ được nhấn "Bắt đầu chuyến" (→ ONGOING) sau khi đã xác nhận đón ít nhất 1 khách.
+ */
+function getDriverPrimaryAction(ride: Ride): {
+  label: string;
+  variant: 'arrive' | 'start' | 'complete';
+  apiCall: () => Promise<void>;
+} | null {
+  const confirmedBookings = ride.bookings?.filter(b => b.status === 'CONFIRMED') ?? [];
+  const unpickedBookings = confirmedBookings.filter(b => !b.isPickedUp);
+  const hasPickedUpSomeone = confirmedBookings.some(b => b.isPickedUp);
+
+  if (ride.status === 'ONGOING') {
+    // Chỉ khi ONGOING mới cho phép hoàn thành
+    return {
+      label: 'Hoàn thành chuyến',
+      variant: 'complete',
+      apiCall: async () => {
+        await apiClient.patch(`/rides/${ride.id}/status`, { status: 'COMPLETED' });
+      },
+    };
+  }
+
+  if (ride.status === 'SCHEDULED') {
+    // Nếu đã đón được ít nhất 1 khách và không còn khách chờ đón → cho phép bắt đầu chuyến
+    if (hasPickedUpSomeone && unpickedBookings.length === 0) {
+      return {
+        label: 'Bắt đầu chuyến',
+        variant: 'start',
+        apiCall: async () => {
+          await apiClient.patch(`/rides/${ride.id}/status`, { status: 'ONGOING' });
+        },
+      };
+    }
+
+    // Còn khách chưa đón → nút "Đã đến vị trí đón khách" không hiện ở đây
+    // Nút đón khách hiện ở từng booking card bên dưới
+    return null;
+  }
+
+  return null;
+}
+
+// ─── Component ─────────────────────────────────────────────────────────────
+
+export default function DriverView({ data, onRefresh, isExpanded = true, onExpand }: DriverViewProps) {
+  const ride: Ride = data.ride;
+
+  // Loading state riêng cho từng action để tránh double-click
+  const [loadingPrimary, setLoadingPrimary] = useState(false);
+  const [loadingBooking, setLoadingBooking] = useState<Record<string, boolean>>({});
+  const [loadingPickup, setLoadingPickup] = useState<Record<string, boolean>>({});
+  const [loadingCancel, setLoadingCancel] = useState(false);
+
+  // ─── Handlers ────────────────────────────────────────────────────────
+
+  const handlePrimaryAction = async () => {
+    const action = getDriverPrimaryAction(ride);
+    if (!action || loadingPrimary) return;
+
+    setLoadingPrimary(true);
     try {
-      await apiClient.patch(`/rides/${ride.id}/status`, { status });
-      toast.success(status === 'COMPLETED' ? 'Chuyến đi đã hoàn thành' : 'Đã cập nhật trạng thái chuyến đi');
+      await action.apiCall();
+      const successText =
+        action.variant === 'complete' ? 'Chuyến đi đã hoàn thành' :
+        action.variant === 'start'    ? 'Đã bắt đầu chuyến đi' :
+                                        'Đã cập nhật trạng thái chuyến đi';
+      toast.success(successText);
       onRefresh();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Không thể cập nhật trạng thái. Vui lòng thử lại.');
+    } finally {
+      setLoadingPrimary(false);
+    }
+  };
+
+  const handleBookingAction = async (bookingId: string, action: 'CONFIRMED' | 'REJECTED') => {
+    if (loadingBooking[bookingId]) return;
+
+    setLoadingBooking(prev => ({ ...prev, [bookingId]: true }));
+    try {
+      await apiClient.patch(`/bookings/${bookingId}/status`, { status: action });
+      toast.success(action === 'CONFIRMED' ? 'Đã nhận khách' : 'Đã từ chối khách');
+      onRefresh();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setLoadingBooking(prev => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
+  /**
+   * Xác nhận đã đến điểm đón và đón khách.
+   * Sau khi đón đủ khách, tài xế mới được nhấn "Bắt đầu chuyến".
+   */
+  const handlePickupPassenger = async (bookingId: string) => {
+    if (loadingPickup[bookingId]) return;
+
+    setLoadingPickup(prev => ({ ...prev, [bookingId]: true }));
+    try {
+      await apiClient.patch(`/bookings/${bookingId}/pickup`);
+      toast.success('Đã xác nhận đón khách');
+      onRefresh();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setLoadingPickup(prev => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
+  const handleDropoffPassenger = async (bookingId: string) => {
+    if (loadingPickup[bookingId]) return;
+
+    setLoadingPickup(prev => ({ ...prev, [bookingId]: true }));
+    try {
+      await apiClient.patch(`/bookings/${bookingId}/dropoff`);
+      toast.success('Đã hoàn thành hành trình của khách hàng');
+      onRefresh();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setLoadingPickup(prev => ({ ...prev, [bookingId]: false }));
     }
   };
 
   const handleCancelRide = async () => {
     if (!confirm('Bạn có chắc chắn muốn hủy chuyến đi này? Hành động này không thể hoàn tác.')) return;
+    if (loadingCancel) return;
+
+    setLoadingCancel(true);
     try {
-      await apiClient.patch(`/rides/${ride.id}/status`, { status: 'CANCELLED' });
+      await apiClient.patch(`/rides/${ride.id}/status`, {
+        status: 'CANCELLED',
+        cancelReason: 'Tài xế hủy chuyến',
+      });
       toast.success('Chuyến đi đã bị hủy');
       onRefresh();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setLoadingCancel(false);
     }
   };
 
-  const pendingBookings = ride.bookings?.filter((b: any) => b.status === 'PENDING') || [];
-  const confirmedBookings = ride.bookings?.filter((b: any) => b.status === 'CONFIRMED' || b.status === 'COMPLETED') || [];
-  
-  const handleBookingAction = async (bookingId: string, action: 'CONFIRMED' | 'REJECTED') => {
-    try {
-      await apiClient.patch(`/bookings/${bookingId}/status`, { status: action });
-      toast.success(action === 'CONFIRMED' ? 'Đã nhận khách' : 'Đã từ chối khách');
-      onRefresh();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
-    }
-  };
+  // ─── Derived State ────────────────────────────────────────────────────
 
-  const handlePickupPassenger = async (bookingId: string) => {
-    try {
-      await apiClient.patch(`/bookings/${bookingId}/pickup`);
-      toast.success('Đã xác nhận đón khách');
-      onRefresh();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
-    }
-  };
+  const pendingBookings = ride.bookings?.filter(b => b.status === 'PENDING') || [];
+  const confirmedBookings = ride.bookings?.filter(b =>
+    b.status === 'CONFIRMED' || b.status === 'COMPLETED'
+  ) || [];
 
-  const handleDropoffPassenger = async (bookingId: string) => {
-    try {
-      await apiClient.patch(`/bookings/${bookingId}/dropoff`);
-      toast.success('Đã hoàn thành hành trình của khách hàng');
-      onRefresh();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
-    }
-  };
+  const primaryAction = getDriverPrimaryAction(ride);
+
+  // Màu sắc badge trạng thái chuyến
+  const statusBadge =
+    ride.status === 'ONGOING'    ? { label: 'ĐANG CHẠY', className: 'bg-green-100 text-green-700' } :
+    ride.status === 'SCHEDULED'  ? { label: 'ĐÃ LÊN LỊCH', className: 'bg-blue-100 text-blue-700' } :
+    ride.status === 'COMPLETED'  ? { label: 'HOÀN THÀNH', className: 'bg-gray-100 text-gray-600' } :
+    ride.status === 'CANCELLED'  ? { label: 'ĐÃ HỦY', className: 'bg-red-100 text-red-600' } :
+    { label: ride.status, className: 'bg-gray-100 text-gray-600' };
+
+  // Màu nút hành động chính theo từng bước
+  const primaryButtonStyle =
+    primaryAction?.variant === 'complete' ? 'bg-[#34c759] hover:bg-green-600' :
+    primaryAction?.variant === 'start'    ? 'bg-[#0071e3] hover:bg-blue-600' :
+                                            'bg-gray-400';
+
+  // ─── Render ───────────────────────────────────────────────────────────
 
   return (
     <div className="w-full px-4 pb-6 pt-2">
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
             {ride.status === 'SCHEDULED' ? 'Chuyến đi sắp tới' : 'Đang di chuyển'}
           </h2>
-          <p className="text-sm text-gray-500">Bấm Bắt đầu khi bạn khởi hành</p>
+          <p className="text-sm text-gray-500">
+            {ride.status === 'SCHEDULED' ? 'Đang chờ khởi hành' : 'Chuyến đang diễn ra'}
+          </p>
         </div>
         <div className="text-right">
           <p className="text-sm font-medium text-gray-500">Trạng thái</p>
-          <span className={`px-2 py-1 rounded-md text-xs font-semibold ${ride.status === 'ONGOING' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
-            {ride.status === 'ONGOING' ? 'ĐANG CHẠY' : 'ĐÃ LÊN LỊCH'}
+          <span className={`px-2 py-1 rounded-md text-xs font-semibold ${statusBadge.className}`}>
+            {statusBadge.label}
           </span>
         </div>
       </div>
 
+      {/* Lộ trình */}
       <div className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl mb-4 border border-gray-100 relative">
         <div className="flex flex-col items-center gap-1 mt-1">
           <div className="w-2 h-2 rounded-full bg-blue-500"></div>
@@ -95,7 +273,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
             <p className="text-sm font-medium text-gray-900 truncate">{ride.destination}</p>
           </div>
         </div>
-        <a 
+        <a
           href={`https://www.google.com/maps/dir/?api=1&origin=${ride.originLat},${ride.originLng}&destination=${ride.destinationLat},${ride.destinationLng}&travelmode=driving`}
           target="_blank"
           rel="noreferrer"
@@ -106,14 +284,13 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
         </a>
       </div>
 
-      {/* Badge + compact controls - luôn hiện */}
+      {/* Badge tổng hành khách + yêu cầu mới */}
       <div className="flex items-center justify-between mb-4 px-1">
         <div className="flex items-center gap-2 text-gray-600">
           <UsersIcon className="w-4 h-4" />
           <span className="text-sm font-medium">Hành khách: {confirmedBookings.length}</span>
         </div>
         <div className="flex items-center gap-2">
-          {/* Badge yêu cầu mới — luôn hiển thị để nhắc nhở tài xế */}
           {pendingBookings.length > 0 && (
             <span className="flex items-center gap-1 bg-orange-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full animate-pulse">
               {pendingBookings.length} yêu cầu mới
@@ -128,7 +305,6 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
       </div>
 
       {/* Yêu cầu PENDING — LUÔN HIỆN, không phụ thuộc isExpanded */}
-      {/* Tài xế cần thấy ngay khi có khách mới dù chưa kéo bottom sheet lên */}
       {pendingBookings.length > 0 && (
         <div className="mb-4 border border-orange-200 rounded-2xl overflow-hidden">
           <div className="bg-orange-500 px-4 py-2.5 flex items-center justify-between">
@@ -136,7 +312,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
             <span className="text-[10px] text-orange-100 font-medium">Nhấn để phản hồi</span>
           </div>
           <div className="divide-y divide-orange-100 bg-orange-50">
-            {pendingBookings.map((b: any) => (
+            {pendingBookings.map(b => (
               <div key={b.id} className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -169,14 +345,16 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
                     variant="outline"
                     className="flex-1 bg-white border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 h-10 text-sm font-semibold rounded-xl"
                     onClick={() => handleBookingAction(b.id, 'REJECTED')}
+                    disabled={loadingBooking[b.id]}
                   >
-                    <XCircle className="w-4 h-4 mr-1" /> Từ chối
+                    {loadingBooking[b.id] ? <Loader2 className="w-4 h-4 animate-spin" /> : <><XCircle className="w-4 h-4 mr-1" /> Từ chối</>}
                   </Button>
                   <Button
                     className="flex-1 bg-[#34c759] hover:bg-green-600 text-white h-10 text-sm font-semibold rounded-xl shadow-sm"
                     onClick={() => handleBookingAction(b.id, 'CONFIRMED')}
+                    disabled={loadingBooking[b.id]}
                   >
-                    <CheckCircle className="w-4 h-4 mr-1" /> Chấp nhận
+                    {loadingBooking[b.id] ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle className="w-4 h-4 mr-1" /> Chấp nhận</>}
                   </Button>
                 </div>
               </div>
@@ -185,6 +363,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
         </div>
       )}
 
+      {/* Danh sách hành khách đã nhận — chỉ hiện khi expanded */}
       {isExpanded && (
         <div className="mb-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-2">Hành khách đã nhận ({confirmedBookings.length})</h3>
@@ -192,7 +371,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
             <p className="text-xs text-gray-500 italic bg-gray-50 p-3 rounded-lg border border-gray-100">Chưa có hành khách nào.</p>
           ) : (
             <div className="space-y-2">
-              {confirmedBookings.map((b: any) => (
+              {confirmedBookings.map(b => (
                 <div key={b.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-white shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
@@ -211,7 +390,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
                           <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded font-bold">ĐÃ ĐÓN</span>
                         ) : null}
                       </div>
-                      <p className="text-xs text-gray-500">{b.seats} chỗ • {(b.price ?? 0).toLocaleString('vi-VN')}đ</p>
+                      <p className="text-xs text-gray-500">{b.seats} chỗ • {((b.totalPrice ?? b.price) ?? 0).toLocaleString('vi-VN')}đ</p>
                       {b.pickupAddress && !b.isPickedUp && b.status !== 'COMPLETED' && (
                         <p className="text-[11px] text-orange-600 mt-0.5 line-clamp-1">{b.pickupAddress}</p>
                       )}
@@ -221,22 +400,26 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
                     <a href={`tel:${b.passenger.phone}`} className="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors">
                       <Phone className="w-4 h-4" />
                     </a>
-                    {!b.isPickedUp && b.status === 'CONFIRMED' && ride.status === 'ONGOING' && (
+                    {/* Nút "Đã đến vị trí đón khách" — chỉ hiện khi CONFIRMED và chưa đón */}
+                    {!b.isPickedUp && b.status === 'CONFIRMED' && (
                       <button
                         onClick={() => handlePickupPassenger(b.id)}
-                        className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors"
-                        title="Xác nhận đã đón khách"
+                        disabled={loadingPickup[b.id]}
+                        className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors disabled:opacity-50"
+                        title="Xác nhận đã đến và đón khách"
                       >
-                        <CheckCircle className="w-4 h-4" />
+                        {loadingPickup[b.id] ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                       </button>
                     )}
+                    {/* Nút trả khách — chỉ khi đang ONGOING và đã đón */}
                     {b.isPickedUp && b.status === 'CONFIRMED' && ride.status === 'ONGOING' && (
                       <button
                         onClick={() => handleDropoffPassenger(b.id)}
-                        className="p-2 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition-colors"
+                        disabled={loadingPickup[b.id]}
+                        className="p-2 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition-colors disabled:opacity-50"
                         title="Kết thúc hành trình (Trả khách)"
                       >
-                        <MapPin className="w-4 h-4" />
+                        {loadingPickup[b.id] ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
                       </button>
                     )}
                   </div>
@@ -247,34 +430,44 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
         </div>
       )}
 
+      {/* Nút hành động chính — State machine UI */}
       <div className="flex flex-col gap-2 mt-4 mb-2">
-        {ride.status === 'SCHEDULED' && (
-          <Button 
-            className="w-full bg-[#0071e3] hover:bg-blue-600 text-white h-12 text-[15px] rounded-xl font-semibold shadow-md"
-            onClick={() => handleUpdateStatus('ONGOING')}
+        {primaryAction && (
+          <Button
+            className={`w-full text-white h-12 text-[15px] rounded-xl font-semibold shadow-md ${primaryButtonStyle} disabled:opacity-60`}
+            onClick={handlePrimaryAction}
+            disabled={loadingPrimary}
           >
-            <Navigation className="w-5 h-5 mr-2" /> Bắt đầu chuyến đi
+            {loadingPrimary ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : primaryAction.variant === 'complete' ? (
+              <><CheckCircle className="w-5 h-5 mr-2" /> {primaryAction.label}</>
+            ) : primaryAction.variant === 'start' ? (
+              <><Navigation className="w-5 h-5 mr-2" /> {primaryAction.label}</>
+            ) : (
+              primaryAction.label
+            )}
           </Button>
         )}
-        
-        {ride.status === 'ONGOING' && (
-          <Button 
-            className="w-full bg-[#34c759] hover:bg-green-600 text-white h-12 text-[15px] rounded-xl font-semibold shadow-md"
-            onClick={() => handleUpdateStatus('COMPLETED')}
-          >
-            <CheckCircle className="w-5 h-5 mr-2" /> Hoàn thành chuyến đi
-          </Button>
+
+        {/* Chú thích luồng nút cho Driver khi ride SCHEDULED */}
+        {ride.status === 'SCHEDULED' && confirmedBookings.length > 0 && !primaryAction && (
+          <p className="text-center text-xs text-gray-400 mt-1">
+            Nhấn nút đón khách (bên trên) để tiến hành bước tiếp theo
+          </p>
         )}
       </div>
 
-      {isExpanded && (
+      {/* Nút hủy chuyến */}
+      {isExpanded && ride.status !== 'COMPLETED' && ride.status !== 'ONGOING' && (
         <div className="mt-8 pt-4 border-t border-gray-100">
-          <Button 
-            variant="outline" 
-            className="w-full h-12 text-[15px] rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 border-gray-200 bg-white"
+          <Button
+            variant="outline"
+            className="w-full h-12 text-[15px] rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 border-gray-200 bg-white disabled:opacity-60"
             onClick={handleCancelRide}
+            disabled={loadingCancel}
           >
-            <XCircle className="w-5 h-5 mr-2" /> Hủy chuyến
+            {loadingCancel ? <Loader2 className="w-5 h-5 animate-spin" /> : <><XCircle className="w-5 h-5 mr-2" /> Hủy chuyến</>}
           </Button>
         </div>
       )}

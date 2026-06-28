@@ -116,6 +116,9 @@ export const Header: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    if (!window.confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
+      return;
+    }
     try {
       await logout();
       toast.success('Đã đăng xuất');

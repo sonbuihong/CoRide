@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { Loader2 } from 'lucide-react';
@@ -18,9 +18,16 @@ export default function OngoingPage() {
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [driverLocation, setDriverLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const { socket } = useSocket();
+  const { socket, isConnected } = useSocket();
 
-  const fetchActiveRide = async () => {
+  // Ref để tránh join lại room khi component re-render
+  const joinedRideIdRef = useRef<string | null>(null);
+
+  /**
+   * Fetch dữ liệu active booking/ride từ API.
+   * Đây là nguồn sự thật duy nhất — socket chỉ trigger fetch này.
+   */
+  const fetchActiveRide = useCallback(async () => {
     try {
       const res = await apiClient.get('/bookings/active');
       if (res.data.activeBooking) {
@@ -35,42 +42,77 @@ export default function OngoingPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Lần đầu load + polling 30 giây làm backup (socket đã xử lý realtime)
-  useEffect(() => {
-    fetchActiveRide();
-    
-    const interval = setInterval(() => {
-      fetchActiveRide();
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
-  // Lắng nghe socket events để cập nhật UI ngay lập tức (không cần refresh trang)
+  // Lần đầu load
+  useEffect(() => {
+    fetchActiveRide();
+  }, [fetchActiveRide]);
+
+  // Polling 30 giây làm backup cho trường hợp socket miss event
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchActiveRide();
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchActiveRide]);
+
+  /**
+   * Quản lý việc join/leave ride room và lắng nghe socket events.
+   * Dependency: socket instance và rideId của activeData.
+   *
+   * Thiết kế:
+   * - Chỉ join ride room 1 lần, không join lại khi component re-render.
+   * - Cleanup tất cả listeners khi dependency thay đổi hoặc component unmount.
+   * - Sau khi socket reconnect, fetch lại dữ liệu để đồng bộ.
+   */
   useEffect(() => {
     if (!socket || !activeData) return;
 
-    // Join ride room để nhận các broadcast chung của chuyến đi (VD: ride:status)
-    const rideId = activeData.userRole === 'DRIVER' ? activeData.ride.id : activeData.ride.id;
-    socket.emit('ride:join', rideId);
+    const rideId: string = activeData.ride?.id;
+    if (!rideId) return;
 
-    const handleBookingConfirmed = () => {
+    // Join ride room nếu chưa join (hoặc rideId thay đổi)
+    if (joinedRideIdRef.current !== rideId) {
+      // Leave room cũ nếu có
+      if (joinedRideIdRef.current) {
+        socket.emit('ride:leave', joinedRideIdRef.current);
+      }
+      socket.emit('ride:join', rideId);
+      joinedRideIdRef.current = rideId;
+    }
+
+    // ─── Event Handlers ────────────────────────────────────────────────
+
+    const handleBookingConfirmed = (data: { message?: string }) => {
       // Tài xế vừa chấp nhận → fetch lại ngay để cập nhật trạng thái
-      toast.success('Tài xế đã xác nhận chuyến đi của bạn!');
+      toast.success(data?.message || 'Tài xế đã xác nhận chuyến đi của bạn!');
       fetchActiveRide();
     };
 
     const handleBookingRejected = (data: { reason?: string }) => {
-      // Tài xế từ chối hoặc timeout → thông báo và fetch lại
       toast.error(data?.reason || 'Yêu cầu đặt chỗ bị từ chối');
       fetchActiveRide();
     };
 
-    const handleRideStatus = () => {
-      // Tài xế bắt đầu / hoàn thành chuyến đi → cập nhật trạng thái
+    const handleRideStatusUpdated = (data: { rideId?: string; status?: string }) => {
+      // Bỏ qua event từ ride không phải ride đang theo dõi
+      // ride:status giờ emit global nên cần filter chính xác
+      if (data?.rideId && data.rideId !== rideId) return;
+
+      // COMPLETED/CANCELLED → chuyến đi đã kết thúc, redirect ngay lập tức
+      // Không cần fetch API vì đã biết chắc chuyến không còn active
+      if (data?.status === 'COMPLETED') {
+        toast.success('Chuyến đi đã hoàn thành!');
+        router.replace('/rides/search');
+        return;
+      }
+      if (data?.status === 'CANCELLED') {
+        toast.error('Chuyến đi đã bị hủy bởi tài xế');
+        router.replace('/rides/search');
+        return;
+      }
+      // Các trạng thái khác (SCHEDULED → ONGOING) → fetch lại để cập nhật UI
       fetchActiveRide();
     };
 
@@ -96,38 +138,73 @@ export default function OngoingPage() {
       toast.info('Có khách mới muốn đặt chỗ!', { duration: 3000 });
     };
 
+    // Sau khi reconnect → fetch lại dữ liệu mới nhất từ API
+    // Đảm bảo không mất state khi mạng bị ngắt tạm thời
+    const handleReconnect = async () => {
+      console.log('[Ongoing] Socket reconnected — re-joining ride room and fetching data');
+      // Re-join ride room sau reconnect
+      socket.emit('ride:join', rideId);
+      await fetchActiveRide();
+    };
+
     socket.on('booking:confirmed', handleBookingConfirmed);
     socket.on('booking:rejected', handleBookingRejected);
     socket.on('booking:picked_up', handleBookingPickedUp);
     socket.on('booking:completed', handleBookingCompleted);
-    socket.on('ride:status', handleRideStatus);
+    socket.on('ride:status', handleRideStatusUpdated);
     socket.on('driver:location', handleDriverLocation);
     socket.on('booking:new_request', handleNewBookingRequest);
+    socket.on('connect', handleReconnect);
 
     return () => {
-      socket.emit('ride:leave', rideId);
+      // Cleanup: bỏ tất cả listeners để tránh memory leak và duplicate handlers
       socket.off('booking:confirmed', handleBookingConfirmed);
       socket.off('booking:rejected', handleBookingRejected);
       socket.off('booking:picked_up', handleBookingPickedUp);
       socket.off('booking:completed', handleBookingCompleted);
-      socket.off('ride:status', handleRideStatus);
+      socket.off('ride:status', handleRideStatusUpdated);
       socket.off('driver:location', handleDriverLocation);
       socket.off('booking:new_request', handleNewBookingRequest);
+      socket.off('connect', handleReconnect);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, activeData?.id]);
+  }, [socket, activeData?.ride?.id]);
+
+  // Khi socket reconnect (isConnected đổi từ false → true), fetch lại
+  useEffect(() => {
+    if (isConnected && activeData) {
+      // Re-join ride room sau khi mất kết nối
+      const rideId = activeData.ride?.id;
+      if (rideId && socket) {
+        socket.emit('ride:join', rideId);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected]);
 
   // Auto-expand bottom sheet khi có pending booking
-  // Đảm bảo tài xế luôn thấy yêu cầu người dùng không bỏ lỡ dù đang nhìn bản đồ
+  // Đảm bảo tài xế luôn thấy yêu cầu, không bỏ lỡ dù đang nhìn bản đồ
   useEffect(() => {
     if (!activeData) return;
     const pendingCount = activeData.ride?.bookings?.filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (b: any) => b.status === 'PENDING'
     ).length ?? 0;
     if (pendingCount > 0) {
       setIsExpanded(true);
     }
   }, [activeData]);
+
+  // Cleanup: leave ride room khi component unmount
+  useEffect(() => {
+    return () => {
+      if (socket && joinedRideIdRef.current) {
+        socket.emit('ride:leave', joinedRideIdRef.current);
+        joinedRideIdRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket]);
 
   if (loading || !activeData) {
     return (
@@ -139,12 +216,11 @@ export default function OngoingPage() {
   }
 
   const role = activeData.userRole; // 'DRIVER' hoặc 'PASSENGER'
-  // Cả 2 role đều trả về object có thuộc tính ride
-  const ride = role === 'DRIVER' ? activeData.ride : activeData.ride;
+  const ride = activeData.ride;
 
   // Lấy danh sách điểm đón khách (chỉ dành cho driver)
   // Lọc các booking CONFIRMED và CHƯA đón, có toạ độ đón
-  const waypoints = role === 'DRIVER' 
+  const waypoints = role === 'DRIVER'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ? (ride.bookings?.filter((b: any) => b.status === 'CONFIRMED' && !b.isPickedUp && b.passengerLat && b.passengerLng) || [])
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -166,17 +242,17 @@ export default function OngoingPage() {
       </div>
 
       {/* Bottom Sheet Section - Lớp phủ lên bản đồ */}
-      <div 
+      <div
         className={`absolute bottom-0 left-0 right-0 z-10 w-full bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out flex flex-col ${isExpanded ? 'h-[85vh]' : 'h-auto max-h-[45vh]'}`}
       >
         {/* Thanh điều khiển (Drag Handle) */}
-        <div 
+        <div
           className="w-full flex justify-center pt-4 pb-2 cursor-pointer sticky top-0 bg-white z-20 shrink-0"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
-        
+
         <div className={`flex-1 w-full ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'}`}>
           {role === 'DRIVER' ? (
             <DriverView data={activeData} onRefresh={fetchActiveRide} isExpanded={isExpanded} onExpand={() => setIsExpanded(true)} />

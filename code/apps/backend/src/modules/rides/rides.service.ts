@@ -253,6 +253,18 @@ export class RidesService {
       }
     }
 
+    // Lưu danh sách passengerId TRƯỚC transaction
+    // Vì transaction CANCELLED sẽ update booking status → query sau transaction trả rỗng
+    // Đây là race condition nghiêm trọng: passenger không nhận được event realtime
+    const affectedPassengers = await prisma.booking.findMany({
+      where: {
+        rideId: id,
+        status: { in: ['PENDING', 'CONFIRMED'] },
+      },
+      select: { passengerId: true },
+    });
+    const affectedPassengerIds = affectedPassengers.map((b) => b.passengerId);
+
     const updatedRide = await prisma.$transaction(async (tx) => {
       // Nếu hủy chuyến, hủy toàn bộ các booking liên quan
       if (status === 'CANCELLED') {
@@ -268,6 +280,18 @@ export class RidesService {
         });
       }
 
+      // Nếu hoàn thành chuyến, hoàn thành toàn bộ booking CONFIRMED đã đón
+      if (status === 'COMPLETED') {
+        await tx.booking.updateMany({
+          where: {
+            rideId: id,
+            status: 'CONFIRMED',
+            isPickedUp: true,
+          },
+          data: { status: 'COMPLETED' },
+        });
+      }
+
       return tx.ride.update({
         where: { id },
         data: { 
@@ -278,15 +302,25 @@ export class RidesService {
       });
     });
 
-    // Broadcast status change đến tất cả participants trong ride room
-    // Passengers nhận realtime thay vì chờ polling 10s
+    // Broadcast status change đến tất cả participants
     try {
-      getIO().to(`ride:${id}`).emit('ride:status', {
+      const statusPayload = {
         rideId: id,
         status,
         updatedAt: new Date().toISOString(),
-      });
-      // Global event for UI refresh
+      };
+
+      // Emit tới ride room (những ai đã join qua ride:join event)
+      getIO().to(`ride:${id}`).emit('ride:status', statusPayload);
+
+      // Emit trực tiếp tới từng passenger đã lưu TRƯỚC transaction
+      // Đảm bảo passenger luôn nhận event dù booking đã bị CANCELLED/COMPLETED
+      for (const passengerId of affectedPassengerIds) {
+        getIO().to(`user:${passengerId}`).emit('ride:status', statusPayload);
+      }
+
+      // Global broadcast để trang search và danh sách tự cập nhật ngay lập tức
+      getIO().emit('ride:status', statusPayload);
       getIO().emit('ride:updated', updatedRide);
     } catch (socketError) {
       // Socket chưa init (test environment) → skip, không ảnh hưởng logic chính
@@ -296,3 +330,4 @@ export class RidesService {
     return updatedRide;
   }
 }
+

@@ -102,4 +102,52 @@ export const registerLegacySocket = (io: Server, socket: Socket, userId: string)
       console.error('[Socket] booking:reject error:', error);
     }
   });
+
+  // ─── Carpooling: Join/Leave ride room ────────────────────────────────
+  // Cho phép Driver và Passenger join vào room của chuyến đi cụ thể
+  // để nhận realtime event khi ride/booking status thay đổi.
+  socket.on('ride:join', async (rideId: string) => {
+    if (typeof rideId !== 'string' || !rideId) return;
+
+    try {
+      // Kiểm tra quyền: user phải là driver hoặc passenger có booking trong ride này
+      const ride = await prisma.ride.findFirst({
+        where: {
+          id: rideId,
+          OR: [
+            { driverId: userId },
+            {
+              bookings: {
+                some: {
+                  passengerId: userId,
+                  status: { in: ['PENDING', 'CONFIRMED'] },
+                },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      });
+
+      if (!ride) {
+        // Không có quyền — bỏ qua, không emit error (tránh lộ thông tin)
+        console.warn(`[Socket] ride:join denied for user ${userId} on ride ${rideId}`);
+        return;
+      }
+
+      const roomName = `ride:${rideId}`;
+      socket.join(roomName);
+      console.log(`[Socket] User ${userId} joined ${roomName}`);
+    } catch (error) {
+      console.error('[Socket] ride:join error:', error);
+    }
+  });
+
+  socket.on('ride:leave', (rideId: string) => {
+    if (typeof rideId !== 'string' || !rideId) return;
+    const roomName = `ride:${rideId}`;
+    socket.leave(roomName);
+    console.log(`[Socket] User ${userId} left ${roomName}`);
+  });
 };
+

@@ -6,7 +6,7 @@ import apiClient from '@/lib/api-client';
 import { SearchForm } from '@/components/rides/search-form';
 import { RideCard, Ride } from '@/components/rides/ride-card';
 import { SearchRideInput } from '@repo/shared';
-import { Loader2, Car, AlertCircle, Map } from 'lucide-react';
+import { Loader2, Car, AlertCircle, Map, RefreshCw } from 'lucide-react';
 import RideRouteMap from '@/components/rides/ride-route-map';
 import { useSocket } from '@/components/providers/socket-provider';
 import { toast } from 'sonner';
@@ -112,12 +112,20 @@ function SearchResults() {
       setHoveredRide((prev) => (prev?.id === data.id ? null : prev));
     };
 
+    // Xử lý khi ride thay đổi trạng thái (event global từ backend)
+    // CANCELLED/COMPLETED → ẩn chuyến ngay lập tức (hành khách không cần thấy nữa)
+    // ONGOING → vẫn hiển thị (hành khách vẫn có thể đặt ghép chuyến)
     const handleRideStatus = (data: { rideId: string; status: string }) => {
       if (data.status === 'CANCELLED' || data.status === 'COMPLETED') {
         setRides((prevRides) => prevRides.filter((ride) => ride.id !== data.rideId));
         setHoveredRide((prev) => (prev?.id === data.rideId ? null : prev));
-      } else {
-        handleRideRefresh();
+      } else if (data.status === 'ONGOING') {
+        // Chuyến vừa bắt đầu — cập nhật status trong state để UI phản ánh đúng
+        setRides((prevRides) =>
+          prevRides.map((ride) =>
+            ride.id === data.rideId ? { ...ride, status: data.status } : ride
+          )
+        );
       }
     };
 
@@ -181,6 +189,15 @@ function SearchResults() {
               <h2 className="text-[21px] font-semibold tracking-[-0.23px] text-[#1d1d1f] dark:text-white">
                 {loading ? 'Đang tải dữ liệu...' : `Kết quả: ${rides.length} chuyến`}
               </h2>
+              <button
+                onClick={() => fetchRides(getCurrentFilters())}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(0,0,0,0.08)] dark:hover:bg-[rgba(255,255,255,0.12)] transition-colors text-[13px] font-medium text-[#1d1d1f] dark:text-white disabled:opacity-50"
+                title="Làm mới danh sách"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                Làm mới
+              </button>
             </div>
 
             {loading ? (

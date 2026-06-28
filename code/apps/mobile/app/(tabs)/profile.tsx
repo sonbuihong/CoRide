@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
 import { useAuth } from '../../src/hooks/useAuth';
 import { useRouter } from 'expo-router';
 import { LogOut, Settings, ChevronRight, Star, Car } from 'lucide-react-native';
@@ -8,8 +8,24 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    Alert.alert(
+      "Xác nhận",
+      "Bạn có chắc chắn muốn đăng xuất?",
+      [
+        {
+          text: "Hủy",
+          style: "cancel"
+        },
+        {
+          text: "Đăng xuất",
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+          }
+        }
+      ]
+    );
   };
 
   return (

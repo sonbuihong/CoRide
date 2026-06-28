@@ -64,6 +64,9 @@ export default function AdminPage() {
   }, [authLoading, user, fetchStats]);
 
   const handleLogout = async () => {
+    if (!window.confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
+      return;
+    }
     try {
       await logout();
       router.push('/login');
