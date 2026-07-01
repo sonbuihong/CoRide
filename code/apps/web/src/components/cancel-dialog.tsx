@@ -40,9 +40,9 @@ export function CancelDialog({ isOpen, onClose, id, type, onSuccess }: CancelDia
     setLoading(true);
     try {
       if (type === 'ride') {
-        await apiClient.post(`/rides/${id}/status`, { status: 'CANCELLED', cancelReason: reason });
+        await apiClient.patch(`/rides/${id}/status`, { status: 'CANCELLED', cancelReason: reason });
       } else {
-        await apiClient.post(`/bookings/${id}/cancel`, { cancelReason: reason });
+        await apiClient.patch(`/bookings/${id}/cancel`, { cancelReason: reason });
       }
       
       toast.success('Đã hủy thành công');

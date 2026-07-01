@@ -2,7 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { TripsService } from './trips.service';
 import { MatchingService } from '../matching/matching.service';
 import { createTripRequestSchema } from './trips.validation';
-import { getIO } from '../../socket/socket.server';
+import { SocketEventService } from '../../socket/socket.events';
+import { SocketEvents } from '@repo/shared';
 
 export class TripsController {
   /**
@@ -24,11 +25,7 @@ export class TripsController {
       });
 
       // 3. Phát event realtime cho Frontend
-      try {
-        getIO().to(userId).emit('trip:created', trip);
-      } catch (socketErr) {
-        console.error('[Socket] trip:created error:', socketErr);
-      }
+      SocketEventService.emitToUser(userId, SocketEvents.TRIP_CREATED, trip);
 
       res.status(201).json({ success: true, data: trip });
     } catch (error) {
@@ -47,14 +44,10 @@ export class TripsController {
 
       const trip = await TripsService.cancelTrip(id as string, userId, reason as string);
 
-      try {
-        // Emit ID để Frontend xóa khỏi danh sách
-        getIO().to(trip.passengerId).emit('trip:deleted', { id: trip.id });
-        if (trip.driverId) {
-          getIO().to(trip.driverId).emit('trip:deleted', { id: trip.id });
-        }
-      } catch (socketErr) {
-        console.error('[Socket] trip:deleted error:', socketErr);
+      // Emit ID để Frontend xóa khỏi danh sách
+      SocketEventService.emitToUser(trip.passengerId, SocketEvents.TRIP_DELETED, { id: trip.id });
+      if (trip.driverId) {
+        SocketEventService.emitToUser(trip.driverId, SocketEvents.TRIP_DELETED, { id: trip.id });
       }
 
       res.json({ success: true, data: trip });
@@ -102,13 +95,9 @@ export class TripsController {
 
       const trip = await TripsService.updateTripStatus(id as string, userId, status as any);
 
-      try {
-        getIO().to(userId).emit('trip:updated', trip);
-        if (trip.passengerId && trip.passengerId !== userId) {
-          getIO().to(trip.passengerId).emit('trip:updated', trip);
-        }
-      } catch (socketErr) {
-        console.error('[Socket] trip:updated error:', socketErr);
+      SocketEventService.emitToUser(userId, SocketEvents.TRIP_UPDATED, trip);
+      if (trip.passengerId && trip.passengerId !== userId) {
+        SocketEventService.emitToUser(trip.passengerId, SocketEvents.TRIP_UPDATED, trip);
       }
 
       res.json({ success: true, data: trip });

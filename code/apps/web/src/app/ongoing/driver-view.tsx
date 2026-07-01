@@ -256,33 +256,57 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
         </div>
       </div>
 
-      {/* Lộ trình */}
-      <div className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl mb-4 border border-gray-100 relative">
-        <div className="flex flex-col items-center gap-1 mt-1">
-          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-          <div className="w-0.5 h-8 bg-gray-300"></div>
-          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-        </div>
-        <div className="flex-1 space-y-3">
-          <div className="pr-10">
-            <p className="text-xs text-gray-500">Điểm đón</p>
-            <p className="text-sm font-medium text-gray-900 truncate">{ride.origin}</p>
-          </div>
-          <div className="pr-10">
-            <p className="text-xs text-gray-500">Điểm đến</p>
-            <p className="text-sm font-medium text-gray-900 truncate">{ride.destination}</p>
-          </div>
-        </div>
-        <a
-          href={`https://www.google.com/maps/dir/?api=1&origin=${ride.originLat},${ride.originLng}&destination=${ride.destinationLat},${ride.destinationLng}&travelmode=driving`}
-          target="_blank"
-          rel="noreferrer"
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
-          title="Mở Google Maps"
-        >
-          <Map className="w-5 h-5" />
-        </a>
+      {/* Nút hành động chính — State machine UI đưa lên trên cùng để luôn nhìn thấy */}
+      <div className="flex flex-col gap-2 mt-2 mb-4">
+        {primaryAction && (
+          <Button
+            className={`w-full text-white h-12 text-[15px] rounded-xl font-semibold shadow-md ${primaryButtonStyle} disabled:opacity-60`}
+            onClick={handlePrimaryAction}
+            disabled={loadingPrimary}
+          >
+            {loadingPrimary ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : primaryAction.variant === 'complete' ? (
+              <><CheckCircle className="w-5 h-5 mr-2" /> {primaryAction.label}</>
+            ) : primaryAction.variant === 'start' ? (
+              <><Navigation className="w-5 h-5 mr-2" /> {primaryAction.label}</>
+            ) : (
+              primaryAction.label
+            )}
+          </Button>
+        )}
+
       </div>
+
+      {/* Lộ trình (Chỉ hiện khi Expanded để nhường chỗ cho các nút thao tác ở chế độ thu gọn) */}
+      {isExpanded && (
+        <div className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl mb-4 border border-gray-100 relative">
+          <div className="flex flex-col items-center gap-1 mt-1">
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+            <div className="w-0.5 h-8 bg-gray-300"></div>
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+          </div>
+          <div className="flex-1 space-y-3">
+            <div className="pr-10">
+              <p className="text-xs text-gray-500">Điểm đón</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{ride.origin}</p>
+            </div>
+            <div className="pr-10">
+              <p className="text-xs text-gray-500">Điểm đến</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{ride.destination}</p>
+            </div>
+          </div>
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&origin=${ride.originLat},${ride.originLng}&destination=${ride.destinationLat},${ride.destinationLng}&travelmode=driving`}
+            target="_blank"
+            rel="noreferrer"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
+            title="Mở Google Maps"
+          >
+            <Map className="w-5 h-5" />
+          </a>
+        </div>
+      )}
 
       {/* Badge tổng hành khách + yêu cầu mới */}
       <div className="flex items-center justify-between mb-4 px-1">
@@ -363,10 +387,9 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
         </div>
       )}
 
-      {/* Danh sách hành khách đã nhận — chỉ hiện khi expanded */}
-      {isExpanded && (
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">Hành khách đã nhận ({confirmedBookings.length})</h3>
+      {/* Danh sách hành khách đã nhận — Bỏ điều kiện isExpanded để luôn hiện nút Đón khách */}
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-gray-900 mb-2">Hành khách đã nhận ({confirmedBookings.length})</h3>
           {confirmedBookings.length === 0 ? (
             <p className="text-xs text-gray-500 italic bg-gray-50 p-3 rounded-lg border border-gray-100">Chưa có hành khách nào.</p>
           ) : (
@@ -428,35 +451,8 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
             </div>
           )}
         </div>
-      )}
 
-      {/* Nút hành động chính — State machine UI */}
-      <div className="flex flex-col gap-2 mt-4 mb-2">
-        {primaryAction && (
-          <Button
-            className={`w-full text-white h-12 text-[15px] rounded-xl font-semibold shadow-md ${primaryButtonStyle} disabled:opacity-60`}
-            onClick={handlePrimaryAction}
-            disabled={loadingPrimary}
-          >
-            {loadingPrimary ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : primaryAction.variant === 'complete' ? (
-              <><CheckCircle className="w-5 h-5 mr-2" /> {primaryAction.label}</>
-            ) : primaryAction.variant === 'start' ? (
-              <><Navigation className="w-5 h-5 mr-2" /> {primaryAction.label}</>
-            ) : (
-              primaryAction.label
-            )}
-          </Button>
-        )}
-
-        {/* Chú thích luồng nút cho Driver khi ride SCHEDULED */}
-        {ride.status === 'SCHEDULED' && confirmedBookings.length > 0 && !primaryAction && (
-          <p className="text-center text-xs text-gray-400 mt-1">
-            Nhấn nút đón khách (bên trên) để tiến hành bước tiếp theo
-          </p>
-        )}
-      </div>
+      {/* Đã chuyển Nút hành động chính lên trên cùng */}
 
       {/* Nút hủy chuyến */}
       {isExpanded && ride.status !== 'COMPLETED' && ride.status !== 'ONGOING' && (

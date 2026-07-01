@@ -20,6 +20,7 @@ import { BookingButton } from '@/components/booking/booking-button';
 import { ReviewDialog } from '@/components/rides/review-dialog';
 import { ChatWindow } from '@/components/chat/chat-window';
 import { useSocket } from '@/components/providers/socket-provider';
+import { SocketEvents } from '@repo/shared';
 
 interface RideDetailClientProps {
   rideId: string;
@@ -98,12 +99,12 @@ export default function RideDetailClient({ rideId }: RideDetailClientProps) {
       setRide((prev) => prev ? { ...prev, availableSeats: 0 } : prev);
     };
 
-    socket.on('ride:seats_updated', handleSeatsUpdated);
-    socket.on('ride:full', handleRideFull);
+    socket.on(SocketEvents.RIDE_SEATS_UPDATED, handleSeatsUpdated);
+    socket.on(SocketEvents.RIDE_FULL, handleRideFull);
 
     return () => {
-      socket.off('ride:seats_updated', handleSeatsUpdated);
-      socket.off('ride:full', handleRideFull);
+      socket.off(SocketEvents.RIDE_SEATS_UPDATED, handleSeatsUpdated);
+      socket.off(SocketEvents.RIDE_FULL, handleRideFull);
     };
   }, [socket, rideId]);
 

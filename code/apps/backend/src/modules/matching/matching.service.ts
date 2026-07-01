@@ -5,7 +5,8 @@ import {
   isDriverBusy,
   setDriverBusy,
 } from '../../shared/lib/redis';
-import { getIO } from '../../socket/socket.server';
+import { SocketEvents } from '@repo/shared';
+import { SocketEventService } from '../../socket/socket.events';
 import { AppError } from '../../shared/errors/AppError';
 
 /**
@@ -62,7 +63,7 @@ export class MatchingService {
     });
 
     // Thông báo passenger rằng hệ thống đang tìm tài xế
-    this.emitToPassenger(trip.passengerId, 'trip:status_update', {
+    this.emitToPassenger(trip.passengerId, SocketEvents.TRIP_STATUS_UPDATE, {
       tripId,
       status: 'MATCHING',
       message: 'Đang tìm tài xế cho bạn...',
@@ -163,7 +164,7 @@ export class MatchingService {
       );
 
       // Gửi thông báo cuốc xe cho tài xế
-      this.emitToDriver(driver.driverId, 'trip:new_request', {
+      this.emitToDriver(driver.driverId, SocketEvents.TRIP_NEW_REQUEST, {
         tripId,
         passenger: trip.passenger,
         originAddress: trip.originAddress,
@@ -188,7 +189,7 @@ export class MatchingService {
       }
 
       // Tài xế không nhận → thông báo hết hạn
-      this.emitToDriver(driver.driverId, 'trip:request_expired', { tripId });
+      this.emitToDriver(driver.driverId, SocketEvents.TRIP_REQUEST_EXPIRED, { tripId });
 
       console.log(
         `[Matching] Trip ${tripId}: Driver ${driver.driverId} timed out/rejected. Trying next...`
@@ -291,7 +292,7 @@ export class MatchingService {
     await setDriverBusy(driverId, tripId);
 
     // Thông báo hành khách: đã tìm được tài xế!
-    this.emitToPassenger(trip.passengerId, 'trip:matched', {
+    this.emitToPassenger(trip.passengerId, SocketEvents.TRIP_MATCHED, {
       tripId,
       driver: updatedTrip.driver,
       status: 'ACCEPTED',
@@ -319,7 +320,7 @@ export class MatchingService {
       data: { status: 'NO_DRIVER' },
     });
 
-    this.emitToPassenger(passengerId, 'trip:no_driver', {
+    this.emitToPassenger(passengerId, SocketEvents.TRIP_NO_DRIVER, {
       tripId,
       message: 'Không tìm được tài xế trong khu vực. Vui lòng thử lại sau.',
     });
@@ -331,7 +332,7 @@ export class MatchingService {
 
   private static emitToPassenger(passengerId: string, event: string, data: any): void {
     try {
-      getIO().to(passengerId).emit(event, data);
+      SocketEventService.emitToUser(passengerId, event, data);
     } catch (error) {
       console.warn(`[Matching] Socket emit to passenger ${passengerId} failed:`, error);
     }
@@ -339,7 +340,7 @@ export class MatchingService {
 
   private static emitToDriver(driverId: string, event: string, data: any): void {
     try {
-      getIO().to(driverId).emit(event, data);
+      SocketEventService.emitToUser(driverId, event, data);
     } catch (error) {
       console.warn(`[Matching] Socket emit to driver ${driverId} failed:`, error);
     }

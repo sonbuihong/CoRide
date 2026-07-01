@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { SearchForm } from '@/components/rides/search-form';
 import { RideCard, Ride } from '@/components/rides/ride-card';
-import { SearchRideInput } from '@repo/shared';
+import { SearchRideInput, SocketEvents } from '@repo/shared';
 import { Loader2, Car, AlertCircle, Map, RefreshCw } from 'lucide-react';
 import RideRouteMap from '@/components/rides/ride-route-map';
 import { useSocket } from '@/components/providers/socket-provider';
@@ -104,6 +104,29 @@ function SearchResults() {
 
     const handleRideCreated = (newRide: any) => {
       toast.success('Có chuyến đi mới vừa được đăng, đang cập nhật danh sách...');
+      
+      // Cập nhật state trực tiếp để UI phản hồi ngay lập tức
+      setRides((prevRides) => {
+        const filters = getCurrentFilters();
+        
+        // Kiểm tra xem chuyến mới có khớp với filter không
+        if (filters.origin && !newRide.origin.toLowerCase().includes(filters.origin.toLowerCase())) return prevRides;
+        if (filters.destination && !newRide.destination.toLowerCase().includes(filters.destination.toLowerCase())) return prevRides;
+        if (filters.date) {
+          const searchDate = new Date(filters.date).toDateString();
+          const rideDate = new Date(newRide.departureTime).toDateString();
+          if (searchDate !== rideDate) return prevRides;
+        }
+
+        // Tránh trùng lặp
+        if (prevRides.some(r => r.id === newRide.id)) return prevRides;
+
+        // Thêm vào danh sách và sắp xếp theo thời gian khởi hành
+        const updated = [...prevRides, newRide];
+        return updated.sort((a, b) => new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime());
+      });
+
+      // Vẫn gọi fetch background để đảm bảo đồng bộ hoàn toàn
       handleRideRefresh();
     };
 
@@ -129,20 +152,20 @@ function SearchResults() {
       }
     };
 
-    socket.on('ride:seats_updated', handleSeatsUpdated);
-    socket.on('ride:full', handleRideFull);
-    socket.on('ride:created', handleRideCreated);
-    socket.on('ride:updated', handleRideRefresh);
-    socket.on('ride:deleted', handleRideDeleted);
-    socket.on('ride:status', handleRideStatus);
+    socket.on(SocketEvents.RIDE_SEATS_UPDATED, handleSeatsUpdated);
+    socket.on(SocketEvents.RIDE_FULL, handleRideFull);
+    socket.on(SocketEvents.RIDE_CREATED, handleRideCreated);
+    socket.on(SocketEvents.RIDE_UPDATED, handleRideRefresh);
+    socket.on(SocketEvents.RIDE_DELETED, handleRideDeleted);
+    socket.on(SocketEvents.RIDE_STATUS_UPDATED, handleRideStatus);
 
     return () => {
-      socket.off('ride:seats_updated', handleSeatsUpdated);
-      socket.off('ride:full', handleRideFull);
-      socket.off('ride:created', handleRideCreated);
-      socket.off('ride:updated', handleRideRefresh);
-      socket.off('ride:deleted', handleRideDeleted);
-      socket.off('ride:status', handleRideStatus);
+      socket.off(SocketEvents.RIDE_SEATS_UPDATED, handleSeatsUpdated);
+      socket.off(SocketEvents.RIDE_FULL, handleRideFull);
+      socket.off(SocketEvents.RIDE_CREATED, handleRideCreated);
+      socket.off(SocketEvents.RIDE_UPDATED, handleRideRefresh);
+      socket.off(SocketEvents.RIDE_DELETED, handleRideDeleted);
+      socket.off(SocketEvents.RIDE_STATUS_UPDATED, handleRideStatus);
     };
   }, [socket, fetchRides, getCurrentFilters]);
 

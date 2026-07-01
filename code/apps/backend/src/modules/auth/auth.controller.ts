@@ -44,15 +44,22 @@ export const refresh = async (
   try {
     const refreshToken = req.cookies.refreshToken as string | undefined;
     if (!refreshToken) {
+      res.clearCookie('refreshToken');
       res.status(401).json({ message: 'Không tìm thấy refresh token' });
       return;
     }
 
-    const { accessToken, refreshToken: newRefreshToken } =
-      await AuthService.refreshTokens(refreshToken);
+    try {
+      const { accessToken, refreshToken: newRefreshToken } =
+        await AuthService.refreshTokens(refreshToken);
 
-    res.cookie('refreshToken', newRefreshToken, REFRESH_COOKIE_OPTIONS);
-    res.json({ message: 'Làm mới token thành công', accessToken });
+      res.cookie('refreshToken', newRefreshToken, REFRESH_COOKIE_OPTIONS);
+      res.json({ message: 'Làm mới token thành công', accessToken });
+    } catch (refreshError) {
+      // Tự động clear cookie lỗi để dev/user không bị kẹt
+      res.clearCookie('refreshToken');
+      throw refreshError;
+    }
   } catch (error) {
     next(error);
   }

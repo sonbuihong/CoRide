@@ -44,10 +44,12 @@ goto menu
 
 :backend_web_prisma
 echo.
-echo [INFO] Dang khoi dong Backend + Web + Prisma (3 Cua so)...
+echo [INFO] Dang khoi dong Backend + Web + Prisma (5 Cua so)...
 start cmd /c "title Prisma Studio & cd packages\database & npx prisma studio"
 start cmd /c "title Backend & cd apps\backend & npm run dev"
-start cmd /c "title Web + API + Noti & npx turbo run dev --filter=web --filter=api-gateway --filter=notification-service"
+start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
+start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
+start cmd /c "title Web Frontend & cd apps\web & npm run dev"
 timeout /t 3 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
@@ -60,7 +62,9 @@ echo.
 echo [INFO] Dang khoi dong tat ca cac dich vu...
 start cmd /c "title Prisma Studio & cd packages\database & npx prisma studio"
 start cmd /c "title Backend & cd apps\backend & npm run dev"
-start cmd /c "title Web + API + Noti & npx turbo run dev --filter=web --filter=api-gateway --filter=notification-service"
+start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
+start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
+start cmd /c "title Web Frontend & cd apps\web & npm run dev"
 start cmd /c "title Mobile & cd apps\mobile & npm run start"
 timeout /t 3 /nobreak > nul
 start "" http://localhost:5001/api/docs/

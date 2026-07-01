@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: `Chuyến đi từ ${ride.origin} đến ${ride.destination} | CoRide`,
       description: `Cùng đi chung xe từ ${ride.origin} đến ${ride.destination} vào ngày ${new Date(ride.departureTime).toLocaleDateString('vi-VN')}. Giá chỉ ${ride.pricePerSeat.toLocaleString('vi-VN')}đ. Đặt chỗ ngay trên CoRide!`,
     };
-  } catch (error) {
+  } catch {
     return {
       title: 'Chi tiết chuyến đi | CoRide',
     };

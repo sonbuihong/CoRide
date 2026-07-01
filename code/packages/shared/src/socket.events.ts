@@ -11,9 +11,19 @@ export enum SocketEvents {
   TRIP_JOIN_REQUEST_CREATED = 'trip:join_request_created',
   TRIP_JOIN_REQUEST_ACCEPTED = 'trip:join_request_accepted',
   TRIP_JOIN_REQUEST_REJECTED = 'trip:join_request_rejected',
+  TRIP_DELETED = 'trip:deleted',
+  TRIP_NEW_REQUEST = 'trip:new_request',
+  TRIP_REQUEST_EXPIRED = 'trip:request_expired',
+  TRIP_MATCHED = 'trip:matched',
+  TRIP_NO_DRIVER = 'trip:no_driver',
+  TRIP_STATUS_UPDATE = 'trip:status_update',
   MESSAGE_CREATED = 'message:created',
   NOTIFICATION_CREATED = 'notification:created',
+  NOTIFICATION_NEW = 'notification:new',
   PAYMENT_STATUS_CHANGED = 'payment:status_changed',
+  CHAT_RECEIVE = 'chat:receive',
+  CHAT_SENT = 'chat:sent',
+  DRIVER_LOCATION = 'driver:location',
 
   // Server gửi cho client — Carpooling (Ride/Booking)
   BOOKING_NEW_REQUEST = 'booking:new_request',      // Driver nhận yêu cầu đặt chỗ mới

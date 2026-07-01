@@ -17,6 +17,7 @@ enum Role {
 }
 
 enum RideStatus {
+  FULL
   SCHEDULED
   ONGOING
   COMPLETED

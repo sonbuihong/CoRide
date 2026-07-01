@@ -6,6 +6,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 import { Loader2, Check, X, User, MapPin } from 'lucide-react';
+import { SocketEvents } from '@repo/shared';
 
 /**
  * Payload nhận từ socket event 'booking:new_request'.
@@ -68,9 +69,9 @@ export function BookingRequestPopup() {
       }
     };
 
-    socket.on('booking:new_request', handleNewRequest);
+    socket.on(SocketEvents.BOOKING_NEW_REQUEST, handleNewRequest);
     return () => {
-      socket.off('booking:new_request', handleNewRequest);
+      socket.off(SocketEvents.BOOKING_NEW_REQUEST, handleNewRequest);
     };
   }, [socket, user]);
 

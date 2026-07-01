@@ -60,6 +60,7 @@ export const updateRideStatusSchema = z.object({
   status: z.enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'], {
     required_error: "Trạng thái chuyến đi là bắt buộc",
   }),
+  cancelReason: z.string().optional(),
 });
 
 export type CreateRideInput = z.infer<typeof createRideSchema>;

@@ -132,6 +132,7 @@ export type TransactionStatus = (typeof TransactionStatus)[keyof typeof Transact
 
 
 export const RideStatus: {
+  FULL: 'FULL',
   SCHEDULED: 'SCHEDULED',
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',

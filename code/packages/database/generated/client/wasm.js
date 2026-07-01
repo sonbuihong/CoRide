@@ -402,6 +402,7 @@ exports.TransactionStatus = exports.$Enums.TransactionStatus = {
 };
 
 exports.RideStatus = exports.$Enums.RideStatus = {
+  FULL: 'FULL',
   SCHEDULED: 'SCHEDULED',
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',

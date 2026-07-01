@@ -28,6 +28,7 @@ interface Booking {
 }
 
 import { useSocket } from '@/components/providers/socket-provider';
+import { SocketEvents } from '@repo/shared';
 
 export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -97,20 +98,20 @@ export default function MyBookingsPage() {
       setBookings((prevBookings) => prevBookings.filter((booking) => booking.rideId !== rideId));
     };
 
-    socket.on('booking:confirmed', handleBookingUpdate);
-    socket.on('booking:rejected', handleBookingUpdate);
-    socket.on('notification:new', handleNotification);
-    socket.on('ride:status', handleRideChanged);
-    socket.on('ride:updated', handleRideChanged);
-    socket.on('ride:deleted', handleRideDeleted);
+    socket.on(SocketEvents.BOOKING_CONFIRMED, handleBookingUpdate);
+    socket.on(SocketEvents.BOOKING_REJECTED, handleBookingUpdate);
+    socket.on(SocketEvents.NOTIFICATION_NEW, handleNotification);
+    socket.on(SocketEvents.RIDE_STATUS_UPDATED, handleRideChanged);
+    socket.on(SocketEvents.RIDE_UPDATED, handleRideChanged);
+    socket.on(SocketEvents.RIDE_DELETED, handleRideDeleted);
 
     return () => {
-      socket.off('booking:confirmed', handleBookingUpdate);
-      socket.off('booking:rejected', handleBookingUpdate);
-      socket.off('notification:new', handleNotification);
-      socket.off('ride:status', handleRideChanged);
-      socket.off('ride:updated', handleRideChanged);
-      socket.off('ride:deleted', handleRideDeleted);
+      socket.off(SocketEvents.BOOKING_CONFIRMED, handleBookingUpdate);
+      socket.off(SocketEvents.BOOKING_REJECTED, handleBookingUpdate);
+      socket.off(SocketEvents.NOTIFICATION_NEW, handleNotification);
+      socket.off(SocketEvents.RIDE_STATUS_UPDATED, handleRideChanged);
+      socket.off(SocketEvents.RIDE_UPDATED, handleRideChanged);
+      socket.off(SocketEvents.RIDE_DELETED, handleRideDeleted);
     };
   }, [socket, fetchBookings]);
 

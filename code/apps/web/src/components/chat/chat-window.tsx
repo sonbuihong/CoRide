@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, X, MessageSquare, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SocketEvents } from '@repo/shared';
 
 interface Message {
   id: string;
@@ -79,12 +80,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       }
     };
 
-    socket.on('chat:receive', handleReceiveMessage);
-    socket.on('chat:sent', handleSentMessage);
+    socket.on(SocketEvents.CHAT_RECEIVE, handleReceiveMessage);
+    socket.on(SocketEvents.CHAT_SENT, handleSentMessage);
 
     return () => {
-      socket.off('chat:receive', handleReceiveMessage);
-      socket.off('chat:sent', handleSentMessage);
+      socket.off(SocketEvents.CHAT_RECEIVE, handleReceiveMessage);
+      socket.off(SocketEvents.CHAT_SENT, handleSentMessage);
     };
   }, [socket, rideId, otherUserId, currentUserId]);
 

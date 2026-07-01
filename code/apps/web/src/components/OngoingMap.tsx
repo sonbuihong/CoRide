@@ -80,11 +80,22 @@ const OngoingMap: React.FC<OngoingMapProps> = ({ originLat, originLng, destLat, 
     const fetchRoute = async () => {
       try {
         setLoading(true);
+        // Tính toán origin dựa trên driverLocation nếu có
+        const startLat = driverLocation?.lat ?? originLat;
+        const startLng = driverLocation?.lng ?? originLng;
+        
         // OSRM expects: longitude,latitude
-        const originStr = `${originLng},${originLat}`;
+        const originStr = `${startLng},${startLat}`;
         const destStr = `${destLng},${destLat}`;
-        const waypointsStr = waypoints.map(wp => `${wp.lng},${wp.lat}`).join(';');
-        const coordinatesStr = waypointsStr ? `${originStr};${waypointsStr};${destStr}` : `${originStr};${destStr}`;
+        // Nếu đang có điểm đón khách (waypoints), chỉ vẽ đường tới các điểm đón
+        // Nếu không có, vẽ đường tới điểm đến cuối cùng của chuyến đi
+        let coordinatesStr = '';
+        if (waypoints.length > 0) {
+          const waypointsStr = waypoints.map(wp => `${wp.lng},${wp.lat}`).join(';');
+          coordinatesStr = `${originStr};${waypointsStr}`;
+        } else {
+          coordinatesStr = `${originStr};${destStr}`;
+        }
 
         const response = await fetch(
           `https://router.project-osrm.org/route/v1/driving/${coordinatesStr}?overview=full&geometries=geojson`
@@ -105,7 +116,7 @@ const OngoingMap: React.FC<OngoingMapProps> = ({ originLat, originLng, destLat, 
     };
 
     fetchRoute();
-  }, [originLat, originLng, destLat, destLng]);
+  }, [originLat, originLng, destLat, destLng, driverLocation, waypoints]);
 
   if (loading) {
     return (
@@ -124,7 +135,10 @@ const OngoingMap: React.FC<OngoingMapProps> = ({ originLat, originLng, destLat, 
     );
   }
 
-  const originPos: [number, number] = [originLat, originLng];
+  // Tính toán lại originPos cho marker
+  const startLat = driverLocation?.lat ?? originLat;
+  const startLng = driverLocation?.lng ?? originLng;
+  const originPos: [number, number] = [startLat, startLng];
   const destPos: [number, number] = [destLat, destLng];
   const waypointsPos: [number, number][] = waypoints.map(wp => [wp.lat, wp.lng]);
 

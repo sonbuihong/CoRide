@@ -8,6 +8,7 @@ import { createRideSchema, CreateRideInput } from '@repo/shared';
 import apiClient from '../../../lib/api-client';
 import { Loader2, ArrowLeft, MapPin, Calendar, Users, DollarSign, Info, User } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { AddressAutocomplete } from '../../../components/ui/address-autocomplete';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -46,8 +47,30 @@ export default function PostRidePage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const [checkingVerification, setCheckingVerification] = useState(true);
 
-  const [activeRide, setActiveRide] = useState<any>(null);
-  const [activePassengers, setActivePassengers] = useState<any[]>([]);
+  interface ActivePassenger {
+    id: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    avatarUrl?: string;
+    seats: number;
+  }
+  
+  interface ActiveRide {
+    id: string;
+    origin: string;
+    destination: string;
+    originLat?: number;
+    originLng?: number;
+    destinationLat?: number;
+    destinationLng?: number;
+    departureTime: string;
+    pricePerSeat: number;
+    status: string;
+  }
+
+  const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
+  const [activePassengers, setActivePassengers] = useState<ActivePassenger[]>([]);
   const [loadingActiveRide, setLoadingActiveRide] = useState(true);
 
   // ==========================================
@@ -75,7 +98,7 @@ export default function PostRidePage() {
     };
 
     verifyDriverStatus();
-  }, [authLoading, user?.id, refreshUser, router]);
+  }, [user, user?.id, refreshUser, router, authLoading]);
 
   useEffect(() => {
     if (authLoading || checkingVerification) return;
@@ -98,7 +121,7 @@ export default function PostRidePage() {
         const driverBookings = res.data.data || [];
         
         // Tìm đặt chỗ được xác nhận (CONFIRMED) của chuyến đi chưa hoàn thành (SCHEDULED hoặc ONGOING)
-        const confirmedActiveBooking = driverBookings.find((b: any) => 
+        const confirmedActiveBooking = driverBookings.find((b: { status: string, ride: { status: string } }) => 
           b.status === 'CONFIRMED' && 
           (b.ride.status === 'SCHEDULED' || b.ride.status === 'ONGOING')
         );
@@ -108,8 +131,8 @@ export default function PostRidePage() {
           
           // Gom tất cả hành khách CONFIRMED của chuyến đi này
           const passengers = driverBookings
-            .filter((b: any) => b.ride.id === confirmedActiveBooking.ride.id && b.status === 'CONFIRMED')
-            .map((b: any) => ({
+            .filter((b: { status: string, ride: { id: string } }) => b.ride.id === confirmedActiveBooking.ride.id && b.status === 'CONFIRMED')
+            .map((b: { passenger: { id: string, firstName: string, lastName: string, phone?: string, avatarUrl?: string }, seats: number }) => ({
               id: b.passenger.id,
               firstName: b.passenger.firstName,
               lastName: b.passenger.lastName,
@@ -317,7 +340,7 @@ export default function PostRidePage() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
                           {pass.avatarUrl ? (
-                            <img src={pass.avatarUrl} alt={pass.firstName} className="w-full h-full object-cover" />
+                            <Image src={pass.avatarUrl} alt={pass.firstName} width={40} height={40} className="w-full h-full object-cover" />
                           ) : (
                             <User className="h-5 w-5 text-gray-400" />
                           )}

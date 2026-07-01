@@ -10,6 +10,7 @@ import DriverView from './driver-view';
 import PassengerView from './passenger-view';
 import { useSocket } from '@/components/providers/socket-provider';
 import { toast } from 'sonner';
+import { SocketEvents } from '@repo/shared';
 
 export default function OngoingPage() {
   const router = useRouter();
@@ -147,24 +148,24 @@ export default function OngoingPage() {
       await fetchActiveRide();
     };
 
-    socket.on('booking:confirmed', handleBookingConfirmed);
-    socket.on('booking:rejected', handleBookingRejected);
-    socket.on('booking:picked_up', handleBookingPickedUp);
-    socket.on('booking:completed', handleBookingCompleted);
-    socket.on('ride:status', handleRideStatusUpdated);
-    socket.on('driver:location', handleDriverLocation);
-    socket.on('booking:new_request', handleNewBookingRequest);
+    socket.on(SocketEvents.BOOKING_CONFIRMED, handleBookingConfirmed);
+    socket.on(SocketEvents.BOOKING_REJECTED, handleBookingRejected);
+    socket.on(SocketEvents.BOOKING_PICKED_UP, handleBookingPickedUp);
+    socket.on(SocketEvents.BOOKING_COMPLETED, handleBookingCompleted);
+    socket.on(SocketEvents.RIDE_STATUS_UPDATED, handleRideStatusUpdated);
+    socket.on(SocketEvents.DRIVER_LOCATION, handleDriverLocation);
+    socket.on(SocketEvents.BOOKING_NEW_REQUEST, handleNewBookingRequest);
     socket.on('connect', handleReconnect);
 
     return () => {
       // Cleanup: bỏ tất cả listeners để tránh memory leak và duplicate handlers
-      socket.off('booking:confirmed', handleBookingConfirmed);
-      socket.off('booking:rejected', handleBookingRejected);
-      socket.off('booking:picked_up', handleBookingPickedUp);
-      socket.off('booking:completed', handleBookingCompleted);
-      socket.off('ride:status', handleRideStatusUpdated);
-      socket.off('driver:location', handleDriverLocation);
-      socket.off('booking:new_request', handleNewBookingRequest);
+      socket.off(SocketEvents.BOOKING_CONFIRMED, handleBookingConfirmed);
+      socket.off(SocketEvents.BOOKING_REJECTED, handleBookingRejected);
+      socket.off(SocketEvents.BOOKING_PICKED_UP, handleBookingPickedUp);
+      socket.off(SocketEvents.BOOKING_COMPLETED, handleBookingCompleted);
+      socket.off(SocketEvents.RIDE_STATUS_UPDATED, handleRideStatusUpdated);
+      socket.off(SocketEvents.DRIVER_LOCATION, handleDriverLocation);
+      socket.off(SocketEvents.BOOKING_NEW_REQUEST, handleNewBookingRequest);
       socket.off('connect', handleReconnect);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -205,6 +206,36 @@ export default function OngoingPage() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket]);
+
+  // Theo dõi vị trí tài xế liên tục nếu user là DRIVER
+  useEffect(() => {
+    let watchId: number;
+    const role = activeData?.userRole;
+    if (role === 'DRIVER') {
+      if ('geolocation' in navigator) {
+        watchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            setDriverLocation(loc);
+            
+            // Nếu muốn, emit vị trí mới của tài xế lên socket để khách thấy
+            if (socket && isConnected) {
+              socket.emit('driver:location', loc);
+            }
+          },
+          (err) => {
+            console.error('Lỗi định vị tài xế:', err);
+          },
+          { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+        );
+      }
+    }
+    return () => {
+      if (watchId !== undefined && 'geolocation' in navigator) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [activeData?.userRole, socket, isConnected]);
 
   if (loading || !activeData) {
     return (

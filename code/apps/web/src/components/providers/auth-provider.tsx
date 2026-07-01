@@ -59,11 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (token) {
             sessionStorage.setItem('accessToken', token);
           }
-        } catch (refreshErr) {
+        } catch {
           // Không có refreshToken hợp lệ hoặc token đã hết hạn -> gọi logout để backend xoá cookie lỗi
           try {
             await apiClient.post('/auth/logout');
-          } catch (e) {
+          } catch {
             // Ignore logout error
           }
           setUser(null);
@@ -92,9 +92,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Chạy một lần khi app khởi động để phục hồi session
+  // AbortController chống Strict Mode (dev): khi unmount lần 1, abort request đang pending
+  // Chỉ lần mount thứ 2 mới chạy thành công → tránh 2 refreshUser song song
   useEffect(() => {
-    refreshUser();
-  }, [refreshUser]);
+    let cancelled = false;
+
+    const init = async () => {
+      try {
+        let token = sessionStorage.getItem('accessToken');
+
+        if (!token) {
+          try {
+            const refreshRes = await apiClient.post('/auth/refresh');
+            if (cancelled) return;
+            token = refreshRes.data.accessToken;
+            if (token) {
+              sessionStorage.setItem('accessToken', token);
+            }
+          } catch {
+            if (cancelled) return;
+            try {
+              await apiClient.post('/auth/logout');
+            } catch {
+              // Ignore logout error
+            }
+            if (cancelled) return;
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+        }
+
+        const res = await Promise.race([
+          apiClient.get('/users/me'),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Request timeout')), 5000)
+          )
+        ]);
+        if (cancelled) return;
+        setUser(res.data);
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Failed to refresh user:', error);
+        sessionStorage.removeItem('accessToken');
+        setUser(null);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    init();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const login = async (email: string, password: string) => {
     const res = await apiClient.post('/auth/login', { email, password });

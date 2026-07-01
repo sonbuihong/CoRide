@@ -17,6 +17,20 @@ import { toast } from 'sonner';
 import apiClient from '@/lib/api-client';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const PassengerPickupMap = dynamic(
+  () => import('./passenger-pickup-map').then((m) => m.PassengerPickupMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col items-center justify-center h-[300px] w-full bg-gray-50 rounded-md">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <p className="mt-4 text-sm text-gray-500 font-medium">Đang tải bản đồ...</p>
+      </div>
+    ),
+  }
+);
 
 interface BookingButtonProps {
   rideId: string;
@@ -31,6 +45,11 @@ export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId 
   const [open, setOpen] = useState(false);
   const [hasActiveBooking, setHasActiveBooking] = useState(false);
   const [checkingActive, setCheckingActive] = useState(false);
+  
+  // States cho luồng mới
+  const [step, setStep] = useState<'map' | 'seats'>('map');
+  const [pickupLocation, setPickupLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+
   const router = useRouter();
 
   const isDriver = currentUserId === driverId;
@@ -74,9 +93,15 @@ export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId 
       await apiClient.post('/bookings', {
         rideId,
         seats,
+        passengerLat: pickupLocation?.lat,
+        passengerLng: pickupLocation?.lng,
+        pickupAddress: pickupLocation?.address,
       });
       toast.success('Đặt chỗ thành công! Đang chờ tài xế duyệt yêu cầu của bạn.');
       setOpen(false);
+      // Reset state
+      setStep('map');
+      setPickupLocation(null);
       router.push('/my-bookings');
     } catch (error: unknown) {
       console.error('Lỗi đặt chỗ:', error);
@@ -127,53 +152,93 @@ export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId 
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => {
+      setOpen(val);
+      if (!val) {
+        // Reset về bước đầu khi đóng dialog
+        setTimeout(() => setStep('map'), 200);
+      }
+    }}>
       <DialogTrigger>
         <Button className="w-full text-lg font-semibold py-6 shadow-md hover:shadow-lg transition-all">
           Đặt chỗ ngay
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Xác nhận đặt chỗ</DialogTitle>
-          <DialogDescription>
-            Chọn số lượng ghế bạn muốn đặt cho chuyến đi này.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="seats" className="text-right">
-              Số ghế
-            </Label>
-            <Input
-              id="seats"
-              type="number"
-              min={1}
-              max={availableSeats}
-              value={seats}
-              onChange={(e) => setSeats(parseInt(e.target.value) || 1)}
-              className="col-span-3"
-            />
+      <DialogContent className={step === 'map' ? "sm:max-w-[600px] p-0 overflow-hidden" : "sm:max-w-[425px]"}>
+        {step === 'map' ? (
+          <div className="flex flex-col">
+            <div className="px-6 py-4 border-b">
+              <DialogTitle className="text-lg">Xác nhận điểm đón</DialogTitle>
+              <DialogDescription className="mt-1">
+                Kéo bản đồ để chọn vị trí chính xác bạn muốn tài xế đến đón.
+              </DialogDescription>
+            </div>
+            <div className="p-6">
+              <PassengerPickupMap 
+                onConfirm={(lat, lng, address) => {
+                  setPickupLocation({ lat, lng, address });
+                  setStep('seats');
+                }}
+                onCancel={() => setOpen(false)}
+              />
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground text-center">
-            Còn trống {availableSeats} ghế
-          </p>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
-            Hủy bỏ
-          </Button>
-          <Button onClick={handleBooking} disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Đang xử lý...
-              </>
-            ) : (
-              'Xác nhận đặt'
-            )}
-          </Button>
-        </DialogFooter>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Xác nhận số ghế</DialogTitle>
+              <DialogDescription>
+                Chọn số lượng ghế bạn muốn đặt cho chuyến đi này.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="seats" className="text-right">
+                  Số ghế
+                </Label>
+                <Input
+                  id="seats"
+                  type="number"
+                  min={1}
+                  max={availableSeats}
+                  value={seats}
+                  onChange={(e) => setSeats(parseInt(e.target.value) || 1)}
+                  className="col-span-3"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                Còn trống {availableSeats} ghế
+              </p>
+              {pickupLocation && (
+                <div className="mt-2 bg-blue-50 p-3 rounded-md border border-blue-100">
+                  <p className="text-xs font-semibold text-blue-800 mb-1">Điểm đón đã chọn:</p>
+                  <p className="text-xs text-blue-700 line-clamp-2">{pickupLocation.address}</p>
+                  <button 
+                    className="text-xs text-blue-600 underline mt-1"
+                    onClick={() => setStep('map')}
+                  >
+                    Thay đổi điểm đón
+                  </button>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setStep('map')} disabled={loading}>
+                Quay lại
+              </Button>
+              <Button onClick={handleBooking} disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  'Xác nhận đặt'
+                )}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

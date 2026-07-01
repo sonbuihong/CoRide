@@ -1,3 +1,4 @@
+import http from 'http';
 import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import cors from 'cors';
@@ -36,19 +37,43 @@ app.use(
   })
 );
 
+// 2. Socket.IO path — cần proxy riêng với WS support đúng cách
+// Socket.IO dùng path /socket.io/ cho cả polling và WebSocket upgrade
+// http-proxy-middleware cần http.Server (không phải Express app) để handle WS upgrade
+const socketProxy = createProxyMiddleware({
+  target: MONOLITH_URL,
+  changeOrigin: true,
+  ws: true,
+});
+app.use('/socket.io', socketProxy);
 
-// 2. Fallback to Monolith
+// 3. Fallback to Monolith cho tất cả HTTP requests còn lại
 app.use(
   '/',
   createProxyMiddleware({
     target: MONOLITH_URL,
     changeOrigin: true,
-    ws: true, // In case there are other WS connections to monolith
+    // Không bật ws ở đây — đã xử lý riêng ở rule Socket.IO trên
   })
 );
 
-app.listen(PORT, () => {
-  console.log(`🚀 API Gateway is running on http://localhost:${PORT}`);
-  console.log(`➡️  Routing /api/notifications to Notification Service at ${NOTIFICATION_SERVICE_URL}`);
-  console.log(`➡️  Routing all other traffic to Monolith at ${MONOLITH_URL}`);
+// Dùng http.createServer thay vì app.listen để có thể attach WS upgrade listener
+// app.listen() trả về http.Server nhưng không expose để socketProxy.upgrade có thể dùng
+const server = http.createServer(app);
+
+// Attach WebSocket upgrade handler cho Socket.IO path
+// Đây là bước bắt buộc — nếu không, WS upgrade request sẽ bị trả 404
+server.on('upgrade', (req, socket, head) => {
+  if (req.url?.startsWith('/socket.io')) {
+    (socketProxy as any).upgrade(req, socket, head);
+  } else {
+    socket.destroy();
+  }
+});
+
+server.listen(PORT, () => {
+  console.log(`API Gateway is running on http://localhost:${PORT}`);
+  console.log(`Routing /socket.io to Monolith with WebSocket support at ${MONOLITH_URL}`);
+  console.log(`Routing /api/notifications to Notification Service at ${NOTIFICATION_SERVICE_URL}`);
+  console.log(`Routing all other traffic to Monolith at ${MONOLITH_URL}`);
 });

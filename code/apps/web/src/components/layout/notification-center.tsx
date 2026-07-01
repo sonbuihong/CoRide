@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useSocket } from '@/components/providers/socket-provider';
 import { useRouter } from 'next/navigation';
+import { SocketEvents } from '@repo/shared';
 
 interface Notification {
   id: string;
@@ -27,8 +28,9 @@ export const NotificationCenter: React.FC = () => {
   const fetchNotifications = useCallback(async () => {
     try {
       const response = await apiClient.get('/notifications');
-      // Defensive fallback: API có thể trả về format khác hoặc notifications = undefined
-      const notificationList: Notification[] = response.data?.notifications || response.data || [];
+      // Defensive fallback: Kiểm tra chắc chắn là mảng
+      const rawData = response.data?.notifications || response.data;
+      const notificationList: Notification[] = Array.isArray(rawData) ? rawData : [];
       setNotifications(notificationList);
       setUnreadCount(notificationList.filter((n) => !n.isRead).length);
     } catch (error) {
@@ -54,10 +56,10 @@ export const NotificationCenter: React.FC = () => {
       });
     };
 
-    socket.on('notification:new', handleNewNotification);
+    socket.on(SocketEvents.NOTIFICATION_NEW, handleNewNotification);
 
     return () => {
-      socket.off('notification:new', handleNewNotification);
+      socket.off(SocketEvents.NOTIFICATION_NEW, handleNewNotification);
     };
   }, [socket]);
 

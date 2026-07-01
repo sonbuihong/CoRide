@@ -97,7 +97,7 @@ export const Header: React.FC = () => {
   };
 
   const isAdmin = user?.role === 'ADMIN';
-  const isDriverMode = mode === 'driver' && !isAdmin;
+  const isDriverMode = !!user && mode === 'driver' && !isAdmin;
 
   let headerClass = passengerHeaderClass;
 

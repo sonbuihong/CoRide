@@ -1,8 +1,8 @@
 import { extendedPrisma as prisma } from '@repo/database';
 import { Prisma } from '@repo/database';
-import { CreateRideInput, SearchRideInput } from '@repo/shared';
+import { CreateRideInput, SearchRideInput, SocketEvents } from '@repo/shared';
 import { AppError } from '../../shared/errors/AppError';
-import { getIO } from '../../socket/socket.server';
+import { SocketEventService } from '../../socket/socket.events';
 
 const DRIVER_SELECT = {
   driver: {
@@ -90,7 +90,7 @@ export class RidesService {
     });
 
     try {
-      getIO().emit('ride:created', newRide);
+      SocketEventService.emitGlobal(SocketEvents.RIDE_CREATED, newRide);
     } catch (e) {
       console.warn('[RidesService] Socket emit skipped:', e);
     }
@@ -128,13 +128,15 @@ export class RidesService {
       endOfDay.setHours(23, 59, 59, 999);
 
       const now = new Date();
+      // Thêm buffer 1 giờ vào quá khứ để không bị ẩn chuyến đi vừa tạo hoặc tài xế đến trễ một chút
+      const pastBuffer = new Date(now.getTime() - 60 * 60 * 1000);
 
       if (!driverId) {
-        // Khách tìm: nếu tìm ngày hôm nay, lấy SCHEDULED từ now đến hết ngày
+        // Khách tìm: nếu tìm ngày hôm nay, lấy SCHEDULED từ pastBuffer đến hết ngày
         // VÀ lấy các chuyến ONGOING trong ngày hôm nay (dù khởi hành trước đó)
         if (startOfDay <= now && endOfDay >= now) {
           where.OR = [
-            { status: 'SCHEDULED', departureTime: { gte: now, lte: endOfDay } },
+            { status: 'SCHEDULED', departureTime: { gte: pastBuffer, lte: endOfDay } },
             { status: 'ONGOING', departureTime: { gte: startOfDay, lte: endOfDay } }
           ];
         } else {
@@ -148,9 +150,10 @@ export class RidesService {
       }
     } else if (!driverId) {
       // Không truyền date (mặc định lấy từ now)
+      const pastBuffer = new Date(Date.now() - 60 * 60 * 1000);
       where.OR = [
-        { status: 'SCHEDULED', departureTime: { gte: new Date() } },
-        { status: 'ONGOING' } // Lấy hết chuyến ONGOING (giả định chưa completed thì còn trong ngày)
+        { status: 'SCHEDULED', departureTime: { gte: pastBuffer } },
+        { status: 'ONGOING' } // Lấy hết chuyến ONGOING
       ];
     }
 
@@ -199,7 +202,7 @@ export class RidesService {
     });
 
     try {
-      getIO().emit('ride:updated', updatedRide);
+      SocketEventService.emitGlobal(SocketEvents.RIDE_UPDATED, updatedRide);
     } catch (e) {
       console.warn('[RidesService] Socket emit skipped:', e);
     }
@@ -220,7 +223,7 @@ export class RidesService {
     const deletedRide = await prisma.ride.delete({ where: { id } });
 
     try {
-      getIO().emit('ride:deleted', { id });
+      SocketEventService.emitGlobal(SocketEvents.RIDE_DELETED, { id });
     } catch (e) {
       console.warn('[RidesService] Socket emit skipped:', e);
     }
@@ -311,17 +314,16 @@ export class RidesService {
       };
 
       // Emit tới ride room (những ai đã join qua ride:join event)
-      getIO().to(`ride:${id}`).emit('ride:status', statusPayload);
+      SocketEventService.emitToRoom(`ride:${id}`, SocketEvents.RIDE_STATUS_UPDATED, statusPayload);
 
       // Emit trực tiếp tới từng passenger đã lưu TRƯỚC transaction
-      // Đảm bảo passenger luôn nhận event dù booking đã bị CANCELLED/COMPLETED
       for (const passengerId of affectedPassengerIds) {
-        getIO().to(`user:${passengerId}`).emit('ride:status', statusPayload);
+        SocketEventService.emitToUser(passengerId, SocketEvents.RIDE_STATUS_UPDATED, statusPayload);
       }
 
       // Global broadcast để trang search và danh sách tự cập nhật ngay lập tức
-      getIO().emit('ride:status', statusPayload);
-      getIO().emit('ride:updated', updatedRide);
+      SocketEventService.emitGlobal(SocketEvents.RIDE_STATUS_UPDATED, statusPayload);
+      SocketEventService.emitGlobal(SocketEvents.RIDE_UPDATED, updatedRide);
     } catch (socketError) {
       // Socket chưa init (test environment) → skip, không ảnh hưởng logic chính
       console.warn('[RidesService] Socket emit skipped:', socketError);

@@ -1,10 +1,10 @@
 import { extendedPrisma as prisma } from '@repo/database';
-import { CreateBookingInput, UpdateBookingStatusInput } from '@repo/shared';
+import { CreateBookingInput, UpdateBookingStatusInput, SocketEvents } from '@repo/shared';
 import { BookingStatus } from '@repo/database';
 import { AppError } from '../../shared/errors/AppError';
 import { NotificationsService } from '../notifications/notifications.service';
 import { getDriverLocation } from '../../shared/lib/redis';
-import { getIO } from '../../socket/socket.server';
+import { SocketEventService } from '../../socket/socket.events';
 import { RouteMatchingService } from './route-matching.service';
 
 /** Ngưỡng lệch đường tối đa (km) — hành khách cách tuyến đường tài xế */
@@ -121,7 +121,6 @@ export class BookingsService {
     // isScheduled = true để frontend phân biệt với booking ONGOING (không cần timeout)
     // Emit cả tới room ride:${rideId} (nếu Driver đang xem /ongoing) VÀ user:${driverId}
     try {
-      const io = getIO();
       const newRequestPayload = {
         bookingId: booking.id,
         passenger: booking.passenger,
@@ -134,10 +133,10 @@ export class BookingsService {
       };
 
       // Emit tới user room của driver (luôn nhận dù không join ride room)
-      io.to(`user:${ride.driverId}`).emit('booking:new_request', newRequestPayload);
+      SocketEventService.emitToUser(ride.driverId, SocketEvents.BOOKING_NEW_REQUEST, newRequestPayload);
 
       // Emit tới ride room (Driver có thể đang xem /ongoing và đã join ride room)
-      io.to(`ride:${booking.rideId}`).emit('booking:new_request', newRequestPayload);
+      SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.BOOKING_NEW_REQUEST, newRequestPayload);
     } catch (socketErr) {
       // Socket chưa init hoặc tài xế offline — không critical, notification vẫn gửi
       console.warn('[BookingsService] Socket emit booking:new_request (scheduled) failed:', socketErr);
@@ -278,10 +277,8 @@ export class BookingsService {
     timeoutMs: number
   ): Promise<void> {
     try {
-      const io = getIO();
-
       // Phát popup cho tài xế
-      io.to(driverId).emit('booking:new_request', {
+      SocketEventService.emitToUser(driverId, SocketEvents.BOOKING_NEW_REQUEST, {
         bookingId: booking.id,
         passenger: booking.passenger,
         pickupLat: booking.passengerLat,
@@ -333,7 +330,7 @@ export class BookingsService {
 
       // Thông báo hành khách tài xế không phản hồi
       try {
-        io.to(booking.passenger.id).emit('booking:rejected', {
+        SocketEventService.emitToUser(booking.passenger.id, SocketEvents.BOOKING_REJECTED, {
           bookingId: booking.id,
           reason: 'Tài xế không phản hồi trong thời gian quy định',
         });
@@ -399,10 +396,8 @@ export class BookingsService {
     const driverLocation = await getDriverLocation(driverId);
 
     try {
-      const io = getIO();
-
       // Thông báo cho hành khách (ONGOING booking confirmed)
-      io.to(updatedBooking.passenger.id).emit('booking:confirmed', {
+      SocketEventService.emitToUser(updatedBooking.passenger.id, SocketEvents.BOOKING_CONFIRMED, {
         bookingId,
         driverLat: driverLocation?.latitude ?? null,
         driverLng: driverLocation?.longitude ?? null,
@@ -410,13 +405,13 @@ export class BookingsService {
       });
 
       // Broadcast số ghế mới đến TOÀN BỘ client đang online
-      io.emit('ride:seats_updated', {
+      SocketEventService.emitGlobal(SocketEvents.RIDE_SEATS_UPDATED, {
         rideId: booking.rideId,
         availableSeats: updatedRideAfterConfirm.availableSeats,
       });
 
       if (updatedRideAfterConfirm.availableSeats === 0) {
-        io.emit('ride:full', { rideId: booking.rideId });
+        SocketEventService.emitGlobal(SocketEvents.RIDE_FULL, { rideId: booking.rideId });
       }
     } catch (socketErr) {
       console.warn('[BookingsService] Socket emit booking:confirmed failed:', socketErr);
@@ -460,7 +455,7 @@ export class BookingsService {
 
     // Thông báo hành khách
     try {
-      getIO().to(booking.passenger.id).emit('booking:rejected', {
+      SocketEventService.emitToUser(booking.passenger.id, SocketEvents.BOOKING_REJECTED, {
         bookingId,
         reason: 'Tài xế đã từ chối yêu cầu ghép chuyến',
       });
@@ -530,8 +525,6 @@ export class BookingsService {
       // Emit socket realtime sau khi transaction đã commit thành công
       // Dùng user:${passengerId} prefix để nhất quán với cách socket server join room
       try {
-        const io = getIO();
-
         const confirmedPayload = {
           bookingId,
           rideId: booking.rideId,
@@ -539,21 +532,20 @@ export class BookingsService {
         };
 
         // Thông báo cho hành khách (qua user room)
-        io.to(`user:${booking.passengerId}`).emit('booking:confirmed', confirmedPayload);
+        SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_CONFIRMED, confirmedPayload);
 
         // Emit tới ride room để cả driver lẫn các passengers khác biết
-        io.to(`ride:${booking.rideId}`).emit('booking:confirmed', confirmedPayload);
+        SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.BOOKING_CONFIRMED, confirmedPayload);
 
         // Broadcast số ghế mới đến TOÀN BỘ client đang online
-        // Mục đích: các trang search/detail tự cập nhật mà không cần reload
-        io.emit('ride:seats_updated', {
+        SocketEventService.emitGlobal(SocketEvents.RIDE_SEATS_UPDATED, {
           rideId: booking.rideId,
           availableSeats: updatedRideAfterConfirm.availableSeats,
         });
 
         // Nếu hết ghế → broadcast thêm event ẩn chuyến để UX rõ ràng hơn
         if (updatedRideAfterConfirm.availableSeats === 0) {
-          io.emit('ride:full', { rideId: booking.rideId });
+          SocketEventService.emitGlobal(SocketEvents.RIDE_FULL, { rideId: booking.rideId });
         }
       } catch (socketErr) {
         console.warn('[BookingsService] Socket emit after confirm failed:', socketErr);
@@ -581,7 +573,7 @@ export class BookingsService {
 
       // Emit socket realtime để hành khách cập nhật ngay mà không cần refresh
       try {
-        getIO().to(`user:${booking.passengerId}`).emit('booking:rejected', {
+        SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_REJECTED, {
           bookingId,
           reason: 'Tài xế đã từ chối yêu cầu của bạn',
         });
@@ -630,16 +622,15 @@ export class BookingsService {
 
     // Notify passenger realtime — dùng user: prefix chuẩn
     try {
-      const io = getIO();
       const pickedUpPayload = {
         bookingId,
         rideId: booking.rideId,
         message: 'Tài xế đã xác nhận đón bạn thành công',
       };
 
-      io.to(`user:${booking.passengerId}`).emit('booking:picked_up', pickedUpPayload);
+      SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_PICKED_UP, pickedUpPayload);
       // Emit tới ride room để cả 2 bên cùng cập nhật
-      io.to(`ride:${booking.rideId}`).emit('booking:picked_up', pickedUpPayload);
+      SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.BOOKING_PICKED_UP, pickedUpPayload);
     } catch (socketErr) {
       console.warn('[BookingsService] Socket emit booking:picked_up failed:', socketErr);
     }
@@ -671,16 +662,15 @@ export class BookingsService {
 
     // Notify passenger realtime — dùng user: prefix chuẩn
     try {
-      const io = getIO();
       const completedPayload = {
         bookingId,
         rideId: booking.rideId,
         message: 'Tài xế đã kết thúc hành trình của bạn. Cảm ơn bạn đã sử dụng dịch vụ!',
       };
 
-      io.to(`user:${booking.passengerId}`).emit('booking:completed', completedPayload);
+      SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_COMPLETED, completedPayload);
       // Emit tới ride room để Driver cũng biết đã hoàn thành
-      io.to(`ride:${booking.rideId}`).emit('booking:completed', completedPayload);
+      SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.BOOKING_COMPLETED, completedPayload);
     } catch (socketErr) {
       console.warn('[BookingsService] Socket emit booking:completed failed:', socketErr);
     }
@@ -729,7 +719,7 @@ export class BookingsService {
 
       // Broadcast ghế được hoàn lại → các client có thể thấy chuyến này lại
       try {
-        getIO().emit('ride:seats_updated', {
+        SocketEventService.emitGlobal(SocketEvents.RIDE_SEATS_UPDATED, {
           rideId: booking.rideId,
           availableSeats: restoredRide.availableSeats,
         });

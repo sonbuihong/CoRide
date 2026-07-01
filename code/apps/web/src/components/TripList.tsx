@@ -1,10 +1,11 @@
 "use client";
-import { useTripContext } from '@/contexts/TripContext';
-import { useSocket } from '@/hooks/useSocket';
+import { useSocket } from '@/components/providers/socket-provider';
+import { useTripContext, Trip } from '@/contexts/TripContext';
 
-export const TripList = () => {
+export default function TripList() {
   const { trips } = useTripContext();
-  const { status } = useSocket();
+  const { isConnected } = useSocket();
+  const status = isConnected ? 'connected' : 'disconnected';
 
   return (
     <div className="p-4 border rounded shadow w-full max-w-2xl mx-auto mt-4 bg-white">
@@ -13,11 +14,9 @@ export const TripList = () => {
         
         {/* Hiển thị trạng thái kết nối */}
         <span className={`text-sm font-medium ${
-          status === 'connected' ? 'text-green-600' : 
-          status === 'connecting' ? 'text-yellow-500' : 'text-red-500'
+          isConnected ? 'text-green-600' : 'text-red-500'
         }`}>
-          {status === 'connected' ? 'Đã kết nối Socket' : 
-           status === 'connecting' ? 'Đang kết nối lại...' : 'Mất kết nối'}
+          {isConnected ? 'Đã kết nối Socket' : 'Mất kết nối'}
         </span>
       </div>
       

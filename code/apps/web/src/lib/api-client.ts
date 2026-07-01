@@ -57,6 +57,7 @@ apiClient.interceptors.response.use(
         // Refresh thất bại → xóa token cũ, redirect về login
         sessionStorage.removeItem('accessToken');
         if (typeof window !== 'undefined') {
+          localStorage.removeItem('token'); // Fallback clear
           const currentPath = window.location.pathname;
           if (currentPath !== '/login' && currentPath !== '/register') {
             window.location.href = '/login';

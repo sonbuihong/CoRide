@@ -6,6 +6,7 @@ import apiClient from '../../lib/api-client';
 import { Loader2, User, Phone, Check, X, Clock, MapPin, Calendar, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSocket } from '@/components/providers/socket-provider';
+import { SocketEvents } from '@repo/shared';
 
 const BookingDirectionsMap = dynamic(
   () => import('../../components/BookingDirectionsMap'),
@@ -74,12 +75,12 @@ export default function BookingRequestsPage() {
       fetchRequests();
     };
 
-    socket.on('notification:new', handleNewNotification);
-    socket.on('booking:new_request', handleNewBookingRequest);
+    socket.on(SocketEvents.NOTIFICATION_NEW, handleNewNotification);
+    socket.on(SocketEvents.BOOKING_NEW_REQUEST, handleNewBookingRequest);
 
     return () => {
-      socket.off('notification:new', handleNewNotification);
-      socket.off('booking:new_request', handleNewBookingRequest);
+      socket.off(SocketEvents.NOTIFICATION_NEW, handleNewNotification);
+      socket.off(SocketEvents.BOOKING_NEW_REQUEST, handleNewBookingRequest);
     };
   }, [socket, fetchRequests]);
 

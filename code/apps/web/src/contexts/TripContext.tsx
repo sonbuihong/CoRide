@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getSocket } from '@/lib/socket';
+import { SocketEvents } from '@repo/shared';
 
 // Generic Trip Type based on Prisma Schema
 export type Trip = {
@@ -20,11 +20,14 @@ interface TripContextProps {
 
 const TripContext = createContext<TripContextProps | undefined>(undefined);
 
+import { useSocket } from '@/components/providers/socket-provider';
+
 export const TripProvider = ({ children }: { children: ReactNode }) => {
   const [trips, setTrips] = useState<Trip[]>([]);
+  const { socket } = useSocket();
 
   useEffect(() => {
-    const socket = getSocket();
+    if (!socket) return;
     
     const handleTripCreated = (newTrip: Trip) => {
       setTrips((prevTrips) => {
@@ -43,14 +46,14 @@ export const TripProvider = ({ children }: { children: ReactNode }) => {
       setTrips((prevTrips) => prevTrips.filter(t => t.id !== id));
     };
 
-    socket.on('trip:created', handleTripCreated);
-    socket.on('trip:updated', handleTripUpdated);
-    socket.on('trip:deleted', handleTripDeleted);
+    socket.on(SocketEvents.TRIP_CREATED, handleTripCreated);
+    socket.on(SocketEvents.TRIP_UPDATED, handleTripUpdated);
+    socket.on(SocketEvents.TRIP_DELETED, handleTripDeleted);
 
     return () => {
-      socket.off('trip:created', handleTripCreated);
-      socket.off('trip:updated', handleTripUpdated);
-      socket.off('trip:deleted', handleTripDeleted);
+      socket.off(SocketEvents.TRIP_CREATED, handleTripCreated);
+      socket.off(SocketEvents.TRIP_UPDATED, handleTripUpdated);
+      socket.off(SocketEvents.TRIP_DELETED, handleTripDeleted);
     };
   }, []);
 
