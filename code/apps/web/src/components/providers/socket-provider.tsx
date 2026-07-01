@@ -77,12 +77,20 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // → An toàn khi Strict Mode gọi effect này 2 lần
   useEffect(() => {
     if (authLoading) return;
-    // connectIfNeeded() kiểm tra:
-    // 1. Đã connected với đúng token → bỏ qua (return true)
-    // 2. Đang connecting → bỏ qua (return false)
-    // 3. Token khác → disconnect + connect (1 lần duy nhất)
-    // 4. Chưa connected → connect (1 lần duy nhất)
-    connectIfNeeded();
+    
+    if (user) {
+      // connectIfNeeded() kiểm tra:
+      // 1. Đã connected với đúng token → bỏ qua (return true)
+      // 2. Đang connecting → bỏ qua (return false)
+      // 3. Token khác → disconnect + connect (1 lần duy nhất)
+      // 4. Chưa connected → connect (1 lần duy nhất)
+      connectIfNeeded();
+    } else {
+      const socket = socketRef.current;
+      if (socket.connected) {
+        socket.disconnect();
+      }
+    }
   }, [user, authLoading]);
 
   return (

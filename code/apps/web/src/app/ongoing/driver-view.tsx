@@ -220,6 +220,16 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
 
   const primaryAction = getDriverPrimaryAction(ride);
 
+  // Ưu tiên khách đang chờ xác nhận (PENDING) để xem điểm đón, sau đó mới đến khách đã xác nhận nhưng chưa đón
+  const nextBookingToFocus = pendingBookings.length > 0 
+    ? pendingBookings[0] 
+    : confirmedBookings.find(b => !b.isPickedUp && b.status === 'CONFIRMED');
+
+  const nextDestinationName = nextBookingToFocus?.pickupAddress || ride.destination;
+  const nextLat = nextBookingToFocus?.passengerLat || ride.destinationLat;
+  const nextLng = nextBookingToFocus?.passengerLng || ride.destinationLng;
+  const mapLink = `https://www.google.com/maps/dir/?api=1&destination=${nextLat},${nextLng}&travelmode=driving`;
+
   // Màu sắc badge trạng thái chuyến
   const statusBadge =
     ride.status === 'ONGOING'    ? { label: 'ĐANG CHẠY', className: 'bg-green-100 text-green-700' } :
@@ -238,22 +248,28 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
 
   return (
     <div className="w-full px-4 pb-6 pt-2">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            {ride.status === 'SCHEDULED' ? 'Chuyến đi sắp tới' : 'Đang di chuyển'}
+      {/* Header - Điểm đến tiếp theo */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex-1 overflow-hidden">
+          <div className="flex justify-between items-start mb-1">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Điểm đến tiếp theo</p>
+            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${statusBadge.className}`}>
+              {statusBadge.label}
+            </span>
+          </div>
+          <h2 className="text-base font-bold text-gray-900 leading-tight line-clamp-2">
+            {nextDestinationName}
           </h2>
-          <p className="text-sm text-gray-500">
-            {ride.status === 'SCHEDULED' ? 'Đang chờ khởi hành' : 'Chuyến đang diễn ra'}
-          </p>
         </div>
-        <div className="text-right">
-          <p className="text-sm font-medium text-gray-500">Trạng thái</p>
-          <span className={`px-2 py-1 rounded-md text-xs font-semibold ${statusBadge.className}`}>
-            {statusBadge.label}
-          </span>
-        </div>
+        <a
+          href={mapLink}
+          target="_blank"
+          rel="noreferrer"
+          className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors shrink-0 shadow-md"
+          title="Chỉ đường Google Maps"
+        >
+          <Navigation className="w-5 h-5 fill-current" />
+        </a>
       </div>
 
       {/* Nút hành động chính — State machine UI đưa lên trên cùng để luôn nhìn thấy */}

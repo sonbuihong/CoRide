@@ -50,22 +50,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = useCallback(async () => {
     try {
       let token = sessionStorage.getItem('accessToken');
+      const hasSession = localStorage.getItem('hasSession') === 'true';
       
       // Nếu không có accessToken trong tab này, thử dùng refreshToken từ cookie để lấy mới
       if (!token) {
-        try {
-          const refreshRes = await apiClient.post('/auth/refresh');
-          token = refreshRes.data.accessToken;
-          if (token) {
-            sessionStorage.setItem('accessToken', token);
-          }
-        } catch {
-          // Không có refreshToken hợp lệ hoặc token đã hết hạn -> gọi logout để backend xoá cookie lỗi
+        if (hasSession) {
           try {
-            await apiClient.post('/auth/logout');
+            const refreshRes = await apiClient.post('/auth/refresh');
+            token = refreshRes.data.accessToken;
+            if (token) {
+              sessionStorage.setItem('accessToken', token);
+            }
           } catch {
-            // Ignore logout error
+            // Không có refreshToken hợp lệ hoặc token đã hết hạn -> gọi logout để backend xoá cookie lỗi
+            try {
+              await apiClient.post('/auth/logout');
+            } catch {
+              // Ignore logout error
+            }
+            localStorage.removeItem('hasSession');
+            setUser(null);
+            setLoading(false);
+            return;
           }
+        } else {
+          // Không có session, không cần gọi refresh
           setUser(null);
           setLoading(false);
           return;
@@ -100,23 +109,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const init = async () => {
       try {
         let token = sessionStorage.getItem('accessToken');
+        const hasSession = localStorage.getItem('hasSession') === 'true';
 
         if (!token) {
-          try {
-            const refreshRes = await apiClient.post('/auth/refresh');
-            if (cancelled) return;
-            token = refreshRes.data.accessToken;
-            if (token) {
-              sessionStorage.setItem('accessToken', token);
-            }
-          } catch {
-            if (cancelled) return;
+          if (hasSession) {
             try {
-              await apiClient.post('/auth/logout');
+              const refreshRes = await apiClient.post('/auth/refresh');
+              if (cancelled) return;
+              token = refreshRes.data.accessToken;
+              if (token) {
+                sessionStorage.setItem('accessToken', token);
+              }
             } catch {
-              // Ignore logout error
+              if (cancelled) return;
+              try {
+                await apiClient.post('/auth/logout');
+              } catch {
+                // Ignore logout error
+              }
+              if (cancelled) return;
+              localStorage.removeItem('hasSession');
+              setUser(null);
+              setLoading(false);
+              return;
             }
-            if (cancelled) return;
+          } else {
             setUser(null);
             setLoading(false);
             return;
@@ -155,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Lưu accessToken vào sessionStorage để api-client gắn vào header
     // sessionStorage cho phép mỗi tab có session riêng, không bị ảnh hưởng bởi tab khác
     sessionStorage.setItem('accessToken', res.data.accessToken);
+    localStorage.setItem('hasSession', 'true');
     setUser(res.data.user);
     return res.data.user;
   };
@@ -164,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiClient.post('/auth/logout');
     } finally {
       sessionStorage.removeItem('accessToken');
+      localStorage.removeItem('hasSession');
       setUser(null);
     }
   };

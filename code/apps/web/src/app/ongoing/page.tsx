@@ -250,10 +250,10 @@ export default function OngoingPage() {
   const ride = activeData.ride;
 
   // Lấy danh sách điểm đón khách (chỉ dành cho driver)
-  // Lọc các booking CONFIRMED và CHƯA đón, có toạ độ đón
+  // Lọc các booking CONFIRMED hoặc PENDING và CHƯA đón, có toạ độ đón
   const waypoints = role === 'DRIVER'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ? (ride.bookings?.filter((b: any) => b.status === 'CONFIRMED' && !b.isPickedUp && b.passengerLat && b.passengerLng) || [])
+    ? (ride.bookings?.filter((b: any) => (b.status === 'CONFIRMED' || b.status === 'PENDING') && !b.isPickedUp && b.passengerLat && b.passengerLng) || [])
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((b: any) => ({ lat: b.passengerLat, lng: b.passengerLng }))
     : [];

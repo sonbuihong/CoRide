@@ -2,7 +2,7 @@ import { Socket } from 'socket.io';
 import * as jose from 'jose';
 import { SOCKET_CONFIG } from '../config/socket';
 
-const getJwtSecret = () => new TextEncoder().encode(SOCKET_CONFIG.JWT_SECRET);
+const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET ?? 'super-secret-fallback-key');
 
 export const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) => void) => {
   const token = socket.handshake.auth?.token as string | undefined;
@@ -21,7 +21,13 @@ export const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) =
     }
     next();
   } catch (error) {
-    const joseErr = error as { code?: string };
+    const joseErr = error as { code?: string, message?: string };
+    console.error('[Socket Auth Error]', {
+      errCode: joseErr.code,
+      errMsg: joseErr.message,
+      tokenLength: token ? token.length : 0,
+      tokenPreview: token ? `${token.substring(0, 15)}...${token.slice(-15)}` : 'null'
+    });
     if (joseErr.code === 'ERR_JWT_EXPIRED') {
       return next(new Error('Token đã hết hạn'));
     }
