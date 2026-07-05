@@ -10,8 +10,10 @@ const router = Router();
 router.get('/', validate(searchRideSchema, 'query'), ridesController.searchRides);
 router.get('/:id', ridesController.getRideById);
 
+import { requireApprovedDriver } from '../../shared/middlewares/driver.middleware';
+
 // Protected routes — cần đăng nhập
-router.post('/', authenticate, validate(createRideSchema), ridesController.createRide);
+router.post('/', authenticate, requireApprovedDriver, validate(createRideSchema), ridesController.createRide);
 router.patch('/:id/status', authenticate, validate(updateRideStatusSchema), ridesController.updateRideStatus);
 router.patch('/:id', authenticate, validate(createRideSchema.partial()), ridesController.updateRide);
 router.delete('/:id', authenticate, ridesController.deleteRide);
