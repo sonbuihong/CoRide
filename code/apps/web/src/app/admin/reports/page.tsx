@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import apiClient from '../../../lib/api-client';
 import { Loader2, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { AdminLayout } from '../components/admin-layout';
 
 interface Report {
   id: string;
@@ -46,7 +47,7 @@ export default function AdminReportsPage() {
   };
 
   return (
-    <div>
+    <AdminLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Quản lý Báo cáo</h1>
@@ -137,6 +138,6 @@ export default function AdminReportsPage() {
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 }
