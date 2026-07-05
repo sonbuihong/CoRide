@@ -700,7 +700,7 @@ export class BookingsService {
           where: { id: booking.rideId, status: { in: ['SCHEDULED', 'FULL'] } },
           data: { availableSeats: { increment: booking.seats } }
         });
-        if (updatedRide.count === 0) throw new AppError('BOOKING_NOT_CANCELLABLE', 409);
+        if (updatedRide.count !== 1) throw new AppError('BOOKING_NOT_CANCELLABLE', 409);
 
         const currentRide = await tx.ride.findUnique({ where: { id: booking.rideId } });
         if (currentRide) availableSeatsAfter = currentRide.availableSeats;
