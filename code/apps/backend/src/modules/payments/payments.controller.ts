@@ -187,4 +187,37 @@ export class PaymentsController {
       next(error);
     }
   }
+
+  /**
+   * Lấy thông tin ví của người dùng hiện tại (bao gồm số dư và lịch sử giao dịch)
+   */
+  static async getMyWallet(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new AppError('Không xác định được người dùng', 401);
+      }
+
+      // Lấy hoặc tạo ví
+      const wallet = await WalletService.getOrCreateWallet(userId);
+
+      // Lấy 20 giao dịch gần nhất
+      const transactions = await prisma.transaction.findMany({
+        where: { walletId: wallet.id },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: {
+          wallet,
+          transactions,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

@@ -20,6 +20,9 @@ export default function OngoingPage() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [driverLocation, setDriverLocation] = useState<{ lat: number; lng: number } | null>(null);
   const { socket, isConnected } = useSocket();
+  const [optimalOrder, setOptimalOrder] = useState<string[]>([]);
+  const [customOrder, setCustomOrder] = useState<string[]>([]);
+  const [useCustomOrder, setUseCustomOrder] = useState(false);
 
   // Ref để tránh join lại room khi component re-render
   const joinedRideIdRef = useRef<string | null>(null);
@@ -86,13 +89,17 @@ export default function OngoingPage() {
     // ─── Event Handlers ────────────────────────────────────────────────
 
     const handleBookingConfirmed = (data: { message?: string }) => {
-      // Tài xế vừa chấp nhận → fetch lại ngay để cập nhật trạng thái
-      toast.success(data?.message || 'Tài xế đã xác nhận chuyến đi của bạn!');
+      // Chỉ hiện toast cho hành khách, vì tài xế đã có toast báo thành công riêng
+      if (activeData?.userRole !== 'DRIVER') {
+        toast.success(data?.message || 'Tài xế đã xác nhận chuyến đi của bạn!');
+      }
       fetchActiveRide();
     };
 
     const handleBookingRejected = (data: { reason?: string }) => {
-      toast.error(data?.reason || 'Yêu cầu đặt chỗ bị từ chối');
+      if (activeData?.userRole !== 'DRIVER') {
+        toast.error(data?.reason || 'Yêu cầu đặt chỗ bị từ chối');
+      }
       fetchActiveRide();
     };
 
@@ -109,7 +116,9 @@ export default function OngoingPage() {
         return;
       }
       if (data?.status === 'CANCELLED') {
-        toast.error('Chuyến đi đã bị hủy bởi tài xế');
+        if (activeData?.userRole !== 'DRIVER') {
+          toast.error('Chuyến đi đã bị hủy bởi tài xế');
+        }
         router.replace('/rides/search');
         return;
       }
@@ -118,12 +127,16 @@ export default function OngoingPage() {
     };
 
     const handleBookingPickedUp = (data: { message?: string }) => {
-      toast.success(data?.message || 'Tài xế đã đón bạn thành công!');
+      if (activeData?.userRole !== 'DRIVER') {
+        toast.success(data?.message || 'Tài xế đã đón bạn thành công!');
+      }
       fetchActiveRide();
     };
 
     const handleBookingCompleted = (data: { message?: string }) => {
-      toast.success(data?.message || 'Chuyến đi của bạn đã hoàn thành!');
+      if (activeData?.userRole !== 'DRIVER') {
+        toast.success(data?.message || 'Chuyến đi của bạn đã hoàn thành!');
+      }
       fetchActiveRide();
     };
 
@@ -136,7 +149,6 @@ export default function OngoingPage() {
     const handleNewBookingRequest = () => {
       fetchActiveRide();
       setIsExpanded(true);
-      toast.info('Có khách mới muốn đặt chỗ!', { duration: 3000 });
     };
 
     // Sau khi reconnect → fetch lại dữ liệu mới nhất từ API
@@ -237,6 +249,32 @@ export default function OngoingPage() {
     };
   }, [activeData?.userRole, socket, isConnected]);
 
+  const activeOrder = useCustomOrder ? customOrder : optimalOrder;
+
+  const waypoints = React.useMemo(() => {
+    if (!activeData || !activeData.ride) return [];
+    const role = activeData.userRole;
+    const ride = activeData.ride;
+    if (role !== 'DRIVER') return [];
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let list = ride.bookings?.filter((b: any) => (b.status === 'CONFIRMED' || b.status === 'PENDING') && !b.isPickedUp && b.passengerLat && b.passengerLng) || [];
+    
+    if (activeOrder.length > 0) {
+      list = [...list].sort((a, b) => {
+        const idxA = activeOrder.indexOf(a.id);
+        const idxB = activeOrder.indexOf(b.id);
+        if (idxA === -1 && idxB === -1) return 0;
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+      });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return list.map((b: any) => ({ id: b.id, lat: b.passengerLat, lng: b.passengerLng }));
+  }, [activeData, activeOrder]);
+
   if (loading || !activeData) {
     return (
       <div className="flex min-h-[calc(100vh-48px)] flex-col items-center justify-center bg-gray-50">
@@ -249,15 +287,6 @@ export default function OngoingPage() {
   const role = activeData.userRole; // 'DRIVER' hoặc 'PASSENGER'
   const ride = activeData.ride;
 
-  // Lấy danh sách điểm đón khách (chỉ dành cho driver)
-  // Lọc các booking CONFIRMED hoặc PENDING và CHƯA đón, có toạ độ đón
-  const waypoints = role === 'DRIVER'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ? (ride.bookings?.filter((b: any) => (b.status === 'CONFIRMED' || b.status === 'PENDING') && !b.isPickedUp && b.passengerLat && b.passengerLng) || [])
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((b: any) => ({ lat: b.passengerLat, lng: b.passengerLng }))
-    : [];
-
   return (
     <div className="relative h-[calc(100vh-48px)] w-full overflow-hidden bg-gray-100 flex flex-col">
       {/* Map Section - Chiếm phần lớn màn hình */}
@@ -269,12 +298,14 @@ export default function OngoingPage() {
           destLng={ride.destinationLng}
           waypoints={waypoints}
           driverLocation={driverLocation}
+          onRouteOptimized={setOptimalOrder}
+          useCustomOrder={useCustomOrder}
         />
       </div>
 
       {/* Bottom Sheet Section - Lớp phủ lên bản đồ */}
       <div
-        className={`absolute bottom-0 left-0 right-0 z-10 w-full bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out flex flex-col ${isExpanded ? 'h-[85vh]' : 'h-auto max-h-[45vh]'}`}
+        className={`absolute bottom-0 left-0 right-0 z-10 w-full bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out flex flex-col ${isExpanded ? 'h-[85vh]' : 'max-h-[60vh]'}`}
       >
         {/* Thanh điều khiển (Drag Handle) */}
         <div
@@ -284,9 +315,19 @@ export default function OngoingPage() {
           <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
         </div>
 
-        <div className={`flex-1 w-full ${isExpanded ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+        <div className="flex-1 w-full flex flex-col min-h-0">
           {role === 'DRIVER' ? (
-            <DriverView data={activeData} onRefresh={fetchActiveRide} isExpanded={isExpanded} onExpand={() => setIsExpanded(true)} />
+            <DriverView 
+              data={activeData} 
+              onRefresh={fetchActiveRide} 
+              isExpanded={isExpanded} 
+              onExpand={() => setIsExpanded(true)} 
+              activeOrder={activeOrder}
+              onReorder={(newOrder) => {
+                setCustomOrder(newOrder);
+                setUseCustomOrder(true);
+              }}
+            />
           ) : (
             <PassengerView data={activeData} onRefresh={fetchActiveRide} isExpanded={isExpanded} onExpand={() => setIsExpanded(true)} />
           )}

@@ -5,6 +5,13 @@ import { authenticate, restrictTo } from '../../shared/middlewares/auth.middlewa
 const router = Router();
 
 /**
+ * @route GET /api/payments/wallet
+ * @desc Lấy thông tin ví và giao dịch của người dùng
+ * @access Private
+ */
+router.get('/wallet', authenticate, PaymentsController.getMyWallet);
+
+/**
  * @route POST /api/payments/create
  * @desc Tạo đơn hàng thanh toán qua ZaloPay
  * @access Private

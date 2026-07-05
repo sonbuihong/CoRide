@@ -23,6 +23,14 @@ export class BookingsService {
       where: { id: rideId },
       include: {
         driver: { select: { id: true, firstName: true, lastName: true } },
+        bookings: {
+          where: {
+            status: { in: ['CONFIRMED', 'PENDING'] },
+            isPickedUp: false,
+            passengerLat: { not: null },
+            passengerLng: { not: null },
+          }
+        }
       },
     });
 
@@ -110,6 +118,9 @@ export class BookingsService {
         seats,
         totalPrice: ride.pricePerSeat * seats,
         status: BookingStatus.PENDING,
+        passengerLat: (data as any).passengerLat,
+        passengerLng: (data as any).passengerLng,
+        pickupAddress: (data as any).pickupAddress ?? null,
       },
       include: {
         ride: { select: { origin: true, destination: true } },
@@ -129,14 +140,14 @@ export class BookingsService {
         rideId: booking.rideId,
         origin: booking.ride.origin,
         destination: booking.ride.destination,
+        pickupLat: booking.passengerLat,
+        pickupLng: booking.passengerLng,
+        pickupAddress: booking.pickupAddress,
         isScheduled: true,
       };
 
       // Emit tới user room của driver (luôn nhận dù không join ride room)
       SocketEventService.emitToUser(ride.driverId, SocketEvents.BOOKING_NEW_REQUEST, newRequestPayload);
-
-      // Emit tới ride room (Driver có thể đang xem /ongoing và đã join ride room)
-      SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.BOOKING_NEW_REQUEST, newRequestPayload);
     } catch (socketErr) {
       // Socket chưa init hoặc tài xế offline — không critical, notification vẫn gửi
       console.warn('[BookingsService] Socket emit booking:new_request (scheduled) failed:', socketErr);
@@ -198,7 +209,10 @@ export class BookingsService {
     }
 
     // Kiểm tra "thuận đường" bằng Haversine + Point-to-Segment
-    const routeCheck = RouteMatchingService.checkRoute({
+    // Lấy các điểm đón hiện tại của chuyến đi để tính toán detour sát thực tế hơn
+    const currentWaypoints = ride.bookings?.map((b: any) => ({ lat: b.passengerLat, lng: b.passengerLng })) || [];
+
+    const routeCheck = await RouteMatchingService.checkRouteWithGoong({
       driverCurrentLat: driverLocation.latitude,
       driverCurrentLng: driverLocation.longitude,
       driverDestLat: ride.destinationLat,
@@ -211,6 +225,7 @@ export class BookingsService {
       passengerDestLng: ride.destinationLng,
       maxDetourKm: MAX_DETOUR_KM,
       maxDestDeviationKm: MAX_DEST_DEVIATION_KM,
+      currentWaypoints,
     });
 
     if (!routeCheck.isOnRoute) {

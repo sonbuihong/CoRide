@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Loader2, MapPin } from 'lucide-react';
@@ -17,15 +17,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-const pickupIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
 interface PassengerPickupMapProps {
   onConfirm: (lat: number, lng: number, address: string) => void;
   onCancel: () => void;
@@ -33,11 +24,12 @@ interface PassengerPickupMapProps {
   defaultLng?: number;
 }
 
-// Component bắt sự kiện click map để đổi toạ độ
+// Component bắt sự kiện di chuyển bản đồ để đổi toạ độ
 function MapEvents({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click(e) {
-      onLocationSelect(e.latlng.lat, e.latlng.lng);
+  const map = useMapEvents({
+    moveend() {
+      const center = map.getCenter();
+      onLocationSelect(center.lat, center.lng);
     },
   });
   return null;
@@ -48,7 +40,7 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
   const [address, setAddress] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [loadingAddress, setLoadingAddress] = useState(false);
-  const markerRef = useRef<L.Marker>(null);
+  const mapRef = useRef<L.Map>(null);
 
   useEffect(() => {
     if ('geolocation' in navigator) {
@@ -92,20 +84,7 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
     return () => clearTimeout(timer);
   }, [position]);
 
-  const eventHandlers = useMemo(
-    () => ({
-      dragend() {
-        const marker = markerRef.current;
-        if (marker != null) {
-          const latLng = marker.getLatLng();
-          setPosition([latLng.lat, latLng.lng]);
-        }
-      },
-    }),
-    [],
-  );
-
-  const handleMapClick = (lat: number, lng: number) => {
+  const handleMapMoveEnd = (lat: number, lng: number) => {
     setPosition([lat, lng]);
   };
 
@@ -125,31 +104,44 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
           center={position}
           zoom={15}
           style={{ height: '100%', width: '100%', zIndex: 0 }}
+          ref={mapRef}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
-          <Marker 
-            draggable={true}
-            eventHandlers={eventHandlers}
-            position={position}
-            ref={markerRef}
-            icon={pickupIcon}
-          />
-          <MapEvents onLocationSelect={handleMapClick} />
+          <MapEvents onLocationSelect={handleMapMoveEnd} />
         </MapContainer>
         
+        {/* Shadow của ghim ở giữa bản đồ */}
+        <div className="absolute top-1/2 left-1/2 z-[399] pointer-events-none" style={{ transform: 'translate(-12px, -41px)' }}>
+          <img 
+            src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png"
+            alt="shadow"
+            style={{ width: '41px', height: '41px' }}
+          />
+        </div>
+        {/* Ghim cố định ở giữa bản đồ */}
+        <div className="absolute top-1/2 left-1/2 z-[400] pointer-events-none" style={{ transform: 'translate(-50%, -100%)' }}>
+          <img 
+            src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png"
+            alt="marker"
+            style={{ width: '25px', height: '41px' }}
+          />
+        </div>
+
         {/* Nút re-center về vị trí hiện tại */}
         <button
           className="absolute bottom-2 right-2 z-[400] bg-white p-2 rounded-full shadow-md text-gray-700 hover:text-blue-600 focus:outline-none"
           onClick={() => {
             if ('geolocation' in navigator) {
-              setLoading(true);
               navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                  setPosition([pos.coords.latitude, pos.coords.longitude]);
-                  setLoading(false);
+                  const newPos: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+                  setPosition(newPos);
+                  if (mapRef.current) {
+                    mapRef.current.setView(newPos, 15);
+                  }
                 }
               );
             }
@@ -174,7 +166,7 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
       </div>
       
       <p className="text-xs text-gray-500 text-center">
-        Bạn có thể kéo thả ghim 📍 trên bản đồ để chọn chính xác điểm đón.
+        Bạn có thể di chuyển bản đồ để chọn chính xác điểm đón 📍.
       </p>
 
       <div className="flex justify-end gap-2 pt-2">

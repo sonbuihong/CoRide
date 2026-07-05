@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { User, Phone, MapPin, XCircle, Clock, ShieldCheck, Car, Map, CheckCircle } from 'lucide-react';
+import { User, Phone, MapPin, Navigation, Loader2, MessageSquare, MoreHorizontal } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 
@@ -49,74 +49,60 @@ interface PassengerViewProps {
 
 // ─── Status Text Mapping ────────────────────────────────────────────────────
 
-/**
- * Xác định thông tin hiển thị trạng thái cho Passenger.
- * Tập trung logic tại đây — không rải điều kiện khắp component.
- */
 function getPassengerStatusInfo(data: PassengerViewData): {
   color: string;
   text: string;
-  Icon: React.ElementType;
 } {
   const { status: bookingStatus, isPickedUp, ride } = data;
 
   if (bookingStatus === 'PENDING') {
     return {
-      color: 'text-orange-700 bg-orange-100 border-orange-200',
-      text: 'Đang chờ tài xế xác nhận',
-      Icon: Clock,
+      color: 'text-orange-600',
+      text: 'Đang chờ xác nhận',
     };
   }
 
   if (bookingStatus === 'CONFIRMED') {
     if (ride.status === 'SCHEDULED') {
       return {
-        color: 'text-[#0071e3] bg-blue-50 border-blue-200',
-        text: 'Tài xế đã nhận. Đang chờ khởi hành',
-        Icon: ShieldCheck,
+        color: 'text-[#0071e3]',
+        text: 'Tài xế sắp khởi hành',
       };
     }
 
     if (ride.status === 'ONGOING') {
       if (isPickedUp) {
         return {
-          color: 'text-[#248a3d] bg-green-50 border-green-200',
-          text: 'Chuyến đi đã bắt đầu. Bạn đang trên xe',
-          Icon: Car,
+          color: 'text-green-600',
+          text: 'Đang di chuyển',
         };
       }
       return {
-        color: 'text-[#0071e3] bg-blue-50 border-blue-200',
-        text: 'Tài xế đang đến đón bạn',
-        Icon: MapPin,
+        color: 'text-[#0071e3]',
+        text: 'Tài xế đang đến đón',
       };
     }
   }
 
   if (bookingStatus === 'COMPLETED') {
     return {
-      color: 'text-gray-700 bg-gray-100 border-gray-200',
-      text: 'Chuyến đi đã hoàn thành',
-      Icon: CheckCircle,
+      color: 'text-gray-600',
+      text: 'Đã hoàn thành',
     };
   }
 
   if (bookingStatus === 'CANCELLED') {
     return {
-      color: 'text-red-700 bg-red-50 border-red-200',
-      text: 'Đặt chỗ đã bị hủy',
-      Icon: XCircle,
+      color: 'text-red-600',
+      text: 'Đã hủy',
     };
   }
 
   return {
-    color: 'text-gray-600 bg-gray-100 border-gray-200',
+    color: 'text-gray-600',
     text: 'Đang xử lý...',
-    Icon: Clock,
   };
 }
-
-// ─── Component ─────────────────────────────────────────────────────────────
 
 export default function PassengerView({ data, onRefresh, isExpanded = true, onExpand }: PassengerViewProps) {
   const ride: Ride = data.ride;
@@ -136,114 +122,107 @@ export default function PassengerView({ data, onRefresh, isExpanded = true, onEx
     }
   };
 
-  const { color: statusColor, text: statusText, Icon: StatusIcon } = getPassengerStatusInfo(data as PassengerViewData);
+  const { color: statusColor, text: statusText } = getPassengerStatusInfo(data as PassengerViewData);
   const displayPrice = data.price ?? data.totalPrice ?? 0;
+  
+  const mapLink = `https://www.google.com/maps/dir/?api=1&origin=${ride.originLat},${ride.originLng}&destination=${ride.destinationLat},${ride.destinationLng}&travelmode=driving`;
 
   return (
-    <div className="w-full px-4 pb-6 pt-2">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Chi tiết chuyến đi</h2>
-          <p className="text-sm text-gray-500">
-            {ride.departureTime
-              ? new Date(ride.departureTime).toLocaleString('vi-VN', {
-                  hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit',
-                })
-              : 'Sắp đi'}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm font-medium text-gray-500">Giá tiền</p>
-          <span className="text-lg font-bold text-[#0071e3]">{displayPrice.toLocaleString('vi-VN')}đ</span>
-        </div>
-      </div>
-
-      {/* Trạng thái nổi bật */}
-      <div className={`flex items-center gap-2 p-3 rounded-xl mb-4 border ${statusColor}`}>
-        <StatusIcon className="w-5 h-5 shrink-0" />
-        <span className="text-sm font-semibold">{statusText}</span>
-      </div>
-
-      {/* Thông tin tài xế */}
-      {isExpanded && driver && (
-        <div className="flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-white shadow-sm mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border border-gray-100">
-              {driver.avatarUrl ? (
-                <img src={driver.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-6 h-6 text-gray-500" />
-              )}
-            </div>
-            <div>
-              <p className="text-[15px] font-semibold text-gray-900">{driver.firstName} {driver.lastName}</p>
-              <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 font-medium">
-                  {ride.vehicleType === 'CAR' ? 'Ô TÔ' : 'XE MÁY'}
-                </span>
-                <span>• {driver.driverRating ? `${driver.driverRating.toFixed(1)}` : 'Mới'}</span>
-              </div>
-            </div>
+    <div className="w-full flex-1 min-h-0 flex flex-col bg-white">
+      {/* Header - Grab/Be Style */}
+      <div className="flex items-center justify-between pb-3 pt-2 px-4 border-b border-gray-100 shrink-0">
+        <button className="flex flex-col items-center gap-1 w-16" onClick={onExpand}>
+          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+            <span className="text-[13px] font-bold text-gray-700">1</span>
           </div>
-          {bookingStatus === 'CONFIRMED' && driver.phone && (
-            <a href={`tel:${driver.phone}`} className="p-3 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors">
-              <Phone className="w-5 h-5" />
-            </a>
-          )}
+          <span className="text-[10px] text-gray-500 font-medium">Địa điểm</span>
+        </button>
+        
+        <div className="flex flex-col items-center flex-1 text-center px-2">
+          <span className={`text-[16px] font-bold ${statusColor}`}>{statusText}</span>
+          <span className="text-[13px] text-gray-500 mt-0.5 font-medium">
+            {ride.vehicleType === 'CAR' ? 'CoRide Car' : 'CoRide Bike'}
+          </span>
         </div>
-      )}
-
-      {/* Lộ trình */}
-      <div className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl mb-4 border border-gray-100 relative">
-        <div className="flex flex-col items-center gap-1 mt-1">
-          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-          <div className="w-0.5 h-8 bg-gray-300"></div>
-          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-        </div>
-        <div className="flex-1 space-y-3">
-          <div className="pr-10">
-            <p className="text-xs text-gray-500">Điểm đón</p>
-            <p className="text-sm font-medium text-gray-900 truncate">{ride.origin}</p>
+        
+        <a href={mapLink} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-1 w-16">
+          <div className="w-10 h-10 bg-[#0071e3] rounded-full flex items-center justify-center shadow-sm">
+            <Navigation className="w-5 h-5 text-white" fill="currentColor" />
           </div>
-          <div className="pr-10">
-            <p className="text-xs text-gray-500">Điểm đến</p>
-            <p className="text-sm font-medium text-gray-900 truncate">{ride.destination}</p>
-          </div>
-        </div>
-        <a
-          href={`https://www.google.com/maps/dir/?api=1&origin=${ride.originLat},${ride.originLng}&destination=${ride.destinationLat},${ride.destinationLng}&travelmode=driving`}
-          target="_blank"
-          rel="noreferrer"
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
-          title="Mở Google Maps"
-        >
-          <Map className="w-5 h-5" />
+          <span className="text-[10px] text-gray-500 font-medium">Chỉ đường</span>
         </a>
       </div>
 
-      {!isExpanded && (
-        <div className="flex justify-center mb-2 mt-2">
-          <button onClick={onExpand} className="text-xs text-blue-600 font-medium hover:underline">
-            Xem thêm chi tiết & thông tin tài xế
-          </button>
-        </div>
-      )}
+      {/* Sticky Info & Actions */}
+      <div className="px-4 pt-4 shrink-0 bg-white z-10">
+        {driver ? (
+          <div className="flex justify-between items-start">
+            <div className="flex-1 pr-4">
+              <h2 className="text-[18px] font-medium text-gray-900">{driver.firstName} {driver.lastName}</h2>
+              {/* Address */}
+              <div className="mt-1.5">
+                <p className="text-[14px] text-gray-800 line-clamp-2 leading-snug">
+                  {ride.origin}
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[15px] font-semibold">{displayPrice.toLocaleString('vi-VN')}đ</span>
+                <span className="bg-[#0071e3] text-white text-[11px] px-2 py-0.5 rounded font-medium">Tiền mặt</span>
+              </div>
+            </div>
+            <div className="w-14 h-14 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden shrink-0 border border-gray-100">
+              {driver.avatarUrl ? (
+                <img src={driver.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-7 h-7 text-gray-500" />
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col justify-center items-center py-6 text-gray-500">
+            <Loader2 className="w-8 h-8 animate-spin mb-2 text-[#0071e3]" />
+            <p className="text-sm">Đang tìm tài xế...</p>
+          </div>
+        )}
 
-      {/* Nút hủy đặt chỗ — chỉ khi còn có thể hủy */}
-      {isExpanded && (
-        <div className="mt-8 pt-4 border-t border-gray-100 flex flex-col gap-2">
-          {(bookingStatus === 'PENDING' || (bookingStatus === 'CONFIRMED' && ride.status === 'SCHEDULED')) && (
-            <Button
-              variant="outline"
-              className="w-full h-12 text-[15px] rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 border-gray-200 bg-white"
-              onClick={handleCancelBooking}
-            >
-              <XCircle className="w-5 h-5 mr-2" /> Hủy đặt chỗ
-            </Button>
-          )}
-        </div>
-      )}
+        {/* Action Bar */}
+        {driver && (
+          <div className="flex items-center justify-between py-3 border-y border-gray-100 mt-4">
+            <a href={`tel:${driver.phone}`} className="flex flex-col items-center gap-1 flex-1 hover:bg-gray-50 py-1 border-r border-gray-100">
+              <Phone className="w-6 h-6 text-gray-700" fill="currentColor" />
+              <span className="text-[12px] text-gray-700 font-medium">Gọi</span>
+            </a>
+            <button className="flex flex-col items-center gap-1 flex-1 hover:bg-gray-50 py-1 border-r border-gray-100">
+              <MessageSquare className="w-6 h-6 text-gray-700" fill="currentColor" />
+              <span className="text-[12px] text-gray-700 font-medium">Nhắn tin</span>
+            </button>
+            <button className="flex flex-col items-center gap-1 flex-1 hover:bg-gray-50 py-1" onClick={onExpand}>
+              <MoreHorizontal className="w-6 h-6 text-gray-700" />
+              <span className="text-[12px] text-gray-700 font-medium">Chi tiết</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+
+
+      {/* Bottom Action Button - FIXED AT BOTTOM */}
+      <div className="p-4 pt-3 pb-6 bg-white border-t border-gray-100 z-10 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] shrink-0 mt-auto">
+        {(bookingStatus === 'PENDING' || (bookingStatus === 'CONFIRMED' && ride.status === 'SCHEDULED')) ? (
+          <Button
+            variant="outline"
+            className="w-full h-14 text-[16px] rounded-full text-red-500 border-red-200 bg-white hover:bg-red-50 hover:text-red-600 font-semibold shadow-sm"
+            onClick={handleCancelBooking}
+          >
+            Hủy chuyến
+          </Button>
+        ) : (
+          <div className="w-full h-14 flex items-center justify-center rounded-full border border-green-500 bg-white text-green-600 font-semibold text-[16px] shadow-sm">
+            {statusText}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

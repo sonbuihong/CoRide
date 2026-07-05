@@ -185,15 +185,15 @@ function SearchResults() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-black pt-12 pb-24">
-      <div className="container px-4 md:px-6 mx-auto max-w-[980px] space-y-12">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-black pt-6 md:pt-12 pb-12 md:pb-24">
+      <div className="container px-4 md:px-6 mx-auto max-w-[980px] space-y-6 md:space-y-12">
         
         {/* Header Section */}
-        <div className="text-center space-y-3">
-          <h1 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.28px] leading-[1.07] text-[#1d1d1f] dark:text-white">
+        <div className="text-center space-y-2 md:space-y-3">
+          <h1 className="text-[32px] md:text-[56px] font-semibold tracking-[-0.28px] leading-[1.07] text-[#1d1d1f] dark:text-white">
             Tìm chuyến đi.
           </h1>
-          <p className="text-[17px] md:text-[21px] tracking-[-0.37px] text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)] max-w-[600px] mx-auto">
+          <p className="text-[15px] md:text-[21px] tracking-[-0.37px] text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)] max-w-[600px] mx-auto">
             Hàng ngàn chuyến đi thân thiện đang chờ bạn.
           </p>
         </div>
@@ -209,13 +209,13 @@ function SearchResults() {
           {/* Left Column: Results */}
           <div className="lg:col-span-7 space-y-6">
             <div className="flex items-center justify-between px-2">
-              <h2 className="text-[21px] font-semibold tracking-[-0.23px] text-[#1d1d1f] dark:text-white">
+              <h2 className="text-[17px] md:text-[21px] font-semibold tracking-[-0.23px] text-[#1d1d1f] dark:text-white">
                 {loading ? 'Đang tải dữ liệu...' : `Kết quả: ${rides.length} chuyến`}
               </h2>
               <button
                 onClick={() => fetchRides(getCurrentFilters())}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(0,0,0,0.08)] dark:hover:bg-[rgba(255,255,255,0.12)] transition-colors text-[13px] font-medium text-[#1d1d1f] dark:text-white disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(0,0,0,0.08)] dark:hover:bg-[rgba(255,255,255,0.12)] transition-colors text-[12px] md:text-[13px] font-medium text-[#1d1d1f] dark:text-white disabled:opacity-50"
                 title="Làm mới danh sách"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />

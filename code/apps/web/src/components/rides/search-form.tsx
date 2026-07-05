@@ -15,13 +15,13 @@ const appleInputWrapperClass =
   "flex-1 relative group";
 
 const appleLabelClass = 
-  "absolute left-4 top-2 text-[10px] font-semibold uppercase tracking-wider text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)] z-10 flex items-center gap-1.5";
+  "absolute left-3 md:left-4 top-1.5 md:top-2 text-[9px] md:text-[10px] font-semibold uppercase tracking-wider text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)] z-10 flex items-center gap-1.5";
 
 const appleInputClass = 
-  "w-full h-[60px] pl-4 pr-4 pt-5 pb-1 rounded-[14px] bg-[#fafafc] border-[2px] border-[rgba(0,0,0,0.04)] text-[17px] font-medium text-[#1d1d1f] transition-all hover:bg-[rgba(0,0,0,0.02)] focus:bg-white focus:border-[rgba(0,0,0,0.08)] focus:outline focus:outline-[2px] focus:outline-[#0071e3] focus:outline-offset-1 dark:bg-[rgba(255,255,255,0.05)] dark:border-[rgba(255,255,255,0.05)] dark:text-white dark:focus:bg-[rgba(255,255,255,0.08)]";
+  "w-full h-[52px] md:h-[60px] pl-3 pr-3 md:pl-4 md:pr-4 pt-4 md:pt-5 pb-1 rounded-[12px] md:rounded-[14px] bg-[#fafafc] border-[2px] border-[rgba(0,0,0,0.04)] text-[15px] md:text-[17px] font-medium text-[#1d1d1f] transition-all hover:bg-[rgba(0,0,0,0.02)] focus:bg-white focus:border-[rgba(0,0,0,0.08)] focus:outline focus:outline-[2px] focus:outline-[#0071e3] focus:outline-offset-1 dark:bg-[rgba(255,255,255,0.05)] dark:border-[rgba(255,255,255,0.05)] dark:text-white dark:focus:bg-[rgba(255,255,255,0.08)]";
 
 const appleSubmitButtonClass = 
-  "h-[60px] px-8 rounded-[14px] bg-[#0071e3] text-white text-[17px] font-medium tracking-tight transition-all hover:bg-[#0077ED] active:scale-95 flex items-center justify-center shrink-0 w-full md:w-auto shadow-[0_4px_14px_rgba(0,113,227,0.4)]";
+  "h-[52px] md:h-[60px] px-8 rounded-[12px] md:rounded-[14px] bg-[#0071e3] text-white text-[15px] md:text-[17px] font-medium tracking-tight transition-all hover:bg-[#0077ED] active:scale-95 flex items-center justify-center shrink-0 w-full md:w-auto shadow-[0_4px_14px_rgba(0,113,227,0.4)]";
 
 interface SearchFormProps {
   onSearch: (filters: SearchRideInput) => void;
@@ -159,7 +159,7 @@ export function SearchForm({ onSearch, initialValues }: SearchFormProps) {
     <div className="w-full relative">
       <form 
         onSubmit={handleSubmit(onSubmit)} 
-        className="flex flex-col md:flex-row gap-3 p-3 bg-white dark:bg-[#1d1d1f] rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.05)]"
+        className="flex flex-col md:flex-row gap-2.5 md:gap-3 p-2.5 md:p-3 bg-white dark:bg-[#1d1d1f] rounded-[20px] md:rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.05)]"
       >
         
         {/* Origin — có nút GPS auto-fill */}

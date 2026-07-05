@@ -51,9 +51,12 @@ export const NotificationCenter: React.FC = () => {
       setUnreadCount((prev) => prev + 1);
 
       // Hiển thị toast để người dùng thấy ngay cả khi không mở panel
-      toast.info(data.title, {
-        description: data.content,
-      });
+      // Bỏ qua toast cho BOOKING_REQUEST vì đã có BookingRequestPopup hiển thị
+      if (data.type !== 'BOOKING_REQUEST') {
+        toast.info(data.title, {
+          description: data.content,
+        });
+      }
     };
 
     socket.on(SocketEvents.NOTIFICATION_NEW, handleNewNotification);
@@ -84,9 +87,12 @@ export const NotificationCenter: React.FC = () => {
       setNotifications((prev) => [data, ...prev]);
       setUnreadCount((prev) => prev + 1);
 
-      toast.info(data.title, {
-        description: data.content,
-      });
+      // Bỏ qua toast cho BOOKING_REQUEST vì đã có BookingRequestPopup hiển thị
+      if (data.type !== 'BOOKING_REQUEST') {
+        toast.info(data.title, {
+          description: data.content,
+        });
+      }
     };
 
     eventSource.onerror = (error) => {

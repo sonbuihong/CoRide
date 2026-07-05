@@ -65,7 +65,7 @@ const apiLimiter = rateLimit({
   max: process.env.NODE_ENV === 'production' ? 100 : 300,
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'Quá nhiều yêu cầu từ IP này, vui lòng thử lại sau 15 phút',
+  message: { message: 'Quá nhiều yêu cầu từ IP này, vui lòng thử lại sau 15 phút' },
 });
 app.use('/api/', apiLimiter);
 

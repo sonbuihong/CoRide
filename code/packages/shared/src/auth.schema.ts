@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const registerSchema = z.object({
   email: z.string({
     required_error: "Email là bắt buộc",
-  }).email("Email không hợp lệ"),
+  }).trim().toLowerCase().email("Email không hợp lệ"),
   password: z.string({
     required_error: "Mật khẩu là bắt buộc",
   }).min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
@@ -25,7 +25,7 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: z.string({
     required_error: "Email là bắt buộc",
-  }).email("Email không hợp lệ"),
+  }).trim().toLowerCase().email("Email không hợp lệ"),
   password: z.string({
     required_error: "Mật khẩu là bắt buộc",
   }).min(1, "Mật khẩu không được để trống"),

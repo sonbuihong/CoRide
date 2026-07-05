@@ -313,15 +313,8 @@ export class RidesService {
         updatedAt: new Date().toISOString(),
       };
 
-      // Emit tới ride room (những ai đã join qua ride:join event)
-      SocketEventService.emitToRoom(`ride:${id}`, SocketEvents.RIDE_STATUS_UPDATED, statusPayload);
-
-      // Emit trực tiếp tới từng passenger đã lưu TRƯỚC transaction
-      for (const passengerId of affectedPassengerIds) {
-        SocketEventService.emitToUser(passengerId, SocketEvents.RIDE_STATUS_UPDATED, statusPayload);
-      }
-
       // Global broadcast để trang search và danh sách tự cập nhật ngay lập tức
+      // Sự kiện này sẽ đến được tất cả user (bao gồm driver và passenger) mà không cần emit riêng lẻ từng room
       SocketEventService.emitGlobal(SocketEvents.RIDE_STATUS_UPDATED, statusPayload);
       SocketEventService.emitGlobal(SocketEvents.RIDE_UPDATED, updatedRide);
     } catch (socketError) {

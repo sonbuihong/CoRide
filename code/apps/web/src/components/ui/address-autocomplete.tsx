@@ -173,7 +173,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     }
     setIsLoading(true);
     try {
-      const results = await autocompleteAddress(query, { limit: 10, more_compound: true });
+      const results = await autocompleteAddress(query, { more_compound: true });
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
     } catch (err) {

@@ -154,17 +154,22 @@ export async function autocompleteAddress(
     more_compound?: boolean;
   }
 ): Promise<AutocompleteResult[]> {
-  const { limit = 10 } = options || {};
+  // Mặc định: Giới hạn 5 kết quả, tìm kiếm xung quanh Hà Nội, bán kính 10km
+  const { 
+    limit = 5, 
+    location = '21.028511,105.804817', // Tọa độ Hà Nội
+    radius = 10, 
+    more_compound 
+  } = options || {};
 
   try {
     const params: any = {
       query,
       limit,
-      // Truyền đầy đủ params V1: location, radius, more_compound
-      ...(options?.location && { location: options.location }),
-      ...(options?.radius && { radius: options.radius }),
+      location,
+      radius,
       // more_compound=true → backend truyền cho Goong, trả thêm compound (quận/xã/tỉnh)
-      more_compound: options?.more_compound !== false ? 'true' : 'false',
+      more_compound: more_compound !== false ? 'true' : 'false',
     };
 
     const response = await axios.get(`${API_URL}/goong/autocomplete`, {

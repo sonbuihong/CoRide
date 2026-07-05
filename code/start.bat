@@ -24,7 +24,7 @@ echo    [5] Mobile: Expo Web Preview
 echo    [6] Mobile: Expo Start (QR Code cho Mobile App)
 echo    [7] Prisma Studio (Quan ly Database - localhost:5555)
 echo    [8] Cai dat lai thu vien (npm install)
-echo    [9] Dong tat ca dich vu dang chay
+echo    [9] Dong tat ca dich vu dang chay (chi cua so cua app nay)
 echo    [0] Thoat
 echo.
 echo  ==============================================================
@@ -50,7 +50,7 @@ start cmd /c "title Backend & cd apps\backend & npm run dev"
 start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
 start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
 start cmd /c "title Web Frontend & cd apps\web & npm run dev"
-timeout /t 3 /nobreak > nul
+timeout /t 10 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
 echo [SUCCESS] Da khoi dong xong.
@@ -65,8 +65,8 @@ start cmd /c "title Backend & cd apps\backend & npm run dev"
 start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
 start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
 start cmd /c "title Web Frontend & cd apps\web & npm run dev"
-start cmd /c "title Mobile & cd apps\mobile & npm run start"
-timeout /t 3 /nobreak > nul
+start cmd /c "title Mobile & cd apps\mobile & npm run start -- -c"
+timeout /t 10 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
 echo [SUCCESS] Da khoi dong tat ca dich vu.
@@ -79,7 +79,7 @@ echo [INFO] Dang khoi dong Backend...
 start cmd /c "title Backend & cd apps\backend & npm run dev"
 start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
 start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
-timeout /t 3 /nobreak > nul
+timeout /t 10 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 echo [SUCCESS] Da khoi dong Backend.
 pause
@@ -89,8 +89,7 @@ goto menu
 echo.
 echo [INFO] Dang khoi dong Web Frontend...
 start cmd /c "title Web Frontend & cd apps\web & npm run dev"
-timeout /t 3 /nobreak > nul
-start "" http://localhost:5001/api/docs/
+timeout /t 10 /nobreak > nul
 start "" http://localhost:3000
 echo [SUCCESS] Da khoi dong Web Frontend.
 pause
@@ -99,25 +98,30 @@ goto menu
 :mobile_web
 echo.
 echo [INFO] Dang khoi dong Mobile o che do Web Preview...
-npx turbo run dev --filter=@repo/mobile -- --web
+pushd apps\mobile
+call npm run web
+popd
 pause
 goto menu
 
 :mobile_qr
 echo.
 echo [INFO] Dang khoi dong Expo (Scan QR Code tren dien thoai)...
-npx turbo run dev --filter=@repo/mobile
+pushd apps\mobile
+call npm run start
+popd
 pause
 goto menu
 
 :prisma
 echo.
 echo [INFO] Dang khoi dong Prisma Studio...
-start "" http://localhost:5555
 pushd packages\database
-npx prisma studio
+start cmd /c "title Prisma Studio & npx prisma studio"
 popd
-    pause
+timeout /t 5 /nobreak > nul
+start "" http://localhost:5555
+pause
 goto menu
 
 :reinstall
@@ -130,27 +134,26 @@ goto menu
 
 :kill_all
 echo.
-echo [INFO] Dang dong tat ca cac dich vu (Node.js va cac cua so terminal)...
+echo [INFO] Dang dong tat ca cac dich vu (chi cua so cua app CoRide)...
 taskkill /F /FI "WINDOWTITLE eq API Gateway*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Notification Service*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Backend*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Web Frontend*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Mobile*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Prisma Studio*" /T > nul 2>&1
-taskkill /F /IM node.exe /T > nul 2>&1
 echo [SUCCESS] Da dong tat ca dich vu thanh cong.
 pause
 goto menu
 
 :kill_all_and_exit
 echo.
-echo [INFO] Dang dong tat ca cac dich vu (Node.js va cac cua so terminal)...
+echo [INFO] Dang dong tat ca cac dich vu (chi cua so cua app CoRide)...
 taskkill /F /FI "WINDOWTITLE eq API Gateway*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Notification Service*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Backend*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Web Frontend*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Mobile*" /T > nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Prisma Studio*" /T > nul 2>&1
-taskkill /F /IM node.exe /T > nul 2>&1
 echo [SUCCESS] Da dong tat ca dich vu va thoat.
+endlocal
 exit

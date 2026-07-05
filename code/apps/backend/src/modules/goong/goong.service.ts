@@ -90,6 +90,16 @@ interface DirectionsResult {
   }>;
 }
 
+export interface DistanceMatrixResult {
+  rows: Array<{
+    elements: Array<{
+      status: string;
+      duration: { text: string; value: number };
+      distance: { text: string; value: number };
+    }>;
+  }>;
+}
+
 class GoongService {
   private baseUrl: string;
 
@@ -281,6 +291,41 @@ class GoongService {
     } catch (error) {
       console.error('Goong Geocode V2 error:', error);
       throw new Error('Không thể tìm thấy địa chỉ mới cho địa chỉ này');
+    }
+  }
+
+  /**
+   * Tính toán ma trận khoảng cách và thời gian giữa nhiều điểm (Distance Matrix)
+   *
+   * @param origins - Danh sách điểm xuất phát, cách nhau bằng dấu `|` (VD: "lat,lng|lat,lng")
+   * @param destinations - Danh sách điểm đến, cách nhau bằng dấu `|`
+   * @param vehicle - Phương tiện (car, bike, truck, hd)
+   */
+  async distanceMatrix(
+    origins: string,
+    destinations: string,
+    vehicle: string = 'car'
+  ): Promise<DistanceMatrixResult | null> {
+    if (!origins || !destinations) return null;
+
+    try {
+      const response = await axios.get(`${this.baseUrl}/distancematrix`, {
+        params: {
+          api_key: this.apiKey,
+          origins,
+          destinations,
+          vehicle,
+        },
+        timeout: 10000,
+      });
+
+      if (response.data && response.data.rows) {
+        return response.data as DistanceMatrixResult;
+      }
+      return null;
+    } catch (error) {
+      console.error('Goong Distance Matrix error:', error);
+      throw new Error('Không thể tính toán khoảng cách lộ trình');
     }
   }
 

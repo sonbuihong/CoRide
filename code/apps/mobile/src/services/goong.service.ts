@@ -28,14 +28,22 @@ export const getAutocompletePredictionsMobile = async (
 ): Promise<GoongAutocompletePrediction[]> => {
   if (!input || input.trim().length < 2) return [];
 
+  // Mặc định: Giới hạn 5 kết quả, tìm kiếm xung quanh Hà Nội, bán kính 10km
+  const { 
+    limit = 5, 
+    location = '21.028511,105.804817', // Tọa độ Hà Nội
+    radius = 10, 
+    more_compound 
+  } = options || {};
+
   try {
     const params = new URLSearchParams({
       query: input,
       // more_compound mặc định true — trả thêm quận/xã/tỉnh tách sẵn
-      more_compound: options?.more_compound !== false ? 'true' : 'false',
-      ...(options?.location && { location: options.location }),
-      ...(options?.limit && { limit: String(options.limit) }),
-      ...(options?.radius && { radius: String(options.radius) }),
+      more_compound: more_compound !== false ? 'true' : 'false',
+      location,
+      limit: String(limit),
+      radius: String(radius),
     }).toString();
 
     const response = await fetch(`${API_BASE_URL}/goong/autocomplete?${params}`, {

@@ -32,9 +32,77 @@ export interface RouteCheckParams {
   passengerDestLng: number;
   maxDetourKm: number;         // Ngưỡng lệch đường tối đa (default 2km)
   maxDestDeviationKm: number;  // Ngưỡng lệch điểm đến tối đa (default 5km)
+  currentWaypoints?: {lat: number, lng: number}[]; // Các điểm đón khách hiện tại
 }
 
+import goongService from '../goong/goong.service';
+
 export class RouteMatchingService {
+  /**
+   * Tính toán thuận đường sử dụng Goong Distance Matrix API
+   * Tính toán chi phí thực tế (khoảng cách lái xe).
+   */
+  static async checkRouteWithGoong(params: RouteCheckParams): Promise<RouteCheckResult> {
+    const {
+      driverCurrentLat, driverCurrentLng,
+      driverDestLat, driverDestLng,
+      passengerPickupLat, passengerPickupLng,
+      passengerDestLat, passengerDestLng,
+      maxDetourKm, maxDestDeviationKm,
+      currentWaypoints = []
+    } = params;
+
+    // Nếu đã có nhiều điểm đón, tạm thời fallback về Haversine (point-to-segment)
+    // vì việc ghép chuỗi ma trận đa điểm (TSP) rất phức tạp và tốn query.
+    if (currentWaypoints.length > 0) {
+      return this.checkRoute(params);
+    }
+
+    const origins = `${driverCurrentLat},${driverCurrentLng}|${passengerPickupLat},${passengerPickupLng}|${passengerDestLat},${passengerDestLng}`;
+    const destinations = `${passengerPickupLat},${passengerPickupLng}|${passengerDestLat},${passengerDestLng}|${driverDestLat},${driverDestLng}`;
+
+    try {
+      const matrix = await goongService.distanceMatrix(origins, destinations);
+      if (!matrix || !matrix.rows || matrix.rows.length < 3) {
+        console.warn('Goong API failed, falling back to Haversine');
+        return this.checkRoute(params);
+      }
+
+      const getDist = (origIdx: number, destIdx: number) => {
+        const el = matrix.rows[origIdx].elements[destIdx];
+        if (el.status !== 'OK') return Infinity;
+        return el.distance.value / 1000; // km
+      };
+
+      // Khoảng cách gốc: Driver -> DriverDest
+      const originalDist = getDist(0, 2);
+
+      // Khoảng cách mới: Driver -> Pickup -> PassDest -> DriverDest
+      const dToP = getDist(0, 0); // Driver -> Pickup
+      const pToPd = getDist(1, 1); // Pickup -> PassDest
+      const pdToD = getDist(2, 2); // PassDest -> DriverDest
+      
+      const newDist = dToP + pToPd + pdToD;
+      const detourKm = newDist - originalDist;
+
+      // Sai lệch điểm đến
+      const destDeviationKm = getDist(2, 2);
+
+      // Đảm bảo điểm đón không bị vòng ngược quá xa
+      const isAhead = dToP <= originalDist + 1.0;
+
+      const isOnRoute =
+        isAhead &&
+        detourKm <= maxDetourKm &&
+        destDeviationKm <= maxDestDeviationKm;
+
+      return { isOnRoute, detourKm, destDeviationKm };
+    } catch (error) {
+      console.error('checkRouteWithGoong Error:', error);
+      return this.checkRoute(params);
+    }
+  }
+
   /**
    * Kiểm tra hành khách có nằm thuận đường với tài xế không.
    *
@@ -55,17 +123,31 @@ export class RouteMatchingService {
       passengerDestLng,
       maxDetourKm,
       maxDestDeviationKm,
+      currentWaypoints = [],
     } = params;
 
-    // 1. Khoảng cách từ điểm đón khách đến đoạn thẳng (vị trí tài xế → đích tài xế)
-    const detourKm = this.pointToSegmentDistance(
-      passengerPickupLat,
-      passengerPickupLng,
-      driverCurrentLat,
-      driverCurrentLng,
-      driverDestLat,
-      driverDestLng
-    );
+    // Lập danh sách các điểm trên lộ trình hiện tại của tài xế
+    const pathPoints = [
+      { lat: driverCurrentLat, lng: driverCurrentLng },
+      ...currentWaypoints,
+      { lat: driverDestLat, lng: driverDestLng }
+    ];
+
+    // 1. Khoảng cách từ điểm đón khách đến tuyến đường tài xế
+    // Tính khoảng cách nhỏ nhất từ điểm đón tới tất cả các đoạn (segments) trên lộ trình
+    let detourKm = Infinity;
+    for (let i = 0; i < pathPoints.length - 1; i++) {
+      const p1 = pathPoints[i];
+      const p2 = pathPoints[i + 1];
+      const distToSegment = this.pointToSegmentDistance(
+        passengerPickupLat, passengerPickupLng,
+        p1.lat, p1.lng,
+        p2.lat, p2.lng
+      );
+      if (distToSegment < detourKm) {
+        detourKm = distToSegment;
+      }
+    }
 
     // 2. Khoảng cách từ điểm đến khách đến điểm đến tài xế
     const destDeviationKm = this.haversineDistance(

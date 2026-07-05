@@ -10,6 +10,7 @@ import { RoleModeProvider } from "@/components/providers/role-mode-provider";
 import { SocketProvider } from "@/components/providers/socket-provider";
 import { BookingRequestPopup } from "@/components/booking/booking-request-popup";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 const inter = Inter({
   subsets: ["latin", "vietnamese"],
@@ -54,7 +55,10 @@ export default function RootLayout({
                 {/* BookingRequestPopup luôn active toàn ứng dụng — tài xế nhận popup ngay khi có yêu cầu */}
                 <BookingRequestPopup />
                 <Header />
-                {children}
+                <main className="pb-[80px] lg:pb-0">
+                  {children}
+                </main>
+                <MobileBottomNav />
               </SocketProvider>
             </RoleModeProvider>
           </AuthProvider>

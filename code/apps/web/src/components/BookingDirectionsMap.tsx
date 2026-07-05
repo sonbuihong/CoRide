@@ -19,13 +19,11 @@ L.Icon.Default.mergeOptions({
 });
 
 // Custom icons
-const driverIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+const driverIcon = L.divIcon({
+  className: '', // Removes default leaflet-div-icon styles
+  html: '<div class="driver-location-marker"></div>',
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
 });
 
 const pickupIcon = new L.Icon({
@@ -43,7 +41,7 @@ const MapBounds = ({ driverPos, pickupPos }: { driverPos: [number, number]; pick
   useEffect(() => {
     if (driverPos && pickupPos) {
       const bounds = L.latLngBounds([driverPos, pickupPos]);
-      map.fitBounds(bounds, { padding: [50, 50] });
+      map.fitBounds(bounds, { padding: [50, 50], animate: false });
     }
   }, [map, driverPos, pickupPos]);
   return null;

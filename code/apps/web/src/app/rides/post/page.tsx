@@ -46,6 +46,7 @@ export default function PostRidePage() {
   const router = useRouter();
   const { user, loading: authLoading, refreshUser } = useAuth();
   const [checkingVerification, setCheckingVerification] = useState(true);
+  const [hasRefreshed, setHasRefreshed] = useState(false);
 
   interface ActivePassenger {
     id: string;
@@ -87,7 +88,8 @@ export default function PostRidePage() {
 
     const verifyDriverStatus = async () => {
       // Nếu client thấy chưa được xác thực tài xế, thử gọi refreshUser để kiểm tra lại
-      if (!user.isDriverVerified) {
+      if (!user.isDriverVerified && !hasRefreshed) {
+        setHasRefreshed(true);
         try {
           await refreshUser();
         } catch (err) {
@@ -98,7 +100,7 @@ export default function PostRidePage() {
     };
 
     verifyDriverStatus();
-  }, [user, user?.id, refreshUser, router, authLoading]);
+  }, [user, user?.id, refreshUser, router, authLoading, hasRefreshed]);
 
   useEffect(() => {
     if (authLoading || checkingVerification) return;
