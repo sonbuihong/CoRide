@@ -110,58 +110,57 @@ export class BookingsService {
   ) {
     const { rideId } = data;
 
-    // Tạo booking với trạng thái PENDING (chờ tài xế duyệt)
-    const booking = await prisma.booking.create({
-      data: {
-        rideId,
-        passengerId,
-        seats,
-        totalPrice: ride.pricePerSeat * seats,
-        status: BookingStatus.PENDING,
-        passengerLat: (data as any).passengerLat,
-        passengerLng: (data as any).passengerLng,
-        pickupAddress: (data as any).pickupAddress ?? null,
-      },
-      include: {
-        ride: { select: { origin: true, destination: true } },
-        passenger: { select: { id: true, firstName: true, lastName: true } },
-      },
-    });
-
-    // Emit socket popup realtime cho tài xế — không await (không block response)
-    // isScheduled = true để frontend phân biệt với booking ONGOING (không cần timeout)
-    // Emit cả tới room ride:${rideId} (nếu Driver đang xem /ongoing) VÀ user:${driverId}
     try {
-      const newRequestPayload = {
-        bookingId: booking.id,
-        passenger: booking.passenger,
-        seats: booking.seats,
-        totalPrice: booking.totalPrice,
-        rideId: booking.rideId,
-        origin: booking.ride.origin,
-        destination: booking.ride.destination,
-        pickupLat: booking.passengerLat,
-        pickupLng: booking.passengerLng,
-        pickupAddress: booking.pickupAddress,
-        isScheduled: true,
-      };
+      const booking = await prisma.booking.create({
+        data: {
+          rideId,
+          passengerId,
+          seats,
+          totalPrice: ride.pricePerSeat * seats,
+          status: BookingStatus.PENDING,
+          passengerLat: (data as any).passengerLat,
+          passengerLng: (data as any).passengerLng,
+          pickupAddress: (data as any).pickupAddress ?? null,
+        },
+        include: {
+          ride: { select: { origin: true, destination: true } },
+          passenger: { select: { id: true, firstName: true, lastName: true } },
+        },
+      });
 
-      // Emit tới user room của driver (luôn nhận dù không join ride room)
-      SocketEventService.emitToUser(ride.driverId, SocketEvents.BOOKING_NEW_REQUEST, newRequestPayload);
-    } catch (socketErr) {
-      // Socket chưa init hoặc tài xế offline — không critical, notification vẫn gửi
-      console.warn('[BookingsService] Socket emit booking:new_request (scheduled) failed:', socketErr);
+      try {
+        const newRequestPayload = {
+          bookingId: booking.id,
+          passenger: booking.passenger,
+          seats: booking.seats,
+          totalPrice: booking.totalPrice,
+          rideId: booking.rideId,
+          origin: booking.ride.origin,
+          destination: booking.ride.destination,
+          pickupLat: booking.passengerLat,
+          pickupLng: booking.passengerLng,
+          pickupAddress: booking.pickupAddress,
+          isScheduled: true,
+        };
+        SocketEventService.emitToUser(ride.driverId, SocketEvents.BOOKING_NEW_REQUEST, newRequestPayload);
+      } catch (socketErr) {
+        console.warn('[BookingsService] Socket emit booking:new_request failed:', socketErr);
+      }
+
+      NotificationsService.createNotification(
+        ride.driverId,
+        'Yêu cầu đặt chỗ mới',
+        `${booking.passenger.firstName} ${booking.passenger.lastName} muốn đặt ${seats} ghế — ${ride.origin} → ${ride.destination}`,
+        'BOOKING_REQUEST'
+      ).catch((err) => console.error('[Notification Error]:', err));
+
+      return booking;
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        throw new AppError('BOOKING_ALREADY_EXISTS', 409);
+      }
+      throw error;
     }
-
-    // Thông báo push cho tài xế (background — không chặn response)
-    NotificationsService.createNotification(
-      ride.driverId,
-      'Yêu cầu đặt chỗ mới',
-      `${booking.passenger.firstName} ${booking.passenger.lastName} muốn đặt ${seats} ghế — ${ride.origin} → ${ride.destination}`,
-      'BOOKING_REQUEST'
-    ).catch((err) => console.error('[Notification Error]:', err));
-
-    return booking;
   }
 
   /**
@@ -502,108 +501,70 @@ export class BookingsService {
 
     if (!booking) throw new AppError('Không tìm thấy yêu cầu đặt chỗ', 404);
 
-    // Chỉ tài xế của chuyến đi mới được duyệt/từ chối
     if (booking.ride.driverId !== userId) {
-      throw new AppError('Bạn không có quyền thực hiện hành động này', 403);
+      throw new AppError('FORBIDDEN_BOOKING_ACCESS', 403);
     }
 
     if (status === BookingStatus.CONFIRMED) {
-      if (booking.status !== BookingStatus.PENDING) {
-        throw new AppError('Chỉ có thể xác nhận yêu cầu đang chờ (PENDING)', 400);
-      }
-
-      // Dùng transaction để đảm bảo giảm ghế và cập nhật booking là atomic
-      // Tránh race condition khi nhiều booking được duyệt cùng lúc
+      let isFull = false;
       const [updatedBooking, updatedRideAfterConfirm] = await prisma.$transaction(async (tx) => {
-        const currentRide = await tx.ride.findUnique({
-          where: { id: booking.rideId },
+        const updatedBookings = await tx.booking.updateMany({
+          where: { id: bookingId, status: BookingStatus.PENDING },
+          data: { status: BookingStatus.CONFIRMED }
         });
-
-        if (!currentRide || currentRide.availableSeats < booking.seats) {
-          throw new AppError('Không đủ số ghế trống để xác nhận', 400);
+        if (updatedBookings.count === 0) {
+          throw new AppError('BOOKING_NOT_PENDING', 409);
         }
 
-        const rideAfterUpdate = await tx.ride.update({
-          where: { id: booking.rideId },
-          data: { availableSeats: { decrement: booking.seats } },
-          select: { id: true, availableSeats: true },
+        const updatedRides = await tx.ride.updateMany({
+          where: { id: booking.rideId, status: 'SCHEDULED', availableSeats: { gte: booking.seats } },
+          data: { availableSeats: { decrement: booking.seats } }
         });
 
-        const confirmedBooking = await tx.booking.update({
-          where: { id: bookingId },
-          data: { status: BookingStatus.CONFIRMED },
-        });
+        if (updatedRides.count === 0) {
+          const currentRide = await tx.ride.findUnique({ where: { id: booking.rideId } });
+          if (currentRide && currentRide.status !== 'SCHEDULED') {
+            throw new AppError('RIDE_NOT_SCHEDULED', 409);
+          }
+          throw new AppError('RIDE_NO_AVAILABLE_SEATS', 409);
+        }
 
-        return [confirmedBooking, rideAfterUpdate];
+        const currentRide = await tx.ride.findUnique({ where: { id: booking.rideId } });
+        if (currentRide && currentRide.availableSeats === 0) {
+          await tx.ride.update({ where: { id: currentRide.id }, data: { status: 'FULL' } });
+          isFull = true;
+        }
+
+        const b = await tx.booking.findUnique({ where: { id: bookingId } });
+        return [b, currentRide];
       });
 
-      // Emit socket realtime sau khi transaction đã commit thành công
-      // Dùng user:${passengerId} prefix để nhất quán với cách socket server join room
       try {
-        const confirmedPayload = {
-          bookingId,
-          rideId: booking.rideId,
-          message: 'Tài xế đã xác nhận chuyến đi của bạn.',
-        };
-
-        // Thông báo cho hành khách (qua user room)
-        SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_CONFIRMED, confirmedPayload);
-
-        // Emit tới ride room để cả driver lẫn các passengers khác biết
-        SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.BOOKING_CONFIRMED, confirmedPayload);
-
-        // Broadcast số ghế mới đến TOÀN BỘ client đang online
-        SocketEventService.emitGlobal(SocketEvents.RIDE_SEATS_UPDATED, {
-          rideId: booking.rideId,
-          availableSeats: updatedRideAfterConfirm.availableSeats,
-        });
-
-        // Nếu hết ghế → broadcast thêm event ẩn chuyến để UX rõ ràng hơn
-        if (updatedRideAfterConfirm.availableSeats === 0) {
-          SocketEventService.emitGlobal(SocketEvents.RIDE_FULL, { rideId: booking.rideId });
+        const payload = { bookingId, rideId: booking.rideId, message: 'Tài xế đã xác nhận chuyến đi của bạn.' };
+        SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_CONFIRMED, payload);
+        SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.RIDE_SEATS_UPDATED, { rideId: booking.rideId, availableSeats: updatedRideAfterConfirm?.availableSeats });
+        if (isFull) {
+          SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.RIDE_FULL, { rideId: booking.rideId });
         }
-      } catch (socketErr) {
-        console.warn('[BookingsService] Socket emit after confirm failed:', socketErr);
-      }
-
-      NotificationsService.createNotification(
-        booking.passengerId,
-        'Yêu cầu đặt chỗ được xác nhận',
-        `Tài xế đã xác nhận ${booking.seats} ghế — ${booking.ride.origin} → ${booking.ride.destination}`,
-        'BOOKING_STATUS'
-      ).catch((err) => console.error('[Notification Error]:', err));
+      } catch (e) {}
 
       return updatedBooking;
     }
 
     if (status === BookingStatus.REJECTED) {
-      if (booking.status !== BookingStatus.PENDING) {
-        throw new AppError('Chỉ có thể từ chối yêu cầu đang chờ (PENDING)', 400);
-      }
-
-      const updatedBooking = await prisma.booking.update({
-        where: { id: bookingId },
-        data: { status: BookingStatus.REJECTED },
+      const updatedBookings = await prisma.booking.updateMany({
+        where: { id: bookingId, status: BookingStatus.PENDING },
+        data: { status: BookingStatus.REJECTED }
       });
-
-      // Emit socket realtime để hành khách cập nhật ngay mà không cần refresh
-      try {
-        SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_REJECTED, {
-          bookingId,
-          reason: 'Tài xế đã từ chối yêu cầu của bạn',
-        });
-      } catch (socketErr) {
-        console.warn('[BookingsService] Socket emit booking:rejected failed:', socketErr);
+      if (updatedBookings.count === 0) {
+        throw new AppError('BOOKING_NOT_PENDING', 409);
       }
 
-      NotificationsService.createNotification(
-        booking.passengerId,
-        'Yêu cầu đặt chỗ bị từ chối',
-        `Rất tiếc, tài xế đã từ chối yêu cầu — ${booking.ride.origin} → ${booking.ride.destination}`,
-        'BOOKING_STATUS'
-      ).catch((err) => console.error('[Notification Error]:', err));
-
-      return updatedBooking;
+      try {
+        SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_REJECTED, { bookingId, reason: 'Tài xế đã từ chối yêu cầu của bạn' });
+      } catch(e) {}
+      
+      return await prisma.booking.findUnique({ where: { id: bookingId } });
     }
 
     throw new AppError('Trạng thái không hợp lệ cho hành động này', 400);
@@ -701,55 +662,71 @@ export class BookingsService {
 
     if (!booking) throw new AppError('Không tìm thấy yêu cầu đặt chỗ', 404);
 
-    // Chỉ hành khách mới được hủy booking của mình
     if (booking.passengerId !== userId) {
-      throw new AppError('Bạn không có quyền hủy yêu cầu này', 403);
-    }
-
-    if (
-      booking.status === BookingStatus.CANCELLED ||
-      booking.status === BookingStatus.REJECTED
-    ) {
-      throw new AppError('Yêu cầu đã được hủy hoặc từ chối trước đó', 400);
+      throw new AppError('FORBIDDEN_BOOKING_ACCESS', 403);
     }
 
     if (!cancelReason) {
       throw new AppError('Vui lòng cung cấp lý do hủy vé', 400);
     }
 
-    // Nếu đã CONFIRMED → phải hoàn lại ghế cho chuyến đi (atomic)
-    if (booking.status === BookingStatus.CONFIRMED) {
-      const [cancelledBooking, restoredRide] = await prisma.$transaction(async (tx) => {
-        const rideAfterRestore = await tx.ride.update({
-          where: { id: booking.rideId },
-          data: { availableSeats: { increment: booking.seats } },
-          select: { id: true, availableSeats: true },
-        });
-        const cancelled = await tx.booking.update({
-          where: { id: bookingId },
-          data: { status: BookingStatus.CANCELLED, cancelReason },
-        });
-        return [cancelled, rideAfterRestore];
-      });
+    let isFullToScheduled = false;
+    let availableSeatsAfter = booking.ride.availableSeats;
+    let updatedBookingRes;
 
-      // Broadcast ghế được hoàn lại → các client có thể thấy chuyến này lại
-      try {
-        SocketEventService.emitGlobal(SocketEvents.RIDE_SEATS_UPDATED, {
-          rideId: booking.rideId,
-          availableSeats: restoredRide.availableSeats,
-        });
-      } catch (socketErr) {
-        console.warn('[BookingsService] Socket emit ride:seats_updated (cancel) failed:', socketErr);
+    if (booking.status === BookingStatus.PENDING) {
+      const updated = await prisma.booking.updateMany({
+        where: { id: bookingId, passengerId: userId, status: BookingStatus.PENDING },
+        data: { status: BookingStatus.CANCELLED, cancelReason }
+      });
+      if (updated.count === 0) throw new AppError('BOOKING_NOT_CANCELLABLE', 409);
+      updatedBookingRes = await prisma.booking.findUnique({ where: { id: bookingId }});
+    } else if (booking.status === BookingStatus.CONFIRMED) {
+      if (!['SCHEDULED', 'FULL'].includes(booking.ride.status)) {
+        throw new AppError('BOOKING_NOT_CANCELLABLE', 409);
       }
 
-      return cancelledBooking;
-    }
+      updatedBookingRes = await prisma.$transaction(async (tx) => {
+        const updated = await tx.booking.updateMany({
+          where: { id: bookingId, passengerId: userId, status: BookingStatus.CONFIRMED },
+          data: { status: BookingStatus.CANCELLED, cancelReason }
+        });
+        if (updated.count === 0) throw new AppError('BOOKING_NOT_CANCELLABLE', 409);
 
-    // Nếu còn PENDING → chỉ cần cập nhật status (ghế chưa bị trừ, không cần hoàn)
-    return prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: BookingStatus.CANCELLED, cancelReason },
-    });
+        const updatedRide = await tx.ride.updateMany({
+          where: { id: booking.rideId, status: { in: ['SCHEDULED', 'FULL'] } },
+          data: { availableSeats: { increment: booking.seats } }
+        });
+        if (updatedRide.count === 0) throw new AppError('BOOKING_NOT_CANCELLABLE', 409);
+
+        const currentRide = await tx.ride.findUnique({ where: { id: booking.rideId } });
+        if (currentRide) availableSeatsAfter = currentRide.availableSeats;
+        if (booking.ride.status === 'FULL' && currentRide && currentRide.availableSeats > 0) {
+           await tx.ride.update({ where: { id: currentRide.id }, data: { status: 'SCHEDULED' } });
+           isFullToScheduled = true;
+        }
+
+        return tx.booking.findUnique({ where: { id: bookingId }});
+      });
+
+      try {
+        SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.RIDE_SEATS_UPDATED, {
+          rideId: booking.rideId,
+          availableSeats: availableSeatsAfter
+        });
+        if (isFullToScheduled) {
+          SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.RIDE_STATUS_UPDATED, {
+             rideId: booking.rideId,
+             status: 'SCHEDULED',
+             updatedAt: new Date().toISOString()
+          });
+        }
+      } catch (err) {}
+    } else {
+      throw new AppError('BOOKING_NOT_CANCELLABLE', 409);
+    }
+    
+    return updatedBookingRes;
   }
 
   static async getBookingById(userId: string, bookingId: string) {
