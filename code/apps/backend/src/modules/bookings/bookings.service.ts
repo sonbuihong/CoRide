@@ -507,7 +507,7 @@ export class BookingsService {
 
     if (status === BookingStatus.CONFIRMED) {
       let isFull = false;
-      const [updatedBooking, updatedRideAfterConfirm] = await prisma.$transaction(async (tx) => {
+      const [updatedBooking, finalRide, becameFull] = await prisma.$transaction(async (tx) => {
         const updatedBookings = await tx.booking.updateMany({
           where: { id: bookingId, status: BookingStatus.PENDING },
           data: { status: BookingStatus.CONFIRMED }
@@ -532,26 +532,28 @@ export class BookingsService {
           throw new AppError('RIDE_NO_AVAILABLE_SEATS', 409);
         }
 
-        const currentRide = await tx.ride.findUnique({ where: { id: booking.rideId } });
-        if (currentRide && currentRide.availableSeats === 0) {
-          await tx.ride.update({ where: { id: currentRide.id }, data: { status: 'FULL' } });
-          isFull = true;
+        let becameFull = false;
+        const rideAfterDecrement = await tx.ride.findUnique({ where: { id: booking.rideId } });
+        let finalRide = rideAfterDecrement;
+        if (rideAfterDecrement && rideAfterDecrement.availableSeats === 0) {
+          finalRide = await tx.ride.update({ where: { id: rideAfterDecrement.id }, data: { status: 'FULL' } });
+          becameFull = true;
         }
 
         const b = await tx.booking.findUnique({ where: { id: bookingId } });
-        return [b, currentRide];
+        return [b, finalRide, becameFull];
       });
 
       try {
         const payload = { bookingId, rideId: booking.rideId, message: 'Tài xế đã xác nhận chuyến đi của bạn.' };
         SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_CONFIRMED, payload);
-        SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.RIDE_SEATS_UPDATED, { rideId: booking.rideId, availableSeats: updatedRideAfterConfirm?.availableSeats });
-        if (isFull) {
+        SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.RIDE_SEATS_UPDATED, { rideId: booking.rideId, availableSeats: finalRide?.availableSeats });
+        if (becameFull) {
           SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.RIDE_FULL, { rideId: booking.rideId });
         }
       } catch (e) {}
 
-      return updatedBooking;
+      return { booking: updatedBooking, ride: finalRide, becameFull };
     }
 
     if (status === BookingStatus.REJECTED) {
