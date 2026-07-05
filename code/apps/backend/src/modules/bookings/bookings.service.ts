@@ -523,7 +523,10 @@ export class BookingsService {
 
         if (updatedRides.count === 0) {
           const currentRide = await tx.ride.findUnique({ where: { id: booking.rideId } });
-          if (currentRide && currentRide.status !== 'SCHEDULED') {
+          if (!currentRide) {
+            throw new AppError('RIDE_NOT_FOUND', 404);
+          }
+          if (currentRide.status !== 'SCHEDULED') {
             throw new AppError('RIDE_NOT_SCHEDULED', 409);
           }
           throw new AppError('RIDE_NO_AVAILABLE_SEATS', 409);
