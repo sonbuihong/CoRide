@@ -12,7 +12,7 @@ export const requireApprovedDriver = async (req: Request, res: Response, next: N
     });
 
     if (!user || !user.isDriverVerified) {
-      return res.status(403).json({ success: false, error: 'DRIVER_NOT_APPROVED' });
+      return res.status(403).json({ success: false, errorCode: 'DRIVER_NOT_APPROVED', error: 'DRIVER_NOT_APPROVED' });
     }
 
     const { vehicleId } = req.body;
@@ -24,7 +24,7 @@ export const requireApprovedDriver = async (req: Request, res: Response, next: N
         return res.status(404).json({ success: false, error: 'Không tìm thấy phương tiện' });
       }
       if (vehicle.userId !== userId) {
-        return res.status(403).json({ success: false, error: 'VEHICLE_NOT_OWNED' });
+        return res.status(403).json({ success: false, errorCode: 'VEHICLE_NOT_OWNED', error: 'VEHICLE_NOT_OWNED' });
       }
       if (vehicle.status !== 'ACTIVE') {
         return res.status(400).json({ success: false, error: 'Phương tiện không hợp lệ để tạo chuyến' });
