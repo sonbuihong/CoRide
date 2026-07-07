@@ -1,5 +1,6 @@
 import axios from 'axios';
 import goongConfig from '../../config/goong.config';
+import { AppError } from '../../shared/errors/AppError';
 
 // Interface theo Goong Autocomplete V1 response
 // Khi truyền more_compound=true → trả thêm compound (quận/xã/tỉnh)
@@ -149,7 +150,7 @@ class GoongService {
       return response.data.predictions || [];
     } catch (error) {
       console.error('Goong Autocomplete error:', error);
-      throw new Error('Không thể tìm kiếm địa điểm');
+      throw new AppError('Không thể tìm kiếm địa điểm — lỗi kết nối tới dịch vụ bản đồ', 502);
     }
   }
 
@@ -176,7 +177,7 @@ class GoongService {
       return null;
     } catch (error) {
       console.error('Goong Geocode error:', error);
-      throw new Error('Không thể tìm thấy tọa độ cho địa chỉ này');
+      throw new AppError('Không thể tìm thấy tọa độ cho địa chỉ này — lỗi kết nối tới dịch vụ bản đồ', 502);
     }
   }
 
@@ -215,7 +216,7 @@ class GoongService {
       return null;
     } catch (error) {
       console.error('Goong Reverse Geocode error:', error);
-      throw new Error('Không thể tìm thấy địa chỉ cho tọa độ này');
+      throw new AppError('Không thể tìm thấy địa chỉ cho tọa độ này — lỗi kết nối tới dịch vụ bản đồ', 502);
     }
   }
 
@@ -260,7 +261,7 @@ class GoongService {
       return null;
     } catch (error) {
       console.error('Goong Directions V2 error:', error);
-      throw new Error('Không thể tính toán lộ trình');
+      throw new AppError('Không thể tính toán lộ trình — lỗi kết nối tới dịch vụ bản đồ', 502);
     }
   }
 
@@ -290,7 +291,7 @@ class GoongService {
       return null;
     } catch (error) {
       console.error('Goong Geocode V2 error:', error);
-      throw new Error('Không thể tìm thấy địa chỉ mới cho địa chỉ này');
+      throw new AppError('Không thể tìm thấy địa chỉ mới cho địa chỉ này — lỗi kết nối tới dịch vụ bản đồ', 502);
     }
   }
 
@@ -325,7 +326,7 @@ class GoongService {
       return null;
     } catch (error) {
       console.error('Goong Distance Matrix error:', error);
-      throw new Error('Không thể tính toán khoảng cách lộ trình');
+      throw new AppError('Không thể tính toán khoảng cách lộ trình — lỗi kết nối tới dịch vụ bản đồ', 502);
     }
   }
 
@@ -349,7 +350,7 @@ class GoongService {
       return response.data.result;
     } catch (error) {
       console.error('Goong Place Detail error:', error);
-      throw new Error('Không thể lấy thông tin chi tiết địa điểm');
+      throw new AppError('Không thể lấy thông tin chi tiết địa điểm — lỗi kết nối tới dịch vụ bản đồ', 502);
     }
   }
 }

@@ -10,20 +10,35 @@ export class NotificationsService {
     content: string,
     type: string
   ) {
-    // [STRANGLER FIG] Thay vì ghi trực tiếp vào DB, chúng ta đẩy event lên RabbitMQ
-    // Microservice Notification sẽ consume event này và tự xử lý lưu DB + push Socket
-    await publishEvent('notification_events', {
-      userId,
-      title,
-      content,
-      type,
-    });
-    
-    // (Legacy fallback) Để tạm thời không crash SSE nếu còn client cũ đang lắng nghe
-    // Tuy nhiên, Socket.io sẽ do Notification Service đảm nhiệm
     const fakeNotification = { id: 'pending', userId, title, content, type, createdAt: new Date() };
+
+    try {
+      // [STRANGLER FIG] Đẩy event lên RabbitMQ
+      // Microservice Notification sẽ consume event này và tự xử lý lưu DB + push Socket
+      await publishEvent('notification_events', {
+        userId,
+        title,
+        content,
+        type,
+      });
+    } catch (error) {
+      // RabbitMQ không khả dụng — ghi trực tiếp vào DB để không mất notification
+      console.warn('[NotificationsService] RabbitMQ unavailable, falling back to direct DB write:', (error as Error).message);
+      try {
+        const saved = await prisma.notification.create({
+          data: { userId, title, content, type },
+        });
+        notificationEmitter.emit('notification', { userId, notification: saved });
+        return saved;
+      } catch (dbError) {
+        console.error('[NotificationsService] Fallback DB write also failed:', dbError);
+        throw new AppError('Không thể gửi thông báo', 500);
+      }
+    }
+
+    // (Legacy fallback) Emit SSE cho client cũ đang lắng nghe
     notificationEmitter.emit('notification', { userId, notification: fakeNotification });
-    
+
     return fakeNotification;
   }
 

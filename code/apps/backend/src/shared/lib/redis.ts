@@ -11,6 +11,12 @@ import { createClient } from 'redis';
  * - connectRedis() gọi 1 lần trong server.ts khi khởi động
  * - redisClient export để các module khác sử dụng trực tiếp
  * - Helper functions (updateDriverLocation, findNearbyDrivers...) bọc logic Geo
+ *
+ * Error handling:
+ * - Read operations (isDriverOnline, isDriverBusy, getDriverLocation) trả safe defaults
+ *   khi Redis down — cho phép hệ thống tiếp tục ở chế độ degraded.
+ * - Write operations (updateDriverLocation) và critical queries (findNearbyDrivers)
+ *   log cảnh báo rõ ràng khi Redis down vì dữ liệu sẽ bị mất/thiếu.
  */
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -75,7 +81,10 @@ export const updateDriverLocation = async (
   latitude: number,
   longitude: number
 ): Promise<void> => {
-  if (!redisClient.isOpen) return;
+  if (!redisClient.isOpen) {
+    console.warn(`[Redis] Cannot update driver location for ${driverId} — Redis disconnected`);
+    return;
+  }
 
   await redisClient.geoAdd(REDIS_KEYS.DRIVER_LOCATIONS, {
     member: driverId,
@@ -107,7 +116,10 @@ export const findNearbyDrivers = async (
   longitude: number,
   radiusKm: number = 5
 ): Promise<Array<{ driverId: string; distance: number }>> => {
-  if (!redisClient.isOpen) return [];
+  if (!redisClient.isOpen) {
+    console.error('[Redis] Cannot find nearby drivers — Redis disconnected. Matching will fail.');
+    return [];
+  }
 
   const results = await redisClient.geoSearchWith(
     REDIS_KEYS.DRIVER_LOCATIONS,
@@ -131,7 +143,10 @@ export const findNearbyDrivers = async (
  * key tự hết hạn để tránh gửi cuốc cho driver đã disconnect.
  */
 export const setDriverOnline = async (driverId: string): Promise<void> => {
-  if (!redisClient.isOpen) return;
+  if (!redisClient.isOpen) {
+    console.warn(`[Redis] Cannot set driver ${driverId} online — Redis disconnected`);
+    return;
+  }
 
   await redisClient.set(
     `${REDIS_KEYS.DRIVER_ONLINE_PREFIX}${driverId}`,
@@ -164,7 +179,10 @@ export const isDriverOnline = async (driverId: string): Promise<boolean> => {
  * Waterfall sẽ skip driver đang busy.
  */
 export const setDriverBusy = async (driverId: string, tripId: string): Promise<void> => {
-  if (!redisClient.isOpen) return;
+  if (!redisClient.isOpen) {
+    console.warn(`[Redis] Cannot set driver ${driverId} busy for trip ${tripId} — Redis disconnected`);
+    return;
+  }
 
   await redisClient.set(
     `${REDIS_KEYS.DRIVER_BUSY_PREFIX}${driverId}`,
@@ -211,7 +229,10 @@ export const refreshDriverOnline = async (driverId: string): Promise<void> => {
 export const getDriverLocation = async (
   driverId: string
 ): Promise<{ latitude: number; longitude: number } | null> => {
-  if (!redisClient.isOpen) return null;
+  if (!redisClient.isOpen) {
+    console.warn(`[Redis] Cannot get driver location for ${driverId} — Redis disconnected`);
+    return null;
+  }
 
   // GEOPOS trả về mảng [[longitude, latitude]] hoặc [null] nếu key không tồn tại
   const positions = await redisClient.geoPos(REDIS_KEYS.DRIVER_LOCATIONS, driverId);
