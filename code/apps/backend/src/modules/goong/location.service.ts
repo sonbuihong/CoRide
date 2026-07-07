@@ -1,4 +1,5 @@
 import { extendedPrisma as prisma } from '@repo/database';
+import { AppError } from '../../shared/errors/AppError';
 
 // Tái sử dụng shared type thay vì khai báo interface riêng
 import type { GoongPlaceDetailResult } from '@repo/shared';
@@ -29,7 +30,10 @@ export const saveLocation = async (placeDetail: GoongPlaceDetailResult) => {
     return location;
   } catch (error) {
     console.error('[LocationService] Lỗi khi lưu địa điểm:', error);
-    throw error;
+    throw new AppError(
+      `Không thể lưu địa điểm "${placeDetail.name}" vào cơ sở dữ liệu`,
+      500
+    );
   }
 };
 

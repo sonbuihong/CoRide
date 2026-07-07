@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import goongService from './goong.service';
 
 class GoongController {
@@ -6,7 +6,7 @@ class GoongController {
    * GET /api/goong/autocomplete
    * Autocomplete V1 — gợi ý địa điểm với đầy đủ params: query, location, limit, radius, more_compound
    */
-  async autocomplete(req: Request, res: Response) {
+  async autocomplete(req: Request, res: Response, next: NextFunction) {
     try {
       const { query, limit, location, radius, more_compound } = req.query;
 
@@ -29,8 +29,7 @@ class GoongController {
 
       res.json(results);
     } catch (error) {
-      console.error('Autocomplete controller error:', error);
-      res.status(500).json({ message: 'Không thể tìm kiếm địa điểm' });
+      next(error);
     }
   }
 
@@ -38,7 +37,7 @@ class GoongController {
    * GET /api/goong/geocode
    * Geocoding - Chuyển địa chỉ thành tọa độ (V1)
    */
-  async geocode(req: Request, res: Response) {
+  async geocode(req: Request, res: Response, next: NextFunction) {
     try {
       const { address } = req.query;
 
@@ -54,8 +53,7 @@ class GoongController {
 
       res.json(result);
     } catch (error) {
-      console.error('Geocode controller error:', error);
-      res.status(500).json({ message: 'Không thể tìm thấy tọa độ cho địa chỉ này' });
+      next(error);
     }
   }
 
@@ -63,7 +61,7 @@ class GoongController {
    * GET /api/goong/geocode-v2
    * Geocoding V2 - Trả về địa chỉ theo địa giới hành chính mới kèm địa giới cũ để hiển thị so sánh
    */
-  async geocodeV2(req: Request, res: Response) {
+  async geocodeV2(req: Request, res: Response, next: NextFunction) {
     try {
       const { address } = req.query;
 
@@ -79,8 +77,7 @@ class GoongController {
 
       res.json(results);
     } catch (error) {
-      console.error('Geocode V2 controller error:', error);
-      res.status(500).json({ message: 'Không thể lấy thông tin địa chỉ mới' });
+      next(error);
     }
   }
 
@@ -88,7 +85,7 @@ class GoongController {
    * GET /api/goong/reverse-geocode
    * Reverse Geocoding - Chuyển tọa độ thành địa chỉ
    */
-  async reverseGeocode(req: Request, res: Response) {
+  async reverseGeocode(req: Request, res: Response, next: NextFunction) {
     try {
       const { lat, lng } = req.query;
 
@@ -111,8 +108,7 @@ class GoongController {
 
       res.json(result);
     } catch (error) {
-      console.error('Reverse geocode controller error:', error);
-      res.status(500).json({ message: 'Không thể tìm thấy địa chỉ cho tọa độ này' });
+      next(error);
     }
   }
 
@@ -120,7 +116,7 @@ class GoongController {
    * POST /api/goong/directions
    * Directions V2 — Tính toán lộ trình, khoảng cách, thời gian (Goong API V2)
    */
-  async directions(req: Request, res: Response) {
+  async directions(req: Request, res: Response, next: NextFunction) {
     try {
       const { origin, destination, vehicle } = req.body;
 
@@ -137,8 +133,7 @@ class GoongController {
 
       res.json(result);
     } catch (error) {
-      console.error('Directions controller error:', error);
-      res.status(500).json({ message: 'Không thể tính toán lộ trình' });
+      next(error);
     }
   }
 
@@ -146,7 +141,7 @@ class GoongController {
    * GET /api/goong/place-detail
    * Lấy thông tin chi tiết về địa điểm
    */
-  async getPlaceDetail(req: Request, res: Response) {
+  async getPlaceDetail(req: Request, res: Response, next: NextFunction) {
     try {
       const { place_id } = req.query;
 
@@ -162,8 +157,7 @@ class GoongController {
 
       res.json(result);
     } catch (error) {
-      console.error('Place detail controller error:', error);
-      res.status(500).json({ message: 'Không thể lấy thông tin chi tiết địa điểm' });
+      next(error);
     }
   }
 }

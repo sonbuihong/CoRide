@@ -1,6 +1,7 @@
 import axios from 'axios';
 import CryptoJS from 'crypto-js';
 import moment from 'moment';
+import { AppError } from '../../shared/errors/AppError';
 
 export class ZaloPayService {
   private static config = {
@@ -45,15 +46,28 @@ export class ZaloPayService {
     const data = `${order.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`;
     const mac = CryptoJS.HmacSHA256(data, this.config.key1).toString();
 
-    const response = await axios.post(this.config.endpoint, {
-      ...order,
-      mac,
-    });
+    try {
+      const response = await axios.post(this.config.endpoint, {
+        ...order,
+        mac,
+      });
 
-    return {
-      ...response.data,
-      app_trans_id,
-    };
+      return {
+        ...response.data,
+        app_trans_id,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const statusCode = error.response?.status ?? 502;
+        const message = error.response?.data?.return_message ?? error.message;
+        console.error('[ZaloPay] API request failed:', { statusCode, message, bookingId });
+        throw new AppError(
+          `Lỗi kết nối tới cổng thanh toán ZaloPay: ${message}`,
+          statusCode >= 500 ? 502 : 400
+        );
+      }
+      throw error;
+    }
   }
 
   /**
