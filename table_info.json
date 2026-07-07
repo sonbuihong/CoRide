@@ -1,0 +1,474 @@
+[
+  {
+    "line": 53,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 55,
+    "text": "\\begin{tabularx}{\\textwidth}{|l|X|X|}"
+  },
+  {
+    "line": 69,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 70,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 284,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 286,
+    "text": "\\caption{Vai tr\u00f2 v\u00e0 l\u00fd do l\u1ef1a ch\u1ecdn c\u00e1c c\u00f4ng ngh\u1ec7 ch\u00ednh}"
+  },
+  {
+    "line": 287,
+    "text": "\\label{tab:technology-comparison}"
+  },
+  {
+    "line": 288,
+    "text": "\\begin{tabularx}{\\textwidth}{|p{2.5cm}|p{3cm}|X|X|}"
+  },
+  {
+    "line": 362,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 363,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 381,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 383,
+    "text": "\\caption{B\u1ea3ng y\u00eau c\u1ea7u ch\u1ee9c n\u0103ng theo ph\u01b0\u01a1ng ph\u00e1p MoSCoW}"
+  },
+  {
+    "line": 384,
+    "text": "\\label{tab:moscow_requirements}"
+  },
+  {
+    "line": 385,
+    "text": "\\begin{tabularx}{\\textwidth}{|c|p{4cm}|p{3cm}|X|}"
+  },
+  {
+    "line": 406,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 407,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 467,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 469,
+    "text": "\\caption{Danh s\u00e1ch Use Case c\u1ee7a h\u1ec7 th\u1ed1ng}"
+  },
+  {
+    "line": 470,
+    "text": "\\label{tab:use_case_list}"
+  },
+  {
+    "line": 471,
+    "text": "\\begin{tabularx}{\\textwidth}{|c|X|l|}"
+  },
+  {
+    "line": 492,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 493,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 498,
+    "text": "\\caption{S\u01a1 \u0111\u1ed3 Use Case t\u1ed5ng qu\u00e1t}"
+  },
+  {
+    "line": 499,
+    "text": "\\label{fig:usecase_diagram_source}"
+  },
+  {
+    "line": 820,
+    "text": "\\caption{S\u01a1 \u0111\u1ed3 lu\u1ed3ng quy tr\u00ecnh \u0111\u1eb7t ch\u1ed7}"
+  },
+  {
+    "line": 829,
+    "text": "\\caption{S\u01a1 \u0111\u1ed3 tu\u1ea7n t\u1ef1 ch\u1ea5p nh\u1eadn \u0111\u1eb7t ch\u1ed7}"
+  },
+  {
+    "line": 838,
+    "text": "\\caption{S\u01a1 \u0111\u1ed3 tu\u1ea7n t\u1ef1 ph\u1ee5c h\u1ed3i k\u1ebft n\u1ed1i}"
+  },
+  {
+    "line": 847,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 849,
+    "text": "\\caption{B\u1ea3ng chuy\u1ec3n tr\u1ea1ng th\u00e1i c\u1ee7a Chuy\u1ebfn \u0111i}"
+  },
+  {
+    "line": 850,
+    "text": "\\label{tab:ride_state_transition}"
+  },
+  {
+    "line": 851,
+    "text": "\\begin{tabularx}{\\textwidth}{|l|l|X|}"
+  },
+  {
+    "line": 858,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 859,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 864,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 866,
+    "text": "\\caption{B\u1ea3ng chuy\u1ec3n tr\u1ea1ng th\u00e1i c\u1ee7a \u0110\u1eb7t ch\u1ed7}"
+  },
+  {
+    "line": 867,
+    "text": "\\label{tab:booking_state_transition}"
+  },
+  {
+    "line": 868,
+    "text": "\\begin{tabularx}{\\textwidth}{|l|l|X|}"
+  },
+  {
+    "line": 877,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 878,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 908,
+    "text": "\\caption{S\u01a1 \u0111\u1ed3 ki\u1ebfn tr\u00fac t\u1ed5ng th\u1ec3 h\u1ec7 th\u1ed1ng CoRide}"
+  },
+  {
+    "line": 909,
+    "text": "\\label{fig:deployment_arch}"
+  },
+  {
+    "line": 923,
+    "text": "%     \\caption{S\u01a1 \u0111\u1ed3 thi\u1ebft k\u1ebf c\u00e1c ph\u00e2n h\u1ec7}"
+  },
+  {
+    "line": 924,
+    "text": "%     \\label{fig:module_arch}"
+  },
+  {
+    "line": 929,
+    "text": "\\caption{S\u01a1 \u0111\u1ed3 thi\u1ebft k\u1ebf c\u00e1c ph\u00e2n h\u1ec7}"
+  },
+  {
+    "line": 930,
+    "text": "\\label{fig:module_arch}"
+  },
+  {
+    "line": 957,
+    "text": "\\caption{S\u01a1 \u0111\u1ed3 Th\u1ef1c th\u1ec3 - Quan h\u1ec7 (ERD)}"
+  },
+  {
+    "line": 958,
+    "text": "\\label{fig:erd_diagram}"
+  },
+  {
+    "line": 963,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 965,
+    "text": "\\caption{Thi\u1ebft k\u1ebf b\u1ea3ng User}"
+  },
+  {
+    "line": 966,
+    "text": "\\label{tab:schema_user}"
+  },
+  {
+    "line": 967,
+    "text": "\\begin{tabularx}{\\textwidth}{|p{3cm}|p{2.5cm}|c|c|X|}"
+  },
+  {
+    "line": 977,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 978,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 980,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 982,
+    "text": "\\caption{Thi\u1ebft k\u1ebf b\u1ea3ng DriverVerification}"
+  },
+  {
+    "line": 983,
+    "text": "\\label{tab:schema_verification}"
+  },
+  {
+    "line": 984,
+    "text": "\\begin{tabularx}{\\textwidth}{|p{3cm}|p{2.5cm}|c|c|X|}"
+  },
+  {
+    "line": 992,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 993,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 995,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 997,
+    "text": "\\caption{Thi\u1ebft k\u1ebf b\u1ea3ng Vehicle}"
+  },
+  {
+    "line": 998,
+    "text": "\\label{tab:schema_vehicle}"
+  },
+  {
+    "line": 999,
+    "text": "\\begin{tabularx}{\\textwidth}{|p{3cm}|p{2.5cm}|c|c|X|}"
+  },
+  {
+    "line": 1007,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 1008,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 1010,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 1012,
+    "text": "\\caption{Thi\u1ebft k\u1ebf b\u1ea3ng Ride}"
+  },
+  {
+    "line": 1013,
+    "text": "\\label{tab:schema_ride}"
+  },
+  {
+    "line": 1014,
+    "text": "\\begin{tabularx}{\\textwidth}{|p{3cm}|p{2.5cm}|c|c|X|}"
+  },
+  {
+    "line": 1025,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 1026,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 1028,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 1030,
+    "text": "\\caption{Thi\u1ebft k\u1ebf b\u1ea3ng Booking}"
+  },
+  {
+    "line": 1031,
+    "text": "\\label{tab:schema_booking}"
+  },
+  {
+    "line": 1032,
+    "text": "\\begin{tabularx}{\\textwidth}{|p{3cm}|p{2.5cm}|c|c|X|}"
+  },
+  {
+    "line": 1042,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 1043,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 1045,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 1047,
+    "text": "\\caption{Thi\u1ebft k\u1ebf b\u1ea3ng Wallet}"
+  },
+  {
+    "line": 1048,
+    "text": "\\label{tab:schema_wallet}"
+  },
+  {
+    "line": 1049,
+    "text": "\\begin{tabularx}{\\textwidth}{|p{3cm}|p{2.5cm}|c|c|X|}"
+  },
+  {
+    "line": 1056,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 1057,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 1059,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 1061,
+    "text": "\\caption{Thi\u1ebft k\u1ebf b\u1ea3ng Transaction}"
+  },
+  {
+    "line": 1062,
+    "text": "\\label{tab:schema_transaction}"
+  },
+  {
+    "line": 1063,
+    "text": "\\begin{tabularx}{\\textwidth}{|p{3cm}|p{2.5cm}|c|c|X|}"
+  },
+  {
+    "line": 1072,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 1073,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 1075,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 1077,
+    "text": "\\caption{Thi\u1ebft k\u1ebf b\u1ea3ng Message, Notification v\u00e0 Review}"
+  },
+  {
+    "line": 1078,
+    "text": "\\label{tab:schema_others}"
+  },
+  {
+    "line": 1079,
+    "text": "\\begin{tabularx}{\\textwidth}{|p{2.5cm}|p{2.5cm}|p{3.5cm}|X|}"
+  },
+  {
+    "line": 1086,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 1087,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 1097,
+    "text": "\\caption{S\u01a1 \u0111\u1ed3 chuy\u1ec3n tr\u1ea1ng th\u00e1i Chuy\u1ebfn \u0111i (Ride)}"
+  },
+  {
+    "line": 1098,
+    "text": "\\label{fig:state_ride}"
+  },
+  {
+    "line": 1115,
+    "text": "\\caption{S\u01a1 \u0111\u1ed3 chuy\u1ec3n tr\u1ea1ng th\u00e1i \u0110\u1eb7t ch\u1ed7 (Booking)}"
+  },
+  {
+    "line": 1116,
+    "text": "\\label{fig:state_booking}"
+  },
+  {
+    "line": 1130,
+    "text": "% L\u01b0u \u00fd: KH\u00d4NG d\u00f9ng \\begin{table}[H] b\u1ecdc b\u00ean ngo\u00e0i n\u1eefa"
+  },
+  {
+    "line": 1132,
+    "text": "\\begin{xltabular}{\\textwidth}{|p{2.3cm}|p{1.5cm}|>{\\raggedright\\arraybackslash}p{4cm}|p{1.5cm}|>{\\raggedright\\arraybackslash}X|}"
+  },
+  {
+    "line": 1133,
+    "text": "\\caption{Danh s\u00e1ch thi\u1ebft k\u1ebf REST API ch\u00ednh}"
+  },
+  {
+    "line": 1134,
+    "text": "\\label{tab:rest_api} \\\\"
+  },
+  {
+    "line": 1163,
+    "text": "\\end{xltabular}"
+  },
+  {
+    "line": 1171,
+    "text": "\\caption{S\u01a1 \u0111\u1ed3 tu\u1ea7n t\u1ef1 x\u1eed l\u00fd Transaction khi x\u00e1c nh\u1eadn \u0110\u1eb7t ch\u1ed7}"
+  },
+  {
+    "line": 1172,
+    "text": "\\label{fig:seq_booking_confirm}"
+  },
+  {
+    "line": 1189,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 1191,
+    "text": "\\caption{Thi\u1ebft k\u1ebf c\u00e1c s\u1ef1 ki\u1ec7n Socket.io ch\u00ednh}"
+  },
+  {
+    "line": 1192,
+    "text": "\\label{tab:socket_events}"
+  },
+  {
+    "line": 1193,
+    "text": "\\begin{tabularx}{\\textwidth}{|p{3.5cm}|c|p{2.5cm}|X|}"
+  },
+  {
+    "line": 1201,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 1202,
+    "text": "\\end{table}"
+  },
+  {
+    "line": 1346,
+    "text": "\\begin{table}[H]"
+  },
+  {
+    "line": 1348,
+    "text": "\\caption{M\u1ed9t s\u1ed1 test case ch\u00ednh}"
+  },
+  {
+    "line": 1349,
+    "text": "\\label{tab:test_cases}"
+  },
+  {
+    "line": 1350,
+    "text": "\\begin{tabularx}{\\textwidth}{|l|X|X|X|}"
+  },
+  {
+    "line": 1361,
+    "text": "\\end{tabularx}"
+  },
+  {
+    "line": 1362,
+    "text": "\\end{table}"
+  }
+]

@@ -9,6 +9,8 @@
     "start": "node dist/server.js",
     "migrate": "npx prisma migrate deploy --schema ../packages/database/prisma/schema.prisma",
     "test": "jest",
+    "test:integration": "jest",
+    "test:concurrency": "jest",
     "test:watch": "jest --watch"
   },
   "keywords": [],
