@@ -1,48 +1,25 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { NotificationsService } from './notifications.service';
 import { notificationEmitter } from '../../shared/lib/notification-emitter';
+import { asyncHandler } from '../../shared/utils/asyncHandler';
 
-export const getNotifications = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const notifications = await NotificationsService.getUserNotifications(req.user!.id);
-    res.json({ notifications });
-  } catch (error) {
-    next(error);
-  }
-};
+export const getNotifications = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const notifications = await NotificationsService.getUserNotifications(req.user!.id);
+  res.json({ notifications });
+});
 
-export const markAsRead = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const notification = await NotificationsService.markAsRead(
-      req.user!.id,
-      (req.params.id as string)
-    );
-    res.json({ message: 'Đã đánh dấu là đã đọc', notification });
-  } catch (error) {
-    next(error);
-  }
-};
+export const markAsRead = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const notification = await NotificationsService.markAsRead(
+    req.user!.id,
+    (req.params.id as string)
+  );
+  res.json({ message: 'Đã đánh dấu là đã đọc', notification });
+});
 
-export const markAllAsRead = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    await NotificationsService.markAllAsRead(req.user!.id);
-    res.json({ message: 'Đã đánh dấu tất cả là đã đọc' });
-  } catch (error) {
-    next(error);
-  }
-};
+export const markAllAsRead = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  await NotificationsService.markAllAsRead(req.user!.id);
+  res.json({ message: 'Đã đánh dấu tất cả là đã đọc' });
+});
 
 /**
  * SSE (Server-Sent Events) endpoint — giữ kết nối HTTP mở và push notification real-time.
