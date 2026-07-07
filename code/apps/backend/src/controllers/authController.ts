@@ -10,8 +10,13 @@ const REFRESH_TOKEN_EXPIRES = '30d';
 const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 ngày tính bằng giây
 const BCRYPT_SALT_ROUNDS = 10;
 
-const getSecret = () =>
-  new TextEncoder().encode(process.env.JWT_SECRET || 'super-secret-fallback-key');
+const getSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  return new TextEncoder().encode(secret);
+};
 
 // Helper sinh cặp Token
 const generateTokenPair = async (userId: string) => {

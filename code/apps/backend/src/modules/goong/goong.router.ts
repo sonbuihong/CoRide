@@ -1,7 +1,11 @@
 import { Router } from 'express';
+import { authenticate } from '../../shared/middlewares/auth.middleware';
 import goongController from './goong.controller';
 
 const router = Router();
+
+// All Goong routes require authentication to prevent API key abuse
+router.use(authenticate);
 
 /**
  * @route   GET /api/goong/autocomplete
