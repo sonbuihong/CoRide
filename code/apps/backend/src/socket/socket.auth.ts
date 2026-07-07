@@ -2,7 +2,13 @@ import { Socket } from 'socket.io';
 import * as jose from 'jose';
 import { SOCKET_CONFIG } from '../config/socket';
 
-const getJwtSecret = () => new TextEncoder().encode(process.env.JWT_SECRET ?? 'super-secret-fallback-key');
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  return new TextEncoder().encode(secret);
+};
 
 export const socketAuthMiddleware = async (socket: Socket, next: (err?: Error) => void) => {
   const token = socket.handshake.auth?.token as string | undefined;

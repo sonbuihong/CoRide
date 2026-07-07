@@ -3,10 +3,13 @@ import * as jose from 'jose';
 import { extendedPrisma as prisma } from '@repo/database';
 import { AppError } from '../errors/AppError';
 
-const getSecret = () =>
-  new TextEncoder().encode(
-    process.env.JWT_SECRET ?? 'super-secret-fallback-key'
-  );
+const getSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  return new TextEncoder().encode(secret);
+};
 
 /**
  * Middleware xác thực JWT.

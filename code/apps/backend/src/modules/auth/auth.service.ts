@@ -8,10 +8,13 @@ const ACCESS_TOKEN_EXPIRES = '15m';
 const REFRESH_TOKEN_EXPIRES = '7d';
 const BCRYPT_SALT_ROUNDS = 10;
 
-const getSecret = () =>
-  new TextEncoder().encode(
-    process.env.JWT_SECRET ?? 'super-secret-fallback-key'
-  );
+const getSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  return new TextEncoder().encode(secret);
+};
 
 export class AuthService {
   static async registerUser(data: RegisterInput) {

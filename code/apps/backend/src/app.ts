@@ -70,8 +70,8 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // ─── Body Parsers ─────────────────────────────────────────────────────────────
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
 
 // Tự động tạo và phục vụ thư mục static uploads
@@ -86,7 +86,6 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV ?? 'development',
   });
 });
 

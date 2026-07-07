@@ -9,10 +9,13 @@ declare module 'express-serve-static-core' {
   }
 }
 
-const getSecret = () =>
-  new TextEncoder().encode(
-    process.env.JWT_SECRET || 'super-secret-fallback-key'
-  );
+const getSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  return new TextEncoder().encode(secret);
+};
 
 export const verifyToken = async (
   req: Request,
