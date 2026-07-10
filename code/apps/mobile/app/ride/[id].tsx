@@ -24,7 +24,7 @@ export default function RideDetailScreen() {
     mutationFn: () => bookingService.createBooking(id as string, seats),
     onSuccess: () => {
       Alert.alert('Thành công', 'Yêu cầu đặt chỗ của bạn đã được gửi tới tài xế.', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)/my-rides') }
+        { text: 'OK', onPress: () => router.replace('/(passenger-tabs)/my-rides') }
       ]);
     },
     onError: (error: any) => {

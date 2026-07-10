@@ -9,7 +9,7 @@ import { rideService } from '../../src/services/ride.service';
 import { LocationPicker } from '../../src/components/LocationPicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
-import { vi } from 'vi-VN';
+import { vi } from 'date-fns/locale';
 import { Calendar, Clock, DollarSign, Users, FileText } from 'lucide-react-native';
 
 export default function CreateRideScreen() {
@@ -36,7 +36,7 @@ export default function CreateRideScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rides'] });
       Alert.alert('Thành công', 'Chuyến đi của bạn đã được đăng thành công.', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)/my-rides') }
+        { text: 'OK', onPress: () => router.replace('/(passenger-tabs)/my-rides') }
       ]);
     },
     onError: (error: any) => {
@@ -75,13 +75,13 @@ export default function CreateRideScreen() {
           <LocationPicker
             label="Điểm đi"
             placeholder="Ví dụ: Đại học Bách Khoa Hà Nội"
-            value={value}
+            value={value || ''}
             onChangeText={onChange}
             onSelectCoords={(lat, lng) => {
               setValue('originLat', lat);
               setValue('originLng', lng);
             }}
-            error={errors.origin?.message}
+            error={errors.origin?.message as string | undefined}
           />
         )}
       />
@@ -93,13 +93,13 @@ export default function CreateRideScreen() {
           <LocationPicker
             label="Điểm đến"
             placeholder="Ví dụ: Thành phố Thái Bình"
-            value={value}
+            value={value || ''}
             onChangeText={onChange}
             onSelectCoords={(lat, lng) => {
               setValue('destinationLat', lat);
               setValue('destinationLng', lng);
             }}
-            error={errors.destination?.message}
+            error={errors.destination?.message as string | undefined}
           />
         )}
       />

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import api from '../src/services/api';
+import { rideService } from '../src/services/ride.service';
+import { bookingService } from '../src/services/booking.service';
 import { XCircle, X } from 'lucide-react-native';
 
 export default function CancelModalScreen() {
@@ -32,9 +33,9 @@ export default function CancelModalScreen() {
     setLoading(true);
     try {
       if (type === 'ride') {
-        await api.post(`/rides/${id}/status`, { status: 'CANCELLED', cancelReason: reason });
+        await rideService.updateRideStatus(id, 'CANCELLED');
       } else {
-        await api.post(`/bookings/${id}/cancel`, { cancelReason: reason });
+        await bookingService.cancelBooking(id);
       }
       
       Alert.alert('Thành công', 'Đã hủy thành công', [

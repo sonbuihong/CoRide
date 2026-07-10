@@ -713,6 +713,10 @@ export class BookingsService {
       throw new AppError('Yêu cầu đã được hủy hoặc từ chối trước đó', 400);
     }
 
+    if (booking.ride.status === 'ONGOING' || booking.ride.status === 'COMPLETED') {
+      throw new AppError('Không thể hủy chuyến xe đã khởi hành hoặc đã hoàn thành', 400);
+    }
+
     if (!cancelReason) {
       throw new AppError('Vui lòng cung cấp lý do hủy vé', 400);
     }

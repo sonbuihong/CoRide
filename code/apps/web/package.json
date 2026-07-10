@@ -14,7 +14,7 @@
     "@goongmaps/goong-map-react": "^1.1.2",
     "@hookform/resolvers": "^5.2.2",
     "@react-google-maps/api": "2.20.8",
-    "@repo/shared": "*",
+    "@repo/shared": "workspace:*",
     "@tanstack/react-query": "^5.101.0",
     "axios": "^1.14.0",
     "class-variance-authority": "^0.7.1",

@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MapPin, Clock, Users, ChevronRight } from 'lucide-react-native';
+import { Clock, Users, ChevronRight, ShieldCheck, User } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Ride } from '../services/ride.service';
+import { AppText } from './ui/AppText';
 
 interface RideCardProps {
   ride: Ride;
@@ -20,49 +21,80 @@ export const RideCard: React.FC<RideCardProps> = ({ ride }) => {
   return (
     <TouchableOpacity 
       onPress={handlePress}
-      className="bg-white p-4 rounded-2xl mb-4 shadow-sm border border-gray-100"
+      className="bg-surface p-5 rounded-3xl mb-4 shadow-sm border border-border"
+      activeOpacity={0.7}
     >
-      <View className="flex-row justify-between items-start mb-4">
-        <View className="flex-1">
-          <View className="flex-row items-center mb-2">
-            <View className="w-2 h-2 rounded-full bg-blue-500 mr-2" />
-            <Text className="text-gray-800 font-bold flex-1" numberOfLines={1}>
-              {ride.departure}
-            </Text>
-          </View>
-          <View className="w-0.5 h-4 bg-gray-200 ml-0.75 mb-2" />
-          <View className="flex-row items-center">
-            <MapPin size={12} color="#EF4444" className="mr-2" />
-            <Text className="text-gray-800 font-bold flex-1" numberOfLines={1}>
-              {ride.destination}
-            </Text>
-          </View>
+      {/* Header row */}
+      <View className="flex-row justify-between items-center mb-5">
+        <View className="flex-row items-center">
+          <Clock size={16} color="#0F172A" className="mr-2" />
+          <AppText variant="h3" weight="bold" className="text-text-primary">
+            {format(new Date(ride.departureTime), 'HH:mm')}
+          </AppText>
+          <AppText variant="bodySmall" className="text-text-secondary ml-2">
+            {format(new Date(ride.departureTime), 'dd/MM', { locale: vi })}
+          </AppText>
         </View>
-        <Text className="text-blue-600 font-bold text-lg">
+        <AppText variant="h3" weight="bold" className="text-primary">
           {ride.price.toLocaleString('vi-VN')}đ
-        </Text>
+        </AppText>
       </View>
 
-      <View className="flex-row justify-between items-center pt-4 border-t border-gray-50">
-        <View className="flex-row items-center space-x-4">
-          <View className="flex-row items-center">
-            <Clock size={14} color="#6B7280" />
-            <Text className="ml-1 text-gray-500 text-xs mr-3">
-              {format(new Date(ride.departureTime), 'HH:mm, dd MMM', { locale: vi })}
-            </Text>
-          </View>
-          <View className="flex-row items-center">
-            <Users size={14} color="#6B7280" />
-            <Text className="ml-1 text-gray-500 text-xs">
-              Còn {ride.availableSeats} chỗ
-            </Text>
+      {/* Route Timeline */}
+      <View className="flex-row mb-5">
+        <View className="items-center mr-3 mt-1">
+          <View className="w-3 h-3 rounded-full border-2 border-primary bg-surface z-10" />
+          <View className="w-0.5 h-8 bg-border -my-1" />
+          <View className="w-3 h-3 rounded-full border-2 border-status-danger bg-surface z-10" />
+        </View>
+        <View className="flex-1">
+          <AppText variant="body" weight="medium" className="text-text-primary mb-5" numberOfLines={1}>
+            {ride.departure}
+          </AppText>
+          <AppText variant="body" weight="medium" className="text-text-primary" numberOfLines={1}>
+            {ride.destination}
+          </AppText>
+        </View>
+      </View>
+
+      {/* Metadata */}
+      <View className="flex-row items-center mb-4">
+        <View className="flex-row items-center bg-gray-50 px-2 py-1 rounded-md">
+          <Users size={14} color="#64748B" />
+          <AppText variant="caption" className="text-text-secondary ml-1 font-medium">
+            Còn {ride.availableSeats} chỗ
+          </AppText>
+        </View>
+      </View>
+
+      <View className="h-[1px] bg-border mb-4" />
+
+      {/* Driver row */}
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center flex-1">
+          {ride.driver?.avatar ? (
+            <Image 
+              source={{ uri: ride.driver.avatar }} 
+              className="w-10 h-10 rounded-full mr-3 bg-gray-100" 
+            />
+          ) : (
+            <View className="w-10 h-10 rounded-full mr-3 bg-primary-soft items-center justify-center">
+              <User size={20} color="#3B82F6" />
+            </View>
+          )}
+          <View>
+            <AppText variant="body" weight="medium" className="text-text-primary">
+              {ride.driver?.firstName} {ride.driver?.lastName}
+            </AppText>
+            <View className="flex-row items-center">
+              <AppText variant="caption" className="text-status-warning font-medium mr-2">
+                ★ {ride.driver?.rating?.toFixed(1) || '5.0'}
+              </AppText>
+              <ShieldCheck size={12} color="#10B981" />
+            </View>
           </View>
         </View>
-        
-        <View className="flex-row items-center">
-          <Text className="text-blue-600 text-xs font-bold mr-1">Chi tiết</Text>
-          <ChevronRight size={14} color="#3B82F6" />
-        </View>
+        <ChevronRight size={20} color="#94A3B8" />
       </View>
     </TouchableOpacity>
   );

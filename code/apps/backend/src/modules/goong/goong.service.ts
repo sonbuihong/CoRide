@@ -258,9 +258,9 @@ class GoongService {
         return response.data;
       }
       return null;
-    } catch (error) {
-      console.error('Goong Directions V2 error:', error);
-      throw new Error('Không thể tính toán lộ trình');
+    } catch (error: any) {
+      console.error('Goong Directions V2 error:', error?.response?.data || error.message);
+      throw new Error(`Goong API Error: ${error?.response?.data?.error?.message || error.message}`);
     }
   }
 

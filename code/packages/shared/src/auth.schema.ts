@@ -31,5 +31,19 @@ export const loginSchema = z.object({
   }).min(1, "Mật khẩu không được để trống"),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string({
+    required_error: "Email là bắt buộc",
+  }).trim().toLowerCase().email("Email không hợp lệ"),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string(),
+  otp: z.string().min(1, "Vui lòng nhập mã xác nhận"),
+  newPassword: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

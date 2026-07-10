@@ -136,9 +136,9 @@ class GoongController {
       }
 
       res.json(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Directions controller error:', error);
-      res.status(500).json({ message: 'Không thể tính toán lộ trình' });
+      res.status(500).json({ message: 'Không thể tính toán lộ trình', error: error.message, stack: error.stack });
     }
   }
 

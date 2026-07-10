@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import api from '../src/services/api';
+import { apiClient as api } from '../src/api/client';
 import { ShieldAlert, X } from 'lucide-react-native';
 
 export default function ReportModalScreen() {

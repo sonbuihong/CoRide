@@ -4,13 +4,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import * as Location from 'expo-location';
-import {
-  connectSocket,
-  joinRideRoom,
-  leaveRideRoom,
-  emitDriverLocation,
-  getSocket,
-} from '../services/socket.service';
+import { socketService } from '../services/socket.service';
 
 interface DriverLocationState {
   latitude: number;
@@ -41,12 +35,10 @@ export const useDriverTracking = (rideId: string | null) => {
     setPermissionGranted(true);
 
     // Kết nối socket và join ride room
-    const connectedSocket = await connectSocket();
-    if (!connectedSocket) {
-      console.error('[DriverTracking] Socket connection failed — vị trí sẽ không được gửi cho passengers');
-      return;
-    }
-    joinRideRoom(rideId);
+    await socketService.connect();
+    // Assuming socketService.socket is not exposed, if we connected without throwing, it's fine
+    
+    socketService.emit('join:ride_room', { rideId });
 
     // Bắt đầu watch vị trí GPS
     // distanceInterval: cập nhật mỗi 10m di chuyển
@@ -67,7 +59,7 @@ export const useDriverTracking = (rideId: string | null) => {
 
         setCurrentLocation(locationData);
         // Gửi vị trí tới passengers qua socket
-        emitDriverLocation(rideId, latitude, longitude);
+        socketService.emit('driver:location_update', { rideId, location: { latitude, longitude } });
       }
     );
   }, [rideId]);
@@ -78,7 +70,7 @@ export const useDriverTracking = (rideId: string | null) => {
       watchSubscription.current = null;
     }
     if (rideId) {
-      leaveRideRoom(rideId);
+      socketService.emit('leave:ride_room', { rideId });
     }
   }, [rideId]);
 
@@ -103,13 +95,10 @@ export const usePassengerTrackDriver = (rideId: string | null) => {
     let mounted = true;
 
     const setupListener = async () => {
-      await connectSocket();
-      joinRideRoom(rideId);
+      await socketService.connect();
+      socketService.emit('join:ride_room', { rideId });
 
-      const socket = getSocket();
-      if (!socket) return;
-
-      socket.on('driver:location', (data: DriverLocationState) => {
+      socketService.on('driver:location', (data: DriverLocationState) => {
         if (mounted) {
           setDriverLocation(data);
         }
@@ -120,11 +109,8 @@ export const usePassengerTrackDriver = (rideId: string | null) => {
 
     return () => {
       mounted = false;
-      leaveRideRoom(rideId);
-      const socket = getSocket();
-      if (socket) {
-        socket.off('driver:location');
-      }
+      socketService.emit('leave:ride_room', { rideId });
+      socketService.off('driver:location');
     };
   }, [rideId]);
 

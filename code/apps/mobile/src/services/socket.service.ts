@@ -1,103 +1,97 @@
-// Singleton Socket.IO client cho mobile app
-// Quản lý kết nối WebSocket đến backend cho realtime features
-
 import { io, Socket } from 'socket.io-client';
-import { authStorage } from './auth-storage';
+import * as SecureStoreService from './secure-store';
+import { Platform } from 'react-native';
 
-// Socket.IO server URL — cắt '/api' suffix để lấy base host
-// Dùng regex anchor $ để chỉ cắt /api ở cuối, tránh cắt nhầm /api trong domain
-const SOCKET_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:5001/api')
-  .replace(/\/api\/?$/, '');
+let SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://10.0.2.2:5001';
 
-let socket: Socket | null = null;
+if (Platform.OS !== 'android') {
+  SOCKET_URL = SOCKET_URL.replace('10.0.2.2', 'localhost');
+}
 
-/**
- * Kết nối Socket.IO với JWT authentication.
- * Chỉ tạo 1 connection duy nhất (singleton pattern).
- * Nếu đã connected → trả về socket hiện tại.
- */
-export const connectSocket = async (): Promise<Socket | null> => {
-  // Không tạo lại nếu đã connected
-  if (socket?.connected) return socket;
+class SocketService {
+  private socket: Socket | null = null;
+  private isConnecting: boolean = false;
+  private pendingListeners: { event: string; listener: (...args: any[]) => void }[] = [];
 
-  const token = await authStorage.getToken();
-  if (!token) {
-    console.warn('[Socket] Không có token, bỏ qua kết nối');
-    return null;
+  public async connect(): Promise<void> {
+    if (this.socket?.connected || this.isConnecting) return;
+
+    this.isConnecting = true;
+    const token = await SecureStoreService.getAccessToken();
+
+    if (!token) {
+      console.warn('SocketService: Không có token để kết nối.');
+      this.isConnecting = false;
+      return;
+    }
+
+    this.socket = io(SOCKET_URL, {
+      auth: { token },
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+    });
+
+    // Đăng ký các listener đã được queue trong khi socket chưa kết nối
+    this.pendingListeners.forEach(({ event, listener }) => {
+      this.socket?.on(event, listener);
+    });
+    this.pendingListeners = [];
+
+
+    this.socket.on('connect', () => {
+      console.log('SocketService: Đã kết nối, socket ID:', this.socket?.id);
+      this.isConnecting = false;
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log('SocketService: Đã ngắt kết nối, lý do:', reason);
+      this.isConnecting = false;
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('SocketService: Lỗi kết nối:', error.message);
+      this.isConnecting = false;
+    });
   }
 
-  socket = io(SOCKET_URL, {
-    auth: { token },
-    transports: ['websocket', 'polling'],
-    // Tự reconnect khi mất kết nối
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 3000,
-  });
-
-  socket.on('connect', () => {
-    console.log('[Socket] Connected:', socket?.id);
-  });
-
-  socket.on('connect_error', (error) => {
-    console.error('[Socket] Connection error:', error.message);
-  });
-
-  socket.on('disconnect', (reason) => {
-    console.log('[Socket] Disconnected:', reason);
-  });
-
-  return socket;
-};
-
-/**
- * Ngắt kết nối Socket.IO và cleanup
- */
-export const disconnectSocket = () => {
-  if (socket) {
-    socket.disconnect();
-    socket = null;
+  public disconnect(): void {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+      console.log('SocketService: Đã chủ động ngắt kết nối.');
+    }
   }
-};
 
-/**
- * Reconnect Socket.IO với token mới.
- * Gọi sau khi JWT token được refresh để socket dùng token hợp lệ.
- */
-export const reconnectSocket = async (): Promise<Socket | null> => {
-  disconnectSocket();
-  return connectSocket();
-};
-
-/**
- * Lấy socket instance hiện tại.
- * Trả null nếu chưa kết nối.
- */
-export const getSocket = (): Socket | null => socket;
-
-/**
- * Join vào ride room để nhận/gửi vị trí realtime
- */
-export const joinRideRoom = (rideId: string) => {
-  if (socket?.connected) {
-    socket.emit('ride:join', rideId);
+  public on(event: string, listener: (...args: any[]) => void): void {
+    if (!this.socket) {
+      // Thay vì warn, chúng ta lưu vào queue để đăng ký sau khi kết nối
+      this.pendingListeners.push({ event, listener });
+      return;
+    }
+    this.socket.on(event, listener);
   }
-};
 
-/**
- * Leave ride room khi rời màn hình
- */
-export const leaveRideRoom = (rideId: string) => {
-  if (socket?.connected) {
-    socket.emit('ride:leave', rideId);
+  public off(event: string, listener?: (...args: any[]) => void): void {
+    if (!this.socket) {
+      // Xóa khỏi queue nếu chưa kết nối
+      this.pendingListeners = this.pendingListeners.filter(
+        (l) => l.event !== event || (listener && l.listener !== listener)
+      );
+      return;
+    }
+    this.socket.off(event, listener);
   }
-};
 
-/**
- * Driver gửi vị trí GPS đến passengers trong cùng ride room
- */
-export const emitDriverLocation = (rideId: string, latitude: number, longitude: number) => {
-  if (socket?.connected) {
-    socket.emit('driver:location', { rideId, latitude, longitude });
+  public emit(event: string, ...args: any[]): void {
+    if (!this.socket?.connected) {
+      console.warn(`SocketService: Không thể emit sự kiện '${event}' vì socket chưa kết nối.`);
+      return;
+    }
+    this.socket.emit(event, ...args);
   }
-};
+}
+
+// Export dạng Singleton
+export const socketService = new SocketService();

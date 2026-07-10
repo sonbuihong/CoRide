@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import api from '../../src/services/api';
+import { apiClient as api } from '../../src/api/client';
 import { Plus, Trash2, Car, Bike, X } from 'lucide-react-native';
 
 interface Vehicle {

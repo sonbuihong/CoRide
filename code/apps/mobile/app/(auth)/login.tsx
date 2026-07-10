@@ -1,103 +1,139 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, LoginInput } from '@repo/shared';
 import { useRouter } from 'expo-router';
-import { authService } from '../../src/services/auth.service';
+import { useAuth } from '../../src/hooks/useAuth';
+import { AppInput } from '../../src/components/ui/AppInput';
+import { AppButton } from '../../src/components/ui/AppButton';
+import { AppText } from '../../src/components/ui/AppText';
+import { Mail, Lock, Eye, EyeOff, CarFront } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
   });
 
   const onSubmit = async (data: LoginInput) => {
     try {
-      await authService.login(data);
-      router.replace('/(tabs)');
+      setErrorMsg(null);
+      await login(data);
     } catch (error: any) {
-      console.error('Login error:', error);
-      Alert.alert('Lỗi đăng nhập', error.response?.data?.message || 'Email hoặc mật khẩu không chính xác');
+      setErrorMsg(error.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
     }
   };
 
   return (
-    <ScrollView className="flex-1 bg-white" contentContainerStyle={{ flexGrow: 1 }}>
-      <View className="px-6 py-12 flex-1 justify-center">
-        <View className="items-center mb-12">
-          <Text className="text-4xl font-bold text-blue-600">CoRide</Text>
-          <Text className="text-gray-500 mt-2">Đăng nhập để tiếp tục hành trình</Text>
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1 }} 
+        className="bg-surface px-6 pt-16 pb-10" 
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="items-center mb-8">
+          <AppText variant="h2" weight="bold" className="text-primary tracking-tight">CoRide</AppText>
         </View>
 
-        <View className="space-y-4">
-          <View>
-            <Text className="text-gray-700 font-medium mb-2">Email</Text>
-            <Controller
-              control={control}
-              name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  className={`bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} p-4 rounded-xl text-gray-800`}
-                  placeholder="name@example.com"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              )}
-            />
-            {errors.email && <Text className="text-red-500 text-xs mt-1 ml-1">{errors.email.message}</Text>}
+        <View className="items-center justify-center mb-10">
+          <View className="w-32 h-32 bg-primary-soft rounded-full items-center justify-center mb-4">
+            <CarFront size={64} color="#3B82F6" strokeWidth={1.5} />
           </View>
+        </View>
 
-          <View>
-            <Text className="text-gray-700 font-medium mb-2 mt-4">Mật khẩu</Text>
-            <Controller
-              control={control}
-              name="password"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  className={`bg-gray-50 border ${errors.password ? 'border-red-500' : 'border-gray-200'} p-4 rounded-xl text-gray-800`}
-                  placeholder="••••••••"
-                  secureTextEntry
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
-            {errors.password && <Text className="text-red-500 text-xs mt-1 ml-1">{errors.password.message}</Text>}
+        <View className="mb-8">
+          <AppText variant="h1" weight="bold" className="text-text-primary mb-2">Chào mừng trở lại</AppText>
+          <AppText variant="body" className="text-text-secondary">Đăng nhập để tiếp tục hành trình của bạn cùng CoRide.</AppText>
+        </View>
+
+        {errorMsg && (
+          <View className="bg-status-danger/10 p-4 rounded-xl mb-6 border border-status-danger/20 flex-row items-center">
+            <AppText variant="bodySmall" className="text-status-danger font-medium flex-1">{errorMsg}</AppText>
           </View>
+        )}
 
-          <View className="flex-row justify-end mt-2">
-            <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')}>
-              <Text className="text-blue-600 font-medium text-sm">Quên mật khẩu?</Text>
-            </TouchableOpacity>
-          </View>
+        <View className="mb-2">
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AppInput
+                placeholder="Nhập địa chỉ email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={errors.email?.message}
+                leftIcon={<Mail size={20} color={errors.email ? '#EF4444' : '#94A3B8'} />}
+              />
+            )}
+          />
+        </View>
 
-          <TouchableOpacity 
-            className="bg-blue-600 p-4 rounded-xl items-center mt-4 shadow-md"
-            onPress={handleSubmit(onSubmit)}
-            disabled={isSubmitting}
-          >
-            <Text className="text-white font-bold text-lg">
-              {isSubmitting ? 'Đang xử lý...' : 'Đăng nhập'}
-            </Text>
+        <View className="mb-2">
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AppInput
+                placeholder="Nhập mật khẩu"
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={errors.password?.message}
+                leftIcon={<Lock size={20} color={errors.password ? '#EF4444' : '#94A3B8'} />}
+                rightIcon={
+                  <TouchableOpacity 
+                    onPress={() => setShowPassword(!showPassword)}
+                    className="p-1"
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} color="#94A3B8" />
+                    ) : (
+                      <Eye size={20} color="#94A3B8" />
+                    )}
+                  </TouchableOpacity>
+                }
+              />
+            )}
+          />
+        </View>
+
+        <TouchableOpacity 
+          className="self-end mb-8"
+          onPress={() => router.push('/(auth)/forgot-password')}
+        >
+          <AppText variant="bodySmall" weight="medium" className="text-primary">Quên mật khẩu?</AppText>
+        </TouchableOpacity>
+
+        <AppButton
+          title="Đăng nhập"
+          onPress={handleSubmit(onSubmit)}
+          isLoading={isSubmitting}
+          className="w-full mb-6"
+        />
+
+        <View className="flex-row justify-center items-center mt-auto pt-6">
+          <AppText variant="body" className="text-text-secondary">Chưa có tài khoản? </AppText>
+          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+            <AppText variant="body" weight="bold" className="text-primary">Đăng ký ngay</AppText>
           </TouchableOpacity>
-
-          <View className="flex-row justify-center mt-8">
-            <Text className="text-gray-500">Chưa có tài khoản? </Text>
-            <TouchableOpacity onPress={() => router.push('/register')}>
-              <Text className="text-blue-600 font-bold">Đăng ký ngay</Text>
-            </TouchableOpacity>
-          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

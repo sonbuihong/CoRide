@@ -13,6 +13,8 @@ import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react-native';
+import { useAuth } from '../../src/hooks/useAuth';
+import { useAppStore } from '../../src/stores/useAppStore';
 
 import { ActiveRideMap } from '../../src/components/ActiveRideMap';
 import { RideInfoPanel } from '../../src/components/RideInfoPanel';
@@ -21,7 +23,7 @@ import { useDriverTracking, usePassengerTrackDriver } from '../../src/hooks/useD
 import { usePickupNavigation } from '../../src/hooks/usePickupNavigation';
 import { bookingService } from '../../src/services/booking.service';
 import { getDirections } from '../../src/services/direction.service';
-import { disconnectSocket } from '../../src/services/socket.service';
+import { socketService } from '../../src/services/socket.service';
 
 interface LatLng {
   latitude: number;
@@ -30,6 +32,8 @@ interface LatLng {
 
 export default function ActiveRideScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { appMode } = useAppStore();
   const queryClient = useQueryClient();
 
   // State cho route directions
@@ -176,7 +180,7 @@ export default function ActiveRideScreen() {
     }
 
     prevTargetRef.current = targetKey;
-  }, [currentTargetType, currentTarget?.latitude, currentTarget?.longitude, userRole, fetchDirections]);
+  }, [currentTargetType, currentTarget?.latitude, currentTarget?.longitude, currentTarget, userRole, fetchDirections]);
 
   // Đảm bảo fetch lại một lần đầu tiên khi driver có location để thay thế fallback
   const hasFetchedWithDriverLoc = useRef(false);
@@ -189,15 +193,15 @@ export default function ActiveRideScreen() {
 
   // Khi driver thay đổi status ride
   const handleStatusChange = useCallback((newStatus: string) => {
-    if (newStatus === 'COMPLETED') {
+    if (newStatus === 'COMPLETED' || newStatus === 'CANCELLED') {
       // Cleanup socket và quay về home
-      disconnectSocket();
-      router.replace('/(tabs)');
+      socketService.disconnect();
+      router.replace((appMode === 'driver' ? '/(driver-tabs)' : '/(passenger-tabs)') as any);
     } else if (newStatus === 'ONGOING') {
       // Recalculate route — lúc này cần xác định target (pickup hoặc destination)
       fetchDirections();
     }
-  }, [router, fetchDirections]);
+  }, [router, fetchDirections, appMode]);
 
   // Xây dựng pickup markers cho bản đồ (chỉ dành cho driver khi ONGOING)
   const pickupMarkers = userRole === 'DRIVER' && ride?.status === 'ONGOING'
@@ -227,7 +231,7 @@ export default function ActiveRideScreen() {
           Không có chuyến đi nào đang hoạt động
         </Text>
         <TouchableOpacity
-          onPress={() => router.replace('/(tabs)')}
+          onPress={() => router.replace((appMode === 'driver' ? '/(driver-tabs)' : '/(passenger-tabs)') as any)}
           className="mt-4 bg-blue-600 px-6 py-3 rounded-xl"
         >
           <Text className="text-white font-bold">Quay về trang chủ</Text>
@@ -269,8 +273,8 @@ export default function ActiveRideScreen() {
 
         {/* Nút back overlay trên bản đồ */}
         <TouchableOpacity
-          onPress={() => router.back()}
-          className="absolute top-12 left-4 bg-white p-3 rounded-full shadow-md"
+          onPress={() => router.replace((appMode === 'driver' ? '/(driver-tabs)' : '/(passenger-tabs)') as any)}
+          className="absolute top-12 left-4 bg-white p-3 rounded-full shadow-md z-20"
         >
           <ArrowLeft size={22} color="#1F2937" />
         </TouchableOpacity>

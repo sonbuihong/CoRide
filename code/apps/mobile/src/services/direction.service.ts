@@ -1,7 +1,7 @@
 // Gọi Goong Directions API qua backend proxy
 // Decode polyline thành mảng tọa độ cho react-native-maps Polyline component
 
-import { api } from './auth.service';
+import { apiClient as api } from '../api/client';
 
 interface LatLng {
   latitude: number;

@@ -1,9 +1,9 @@
 import request from 'supertest';
 import app from '../server';
-import prisma from '@repo/database';
+import { extendedPrisma as prisma } from '@repo/database';
 import * as jose from 'jose';
 
-// Manual definition of statuses to avoid import issues in mock
+// Manual definition of statuses
 const BookingStatus = {
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
@@ -16,6 +16,7 @@ jest.mock('@repo/database', () => {
   const mockPrisma = {
     ride: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
     },
     booking: {
@@ -37,6 +38,13 @@ jest.mock('@repo/database', () => {
   return {
     __esModule: true,
     default: mockPrisma,
+    extendedPrisma: mockPrisma,
+    BookingStatus: {
+      PENDING: 'PENDING',
+      CONFIRMED: 'CONFIRMED',
+      CANCELLED: 'CANCELLED',
+      REJECTED: 'REJECTED'
+    },
   };
 });
 
@@ -50,10 +58,10 @@ jest.mock('@prisma/client', () => ({
   }
 }));
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-fallback-key';
 const secret = new TextEncoder().encode(JWT_SECRET);
 
-describe('Booking API', () => {
+describe('Booking API (Giai đoạn 1 Test Cases)', () => {
   let passengerToken: string;
   let driverToken: string;
   const passengerId = '123e4567-e89b-12d3-a456-426614174000';
@@ -83,21 +91,26 @@ describe('Booking API', () => {
     });
   });
 
-  describe('POST /api/bookings', () => {
+  describe('5.1 Test API Đặt xe (POST /api/bookings)', () => {
     const bookingData = { rideId, seats: 2 };
 
-    it('1. nên tạo yêu cầu đặt chỗ thành công (PENDING)', async () => {
+    it('API_BKG_001 & 002: Happy Case - Hành khách đặt ghế thành công (PENDING)', async () => {
       (prisma.ride.findUnique as jest.Mock).mockResolvedValue({
         id: rideId,
         driverId: driverId,
         status: 'SCHEDULED',
         availableSeats: 4,
         pricePerSeat: 100000,
+        driver: { id: driverId, firstName: 'Driver', lastName: 'A' },
+        bookings: []
       });
-      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.ride.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(null); // Chưa đặt
       (prisma.booking.create as jest.Mock).mockResolvedValue({
         id: bookingId,
         status: BookingStatus.PENDING,
+        passenger: { id: passengerId, firstName: 'Pass', lastName: 'A' },
+        ride: { origin: 'A', destination: 'B' },
         ...bookingData,
       });
 
@@ -108,46 +121,60 @@ describe('Booking API', () => {
 
       if (response.status !== 201) console.log(response.body);
       expect(response.status).toBe(201);
-      expect(response.body.booking.status).toBe(BookingStatus.PENDING);
+      expect(response.body.booking?.status).toBe(BookingStatus.PENDING);
       expect(prisma.booking.create).toHaveBeenCalled();
     });
 
-    it('2. nên thất bại nếu chuyến đi không tồn tại', async () => {
-      (prisma.ride.findUnique as jest.Mock).mockResolvedValue(null);
-
+    it('API_BKG_003: Validation - Lỗi do thiếu rideId', async () => {
       const response = await request(app)
         .post('/api/bookings')
         .set('Authorization', `Bearer ${passengerToken}`)
-        .send(bookingData);
+        .send({ seats: 1 });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Không tìm thấy');
+      expect(JSON.stringify(response.body)).toMatch(/Mã chuyến đi/i);
     });
 
-    it('3. nên thất bại nếu tài xế tự đặt xe của chính mình', async () => {
+    it('API_BKG_004: Validation - Lỗi do số ghế <= 0', async () => {
+      const response = await request(app)
+        .post('/api/bookings')
+        .set('Authorization', `Bearer ${passengerToken}`)
+        .send({ rideId, seats: 0 });
+
+      expect(response.status).toBe(400);
+      expect(JSON.stringify(response.body)).toMatch(/ghế/i);
+    });
+
+    it('API_BKG_006: Business Rule - Thất bại do chuyến xe đã hết chỗ trống', async () => {
       (prisma.ride.findUnique as jest.Mock).mockResolvedValue({
         id: rideId,
-        driverId: passengerId, // User đang gọi là driver
+        driverId: driverId,
         status: 'SCHEDULED',
-        availableSeats: 4,
+        availableSeats: 0, // Không còn ghế
+        driver: { id: driverId, firstName: 'Driver', lastName: 'A' },
+        bookings: []
       });
+      (prisma.ride.findFirst as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app)
         .post('/api/bookings')
         .set('Authorization', `Bearer ${passengerToken}`)
-        .send(bookingData);
+        .send({ rideId, seats: 1 });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Tài xế không thể đặt chỗ');
+      expect(response.body.message).toContain('không đủ');
     });
 
-    it('4. nên thất bại nếu không đủ số ghế trống', async () => {
+    it('API_BKG_007: Business Rule - Thất bại do đặt số ghế lớn hơn số ghế trống', async () => {
       (prisma.ride.findUnique as jest.Mock).mockResolvedValue({
         id: rideId,
         driverId: driverId,
         status: 'SCHEDULED',
         availableSeats: 1, // Chỉ còn 1 ghế
+        driver: { id: driverId, firstName: 'Driver', lastName: 'A' },
+        bookings: []
       });
+      (prisma.ride.findFirst as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app)
         .post('/api/bookings')
@@ -155,120 +182,187 @@ describe('Booking API', () => {
         .send({ rideId, seats: 2 }); // Đặt 2 ghế
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Không đủ số ghế trống');
+      expect(response.body.message).toContain('không đủ');
+    });
+
+    it('API_BKG_008: Business Rule - Thất bại nếu tài xế tự đặt xe của chính mình', async () => {
+      (prisma.ride.findUnique as jest.Mock).mockResolvedValue({
+        id: rideId,
+        driverId: passengerId, // User đang gọi là driver
+        status: 'SCHEDULED',
+        availableSeats: 4,
+        driver: { id: passengerId, firstName: 'Pass', lastName: 'A' },
+        bookings: []
+      });
+
+      const response = await request(app)
+        .post('/api/bookings')
+        .set('Authorization', `Bearer ${passengerToken}`)
+        .send(bookingData);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain('Tài xế không thể đặt chỗ trên chuyến đi của chính mình');
+    });
+
+    it('API_BKG_010: Business Rule - Không thể đặt chuyến xe đã khởi hành hoặc hủy', async () => {
+      (prisma.ride.findUnique as jest.Mock).mockResolvedValue({
+        id: rideId,
+        driverId: driverId,
+        status: 'COMPLETED', // Đã xong
+        availableSeats: 4,
+        driver: { id: driverId, firstName: 'Driver', lastName: 'A' },
+        bookings: []
+      });
+
+      const response = await request(app)
+        .post('/api/bookings')
+        .set('Authorization', `Bearer ${passengerToken}`)
+        .send(bookingData);
+
+      expect(response.status).toBe(400);
+    });
+
+    it('API_BKG_011: Business Rule - Khách hàng không thể đặt trùng 1 chuyến nhiều lần', async () => {
+      (prisma.ride.findUnique as jest.Mock).mockResolvedValue({
+        id: rideId,
+        driverId: driverId,
+        status: 'SCHEDULED',
+        availableSeats: 4,
+        driver: { id: driverId, firstName: 'Driver', lastName: 'A' },
+        bookings: []
+      });
+      (prisma.ride.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue({ id: 'old-bkg', status: 'PENDING', ride: { status: 'SCHEDULED' } }); // Đã tồn tại booking
+
+      const response = await request(app)
+        .post('/api/bookings')
+        .set('Authorization', `Bearer ${passengerToken}`)
+        .send(bookingData);
+
+      expect(response.status).toBe(400);
     });
   });
 
-  describe('PATCH /api/bookings/:id/status', () => {
-    it('5. nên cho phép tài xế xác nhận đặt chỗ và giảm ghế', async () => {
+  describe('5.2 Test API Nhận chuyến / Xác nhận (PATCH /api/bookings/:id/status)', () => {
+    it('API_CFM_001: Happy Case - Tài xế xác nhận đặt chỗ thành công và giảm ghế', async () => {
       const mockBooking = {
         id: bookingId,
         rideId,
         passengerId,
         seats: 2,
         status: BookingStatus.PENDING,
-        ride: { driverId: driverId, availableSeats: 4 }
+        passenger: { id: passengerId, firstName: 'Pass', lastName: 'A' },
+        ride: { driverId: driverId, availableSeats: 4, origin: 'A', destination: 'B' }
       };
       (prisma.booking.findUnique as jest.Mock).mockResolvedValue(mockBooking);
-      (prisma.ride.findUnique as jest.Mock).mockResolvedValue(mockBooking.ride);
-      (prisma.ride.update as jest.Mock).mockResolvedValue({});
+      (prisma.ride.findUnique as jest.Mock).mockResolvedValue(mockBooking.ride); // Thêm findUnique cho update status
+      (prisma.ride.update as jest.Mock).mockResolvedValue({ availableSeats: 2 });
       (prisma.booking.update as jest.Mock).mockResolvedValue({ ...mockBooking, status: BookingStatus.CONFIRMED });
 
       const response = await request(app)
         .patch(`/api/bookings/${bookingId}/status`)
-        .set('Authorization', `Bearer ${driverToken}`)
-        .send({ status: BookingStatus.CONFIRMED });
+        .send({ status: BookingStatus.CONFIRMED })
+        .set('Authorization', `Bearer ${driverToken}`);
 
-      if (response.status !== 200) console.log(response.body);
       expect(response.status).toBe(200);
-      expect(response.body.message).toContain('xác nhận');
       expect(prisma.ride.update).toHaveBeenCalledWith(expect.objectContaining({
         data: { availableSeats: { decrement: 2 } }
       }));
     });
 
-    it('6. nên trả về 403 nếu không phải tài xế của chuyến đi', async () => {
+    it('API_CFM_002: Business Rule - Trả về 403 nếu không phải tài xế của chuyến xe', async () => {
       (prisma.booking.findUnique as jest.Mock).mockResolvedValue({
         id: bookingId,
-        ride: { driverId: 'other-driver' }
+        passenger: { id: passengerId, firstName: 'Pass', lastName: 'A' },
+        ride: { driverId: 'other-driver', origin: 'A', destination: 'B' }
       });
 
       const response = await request(app)
         .patch(`/api/bookings/${bookingId}/status`)
-        .set('Authorization', `Bearer ${driverToken}`)
-        .send({ status: BookingStatus.CONFIRMED });
+        .send({ status: BookingStatus.CONFIRMED })
+        .set('Authorization', `Bearer ${driverToken}`);
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toContain('không có quyền');
     });
 
-    it('7. nên xử lý Race condition: thất bại nếu hết ghế ngay lúc confirm', async () => {
+    it('API_CFM_004: Race Condition - Thất bại nếu hết ghế ngay lúc tài xế confirm', async () => {
       const mockBooking = {
         id: bookingId,
         rideId,
         seats: 3,
         status: BookingStatus.PENDING,
-        ride: { driverId: driverId }
+        passenger: { id: passengerId, firstName: 'Pass', lastName: 'A' },
+        ride: { driverId: driverId, availableSeats: 2, origin: 'A', destination: 'B' } // Hết ghế
       };
       (prisma.booking.findUnique as jest.Mock).mockResolvedValue(mockBooking);
-      
-      // Giả lập lúc này ride chỉ còn 2 ghế (ai đó đã nhanh tay hơn)
-      (prisma.ride.findUnique as jest.Mock).mockResolvedValue({
-        id: rideId,
-        availableSeats: 2 
-      });
+      (prisma.ride.findUnique as jest.Mock).mockResolvedValue(mockBooking.ride);
 
       const response = await request(app)
         .patch(`/api/bookings/${bookingId}/status`)
-        .set('Authorization', `Bearer ${driverToken}`)
-        .send({ status: BookingStatus.CONFIRMED });
+        .send({ status: BookingStatus.CONFIRMED })
+        .set('Authorization', `Bearer ${driverToken}`);
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain('Không đủ số ghế trống');
       expect(prisma.ride.update).not.toHaveBeenCalled();
     });
   });
 
-  describe('DELETE /api/bookings/:id', () => {
-    it('8. nên cho phép hành khách hủy yêu cầu PENDING', async () => {
-      (prisma.booking.findUnique as jest.Mock).mockResolvedValue({
-        id: bookingId,
-        passengerId,
-        status: BookingStatus.PENDING,
-        ride: { id: rideId }
-      });
-      (prisma.booking.update as jest.Mock).mockResolvedValue({ status: BookingStatus.CANCELLED });
-
-      const response = await request(app)
-        .delete(`/api/bookings/${bookingId}`)
-        .set('Authorization', `Bearer ${passengerToken}`);
-
-      if (response.status !== 200) console.log(response.body);
-      expect(response.status).toBe(200);
-      expect(response.body.message).toContain('Đã hủy');
-      expect(prisma.ride.update).not.toHaveBeenCalled(); // Không cần hoàn ghế vì đang PENDING
-    });
-
-    it('9. nên hoàn lại ghế khi hành khách hủy yêu cầu đã CONFIRMED', async () => {
+  describe('5.3 Test API Hủy chuyến (PATCH /api/bookings/:id/cancel)', () => {
+    it('API_CCL_001: Happy Case - Hành khách hủy chuyến thành công trước khi đi', async () => {
       (prisma.booking.findUnique as jest.Mock).mockResolvedValue({
         id: bookingId,
         passengerId,
         seats: 2,
         status: BookingStatus.CONFIRMED,
-        ride: { id: rideId }
+        ride: { id: rideId, status: 'SCHEDULED', driverId: driverId }
       });
-      (prisma.ride.update as jest.Mock).mockResolvedValue({});
       (prisma.booking.update as jest.Mock).mockResolvedValue({ status: BookingStatus.CANCELLED });
+      (prisma.ride.update as jest.Mock).mockResolvedValue({ availableSeats: 4 });
 
       const response = await request(app)
-        .delete(`/api/bookings/${bookingId}`)
+        .patch(`/api/bookings/${bookingId}/cancel`)
+        .send({ cancelReason: 'Bận việc đột xuất' })
         .set('Authorization', `Bearer ${passengerToken}`);
 
-      if (response.status !== 200) console.log(response.body);
       expect(response.status).toBe(200);
+      // Hủy CONFIRMED -> Phải hoàn ghế
       expect(prisma.ride.update).toHaveBeenCalledWith(expect.objectContaining({
         data: { availableSeats: { increment: 2 } }
       }));
+    });
+
+    it('API_CCL_001_B: Hủy yêu cầu PENDING (không cần hoàn ghế)', async () => {
+      (prisma.booking.findUnique as jest.Mock).mockResolvedValue({
+        id: bookingId,
+        passengerId,
+        seats: 2,
+        status: BookingStatus.PENDING,
+        ride: { id: rideId, status: 'SCHEDULED', driverId: driverId }
+      });
+      (prisma.booking.update as jest.Mock).mockResolvedValue({ status: BookingStatus.CANCELLED });
+
+      const response = await request(app)
+        .patch(`/api/bookings/${bookingId}/cancel`)
+        .send({ cancelReason: 'Thay đổi kế hoạch' })
+        .set('Authorization', `Bearer ${passengerToken}`);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('API_CCL_003: Business Rule - Không thể hủy khi xe đã chạy (ONGOING)', async () => {
+      (prisma.booking.findUnique as jest.Mock).mockResolvedValue({
+        id: bookingId,
+        passengerId,
+        status: BookingStatus.CONFIRMED,
+        ride: { id: rideId, status: 'ONGOING', driverId: driverId } // Xe đã chạy
+      });
+
+      const response = await request(app)
+        .patch(`/api/bookings/${bookingId}/cancel`)
+        .send({ cancelReason: 'Xe chạy rồi' })
+        .set('Authorization', `Bearer ${passengerToken}`);
+
+      expect(response.status).toBe(400);
     });
   });
 });

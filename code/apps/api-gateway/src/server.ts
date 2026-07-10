@@ -16,7 +16,11 @@ const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http:/
 // Middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+      'http://localhost:8081',
+      'http://localhost:8082' // Đề phòng Expo mở port 8082
+    ],
     credentials: true,
   })
 );

@@ -1,155 +1,188 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, KeyboardAvoidingView, Platform, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, RegisterInput } from '@repo/shared';
 import { useRouter } from 'expo-router';
-import { authService } from '../../src/services/auth.service';
+import { useAuth } from '../../src/hooks/useAuth';
+import { AppInput } from '../../src/components/ui/AppInput';
+import { AppButton } from '../../src/components/ui/AppButton';
+import { AppText } from '../../src/components/ui/AppText';
+import { Mail, Lock, Eye, EyeOff, User, Phone } from 'lucide-react-native';
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { register } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-      firstName: '',
-      lastName: '',
-      phone: '',
-    },
+    defaultValues: { email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '' },
   });
 
   const onSubmit = async (data: RegisterInput) => {
     try {
-      await authService.register(data);
-      router.replace('/(tabs)');
+      setErrorMsg(null);
+      const { confirmPassword, ...payload } = data;
+      await register(payload as any);
+      
+      Alert.alert('Thành công', 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.', [
+        { text: 'OK', onPress: () => router.replace('/(auth)/login') }
+      ]);
     } catch (error: any) {
-      console.error('Register error:', error);
-      Alert.alert('Lỗi đăng ký', error.response?.data?.message || 'Không thể tạo tài khoản vào lúc này');
+      setErrorMsg(error.message || 'Đăng ký thất bại. Vui lòng thử lại.');
     }
   };
 
   return (
-    <ScrollView className="flex-1 bg-white" contentContainerStyle={{ flexGrow: 1 }}>
-      <View className="px-6 py-12">
-        <View className="mb-10">
-          <Text className="text-3xl font-bold text-gray-800">Tạo tài khoản</Text>
-          <Text className="text-gray-500 mt-1">Tham gia cộng đồng CoRide ngay hôm nay</Text>
-        </View>
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-background px-6 pt-12 pb-10" keyboardShouldPersistTaps="handled">
+        <AppText variant="h2" weight="bold" className="text-text-primary mb-2">Tạo tài khoản mới</AppText>
+        <AppText variant="body" className="text-text-secondary mb-6">Tham gia CoRide để chia sẻ hành trình</AppText>
 
-        <View className="flex-row space-x-4 mb-4">
+        {errorMsg && (
+          <View className="bg-status-danger/10 p-4 rounded-xl mb-6 border border-status-danger/20">
+            <AppText variant="bodySmall" className="text-status-danger font-medium">{errorMsg}</AppText>
+          </View>
+        )}
+
+        <View className="flex-row space-x-4 mb-1">
           <View className="flex-1 mr-2">
-            <Text className="text-gray-700 font-medium mb-2">Họ</Text>
             <Controller
               control={control}
               name="lastName"
               render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  className={`bg-gray-50 border ${errors.lastName ? 'border-red-500' : 'border-gray-200'} p-4 rounded-xl text-gray-800`}
-                  placeholder="Nguyễn"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
+                <AppInput
+                  label="Họ"
+                  placeholder="Họ"
                   value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.lastName?.message}
+                  leftIcon={<User size={20} color={errors.lastName ? '#EF4444' : '#64748B'} />}
                 />
               )}
             />
-            {errors.lastName && <Text className="text-red-500 text-xs mt-1">{errors.lastName.message}</Text>}
           </View>
-
-          <View className="flex-1">
-            <Text className="text-gray-700 font-medium mb-2">Tên</Text>
+          <View className="flex-1 ml-2">
             <Controller
               control={control}
               name="firstName"
               render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  className={`bg-gray-50 border ${errors.firstName ? 'border-red-500' : 'border-gray-200'} p-4 rounded-xl text-gray-800`}
-                  placeholder="An"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
+                <AppInput
+                  label="Tên"
+                  placeholder="Tên"
                   value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.firstName?.message}
                 />
               )}
             />
-            {errors.firstName && <Text className="text-red-500 text-xs mt-1">{errors.firstName.message}</Text>}
           </View>
         </View>
 
-        <View className="mb-4">
-          <Text className="text-gray-700 font-medium mb-2">Email</Text>
-          <Controller
-            control={control}
-            name="email"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className={`bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} p-4 rounded-xl text-gray-800`}
-                placeholder="email@example.com"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            )}
-          />
-          {errors.email && <Text className="text-red-500 text-xs mt-1">{errors.email.message}</Text>}
-        </View>
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <AppInput
+              label="Email"
+              placeholder="Nhập địa chỉ email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              error={errors.email?.message}
+              leftIcon={<Mail size={20} color={errors.email ? '#EF4444' : '#64748B'} />}
+            />
+          )}
+        />
 
-        <View className="mb-4">
-          <Text className="text-gray-700 font-medium mb-2">Số điện thoại (tùy chọn)</Text>
-          <Controller
-            control={control}
-            name="phone"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className={`bg-gray-50 border ${errors.phone ? 'border-red-500' : 'border-gray-200'} p-4 rounded-xl text-gray-800`}
-                placeholder="0912345678"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-                keyboardType="phone-pad"
-              />
-            )}
-          />
-          {errors.phone && <Text className="text-red-500 text-xs mt-1">{errors.phone.message}</Text>}
-        </View>
+        <Controller
+          control={control}
+          name="phone"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <AppInput
+              label="Số điện thoại"
+              placeholder="Ví dụ: 0912345678"
+              keyboardType="phone-pad"
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              error={errors.phone?.message}
+              leftIcon={<Phone size={20} color={errors.phone ? '#EF4444' : '#64748B'} />}
+            />
+          )}
+        />
 
-        <View className="mb-6">
-          <Text className="text-gray-700 font-medium mb-2">Mật khẩu</Text>
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className={`bg-gray-50 border ${errors.password ? 'border-red-500' : 'border-gray-200'} p-4 rounded-xl text-gray-800`}
-                placeholder="Ít nhất 6 ký tự"
-                secureTextEntry
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
-            )}
-          />
-          {errors.password && <Text className="text-red-500 text-xs mt-1">{errors.password.message}</Text>}
-        </View>
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <AppInput
+              label="Mật khẩu"
+              placeholder="Ít nhất 6 ký tự"
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              error={errors.password?.message}
+              leftIcon={<Lock size={20} color={errors.password ? '#EF4444' : '#64748B'} />}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} accessibilityRole="button">
+                  {showPassword ? <EyeOff size={20} color="#64748B" /> : <Eye size={20} color="#64748B" />}
+                </TouchableOpacity>
+              }
+            />
+          )}
+        />
 
-        <TouchableOpacity 
-          className="bg-blue-600 p-4 rounded-xl items-center shadow-md"
+        <Controller
+          control={control}
+          name="confirmPassword"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <AppInput
+              label="Xác nhận mật khẩu"
+              placeholder="Nhập lại mật khẩu"
+              secureTextEntry={!showConfirmPassword}
+              autoCapitalize="none"
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              error={errors.confirmPassword?.message}
+              leftIcon={<Lock size={20} color={errors.confirmPassword ? '#EF4444' : '#64748B'} />}
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} accessibilityRole="button">
+                  {showConfirmPassword ? <EyeOff size={20} color="#64748B" /> : <Eye size={20} color="#64748B" />}
+                </TouchableOpacity>
+              }
+            />
+          )}
+        />
+
+        <AppButton
+          title="Đăng ký"
           onPress={handleSubmit(onSubmit)}
-          disabled={isSubmitting}
-        >
-          <Text className="text-white font-bold text-lg">
-            {isSubmitting ? 'Đang tạo tài khoản...' : 'Đăng ký'}
-          </Text>
-        </TouchableOpacity>
+          isLoading={isSubmitting}
+          className="w-full mt-2 shadow-sm"
+        />
 
-        <View className="flex-row justify-center mt-8 mb-10">
-          <Text className="text-gray-500">Đã có tài khoản? </Text>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-600 font-bold">Đăng nhập</Text>
+        <View className="flex-row justify-center mt-8 items-center">
+          <AppText variant="body" className="text-text-secondary">Đã có tài khoản? </AppText>
+          <TouchableOpacity onPress={() => router.back()} className="py-2">
+            <AppText variant="body" weight="bold" className="text-primary">Đăng nhập</AppText>
           </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

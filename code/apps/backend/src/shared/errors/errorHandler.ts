@@ -36,8 +36,7 @@ export const errorHandler = (
   // Lỗi không xác định — log để debug, không expose stack trace ra production
   console.error('[UNHANDLED ERROR]:', err);
   res.status(500).json({
-    message: 'Lỗi hệ thống nội bộ',
-    ...(process.env.NODE_ENV === 'development' &&
-      err instanceof Error && { stack: err.stack }),
+    message: err instanceof Error ? err.message : 'Lỗi hệ thống nội bộ',
+    stack: err instanceof Error ? err.stack : undefined,
   });
 };

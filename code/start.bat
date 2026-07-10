@@ -19,12 +19,12 @@ echo.
 echo    [1] CHAY BACKEND + WEB + PRISMA (Khong Mobile)
 echo    [2] CHAY TOAN BO (Backend + Web + Prisma + Mobile)
 echo    [3] Chi chay Backend (API Server)
-echo    [4] Chi chay Web Frontend (Mo trinh duyet localhost:3000)
-echo    [5] Mobile: Expo Web Preview
-echo    [6] Mobile: Expo Start (QR Code cho Mobile App)
+echo    [4] Web Frontend + Backend
+echo    [5] Mobile (Expo Web Preview) + Backend
+echo    [6] Mobile (Expo Start - QR Code) + Backend
 echo    [7] Prisma Studio (Quan ly Database - localhost:5555)
 echo    [8] Cai dat lai thu vien (npm install)
-echo    [9] Dong tat ca dich vu dang chay (chi cua so cua app nay)
+echo    [9] Dong tat ca dich vu dang chay
 echo    [0] Thoat
 echo.
 echo  ==============================================================
@@ -87,29 +87,37 @@ goto menu
 
 :web
 echo.
-echo [INFO] Dang khoi dong Web Frontend...
+echo [INFO] Dang khoi dong Web Frontend va Backend...
+start cmd /c "title Backend & cd apps\backend & npm run dev"
+start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
+start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
 start cmd /c "title Web Frontend & cd apps\web & npm run dev"
 timeout /t 10 /nobreak > nul
+start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
-echo [SUCCESS] Da khoi dong Web Frontend.
+echo [SUCCESS] Da khoi dong Web Frontend va Backend.
 pause
 goto menu
 
 :mobile_web
 echo.
-echo [INFO] Dang khoi dong Mobile o che do Web Preview...
-pushd apps\mobile
-call npm run web
-popd
+echo [INFO] Dang khoi dong Mobile (Web Preview) va Backend...
+start cmd /c "title Backend & cd apps\backend & npm run dev"
+start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
+start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
+start cmd /c "title Mobile & cd apps\mobile & pnpm run web"
+echo [SUCCESS] Da khoi dong Mobile va Backend.
 pause
 goto menu
 
 :mobile_qr
 echo.
-echo [INFO] Dang khoi dong Expo (Scan QR Code tren dien thoai)...
-pushd apps\mobile
-call npm run start
-popd
+echo [INFO] Dang khoi dong Expo (Scan QR Code) va Backend...
+start cmd /c "title Backend & cd apps\backend & npm run dev"
+start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
+start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
+start cmd /c "title Mobile & cd apps\mobile & pnpm expo start -c"
+echo [SUCCESS] Da khoi dong Mobile va Backend.
 pause
 goto menu
 
@@ -134,26 +142,18 @@ goto menu
 
 :kill_all
 echo.
-echo [INFO] Dang dong tat ca cac dich vu (chi cua so cua app CoRide)...
-taskkill /F /FI "WINDOWTITLE eq API Gateway*" /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Notification Service*" /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Backend*" /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Web Frontend*" /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Mobile*" /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Prisma Studio*" /T > nul 2>&1
+echo [INFO] Dang dong tat ca cac cua so CMD va Node.exe tren may tinh (Ngoai tru Menu)...
+taskkill /F /IM node.exe /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE neq CoRide Development Menu" /IM cmd.exe /T > nul 2>&1
 echo [SUCCESS] Da dong tat ca dich vu thanh cong.
 pause
 goto menu
 
 :kill_all_and_exit
 echo.
-echo [INFO] Dang dong tat ca cac dich vu (chi cua so cua app CoRide)...
-taskkill /F /FI "WINDOWTITLE eq API Gateway*" /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Notification Service*" /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Backend*" /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Web Frontend*" /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Mobile*" /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Prisma Studio*" /T > nul 2>&1
+echo [INFO] Dang dong tat ca cac cua so CMD va Node.exe tren may tinh...
+taskkill /F /IM node.exe /T > nul 2>&1
+taskkill /F /IM cmd.exe /T > nul 2>&1
 echo [SUCCESS] Da dong tat ca dich vu va thoat.
 endlocal
 exit

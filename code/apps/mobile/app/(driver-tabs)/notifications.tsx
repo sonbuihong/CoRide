@@ -23,7 +23,7 @@ export default function NotificationsScreen() {
     if (lastEvent) {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
-  }, [lastEvent]);
+  }, [lastEvent, queryClient]);
 
   const markReadMutation = useMutation({
     mutationFn: (id: string) => notificationService.markAsRead(id),

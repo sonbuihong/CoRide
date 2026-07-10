@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import EventSource from 'react-native-eventsource';
+import EventSource from 'react-native-sse';
 import { useAuth } from './useAuth';
 import { authStorage } from '../services/auth-storage';
 

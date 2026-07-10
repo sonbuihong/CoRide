@@ -1,46 +1,82 @@
-import axios from 'axios';
-import { authStorage } from './auth-storage';
+import { apiClient } from '../api/client';
+import { LoginInput, RegisterInput, ForgotPasswordInput, ResetPasswordInput } from '@repo/shared';
 
-// Lấy IP từ máy chủ Backend (localhost trên emulator thường là 10.0.2.2 cho Android)
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
-
-export const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-api.interceptors.request.use(async (config) => {
-  const token = await authStorage.getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+export interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  avatar?: string;
+  avatarUrl?: string; // Đồng bộ với schema backend
+  bio?: string;
+  role: string;
+  isDriverVerified?: boolean; // Tên chuẩn trong schema
+  driverVerification?: {
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    rejectionReason?: string;
+    vehicleType: 'BIKE' | 'CAR';
+    vehiclePlate: string;
+    vehicleModel?: string;
+  };
+  vehicles?: {
+    id: string;
+    licensePlate: string;
+    type: 'BIKE' | 'CAR';
+    color?: string;
+    status: 'ACTIVE' | 'INACTIVE';
+  }[];
+}
 
 export const authService = {
-  async login(credentials: any) {
-    const response = await api.post('/auth/login', credentials);
-    const { token, user } = response.data;
-    await authStorage.saveToken(token);
-    await authStorage.saveUser(user);
+  login: async (data: LoginInput): Promise<{ message: string; user: User; accessToken: string }> => {
+    const response = await apiClient.post('/auth/login', data);
     return response.data;
   },
 
-  async register(data: any) {
-    const response = await api.post('/auth/register', data);
-    const { token, user } = response.data;
-    await authStorage.saveToken(token);
-    await authStorage.saveUser(user);
+  register: async (data: RegisterInput): Promise<{ message: string; user: User }> => {
+    const response = await apiClient.post('/auth/register', data);
     return response.data;
   },
 
-  async logout() {
-    await authStorage.clearAll();
+  logout: async (): Promise<{ message: string }> => {
+    const response = await apiClient.post('/auth/logout');
+    return response.data;
   },
 
-  async getCurrentUser() {
-    return await authStorage.getUser();
+  forgotPassword: async (data: ForgotPasswordInput): Promise<{ message: string }> => {
+    const response = await apiClient.post('/auth/forgot-password', data);
+    return response.data;
+  },
+
+  resetPassword: async (data: ResetPasswordInput): Promise<{ message: string }> => {
+    const response = await apiClient.post('/auth/reset-password', data);
+    return response.data;
+  },
+
+  getCurrentUser: async (): Promise<User> => {
+    const response = await apiClient.get('/users/me');
+    return response.data;
+  },
+  
+  updateProfile: async (data: { firstName: string; lastName: string; phone: string }): Promise<{ message: string; user: User }> => {
+    const response = await apiClient.patch('/users/me', data);
+    return response.data;
+  },
+
+  uploadAvatar: async (imageUri: string, mimeType: string, fileName: string): Promise<{ message: string; user: User }> => {
+    const formData = new FormData();
+    formData.append('avatar', {
+      uri: imageUri,
+      type: mimeType,
+      name: fileName,
+    } as any);
+
+    const response = await apiClient.post('/users/me/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
   },
 };

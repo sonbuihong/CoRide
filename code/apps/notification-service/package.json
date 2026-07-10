@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
-    "@repo/database": "1.0.0",
+    "@repo/database": "workspace:*",
     "@socket.io/redis-emitter": "^5.1.0",
     "amqplib": "^0.10.5",
     "cors": "^2.8.5",

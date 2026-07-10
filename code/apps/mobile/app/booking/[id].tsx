@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { bookingService } from '../../../src/services/booking.service';
-import { paymentService } from '../../../src/services/payment.service';
-import { authService } from '../../../src/services/auth.service';
+import { bookingService } from '../../src/services/booking.service';
+import { paymentService } from '../../src/services/payment.service';
+import { authService } from '../../src/services/auth.service';
 import { Check, X, User, Star, Phone, CreditCard } from 'lucide-react-native';
 
 export default function BookingManageScreen() {
