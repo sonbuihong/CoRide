@@ -1,83 +1,80 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { extendedPrisma as prisma } from '@repo/database';
 import { AppError } from '../../shared/errors/AppError';
 import { ZaloPayService } from './zalopay.service';
 import { WalletService } from './wallet.service';
 import { TransactionType, TransactionStatus, PaymentStatus } from '@repo/database';
+import { asyncHandler } from '../../shared/utils/asyncHandler';
 
 export class PaymentsController {
   /**
    * Tạo yêu cầu thanh toán cho một Booking qua ZaloPay
    */
-  static async createPayment(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { bookingId } = req.body;
-      const userId = req.user?.id;
+  static createPayment = asyncHandler(async (req: Request, res: Response) => {
+    const { bookingId } = req.body;
+    const userId = req.user?.id;
 
-      if (!userId) {
-        throw new AppError('Không xác định được người dùng', 401);
-      }
-
-      // 1. Kiểm tra Booking
-      const booking = await prisma.booking.findUnique({
-        where: { id: bookingId },
-        include: { ride: true },
-      });
-
-      if (!booking) {
-        throw new AppError('Không tìm thấy đơn đặt chuyến', 404);
-      }
-
-      if (booking.passengerId !== userId) {
-        throw new AppError('Bạn không có quyền thanh toán cho đơn đặt chuyến này', 403);
-      }
-
-      if (booking.paymentStatus === PaymentStatus.PAID) {
-        throw new AppError('Đơn đặt chuyến này đã được thanh toán trước đó', 400);
-      }
-
-      // 2. Gọi ZaloPay API tạo đơn hàng
-      const amount = booking.totalPrice;
-      const description = `CoRide - Thanh toán đơn đặt chuyến #${booking.id.slice(0, 8)}`;
-      
-      const zalopayOrder = await ZaloPayService.createOrder(
-        booking.id,
-        amount,
-        description,
-        userId
-      );
-
-      if (zalopayOrder.return_code !== 1) {
-        throw new AppError(`Lỗi ZaloPay: ${zalopayOrder.return_message}`, 500);
-      }
-
-      // 3. Tạo bản ghi giao dịch (Transaction) ở trạng thái PENDING
-      const wallet = await WalletService.getOrCreateWallet(userId);
-      await prisma.transaction.create({
-        data: {
-          walletId: wallet.id,
-          amount: amount, // Số tiền dương vì đây là dòng tiền đi vào hệ thống/thanh toán
-          type: TransactionType.PAYMENT,
-          status: TransactionStatus.PENDING,
-          description: `Thanh toán qua ZaloPay: ${description}`,
-          externalId: zalopayOrder.app_trans_id,
-          bookingId: booking.id,
-        },
-      });
-
-      res.status(200).json({
-        success: true,
-        message: 'Tạo đơn hàng thanh toán thành công',
-        data: {
-          order_url: zalopayOrder.order_url,
-          app_trans_id: zalopayOrder.app_trans_id,
-          order_token: zalopayOrder.order_token
-        },
-      });
-    } catch (error) {
-      next(error);
+    if (!userId) {
+      throw new AppError('Không xác định được người dùng', 401);
     }
-  }
+
+    // 1. Kiểm tra Booking
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { ride: true },
+    });
+
+    if (!booking) {
+      throw new AppError('Không tìm thấy đơn đặt chuyến', 404);
+    }
+
+    if (booking.passengerId !== userId) {
+      throw new AppError('Bạn không có quyền thanh toán cho đơn đặt chuyến này', 403);
+    }
+
+    if (booking.paymentStatus === PaymentStatus.PAID) {
+      throw new AppError('Đơn đặt chuyến này đã được thanh toán trước đó', 400);
+    }
+
+    // 2. Gọi ZaloPay API tạo đơn hàng
+    const amount = booking.totalPrice;
+    const description = `CoRide - Thanh toán đơn đặt chuyến #${booking.id.slice(0, 8)}`;
+    
+    const zalopayOrder = await ZaloPayService.createOrder(
+      booking.id,
+      amount,
+      description,
+      userId
+    );
+
+    if (zalopayOrder.return_code !== 1) {
+      throw new AppError(`Lỗi ZaloPay: ${zalopayOrder.return_message}`, 500);
+    }
+
+    // 3. Tạo bản ghi giao dịch (Transaction) ở trạng thái PENDING
+    const wallet = await WalletService.getOrCreateWallet(userId);
+    await prisma.transaction.create({
+      data: {
+        walletId: wallet.id,
+        amount: amount, // Số tiền dương vì đây là dòng tiền đi vào hệ thống/thanh toán
+        type: TransactionType.PAYMENT,
+        status: TransactionStatus.PENDING,
+        description: `Thanh toán qua ZaloPay: ${description}`,
+        externalId: zalopayOrder.app_trans_id,
+        bookingId: booking.id,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Tạo đơn hàng thanh toán thành công',
+      data: {
+        order_url: zalopayOrder.order_url,
+        app_trans_id: zalopayOrder.app_trans_id,
+        order_token: zalopayOrder.order_token
+      },
+    });
+  });
 
   /**
    * Xử lý Callback từ ZaloPay (Webhook)
@@ -152,72 +149,64 @@ export class PaymentsController {
   /**
    * Lấy danh sách toàn bộ giao dịch (Chỉ dành cho Admin)
    */
-  static async getTransactions(req: Request, res: Response, next: NextFunction) {
-    try {
-      const transactions = await prisma.transaction.findMany({
-        include: {
-          wallet: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  email: true,
-                  firstName: true,
-                  lastName: true,
-                  avatarUrl: true,
-                },
+  static getTransactions = asyncHandler(async (req: Request, res: Response) => {
+    const transactions = await prisma.transaction.findMany({
+      include: {
+        wallet: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
               },
             },
           },
-          booking: {
-            include: {
-              ride: true,
-            },
+        },
+        booking: {
+          include: {
+            ride: true,
           },
         },
-        orderBy: { createdAt: 'desc' },
-      });
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
-      res.status(200).json({
-        status: 'success',
-        results: transactions.length,
-        data: transactions,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+    res.status(200).json({
+      status: 'success',
+      results: transactions.length,
+      data: transactions,
+    });
+  });
 
   /**
    * Lấy thông tin ví của người dùng hiện tại (bao gồm số dư và lịch sử giao dịch)
    */
-  static async getMyWallet(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.user?.id;
+  static getMyWallet = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?.id;
 
-      if (!userId) {
-        throw new AppError('Không xác định được người dùng', 401);
-      }
-
-      // Lấy hoặc tạo ví
-      const wallet = await WalletService.getOrCreateWallet(userId);
-
-      // Lấy 20 giao dịch gần nhất
-      const transactions = await prisma.transaction.findMany({
-        where: { walletId: wallet.id },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-      });
-
-      res.status(200).json({
-        status: 'success',
-        data: {
-          wallet,
-          transactions,
-        },
-      });
-    } catch (error) {
-      next(error);
+    if (!userId) {
+      throw new AppError('Không xác định được người dùng', 401);
     }
-  }
+
+    // Lấy hoặc tạo ví
+    const wallet = await WalletService.getOrCreateWallet(userId);
+
+    // Lấy 20 giao dịch gần nhất
+    const transactions = await prisma.transaction.findMany({
+      where: { walletId: wallet.id },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        wallet,
+        transactions,
+      },
+    });
+  });
 }
