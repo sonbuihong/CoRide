@@ -13,6 +13,10 @@ class SocketService {
   private isConnecting: boolean = false;
   private pendingListeners: { event: string; listener: (...args: any[]) => void }[] = [];
 
+  public get connected(): boolean {
+    return this.socket?.connected || false;
+  }
+
   public async connect(): Promise<void> {
     if (this.socket?.connected || this.isConnecting) return;
 

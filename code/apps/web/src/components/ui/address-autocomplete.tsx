@@ -190,7 +190,8 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     onAddressSelect(val);
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(val), 400);
+    // 500ms — đồng bộ với GoongAutocomplete để tăng xác suất cache hit giữa 2 component
+    debounceRef.current = setTimeout(() => fetchSuggestions(val), 500);
   };
 
   const handleSelect = async (result: AutocompleteResult) => {

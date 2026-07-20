@@ -85,8 +85,17 @@ export class RidesService {
         availableSeats: data.availableSeats,
         pricePerSeat: data.pricePerSeat,
         description: data.description ?? null,
+        // Quy định chuyến đi
+        allowSmoking: data.allowSmoking ?? false,
+        allowPets: data.allowPets ?? false,
+        allowLuggage: data.allowLuggage ?? true,
+        // Phương tiện (nullable — tài xế có thể không chọn)
+        vehicleId: data.vehicleId ?? null,
       },
-      include: DRIVER_SELECT,
+      include: {
+        ...DRIVER_SELECT,
+        vehicle: true,
+      },
     });
 
     try {

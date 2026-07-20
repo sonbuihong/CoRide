@@ -251,6 +251,11 @@ model Ride {
   vehicleId      String?
   vehicle        Vehicle?   @relation(fields: [vehicleId], references: [id])
 
+  // Quy định chuyến đi — tài xế thiết lập khi đăng chuyến
+  allowSmoking   Boolean    @default(false)
+  allowPets      Boolean    @default(false)
+  allowLuggage   Boolean    @default(true)
+
   // Relations
   bookings Booking[]
   reviews  Review[]

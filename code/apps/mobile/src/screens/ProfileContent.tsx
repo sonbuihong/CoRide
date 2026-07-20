@@ -186,7 +186,7 @@ export default function ProfileContent({ user, isPrototype = false, onLogout }: 
           <KYCStatusCard 
             status={kycStatus} 
             rejectionReason={user?.driverVerification?.rejectionReason}
-            onPressAction={() => Alert.alert('Thông báo', '[CẦN TÍCH HỢP LUỒNG KYC]')} 
+            onPressAction={() => router.push('/driver/register' as any)} 
           />
 
           {kycStatus === 'APPROVED' && (

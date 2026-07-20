@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import apiClient from '../../lib/api-client';
-import { Loader2, Users, Car, BookOpen, CreditCard, LogOut } from 'lucide-react';
+import { Loader2, Users, Car, BookOpen, CreditCard, LogOut, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/providers/auth-provider';
 
@@ -266,6 +266,19 @@ export default function AdminPage() {
                   <CreditCard className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
                     Quản lý giao dịch
+                  </span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => router.push('/admin/driver-verifications')}
+                className="w-full flex items-center justify-between p-3 bg-rose-50 dark:bg-rose-900/20 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors border border-rose-100 dark:border-rose-950/20"
+                id="admin-nav-kyc"
+              >
+                <div className="flex items-center space-x-3">
+                  <ShieldCheck className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+                  <span className="text-sm font-medium text-rose-700 dark:text-rose-300">
+                    Duyệt hồ sơ KYC tài xế
                   </span>
                 </div>
               </button>

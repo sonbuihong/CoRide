@@ -79,4 +79,33 @@ export const authService = {
     });
     return response.data;
   },
+
+  uploadKycImage: async (imageUri: string, mimeType: string, fileName: string): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: imageUri,
+      type: mimeType,
+      name: fileName,
+    } as any);
+
+    const response = await apiClient.post('/users/upload-kyc', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  submitDriverVerification: async (data: {
+    licenseFrontImageUrl: string;
+    licenseBackImageUrl: string;
+    registrationFrontImageUrl: string;
+    registrationBackImageUrl: string;
+    vehiclePlate: string;
+    vehicleModel: string;
+    vehicleType: 'BIKE' | 'CAR';
+  }): Promise<{ message: string; data: any }> => {
+    const response = await apiClient.post('/users/driver-verification', data);
+    return response.data;
+  },
 };

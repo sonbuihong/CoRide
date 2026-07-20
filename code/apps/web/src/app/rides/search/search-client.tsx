@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useState, useEffect, Suspense } from 'react';
+import React, { useCallback, useState, useEffect, Suspense, useRef } from 'react';
+import axios from 'axios';
 import { useSearchParams, useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { SearchForm } from '@/components/rides/search-form';
@@ -22,6 +23,7 @@ function SearchResults() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [hoveredRide, setHoveredRide] = useState<Ride | null>(null);
   const { socket } = useSocket();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if ('geolocation' in navigator) {
@@ -49,6 +51,13 @@ function SearchResults() {
     filters: SearchRideInput,
     options: { showLoading?: boolean } = {}
   ) => {
+    // Hủy request cũ nếu có
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     const showLoading = options.showLoading ?? true;
 
     if (showLoading) {
@@ -57,10 +66,16 @@ function SearchResults() {
     }
     try {
       const response = await apiClient.get('/rides', { 
-        params: { ...filters, _t: Date.now() } 
+        params: { ...filters, _t: Date.now() },
+        signal: abortController.signal
       });
       setRides(response.data.rides ?? []);
     } catch (err: unknown) {
+      // Bỏ qua lỗi do abort
+      if (axios.isCancel(err) || (err as any).name === 'CanceledError') {
+        return;
+      }
+      
       if (!showLoading) {
         console.error('[SearchResults] Background ride refresh failed:', err);
         return;
@@ -68,7 +83,9 @@ function SearchResults() {
       console.error('Lỗi khi tìm kiếm chuyến đi:', err);
       setError('Đã xảy ra lỗi khi tải danh sách chuyến đi. Vui lòng thử lại sau.');
     } finally {
-      if (showLoading) setLoading(false);
+      if (showLoading && abortControllerRef.current === abortController) {
+        setLoading(false);
+      }
     }
   }, []);
 

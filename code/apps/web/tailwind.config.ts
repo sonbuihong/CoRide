@@ -51,6 +51,21 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        // Bổ sung các màu sắc semantic đồng bộ với di động
+        passenger: {
+          DEFAULT: "#3B82F6",
+          foreground: "#FFFFFF",
+          soft: "#EFF6FF",
+        },
+        driver: {
+          DEFAULT: "#F59E0B", // Amber 500
+          foreground: "#FFFFFF",
+          soft: "#FEF3C7", // Amber 100
+        },
+        pending: "#F59E0B",
+        confirmed: "#16A34A",
+        cancelled: "#94A3B8",
+        rejected: "#DC2626",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -66,3 +81,5 @@ const config: Config = {
 };
 
 export default config;
+
+// Trigger tailwind rebuild

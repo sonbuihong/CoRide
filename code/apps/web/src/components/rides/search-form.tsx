@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { searchRideSchema, SearchRideInput } from '@repo/shared';
@@ -30,9 +30,6 @@ interface SearchFormProps {
 
 export function SearchForm({ onSearch, initialValues }: SearchFormProps) {
   const [isLocating, setIsLocating] = useState(false);
-  // Dùng key để force re-render GoongAutocomplete khi cần set giá trị từ GPS
-  const [originKey, setOriginKey] = useState(0);
-  const [originDefaultValue, setOriginDefaultValue] = useState(initialValues?.origin || '');
 
   const {
     register,
@@ -81,38 +78,10 @@ export function SearchForm({ onSearch, initialValues }: SearchFormProps) {
   };
 
   /**
-   * Auto-fill GPS khi mount — chỉ chạy khi ô "Điểm đi" đang trống
-   * Nếu user đã có origin từ URL params thì không ghi đè
+   * Auto-fill GPS được bỏ qua khi mount (đã xóa useEffect auto-trigger).
+   * WHY: Tránh reverse-geocode call bất ngờ ngay khi trang load mà user
+   * chưa có hành động gì. User chủ động bấm nút khi cần.
    */
-  useEffect(() => {
-    if (initialValues?.origin) return; // Đã có giá trị, bỏ qua
-    if (!navigator.geolocation) return;
-
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        try {
-          const address = await resolveGpsToAddress(coords.latitude, coords.longitude);
-          if (address) {
-            setValue('origin', address);
-            setOriginDefaultValue(address);
-            setOriginKey((k) => k + 1);
-          }
-        } catch {
-          // Lỗi silent — không alert, user tự nhập nếu muốn
-          console.warn('[SearchForm] Không lấy được địa chỉ từ GPS');
-        } finally {
-          setIsLocating(false);
-        }
-      },
-      () => {
-        // Từ chối quyền hoặc lỗi GPS — silent fail
-        setIsLocating(false);
-      },
-      { timeout: 10000, maximumAge: 60000 }
-    );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Chỉ chạy 1 lần khi mount
 
   /**
    * Lấy vị trí GPS → autocomplete → điền địa chỉ chi tiết vào ô "Điểm đi"
@@ -130,9 +99,9 @@ export function SearchForm({ onSearch, initialValues }: SearchFormProps) {
         try {
           const address = await resolveGpsToAddress(coords.latitude, coords.longitude);
           if (address) {
+            // Chỉ cần setValue — GoongAutocomplete là controlled component riêng
+            // Không cần force re-render bằng key vì điểm đi được lưu trong react-hook-form
             setValue('origin', address);
-            setOriginDefaultValue(address);
-            setOriginKey((k) => k + 1);
           } else {
             alert('Không thể xác định địa chỉ từ vị trí hiện tại.');
           }
@@ -185,9 +154,8 @@ export function SearchForm({ onSearch, initialValues }: SearchFormProps) {
             </button>
           </label>
           <GoongAutocomplete
-            key={originKey}
             placeholder="Bạn muốn đi từ đâu?"
-            defaultValue={originDefaultValue}
+            defaultValue={initialValues?.origin || ''}
             onSelect={handleOriginSelect}
             className="w-full"
           />

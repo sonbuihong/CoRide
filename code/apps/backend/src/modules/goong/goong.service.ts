@@ -1,5 +1,6 @@
 import axios from 'axios';
 import goongConfig from '../../config/goong.config';
+import { goongCache } from './goong.cache';
 
 // Interface theo Goong Autocomplete V1 response
 // Khi truyền more_compound=true → trả thêm compound (quận/xã/tỉnh)
@@ -134,6 +135,11 @@ class GoongService {
       return [];
     }
 
+    // Cache key bao gồm tất cả params ảnh hưởng đến kết quả
+    const cacheKey = `autocomplete:${query.toLowerCase().trim()}:${limit}:${location ?? ''}:${radius ?? ''}:${more_compound}`;
+    const cached = goongCache.get<AutocompleteResult[]>(cacheKey);
+    if (cached) return cached;
+
     try {
       const response = await axios.get(`${this.baseUrl}/place/autocomplete`, {
         params: {
@@ -146,7 +152,10 @@ class GoongService {
         },
       });
 
-      return response.data.predictions || [];
+      const results: AutocompleteResult[] = response.data.predictions || [];
+      // TTL 60s — kết quả autocomplete có thể thay đổi nhưng ít xảy ra trong 1 phút
+      goongCache.set(cacheKey, results, 60);
+      return results;
     } catch (error) {
       console.error('Goong Autocomplete error:', error);
       throw new Error('Không thể tìm kiếm địa điểm');
@@ -162,6 +171,10 @@ class GoongService {
       return null;
     }
 
+    const cacheKey = `geocode:${address.toLowerCase().trim()}`;
+    const cached = goongCache.get<GeocodeResult>(cacheKey);
+    if (cached) return cached;
+
     try {
       const response = await axios.get(`${this.baseUrl}/geocode`, {
         params: {
@@ -171,7 +184,10 @@ class GoongService {
       });
 
       if (response.data.results && response.data.results.length > 0) {
-        return response.data.results[0];
+        const result: GeocodeResult = response.data.results[0];
+        // TTL 300s — tọa độ địa chỉ gần như không bao giờ thay đổi
+        goongCache.set(cacheKey, result, 300);
+        return result;
       }
       return null;
     } catch (error) {
@@ -188,6 +204,15 @@ class GoongService {
    * @param lng - Kinh độ
    */
   async reverseGeocode(lat: number, lng: number): Promise<any | null> {
+    // Làm tròn 4 chữ số thập phân (~11m precision) để tăng cache hit rate
+    // Tọa độ GPS thường chênh nhau vài mét → cùng địa điểm → nên cache chung
+    const roundedLat = Math.round(lat * 10000) / 10000;
+    const roundedLng = Math.round(lng * 10000) / 10000;
+    const cacheKey = `reverse-geocode:${roundedLat},${roundedLng}`;
+
+    const cached = goongCache.get<any>(cacheKey);
+    if (cached) return cached;
+
     try {
       const response = await axios.get(`${this.baseUrl}/geocode`, {
         params: {
@@ -198,7 +223,7 @@ class GoongService {
 
       if (response.data.results && response.data.results.length > 0) {
         const result = response.data.results[0];
-        return {
+        const data = {
           // formatted_address: "Hertz Car Rental, 3 5 Nguyen Van Linh, Kim Ma, Long Biên, Hà Nội"
           address: result.formatted_address,
           // name: "Hertz Car Rental" (tên địa điểm cụ thể gần nhất)
@@ -211,6 +236,9 @@ class GoongService {
           geometry: result.geometry,
           plus_code: result.plus_code,
         };
+        // TTL 300s — địa chỉ tại tọa độ cố định không thay đổi trong 5 phút
+        goongCache.set(cacheKey, data, 300);
+        return data;
       }
       return null;
     } catch (error) {
@@ -274,6 +302,10 @@ class GoongService {
       return null;
     }
 
+    const cacheKey = `geocode-v2:${address.toLowerCase().trim()}`;
+    const cached = goongCache.get<GeocodeV2Result[]>(cacheKey);
+    if (cached) return cached;
+
     try {
       const response = await axios.get(`${this.baseUrl}/v2/geocode`, {
         params: {
@@ -285,7 +317,10 @@ class GoongService {
       });
 
       if (response.data.results && response.data.results.length > 0) {
-        return response.data.results as GeocodeV2Result[];
+        const results = response.data.results as GeocodeV2Result[];
+        // TTL 300s — địa giới hành chính thay đổi rất ít
+        goongCache.set(cacheKey, results, 300);
+        return results;
       }
       return null;
     } catch (error) {
@@ -338,6 +373,10 @@ class GoongService {
       return null;
     }
 
+    const cacheKey = `place-detail:${placeId}`;
+    const cached = goongCache.get<any>(cacheKey);
+    if (cached) return cached;
+
     try {
       const response = await axios.get(`${this.baseUrl}/place/detail`, {
         params: {
@@ -346,7 +385,12 @@ class GoongService {
         },
       });
 
-      return response.data.result;
+      const result = response.data.result;
+      if (result) {
+        // TTL 600s — thông tin địa điểm (tên, tọa độ, địa chỉ) rất ổn định
+        goongCache.set(cacheKey, result, 600);
+      }
+      return result;
     } catch (error) {
       console.error('Goong Place Detail error:', error);
       throw new Error('Không thể lấy thông tin chi tiết địa điểm');

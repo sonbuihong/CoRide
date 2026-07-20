@@ -4,10 +4,11 @@ import { AppText } from './AppText';
 
 export interface AppButtonProps extends TouchableOpacityProps {
   title: string;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'passenger' | 'driver';
   isLoading?: boolean;
   className?: string;
   textClassName?: string;
+  leftIcon?: React.ReactNode;
 }
 
 export const AppButton: React.FC<AppButtonProps> = ({
@@ -17,41 +18,60 @@ export const AppButton: React.FC<AppButtonProps> = ({
   disabled = false,
   className = '',
   textClassName = '',
+  accessibilityLabel,
+  leftIcon,
   ...props
 }) => {
-  const baseStyle = 'rounded-xl flex-row justify-center items-center py-4 px-6 active:opacity-80 min-h-[56px]';
+  const baseStyle = 'rounded-xl flex-row justify-center items-center py-4 px-6 active:opacity-85 min-h-[56px]';
   
   const variantStyles = {
-    primary: 'bg-primary active:bg-primary-pressed',
-    secondary: 'bg-secondary',
+    primary: 'bg-passenger active:bg-passenger-pressed',
+    passenger: 'bg-passenger active:bg-passenger-pressed',
+    driver: 'bg-driver active:bg-driver-pressed',
+    secondary: 'bg-passenger-soft active:bg-passenger/20',
     outline: 'bg-surface border border-border-strong active:bg-background',
     ghost: 'bg-transparent active:bg-background',
-    danger: 'bg-status-danger',
+    danger: 'bg-status-danger active:bg-red-700',
   };
 
   const textVariantStyles = {
     primary: 'text-surface font-semibold',
-    secondary: 'text-surface font-medium',
+    passenger: 'text-surface font-semibold',
+    driver: 'text-surface font-semibold',
+    secondary: 'text-passenger font-semibold',
     outline: 'text-text-primary font-semibold',
     ghost: 'text-text-primary font-semibold',
     danger: 'text-surface font-semibold',
   };
 
   const isDisabled = disabled || isLoading;
-  const disabledStyle = isDisabled ? 'opacity-50' : '';
+  const disabledStyle = isDisabled ? 'opacity-40' : '';
+
+  const getIndicatorColor = () => {
+    if (variant === 'outline' || variant === 'ghost' || variant === 'secondary') {
+      return '#3B82F6';
+    }
+    return '#ffffff';
+  };
 
   return (
     <TouchableOpacity
       className={`${baseStyle} ${variantStyles[variant]} ${disabledStyle} ${className}`}
       disabled={isDisabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled, busy: isLoading }}
+      accessibilityLabel={accessibilityLabel || title}
       {...props}
     >
       {isLoading ? (
-        <ActivityIndicator color={(variant === 'outline' || variant === 'ghost') ? '#3B82F6' : '#ffffff'} />
+        <ActivityIndicator color={getIndicatorColor()} />
       ) : (
-        <AppText variant="button" className={`${textVariantStyles[variant]} ${textClassName}`}>
-          {title}
-        </AppText>
+        <>
+          {leftIcon}
+          <AppText variant="button" className={`${textVariantStyles[variant]} ${textClassName}`}>
+            {title}
+          </AppText>
+        </>
       )}
     </TouchableOpacity>
   );

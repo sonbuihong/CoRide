@@ -224,7 +224,10 @@ exports.Prisma.RideScalarFieldEnum = {
   destAddressType: 'destAddressType',
   addressDetailLevel: 'addressDetailLevel',
   cancelReason: 'cancelReason',
-  vehicleId: 'vehicleId'
+  vehicleId: 'vehicleId',
+  allowSmoking: 'allowSmoking',
+  allowPets: 'allowPets',
+  allowLuggage: 'allowLuggage'
 };
 
 exports.Prisma.BookingScalarFieldEnum = {

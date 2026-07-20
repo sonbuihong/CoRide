@@ -32,7 +32,10 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const debouncedQuery = useDebounce(query, 300);
+  // Debounce 500ms — cân bằng giữa UX mượt mà và giảm số API call
+  // WHY 500ms (thay vì 300ms cũ): ở tốc độ gõ bình thường (5-6 ký tự/giây)
+  // mỗi ký tự cách nhau ~160ms → 500ms loại bỏ được 2-3 request trung gian
+  const debouncedQuery = useDebounce(query, 500);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 

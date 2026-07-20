@@ -581,7 +581,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
                 <div className="shrink-0">
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border border-border">
                     {(confirmedBookings[detailIndex] || nextBookingToFocus)?.passenger.avatarUrl ? (
-                      <img src={(confirmedBookings[detailIndex] || nextBookingToFocus)?.passenger.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      <img src={(confirmedBookings[detailIndex] || nextBookingToFocus)?.passenger.avatarUrl ?? undefined} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
                       <User className="w-5 h-5 text-gray-500" />
                     )}
@@ -618,7 +618,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
                   <MapPin className="text-red-500 w-5 h-5" fill="currentColor" />
                 </div>
                 <div>
-                  <p className="text-[15px] text-foreground font-medium">{(confirmedBookings[detailIndex] || nextBookingToFocus)?.dropoffAddress || ride.destination}</p>
+                  <p className="text-[15px] text-foreground font-medium">{ride.destination}</p>
                 </div>
               </div>
 

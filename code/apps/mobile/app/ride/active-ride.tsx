@@ -1,18 +1,9 @@
-// Màn hình chuyến đi đang active — fullscreen bản đồ + panel thông tin + driver actions
-// Phân biệt vai trò:
-//   - DRIVER: GPS tracking → emit location, navigation đón khách → điểm đến
-//   - PASSENGER: Listen driver location → hiển thị marker realtime
-//
-// Luồng navigation tài xế (khi ONGOING):
-//   1. Có khách chưa đón → route đến pickup point gần nhất
-//   2. Tài xế nhấn "Đã đến điểm đón" → route đến pickup point tiếp theo (nếu có)
-//   3. Đã đón hết → route đến destination
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ArrowLeft, Navigation, Wifi, WifiOff } from 'lucide-react-native';
 import { useAuth } from '../../src/hooks/useAuth';
 import { useAppStore } from '../../src/stores/useAppStore';
 
@@ -24,6 +15,8 @@ import { usePickupNavigation } from '../../src/hooks/usePickupNavigation';
 import { bookingService } from '../../src/services/booking.service';
 import { getDirections } from '../../src/services/direction.service';
 import { socketService } from '../../src/services/socket.service';
+import { AppText } from '../../src/components/ui/AppText';
+import { AppButton } from '../../src/components/ui/AppButton';
 
 interface LatLng {
   latitude: number;
@@ -32,6 +25,7 @@ interface LatLng {
 
 export default function ActiveRideScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { appMode } = useAppStore();
   const queryClient = useQueryClient();
@@ -40,6 +34,9 @@ export default function ActiveRideScreen() {
   const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
   const [routeDistance, setRouteDistance] = useState<number>(0);
   const [routeDuration, setRouteDuration] = useState<number>(0);
+
+  // State quản lý kết nối socket realtime
+  const [socketConnected, setSocketConnected] = useState(socketService.connected);
 
   // Fetch active booking
   const { data: activeData, isLoading } = useQuery({
@@ -102,6 +99,23 @@ export default function ActiveRideScreen() {
     driverLocRef.current = driverOwnLocation;
   }, [driverOwnLocation]);
 
+  // Lắng nghe sự kiện socket connect/disconnect
+  useEffect(() => {
+    const onConnect = () => setSocketConnected(true);
+    const onDisconnect = () => setSocketConnected(false);
+
+    socketService.on('connect', onConnect);
+    socketService.on('disconnect', onDisconnect);
+
+    // Cập nhật trạng thái tức thời
+    setSocketConnected(socketService.connected);
+
+    return () => {
+      socketService.off('connect', onConnect);
+      socketService.off('disconnect', onDisconnect);
+    };
+  }, []);
+
   // Fetch directions — thông minh theo trạng thái navigation
   const fetchDirections = useCallback(async () => {
     if (!originCoords || !destinationCoords) return;
@@ -114,24 +128,19 @@ export default function ActiveRideScreen() {
 
       if (userRole === 'DRIVER') {
         if (ride?.status === 'SCHEDULED' && currentDriverLoc) {
-          // Giai đoạn 0: Ride chưa bắt đầu → route từ driver đến origin
           fromCoords = currentDriverLoc;
           toCoords = originCoords;
         } else if (ride?.status === 'ONGOING' && currentTargetType === 'PICKUP' && currentTarget && currentDriverLoc) {
-          // Giai đoạn 1: Đang đi đón khách → route từ driver đến pickup point
           fromCoords = currentDriverLoc;
           toCoords = currentTarget;
         } else if (ride?.status === 'ONGOING' && currentTargetType === 'DESTINATION' && currentDriverLoc) {
-          // Giai đoạn 2: Đã đón hết → route từ driver đến destination
           fromCoords = currentDriverLoc;
           toCoords = destinationCoords;
         } else {
-          // Fallback: origin → destination
           fromCoords = originCoords;
           toCoords = destinationCoords;
         }
       } else {
-        // Passenger: luôn hiện route origin → destination
         fromCoords = originCoords;
         toCoords = destinationCoords;
       }
@@ -157,24 +166,19 @@ export default function ActiveRideScreen() {
     currentTarget?.longitude,
   ]);
 
-  // Gọi fetchDirections khi các dependency thay đổi (route mới, target mới)
   useEffect(() => {
     fetchDirections();
   }, [fetchDirections]);
 
-  // Khi tài xế xác nhận đón khách → currentTarget thay đổi sang điểm đón tiếp theo
-  // hoặc sang DESTINATION → cần fetch lại route ngay lập tức
   const prevTargetRef = useRef<string | null>(null);
   useEffect(() => {
     if (userRole !== 'DRIVER') return;
 
-    // Tạo key để so sánh: kết hợp type + tọa độ
     const targetKey = currentTarget
       ? `${currentTargetType}:${currentTarget.latitude}:${currentTarget.longitude}`
       : `${currentTargetType}:null`;
 
     if (prevTargetRef.current !== null && prevTargetRef.current !== targetKey) {
-      // Target đã thay đổi (xác nhận đón khách xong → điểm đón tiếp hoặc destination)
       console.log('[ActiveRide] Target thay đổi, cập nhật route:', prevTargetRef.current, '->', targetKey);
       fetchDirections();
     }
@@ -182,7 +186,6 @@ export default function ActiveRideScreen() {
     prevTargetRef.current = targetKey;
   }, [currentTargetType, currentTarget?.latitude, currentTarget?.longitude, currentTarget, userRole, fetchDirections]);
 
-  // Đảm bảo fetch lại một lần đầu tiên khi driver có location để thay thế fallback
   const hasFetchedWithDriverLoc = useRef(false);
   useEffect(() => {
     if (userRole === 'DRIVER' && driverOwnLocation && !hasFetchedWithDriverLoc.current) {
@@ -191,19 +194,16 @@ export default function ActiveRideScreen() {
     }
   }, [driverOwnLocation, userRole, fetchDirections]);
 
-  // Khi driver thay đổi status ride
   const handleStatusChange = useCallback((newStatus: string) => {
     if (newStatus === 'COMPLETED' || newStatus === 'CANCELLED') {
-      // Cleanup socket và quay về home
       socketService.disconnect();
       router.replace((appMode === 'driver' ? '/(driver-tabs)' : '/(passenger-tabs)') as any);
     } else if (newStatus === 'ONGOING') {
-      // Recalculate route — lúc này cần xác định target (pickup hoặc destination)
       fetchDirections();
     }
   }, [router, fetchDirections, appMode]);
 
-  // Xây dựng pickup markers cho bản đồ (chỉ dành cho driver khi ONGOING)
+  // Hoàn thiện pickup markers cho driver khi ONGOING
   const pickupMarkers = userRole === 'DRIVER' && ride?.status === 'ONGOING'
     ? pendingPickups.map((p) => ({
         coordinate: p.pickupCoords,
@@ -213,53 +213,50 @@ export default function ActiveRideScreen() {
       }))
     : [];
 
-  // Loading state
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#3B82F6" />
-        <Text className="text-gray-500 mt-4">Đang tải thông tin chuyến đi...</Text>
+        <AppText variant="bodySmall" className="text-text-secondary mt-4">Đang tải bản đồ hành trình...</AppText>
       </View>
     );
   }
 
-  // Không có chuyến active
   if (!activeData || !ride) {
     return (
-      <View className="flex-1 items-center justify-center bg-white p-6">
-        <Text className="text-gray-500 text-lg text-center">
+      <View className="flex-1 items-center justify-center bg-background p-6">
+        <AppText variant="body" className="text-text-secondary text-center mb-4">
           Không có chuyến đi nào đang hoạt động
-        </Text>
-        <TouchableOpacity
+        </AppText>
+        <AppButton
+          title="Quay về trang chủ"
+          variant="passenger"
           onPress={() => router.replace((appMode === 'driver' ? '/(driver-tabs)' : '/(passenger-tabs)') as any)}
-          className="mt-4 bg-blue-600 px-6 py-3 rounded-xl"
-        >
-          <Text className="text-white font-bold">Quay về trang chủ</Text>
-        </TouchableOpacity>
+          className="px-6"
+        />
       </View>
     );
   }
 
-  // Không có tọa độ
   if (!originCoords || !destinationCoords) {
     return (
-      <View className="flex-1 items-center justify-center bg-white p-6">
-        <Text className="text-gray-500 text-lg text-center">
-          Không có thông tin tọa độ cho chuyến đi này
-        </Text>
-        <TouchableOpacity
+      <View className="flex-1 items-center justify-center bg-background p-6">
+        <AppText variant="body" className="text-text-secondary text-center mb-4">
+          Lỗi dữ liệu định vị địa lý của chuyến đi này
+        </AppText>
+        <AppButton
+          title="Quay lại"
+          variant="passenger"
           onPress={() => router.back()}
-          className="mt-4 bg-blue-600 px-6 py-3 rounded-xl"
-        >
-          <Text className="text-white font-bold">Quay lại</Text>
-        </TouchableOpacity>
+          className="px-6"
+        />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-white">
-      {/* Bản đồ fullscreen */}
+    <View className="flex-1 bg-background">
+      {/* Bản đồ định vị toàn màn hình */}
       <View className="flex-1">
         <ActiveRideMap
           originCoords={originCoords}
@@ -271,23 +268,40 @@ export default function ActiveRideScreen() {
           pickupMarkers={pickupMarkers}
         />
 
-        {/* Nút back overlay trên bản đồ */}
+        {/* Nút Back nổi */}
         <TouchableOpacity
           onPress={() => router.replace((appMode === 'driver' ? '/(driver-tabs)' : '/(passenger-tabs)') as any)}
-          className="absolute top-12 left-4 bg-white p-3 rounded-full shadow-md z-20"
+          className="absolute left-4 bg-surface p-3 rounded-full shadow-md z-20 border border-border/20 active:bg-slate-50"
+          style={{ top: insets.top + 10 }}
+          accessibilityRole="button"
+          accessibilityLabel="Thoát khỏi bản đồ theo dõi"
         >
-          <ArrowLeft size={22} color="#1F2937" />
+          <ArrowLeft size={20} color="#0F172A" />
         </TouchableOpacity>
 
-        {/* Badge role overlay */}
-        <View className="absolute top-12 right-4 bg-blue-600 px-3 py-1.5 rounded-full">
-          <Text className="text-white text-xs font-bold">
-            {userRole === 'DRIVER' ? 'Tài xế' : 'Hành khách'}
-          </Text>
+        {/* Cụm Panel Trạng thái Realtime Socket & Vai Trò (Góc trên phải) */}
+        <View 
+          className="absolute right-4 z-20 flex-row items-center space-x-2"
+          style={{ top: insets.top + 10 }}
+        >
+          {/* Socket status badge */}
+          <View className="flex-row items-center bg-surface/90 px-3 py-1.5 rounded-full border border-border/20 shadow-sm mr-2">
+            <View className={`w-2 h-2 rounded-full mr-1.5 ${socketConnected ? 'bg-confirmed' : 'bg-rejected animate-pulse'}`} />
+            <AppText variant="caption" weight="bold" className="text-text-primary">
+              {socketConnected ? 'Kết nối' : 'Mất kết nối'}
+            </AppText>
+          </View>
+
+          {/* Role badge */}
+          <View className={`${userRole === 'DRIVER' ? 'bg-driver' : 'bg-passenger'} px-3 py-1.5 rounded-full shadow-sm`}>
+            <AppText variant="caption" weight="bold" className="text-white">
+              {userRole === 'DRIVER' ? 'Tài xế' : 'Hành khách'}
+            </AppText>
+          </View>
         </View>
       </View>
 
-      {/* Panel thông tin chuyến đi */}
+      {/* Thông tin chuyến đi trượt chân trang */}
       <RideInfoPanel
         ride={ride}
         booking={booking}
@@ -300,7 +314,7 @@ export default function ActiveRideScreen() {
         pickedUpBookings={pickedUpBookings}
       />
 
-      {/* Action bar cho driver */}
+      {/* Nút thao tác nhanh của Tài xế */}
       {userRole === 'DRIVER' && (
         <DriverActionBar
           rideId={ride.id}

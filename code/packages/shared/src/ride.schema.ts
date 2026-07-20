@@ -47,6 +47,12 @@ export const createRideSchema = z.object({
     required_error: "Giá mỗi chỗ là bắt buộc",
   }).min(0, "Giá không được âm"),
   description: z.string().max(1000, "Mô tả không được vượt quá 1000 ký tự").optional().or(z.literal('')),
+  // Quy định chuyến đi — mặc định được xử lý ở backend nếu không truyền
+  allowSmoking: z.boolean().optional(),
+  allowPets: z.boolean().optional(),
+  allowLuggage: z.boolean().optional(),
+  // Phương tiện — optional, tài xế có thể không chọn
+  vehicleId: z.string().uuid("vehicleId không hợp lệ").optional(),
 });
 
 export const searchRideSchema = z.object({

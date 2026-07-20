@@ -34,7 +34,9 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
 
   return (
     <Animated.View
-      className={`bg-border-strong ${className}`}
+      className={`bg-slate-200 ${className}`}
+      accessibilityRole="progressbar"
+      accessibilityLabel="Đang tải dữ liệu"
       style={[
         { width: width as any, height: height as any, borderRadius },
         animatedStyle,

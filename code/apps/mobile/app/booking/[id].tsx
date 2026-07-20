@@ -1,15 +1,20 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, Linking } from 'react-native';
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { bookingService } from '../../src/services/booking.service';
 import { paymentService } from '../../src/services/payment.service';
 import { authService } from '../../src/services/auth.service';
-import { Check, X, User, Star, Phone, CreditCard } from 'lucide-react-native';
+import { AppText } from '../../src/components/ui/AppText';
+import { AppButton } from '../../src/components/ui/AppButton';
+import { StatusBadge } from '../../src/components/ui/StatusBadge';
+import { Star, Phone, CreditCard, ArrowLeft, ShieldCheck, Mail, MessageSquare } from 'lucide-react-native';
 
 export default function BookingManageScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
@@ -55,138 +60,180 @@ export default function BookingManageScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#3B82F6" />
       </View>
     );
   }
 
-  if (!booking) return null;
+  if (!booking) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background p-6">
+        <AppText className="text-text-secondary">Không tìm thấy thông tin đặt chỗ</AppText>
+      </View>
+    );
+  }
 
   const isDriver = currentUser?.id === booking.ride.driverId;
   const isPassenger = currentUser?.id === booking.passengerId;
   const displayUser = isDriver ? booking.passenger : booking.ride.driver;
   const title = isDriver ? 'Yêu cầu đặt chỗ' : 'Chi tiết đặt chỗ';
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING': return 'text-yellow-600';
-      case 'CONFIRMED': return 'text-green-600';
-      case 'CANCELLED': return 'text-red-600';
-      case 'REJECTED': return 'text-gray-500';
-      default: return 'text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'PENDING': return 'Đang chờ';
-      case 'CONFIRMED': return 'Đã xác nhận';
-      case 'CANCELLED': return 'Đã hủy';
-      case 'REJECTED': return 'Đã từ chối';
-      default: return status;
-    }
-  };
-
   return (
-    <View className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1 p-6">
-        <Text className="text-2xl font-bold text-gray-800 mb-6">{title}</Text>
+    <View className="flex-1 bg-background" style={{ paddingBottom: insets.bottom }}>
+      {/* Header nổi */}
+      <View 
+        style={{ paddingTop: insets.top + 10 }}
+        className="px-6 py-4 flex-row items-center bg-background border-b border-border/30"
+      >
+        <TouchableOpacity 
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-surface border border-border/30 items-center justify-center shadow-sm active:bg-slate-50 mr-4"
+          accessibilityRole="button"
+          accessibilityLabel="Quay lại"
+        >
+          <ArrowLeft size={20} color="#0F172A" />
+        </TouchableOpacity>
+        <AppText variant="h3" weight="bold" className="text-text-primary flex-1">{title}</AppText>
+      </View>
 
-        <View className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-6">
-          <View className="flex-row items-center mb-6">
-            <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center mr-4">
-              {displayUser.avatarUrl ? (
-                <Image source={{ uri: displayUser.avatarUrl }} className="w-full h-full rounded-full" />
+      <ScrollView 
+        className="flex-1 px-6 pt-4"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Thẻ liên hệ đối phương (Hành khách/Tài xế) */}
+        <View className="bg-surface p-5 rounded-3xl border border-border/40 shadow-sm mb-6">
+          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-slate-100">
+            <AppText variant="bodySmall" weight="semibold" className="text-text-secondary">
+              {isDriver ? 'Hành khách đặt xe' : 'Tài xế của bạn'}
+            </AppText>
+            <StatusBadge status={booking.status} />
+          </View>
+
+          <View className="flex-row items-center">
+            <View className="w-14 h-14 bg-passenger-soft rounded-full items-center justify-center mr-4 border border-passenger/10 overflow-hidden">
+              {displayUser.avatarUrl || displayUser.avatar ? (
+                <Image source={{ uri: displayUser.avatarUrl || displayUser.avatar }} className="w-full h-full" />
               ) : (
-                <User size={32} color="#3B82F6" />
+                <AppText variant="h3" weight="bold" className="text-passenger">
+                  {displayUser.firstName?.charAt(0) || 'U'}
+                </AppText>
               )}
             </View>
             <View className="flex-1">
-              <Text className="text-xl font-bold text-gray-800">
+              <AppText variant="body" weight="bold" className="text-text-primary">
                 {displayUser.firstName} {displayUser.lastName}
-              </Text>
+              </AppText>
               <View className="flex-row items-center mt-1">
-                <Star size={14} color="#EAB308" fill="#EAB308" />
-                <Text className="ml-1 text-yellow-700 font-bold">{displayUser.rating || '5.0'}</Text>
-                <Text className="ml-2 text-gray-400 text-xs">({displayUser.ratingCount || 0} đánh giá)</Text>
+                <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                <AppText variant="caption" weight="bold" className="text-driver ml-1 mr-2">
+                  {displayUser.rating?.toFixed(1) || '5.0'}
+                </AppText>
+                {displayUser.ratingCount !== undefined && (
+                  <AppText variant="caption" className="text-text-secondary">
+                    ({displayUser.ratingCount} đánh giá)
+                  </AppText>
+                )}
               </View>
             </View>
-            <View>
-              <Text className={`font-bold ${getStatusColor(booking.status)}`}>
-                {getStatusText(booking.status)}
-              </Text>
-            </View>
           </View>
+        </View>
 
+        {/* Thông tin Chi tiết Đặt chỗ */}
+        <View className="bg-surface p-5 rounded-3xl border border-border/40 shadow-sm mb-6">
+          <AppText variant="bodySmall" weight="semibold" className="text-text-secondary mb-4">Chi tiết yêu cầu</AppText>
+          
           <View className="space-y-4">
-            <View className="flex-row justify-between py-3 border-b border-gray-50">
-              <Text className="text-gray-500">Số ghế yêu cầu</Text>
-              <Text className="text-gray-800 font-bold text-lg">{booking.seats} ghế</Text>
+            <View className="flex-row justify-between py-3 border-b border-slate-100">
+              <AppText className="text-text-secondary">Số ghế đặt</AppText>
+              <AppText weight="bold" className="text-text-primary">{booking.seats} ghế</AppText>
             </View>
-            <View className="flex-row justify-between py-3 border-b border-gray-50">
-              <Text className="text-gray-500">Tổng thanh toán</Text>
-              <Text className="text-blue-600 font-bold text-lg">
+            
+            <View className="flex-row justify-between py-3 border-b border-slate-100">
+              <AppText className="text-text-secondary">Tổng chi phí</AppText>
+              <AppText weight="bold" className="text-passenger">
                 {(booking.totalPrice || 0).toLocaleString('vi-VN')}đ
-              </Text>
+              </AppText>
             </View>
-            <View className="flex-row justify-between py-3 border-b border-gray-50">
-              <Text className="text-gray-500">Trạng thái thanh toán</Text>
-              <Text className={`font-bold ${booking.paymentStatus === 'PAID' ? 'text-green-600' : 'text-orange-500'}`}>
+            
+            <View className="flex-row justify-between py-3 border-b border-slate-100">
+              <AppText className="text-text-secondary">Trạng thái thanh toán</AppText>
+              <AppText weight="bold" className={booking.paymentStatus === 'PAID' ? 'text-confirmed' : 'text-pending'}>
                 {booking.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}
-              </Text>
+              </AppText>
             </View>
-            {displayUser.phone && (
-              <View className="flex-row justify-between py-3">
-                <Text className="text-gray-500">Số điện thoại</Text>
+
+            {displayUser.phone && booking.status === 'CONFIRMED' && (
+              <View className="flex-row justify-between py-3 border-b border-slate-100">
+                <AppText className="text-text-secondary">Số điện thoại</AppText>
                 <View className="flex-row items-center">
-                  <Phone size={14} color="#6B7280" className="mr-1" />
-                  <Text className="text-gray-800 font-medium">{displayUser.phone}</Text>
+                  <Phone size={14} color="#64748B" className="mr-1.5" />
+                  <AppText weight="semibold" className="text-text-primary">{displayUser.phone}</AppText>
+                </View>
+              </View>
+            )}
+
+            {displayUser.email && booking.status === 'CONFIRMED' && (
+              <View className="flex-row justify-between py-3">
+                <AppText className="text-text-secondary">Địa chỉ email</AppText>
+                <View className="flex-row items-center">
+                  <Mail size={14} color="#64748B" className="mr-1.5" />
+                  <AppText weight="semibold" className="text-text-primary">{displayUser.email}</AppText>
                 </View>
               </View>
             )}
           </View>
         </View>
 
-        <Text className="text-gray-400 text-sm uppercase font-bold mb-4 ml-2">Thông tin chuyến đi</Text>
-        <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-10">
-          <Text className="text-gray-800 font-bold">{booking.ride.destination}</Text>
-          <Text className="text-gray-500 text-xs mt-1">Từ: {booking.ride.origin}</Text>
+        {/* Thông tin chuyến đi lộ trình */}
+        <AppText variant="bodySmall" weight="bold" className="text-text-secondary uppercase mb-3 ml-2">Thông tin lộ trình</AppText>
+        <View className="bg-surface p-5 rounded-3xl border border-border/40 shadow-sm mb-10">
+          <AppText variant="body" weight="bold" className="text-text-primary mb-2">
+            Đích đến: {booking.ride.destination}
+          </AppText>
+          <View className="flex-row items-center">
+            <AppText variant="bodySmall" className="text-text-secondary">
+              Khởi hành từ: <AppText weight="bold" className="text-text-primary">{booking.ride.origin}</AppText>
+            </AppText>
+          </View>
         </View>
       </ScrollView>
 
+      {/* Hành động dưới chân màn hình */}
       {isDriver && booking.status === 'PENDING' && (
-        <View className="p-6 bg-white border-t border-gray-100 flex-row space-x-4">
-          <TouchableOpacity 
-            className="flex-1 bg-gray-100 p-4 rounded-2xl items-center flex-row justify-center"
+        <View className="p-6 bg-surface border-t border-border/40 flex-row space-x-4">
+          <AppButton 
+            title="Từ chối"
+            variant="outline"
             onPress={() => updateStatusMutation.mutate('REJECTED')}
             disabled={updateStatusMutation.isPending}
-          >
-            <X size={20} color="#EF4444" className="mr-2" />
-            <Text className="text-red-600 font-bold text-lg">Từ chối</Text>
-          </TouchableOpacity>
+            className="flex-1 mr-2 border border-slate-300"
+            textClassName="text-rejected"
+            accessibilityLabel="Từ chối yêu cầu đặt chỗ này"
+          />
           
-          <TouchableOpacity 
-            className="flex-1 bg-blue-600 p-4 rounded-2xl items-center flex-row justify-center"
+          <AppButton 
+            title="Chấp nhận"
+            variant="driver"
             onPress={() => updateStatusMutation.mutate('CONFIRMED')}
             disabled={updateStatusMutation.isPending}
-          >
-            <Check size={20} color="white" className="mr-2" />
-            <Text className="text-white font-bold text-lg">Chấp nhận</Text>
-          </TouchableOpacity>
+            className="flex-1 ml-2"
+            accessibilityLabel="Xác nhận đồng ý yêu cầu đặt chỗ này"
+          />
         </View>
       )}
 
       {isPassenger && booking.status === 'CONFIRMED' && booking.paymentStatus === 'UNPAID' && (
-        <View className="p-6 bg-white border-t border-gray-100">
-          <TouchableOpacity 
-            className="bg-blue-600 p-4 rounded-2xl items-center flex-row justify-center"
+        <View className="p-6 bg-surface border-t border-border/40">
+          <AppButton 
+            title="Thanh toán chuyến đi"
+            variant="passenger"
             onPress={() => createPaymentMutation.mutate()}
             disabled={createPaymentMutation.isPending}
-          >
-            <CreditCard size={20} color="white" className="mr-2" />
-            <Text className="text-white font-bold text-lg">Thanh toán bằng ZaloPay</Text>
-          </TouchableOpacity>
+            className="w-full flex-row justify-center items-center"
+            leftIcon={<CreditCard size={20} color="white" className="mr-2" />}
+            accessibilityLabel="Nhấn để tiến hành thanh toán chi phí chuyến đi"
+          />
         </View>
       )}
     </View>

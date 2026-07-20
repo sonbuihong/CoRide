@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import axios from 'axios';
 import { Bell, Clock, Info, CheckCircle } from 'lucide-react';
 import apiClient from '../../lib/api-client';
 import { cn } from '@/lib/utils';
@@ -24,16 +25,28 @@ export const NotificationCenter: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const { socket, isConnected } = useSocket();
   const router = useRouter();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchNotifications = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     try {
-      const response = await apiClient.get('/notifications');
+      const response = await apiClient.get('/notifications', {
+        signal: abortController.signal
+      });
       // Defensive fallback: Kiểm tra chắc chắn là mảng
       const rawData = response.data?.notifications || response.data;
       const notificationList: Notification[] = Array.isArray(rawData) ? rawData : [];
       setNotifications(notificationList);
       setUnreadCount(notificationList.filter((n) => !n.isRead).length);
     } catch (error) {
+      if (axios.isCancel(error) || (error as any).name === 'CanceledError') {
+        return;
+      }
       console.error('Lỗi khi lấy thông báo:', error);
     }
   }, []);

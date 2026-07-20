@@ -26,11 +26,26 @@ module.exports = {
           strong: "#CBD5E1", // Slate 300
         },
         status: {
-          success: "#22C55E", // Green 500
-          warning: "#F59E0B", // Amber 500
-          danger: "#EF4444", // Red 500
-          info: "#3B82F6", // Blue 500
-        }
+          success: "#16A34A", // Green 600
+          warning: "#F97316", // Orange 500
+          danger: "#DC2626", // Red 600
+          info: "#2563EB", // Blue 600
+        },
+        // Bổ sung các màu sắc semantic theo đặc tả CoRide
+        passenger: {
+          DEFAULT: "#3B82F6",
+          pressed: "#2563EB",
+          soft: "#EFF6FF",
+        },
+        driver: {
+          DEFAULT: "#F59E0B", // Amber 500
+          pressed: "#D97706", // Amber 600
+          soft: "#FEF3C7", // Amber 100
+        },
+        pending: "#F59E0B",
+        confirmed: "#16A34A",
+        cancelled: "#94A3B8",
+        rejected: "#DC2626",
       },
     },
   },

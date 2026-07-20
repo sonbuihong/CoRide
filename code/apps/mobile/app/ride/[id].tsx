@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { rideService } from '../../src/services/ride.service';
 import { bookingService } from '../../src/services/booking.service';
 import { RideMap } from '../../src/components/RideMap';
-import { MapPin, Clock, Users, Star, ShieldCheck, MessageCircle } from 'lucide-react-native';
+import { AppText } from '../../src/components/ui/AppText';
+import { AppButton } from '../../src/components/ui/AppButton';
+import { Clock, Users, Star, ShieldCheck, MessageCircle, ArrowLeft, Heart } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 export default function RideDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [seats, setSeats] = useState(1);
 
   const { data: ride, isLoading } = useQuery({
@@ -24,7 +28,7 @@ export default function RideDetailScreen() {
     mutationFn: () => bookingService.createBooking(id as string, seats),
     onSuccess: () => {
       Alert.alert('Thành công', 'Yêu cầu đặt chỗ của bạn đã được gửi tới tài xế.', [
-        { text: 'OK', onPress: () => router.replace('/(passenger-tabs)/my-rides') }
+        { text: 'OK', onPress: () => router.replace('/(passenger-tabs)/my-rides' as any) }
       ]);
     },
     onError: (error: any) => {
@@ -34,7 +38,7 @@ export default function RideDetailScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#3B82F6" />
       </View>
     );
@@ -42,112 +46,181 @@ export default function RideDetailScreen() {
 
   if (!ride) {
     return (
-      <View className="flex-1 items-center justify-center bg-white p-6">
-        <Text className="text-gray-500 text-lg">Không tìm thấy thông tin chuyến đi</Text>
-        <TouchableOpacity onPress={() => router.back()} className="mt-4 bg-blue-600 px-6 py-3 rounded-xl">
-          <Text className="text-white font-bold">Quay lại</Text>
-        </TouchableOpacity>
+      <View className="flex-1 items-center justify-center bg-background p-6">
+        <AppText variant="body" className="text-text-secondary text-lg">Không tìm thấy thông tin chuyến đi</AppText>
+        <AppButton 
+          title="Quay lại" 
+          variant="passenger"
+          onPress={() => router.back()} 
+          className="mt-4 px-6" 
+        />
       </View>
     );
   }
 
-  return (
-    <View className="flex-1 bg-white">
-      <ScrollView className="flex-1">
-        <RideMap 
-          departureCoords={ride.departureCoords} 
-          destinationCoords={ride.destinationCoords} 
-        />
+  const departureDateFormatted = format(new Date(ride.departureTime), 'eeee, dd MMMM yyyy', { locale: vi });
 
-        <View className="p-6">
-          <View className="flex-row justify-between items-start mb-6">
-            <View className="flex-1">
-              <Text className="text-2xl font-bold text-gray-800">{ride.destination}</Text>
-              <View className="flex-row items-center mt-1">
-                <Text className="text-gray-500">Từ: </Text>
-                <Text className="text-gray-700 font-medium">{ride.departure}</Text>
+  return (
+    <View className="flex-1 bg-background">
+      {/* Custom Header nổi đè lên bản đồ */}
+      <View 
+        style={{ paddingTop: insets.top + 10 }} 
+        className="absolute top-0 left-0 right-0 z-20 flex-row justify-between px-6 items-center"
+      >
+        <TouchableOpacity 
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-surface border border-border/30 items-center justify-center shadow-md active:bg-slate-50"
+          accessibilityRole="button"
+          accessibilityLabel="Quay lại trang trước"
+        >
+          <ArrowLeft size={20} color="#0F172A" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          className="w-10 h-10 rounded-full bg-surface border border-border/30 items-center justify-center shadow-md active:bg-slate-50"
+          accessibilityRole="button"
+          accessibilityLabel="Lưu chuyến đi này"
+        >
+          <Heart size={20} color="#64748B" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView 
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Bản đồ tuyến đường */}
+        <View className="overflow-hidden">
+          <RideMap 
+            departureCoords={ride.departureCoords} 
+            destinationCoords={ride.destinationCoords} 
+          />
+        </View>
+
+        <View className="p-6 -mt-6 bg-background rounded-t-3xl z-10">
+          {/* Thông tin điểm đi - điểm đến chính */}
+          <View className="bg-surface p-5 rounded-3xl shadow-sm border border-border/40 mb-6">
+            <View className="flex-row justify-between items-start mb-4">
+              <View className="flex-1">
+                <AppText variant="h2" weight="bold" className="text-text-primary mb-1">
+                  Đến: {ride.destination}
+                </AppText>
+                <AppText variant="bodySmall" className="text-text-secondary">
+                  Từ: <AppText weight="bold" className="text-text-primary">{ride.departure}</AppText>
+                </AppText>
               </View>
+              <AppText variant="h2" weight="bold" className="text-passenger">
+                {ride.price.toLocaleString('vi-VN')}đ
+              </AppText>
             </View>
-            <Text className="text-2xl font-bold text-blue-600">
-              {ride.price.toLocaleString('vi-VN')}đ
-            </Text>
+            <AppText variant="caption" weight="medium" className="text-text-secondary">
+              Thời gian khởi hành: {departureDateFormatted}
+            </AppText>
           </View>
 
-          <View className="flex-row bg-gray-50 p-4 rounded-2xl mb-6 justify-between">
-            <View className="items-center flex-1 border-r border-gray-200">
+          {/* Grid thông tin nhanh */}
+          <View className="flex-row bg-surface p-4 rounded-3xl mb-6 justify-between border border-border/40 shadow-sm">
+            <View className="items-center flex-1 border-r border-slate-100">
               <Clock size={20} color="#3B82F6" />
-              <Text className="text-gray-400 text-xs mt-1">Giờ đi</Text>
-              <Text className="text-gray-800 font-bold mt-0.5">
+              <AppText variant="caption" className="text-text-secondary mt-1">Giờ xuất phát</AppText>
+              <AppText variant="bodySmall" weight="bold" className="text-text-primary mt-0.5">
                 {format(new Date(ride.departureTime), 'HH:mm')}
-              </Text>
+              </AppText>
             </View>
-            <View className="items-center flex-1 border-r border-gray-200">
+            <View className="items-center flex-1 border-r border-slate-100">
               <Users size={20} color="#3B82F6" />
-              <Text className="text-gray-400 text-xs mt-1">Ghế trống</Text>
-              <Text className="text-gray-800 font-bold mt-0.5">{ride.availableSeats}/{ride.totalSeats}</Text>
+              <AppText variant="caption" className="text-text-secondary mt-1">Ghế trống</AppText>
+              <AppText variant="bodySmall" weight="bold" className="text-text-primary mt-0.5">
+                {ride.availableSeats} / {ride.totalSeats}
+              </AppText>
             </View>
             <View className="items-center flex-1">
-              <ShieldCheck size={20} color="#3B82F6" />
-              <Text className="text-gray-400 text-xs mt-1">Bảo hiểm</Text>
-              <Text className="text-gray-800 font-bold mt-0.5">Có</Text>
+              <ShieldCheck size={20} color="#16A34A" />
+              <AppText variant="caption" className="text-text-secondary mt-1">Cam kết</AppText>
+              <AppText variant="bodySmall" weight="bold" className="text-confirmed mt-0.5">
+                An toàn P2P
+              </AppText>
             </View>
           </View>
 
-          <Text className="text-lg font-bold text-gray-800 mb-4">Tài xế</Text>
-          <View className="flex-row items-center bg-white border border-gray-100 p-4 rounded-2xl shadow-sm mb-6">
-            <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-4">
+          {/* DriverTrustCard: Thông tin tài xế và uy tín */}
+          <AppText variant="body" weight="bold" className="text-text-primary mb-3">Tài xế của bạn</AppText>
+          <View className="flex-row items-center bg-surface border border-border/40 p-4 rounded-3xl shadow-sm mb-10">
+            <View className="w-14 h-14 bg-passenger-soft rounded-full items-center justify-center mr-4 border border-passenger/10 overflow-hidden">
               {ride.driver.avatar ? (
-                <Image source={{ uri: ride.driver.avatar }} className="w-full h-full rounded-full" />
+                <Image source={{ uri: ride.driver.avatar }} className="w-full h-full" />
               ) : (
-                <Text className="text-blue-600 font-bold">{ride.driver.firstName.charAt(0)}</Text>
+                <AppText variant="h2" weight="bold" className="text-passenger">
+                  {ride.driver.firstName.charAt(0)}
+                </AppText>
               )}
             </View>
             <View className="flex-1">
-              <Text className="text-gray-800 font-bold text-lg">{ride.driver.firstName} {ride.driver.lastName}</Text>
-              <View className="flex-row items-center">
-                <Star size={14} color="#EAB308" fill="#EAB308" />
-                <Text className="ml-1 text-yellow-700 font-bold">{ride.driver.rating || 'N/A'}</Text>
+              <AppText variant="body" weight="bold" className="text-text-primary">
+                {ride.driver.firstName} {ride.driver.lastName}
+              </AppText>
+              <View className="flex-row items-center mt-1">
+                <Star size={14} color="#F59E0B" fill="#F59E0B" />
+                <AppText variant="caption" weight="bold" className="text-driver ml-1 mr-2">
+                  {ride.driver.rating?.toFixed(1) || '5.0'}
+                </AppText>
+                <ShieldCheck size={12} color="#16A34A" />
+                <AppText variant="caption" className="text-confirmed ml-0.5 font-semibold">
+                  Tài xế uy tín
+                </AppText>
               </View>
             </View>
-            <TouchableOpacity className="p-3 bg-blue-50 rounded-full">
+            <TouchableOpacity 
+              className="p-3 bg-passenger-soft rounded-full border border-passenger/10 active:bg-passenger/20"
+              accessibilityRole="button"
+              accessibilityLabel="Nhắn tin trò chuyện với tài xế"
+            >
               <MessageCircle size={20} color="#3B82F6" />
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
-      <View className="p-6 border-t border-gray-100 bg-white">
+      {/* Sticky Bottom Actions */}
+      <View 
+        style={{ paddingBottom: insets.bottom + 16 }}
+        className="p-6 border-t border-border/40 bg-surface shadow-lg"
+      >
         <View className="flex-row items-center justify-between mb-4">
-          <View>
-            <Text className="text-gray-800 font-bold">Số lượng ghế</Text>
-            <Text className="text-gray-400 text-xs">Mỗi người tối đa {ride.availableSeats} ghế</Text>
+          <View className="flex-1 mr-4">
+            <AppText variant="bodySmall" weight="bold" className="text-text-primary">Số lượng ghế cần đặt</AppText>
+            <AppText variant="caption" className="text-text-secondary mt-0.5">
+              Mỗi hành khách đặt tối đa {ride.availableSeats} ghế
+            </AppText>
           </View>
-          <View className="flex-row items-center bg-gray-100 rounded-xl p-1">
+          <View className="flex-row items-center bg-slate-100 rounded-xl p-1 border border-border/40">
             <TouchableOpacity 
               onPress={() => setSeats(Math.max(1, seats - 1))}
-              className="w-10 h-10 items-center justify-center"
+              className="w-10 h-10 items-center justify-center active:bg-slate-200 rounded-lg"
+              accessibilityRole="button"
+              accessibilityLabel="Giảm số ghế"
             >
-              <Text className="text-xl font-bold">-</Text>
+              <AppText weight="bold" className="text-text-primary text-lg">-</AppText>
             </TouchableOpacity>
-            <Text className="px-4 font-bold text-lg">{seats}</Text>
+            <AppText weight="bold" className="px-4 text-text-primary text-base">{seats}</AppText>
             <TouchableOpacity 
               onPress={() => setSeats(Math.min(ride.availableSeats, seats + 1))}
-              className="w-10 h-10 items-center justify-center"
+              className="w-10 h-10 items-center justify-center active:bg-slate-200 rounded-lg"
+              accessibilityRole="button"
+              accessibilityLabel="Tăng số ghế"
             >
-              <Text className="text-xl font-bold">+</Text>
+              <AppText weight="bold" className="text-text-primary text-lg">+</AppText>
             </TouchableOpacity>
           </View>
         </View>
 
-        <TouchableOpacity 
-          className={`p-4 rounded-2xl items-center shadow-md ${bookingMutation.isPending ? 'bg-blue-400' : 'bg-blue-600'}`}
+        <AppButton 
+          title={ride.availableSeats === 0 ? 'Chuyến đi đã hết chỗ' : 'Gửi yêu cầu đặt chỗ'}
+          variant="passenger"
           onPress={() => bookingMutation.mutate()}
+          isLoading={bookingMutation.isPending}
           disabled={bookingMutation.isPending || ride.availableSeats === 0}
-        >
-          <Text className="text-white font-bold text-lg">
-            {bookingMutation.isPending ? 'Đang xử lý...' : ride.availableSeats === 0 ? 'Hết chỗ' : 'Đặt ngay'}
-          </Text>
-        </TouchableOpacity>
+          className="w-full shadow-md"
+        />
       </View>
     </View>
   );

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import axios from 'axios';
+import { goongClientCache } from './goong-client-cache';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 const GOONG_API_KEY = process.env.NEXT_PUBLIC_GOONG_API_KEY || '';
@@ -162,6 +163,11 @@ export async function autocompleteAddress(
     more_compound 
   } = options || {};
 
+  // JS cache: ngăn duplicate calls trong cùng tab ngay tại tầng JavaScript
+  const cacheKey = `autocomplete:${query.toLowerCase().trim()}:${limit}:${location}:${radius}:${more_compound ?? true}`;
+  const cached = goongClientCache.get<AutocompleteResult[]>(cacheKey);
+  if (cached) return cached;
+
   try {
     const params: any = {
       query,
@@ -177,7 +183,10 @@ export async function autocompleteAddress(
       timeout: 5000,
     });
 
-    return response.data || [];
+    const results: AutocompleteResult[] = response.data || [];
+    // TTL 60s — đồng bộ với backend cache TTL
+    goongClientCache.set(cacheKey, results, 60);
+    return results;
   } catch (error) {
     console.warn('Backend Autocomplete failed, falling back to Nominatim');
     
@@ -295,6 +304,13 @@ export async function geocodeAddressV2(address: string): Promise<GeocodeV2Result
  * Trả string đơn giản (backward compatibility cho các nơi chỉ cần hiện text)
  */
 export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  // Làm tròn 4 chữ số thập phân (~11m) để cache hit dù GPS trả giá trị hơi khác nhau
+  const roundedLat = Math.round(lat * 10000) / 10000;
+  const roundedLng = Math.round(lng * 10000) / 10000;
+  const cacheKey = `reverse-geocode:${roundedLat},${roundedLng}`;
+  const cached = goongClientCache.get<string>(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = await axios.get(`${API_URL}/goong/reverse-geocode`, {
       params: { lat, lng },
@@ -302,6 +318,7 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string |
     });
 
     if (response.data && response.data.address) {
+      goongClientCache.set(cacheKey, response.data.address, 300);
       return response.data.address;
     }
     return null;
@@ -369,6 +386,13 @@ export async function reverseGeocodeDetailed(
   lat: number,
   lng: number
 ): Promise<ReverseGeocodeDetailedResult | null> {
+  // Làm tròn 4 chữ số thập phân — cùng lý do với reverseGeocode ở trên
+  const roundedLat = Math.round(lat * 10000) / 10000;
+  const roundedLng = Math.round(lng * 10000) / 10000;
+  const cacheKey = `reverse-geocode-detailed:${roundedLat},${roundedLng}`;
+  const cached = goongClientCache.get<ReverseGeocodeDetailedResult>(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = await axios.get(`${API_URL}/goong/reverse-geocode`, {
       params: { lat, lng },
@@ -376,6 +400,7 @@ export async function reverseGeocodeDetailed(
     });
 
     if (response.data && response.data.address) {
+      goongClientCache.set(cacheKey, response.data as ReverseGeocodeDetailedResult, 300);
       return response.data as ReverseGeocodeDetailedResult;
     }
     return null;

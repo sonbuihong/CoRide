@@ -14,17 +14,19 @@ const server = http.createServer(app);
 // CORS được xử lý tại API Gateway
 app.use(express.json());
 
-import notificationRoutes from './routes';
-app.use('/', notificationRoutes);
-
 const PORT = process.env.PORT || 5003;
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const prisma = new PrismaClient();
 
+// /health phải đặt TRƯỚC notificationRoutes để không bị chặn bởi authenticate middleware
+// WHY: Express khớp route theo thứ tự khai báo — đặt sau sẽ bị router chặn trước
 app.get('/health', (req, res) => {
   res.json({ status: 'Notification Service is running' });
 });
+
+import notificationRoutes from './routes';
+app.use('/', notificationRoutes);
 
 // Redis Emitter (thay vì tự host Socket.io, ta push event qua Redis để Backend Monolith gửi cho Client)
 import { createClient } from 'redis';

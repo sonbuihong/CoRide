@@ -9154,6 +9154,9 @@ export namespace Prisma {
     addressDetailLevel: string | null
     cancelReason: string | null
     vehicleId: string | null
+    allowSmoking: boolean | null
+    allowPets: boolean | null
+    allowLuggage: boolean | null
   }
 
   export type RideMaxAggregateOutputType = {
@@ -9189,6 +9192,9 @@ export namespace Prisma {
     addressDetailLevel: string | null
     cancelReason: string | null
     vehicleId: string | null
+    allowSmoking: boolean | null
+    allowPets: boolean | null
+    allowLuggage: boolean | null
   }
 
   export type RideCountAggregateOutputType = {
@@ -9224,6 +9230,9 @@ export namespace Prisma {
     addressDetailLevel: number
     cancelReason: number
     vehicleId: number
+    allowSmoking: number
+    allowPets: number
+    allowLuggage: number
     _all: number
   }
 
@@ -9283,6 +9292,9 @@ export namespace Prisma {
     addressDetailLevel?: true
     cancelReason?: true
     vehicleId?: true
+    allowSmoking?: true
+    allowPets?: true
+    allowLuggage?: true
   }
 
   export type RideMaxAggregateInputType = {
@@ -9318,6 +9330,9 @@ export namespace Prisma {
     addressDetailLevel?: true
     cancelReason?: true
     vehicleId?: true
+    allowSmoking?: true
+    allowPets?: true
+    allowLuggage?: true
   }
 
   export type RideCountAggregateInputType = {
@@ -9353,6 +9368,9 @@ export namespace Prisma {
     addressDetailLevel?: true
     cancelReason?: true
     vehicleId?: true
+    allowSmoking?: true
+    allowPets?: true
+    allowLuggage?: true
     _all?: true
   }
 
@@ -9475,6 +9493,9 @@ export namespace Prisma {
     addressDetailLevel: string | null
     cancelReason: string | null
     vehicleId: string | null
+    allowSmoking: boolean
+    allowPets: boolean
+    allowLuggage: boolean
     _count: RideCountAggregateOutputType | null
     _avg: RideAvgAggregateOutputType | null
     _sum: RideSumAggregateOutputType | null
@@ -9529,6 +9550,9 @@ export namespace Prisma {
     addressDetailLevel?: boolean
     cancelReason?: boolean
     vehicleId?: boolean
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     driver?: boolean | UserDefaultArgs<ExtArgs>
     vehicle?: boolean | Ride$vehicleArgs<ExtArgs>
     bookings?: boolean | Ride$bookingsArgs<ExtArgs>
@@ -9571,6 +9595,9 @@ export namespace Prisma {
     addressDetailLevel?: boolean
     cancelReason?: boolean
     vehicleId?: boolean
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     driver?: boolean | UserDefaultArgs<ExtArgs>
     vehicle?: boolean | Ride$vehicleArgs<ExtArgs>
   }, ExtArgs["result"]["ride"]>
@@ -9608,6 +9635,9 @@ export namespace Prisma {
     addressDetailLevel?: boolean
     cancelReason?: boolean
     vehicleId?: boolean
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
   }
 
   export type RideInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9667,6 +9697,9 @@ export namespace Prisma {
       addressDetailLevel: string | null
       cancelReason: string | null
       vehicleId: string | null
+      allowSmoking: boolean
+      allowPets: boolean
+      allowLuggage: boolean
     }, ExtArgs["result"]["ride"]>
     composites: {}
   }
@@ -10098,6 +10131,9 @@ export namespace Prisma {
     readonly addressDetailLevel: FieldRef<"Ride", 'String'>
     readonly cancelReason: FieldRef<"Ride", 'String'>
     readonly vehicleId: FieldRef<"Ride", 'String'>
+    readonly allowSmoking: FieldRef<"Ride", 'Boolean'>
+    readonly allowPets: FieldRef<"Ride", 'Boolean'>
+    readonly allowLuggage: FieldRef<"Ride", 'Boolean'>
   }
     
 
@@ -20908,7 +20944,10 @@ export namespace Prisma {
     destAddressType: 'destAddressType',
     addressDetailLevel: 'addressDetailLevel',
     cancelReason: 'cancelReason',
-    vehicleId: 'vehicleId'
+    vehicleId: 'vehicleId',
+    allowSmoking: 'allowSmoking',
+    allowPets: 'allowPets',
+    allowLuggage: 'allowLuggage'
   };
 
   export type RideScalarFieldEnum = (typeof RideScalarFieldEnum)[keyof typeof RideScalarFieldEnum]
@@ -21884,6 +21923,9 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableFilter<"Ride"> | string | null
     cancelReason?: StringNullableFilter<"Ride"> | string | null
     vehicleId?: StringNullableFilter<"Ride"> | string | null
+    allowSmoking?: BoolFilter<"Ride"> | boolean
+    allowPets?: BoolFilter<"Ride"> | boolean
+    allowLuggage?: BoolFilter<"Ride"> | boolean
     driver?: XOR<UserRelationFilter, UserWhereInput>
     vehicle?: XOR<VehicleNullableRelationFilter, VehicleWhereInput> | null
     bookings?: BookingListRelationFilter
@@ -21925,6 +21967,9 @@ export namespace Prisma {
     addressDetailLevel?: SortOrderInput | SortOrder
     cancelReason?: SortOrderInput | SortOrder
     vehicleId?: SortOrderInput | SortOrder
+    allowSmoking?: SortOrder
+    allowPets?: SortOrder
+    allowLuggage?: SortOrder
     driver?: UserOrderByWithRelationInput
     vehicle?: VehicleOrderByWithRelationInput
     bookings?: BookingOrderByRelationAggregateInput
@@ -21969,6 +22014,9 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableFilter<"Ride"> | string | null
     cancelReason?: StringNullableFilter<"Ride"> | string | null
     vehicleId?: StringNullableFilter<"Ride"> | string | null
+    allowSmoking?: BoolFilter<"Ride"> | boolean
+    allowPets?: BoolFilter<"Ride"> | boolean
+    allowLuggage?: BoolFilter<"Ride"> | boolean
     driver?: XOR<UserRelationFilter, UserWhereInput>
     vehicle?: XOR<VehicleNullableRelationFilter, VehicleWhereInput> | null
     bookings?: BookingListRelationFilter
@@ -22010,6 +22058,9 @@ export namespace Prisma {
     addressDetailLevel?: SortOrderInput | SortOrder
     cancelReason?: SortOrderInput | SortOrder
     vehicleId?: SortOrderInput | SortOrder
+    allowSmoking?: SortOrder
+    allowPets?: SortOrder
+    allowLuggage?: SortOrder
     _count?: RideCountOrderByAggregateInput
     _avg?: RideAvgOrderByAggregateInput
     _max?: RideMaxOrderByAggregateInput
@@ -22053,6 +22104,9 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     cancelReason?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     vehicleId?: StringNullableWithAggregatesFilter<"Ride"> | string | null
+    allowSmoking?: BoolWithAggregatesFilter<"Ride"> | boolean
+    allowPets?: BoolWithAggregatesFilter<"Ride"> | boolean
+    allowLuggage?: BoolWithAggregatesFilter<"Ride"> | boolean
   }
 
   export type BookingWhereInput = {
@@ -23516,6 +23570,9 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
@@ -23557,6 +23614,9 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
@@ -23594,6 +23654,9 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
@@ -23635,6 +23698,9 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
@@ -23674,6 +23740,9 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
   }
 
   export type RideUpdateManyMutationInput = {
@@ -23707,6 +23776,9 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type RideUncheckedUpdateManyInput = {
@@ -23742,6 +23814,9 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type BookingCreateInput = {
@@ -25372,6 +25447,9 @@ export namespace Prisma {
     addressDetailLevel?: SortOrder
     cancelReason?: SortOrder
     vehicleId?: SortOrder
+    allowSmoking?: SortOrder
+    allowPets?: SortOrder
+    allowLuggage?: SortOrder
   }
 
   export type RideAvgOrderByAggregateInput = {
@@ -25418,6 +25496,9 @@ export namespace Prisma {
     addressDetailLevel?: SortOrder
     cancelReason?: SortOrder
     vehicleId?: SortOrder
+    allowSmoking?: SortOrder
+    allowPets?: SortOrder
+    allowLuggage?: SortOrder
   }
 
   export type RideMinOrderByAggregateInput = {
@@ -25453,6 +25534,9 @@ export namespace Prisma {
     addressDetailLevel?: SortOrder
     cancelReason?: SortOrder
     vehicleId?: SortOrder
+    allowSmoking?: SortOrder
+    allowPets?: SortOrder
+    allowLuggage?: SortOrder
   }
 
   export type RideSumOrderByAggregateInput = {
@@ -27994,6 +28078,9 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
     reviews?: ReviewCreateNestedManyWithoutRideInput
@@ -28033,6 +28120,9 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
@@ -28609,6 +28699,9 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableFilter<"Ride"> | string | null
     cancelReason?: StringNullableFilter<"Ride"> | string | null
     vehicleId?: StringNullableFilter<"Ride"> | string | null
+    allowSmoking?: BoolFilter<"Ride"> | boolean
+    allowPets?: BoolFilter<"Ride"> | boolean
+    allowLuggage?: BoolFilter<"Ride"> | boolean
   }
 
   export type BookingUpsertWithWhereUniqueWithoutPassengerInput = {
@@ -29390,6 +29483,9 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
@@ -29430,6 +29526,9 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     reports?: ReportUncheckedCreateNestedManyWithoutRideInput
@@ -29624,6 +29723,9 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
@@ -29664,6 +29766,9 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
@@ -30562,6 +30667,9 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
     reviews?: ReviewCreateNestedManyWithoutRideInput
@@ -30602,6 +30710,9 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
     reports?: ReportUncheckedCreateNestedManyWithoutRideInput
@@ -30759,6 +30870,9 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
     reviews?: ReviewUpdateManyWithoutRideNestedInput
@@ -30799,6 +30913,9 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
     reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
@@ -30928,6 +31045,9 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
@@ -30968,6 +31088,9 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
     reports?: ReportUncheckedCreateNestedManyWithoutRideInput
@@ -31162,6 +31285,9 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
@@ -31202,6 +31328,9 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
     reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
@@ -31957,6 +32086,9 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     bookings?: BookingCreateNestedManyWithoutRideInput
     reviews?: ReviewCreateNestedManyWithoutRideInput
@@ -31996,6 +32128,9 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
@@ -32278,6 +32413,9 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
@@ -32318,6 +32456,9 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
@@ -32585,6 +32726,9 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
@@ -32625,6 +32769,9 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
@@ -32729,6 +32876,9 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
   }
 
   export type BookingCreateManyPassengerInput = {
@@ -32922,6 +33072,9 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
     reviews?: ReviewUpdateManyWithoutRideNestedInput
@@ -32961,6 +33114,9 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
@@ -32999,6 +33155,9 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type BookingUpdateWithoutPassengerInput = {
@@ -33855,6 +34014,9 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
   }
 
   export type RideUpdateWithoutVehicleInput = {
@@ -33888,6 +34050,9 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
     reviews?: ReviewUpdateManyWithoutRideNestedInput
@@ -33927,6 +34092,9 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
@@ -33965,6 +34133,9 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
   }
 
 
