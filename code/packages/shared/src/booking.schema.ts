@@ -12,6 +12,11 @@ export const createBookingSchema = z.object({
   passengerLat: z.number().min(-90).max(90).optional(),
   passengerLng: z.number().min(-180).max(180).optional(),
   pickupAddress: z.string().max(500).optional(),
+  // Điểm trả khách riêng — Multi-Passenger Carpooling
+  // Khi không truyền: khách xuống cùng điểm đến (destination) của tài xế
+  dropoffLat: z.number().min(-90).max(90).optional(),
+  dropoffLng: z.number().min(-180).max(180).optional(),
+  dropoffAddress: z.string().max(500).optional(),
 });
 
 export const updateBookingStatusSchema = z.object({

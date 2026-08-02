@@ -1,11 +1,12 @@
+import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 import http from 'http';
 import express from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import cors from 'cors';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const app = express();
 
@@ -31,6 +32,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'API Gateway is running' });
 });
 
+// Xử lý Chrome DevTools probe request để tránh lỗi 404 & CSP trên Console
+app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
+  res.status(204).end();
+});
+
 // Proxy rules for Microservices
 // 1. Notification Service
 app.use(
@@ -38,16 +44,27 @@ app.use(
   createProxyMiddleware({
     target: NOTIFICATION_SERVICE_URL,
     changeOrigin: true,
+    on: {
+      error: (err, req, res) => {
+        console.error(`[API Gateway Error] Proxy to Notification Service failed (${req.method} ${req.url}):`, err.message);
+        if (!res.headersSent) {
+          (res as any).status(502).json({ message: 'Bad Gateway: Notification Service không phản hồi' });
+        }
+      },
+    },
   })
 );
 
 // 2. Socket.IO path — cần proxy riêng với WS support đúng cách
-// Socket.IO dùng path /socket.io/ cho cả polling và WebSocket upgrade
-// http-proxy-middleware cần http.Server (không phải Express app) để handle WS upgrade
 const socketProxy = createProxyMiddleware({
   target: MONOLITH_URL,
   changeOrigin: true,
   ws: true,
+  on: {
+    error: (err) => {
+      console.error('[API Gateway Error] Socket Proxy error:', err.message);
+    },
+  },
 });
 app.use('/socket.io', socketProxy);
 
@@ -57,7 +74,14 @@ app.use(
   createProxyMiddleware({
     target: MONOLITH_URL,
     changeOrigin: true,
-    // Không bật ws ở đây — đã xử lý riêng ở rule Socket.IO trên
+    on: {
+      error: (err, req, res) => {
+        console.error(`[API Gateway Error] Proxy to Monolith failed (${req.method} ${req.url}):`, err.message);
+        if (!res.headersSent) {
+          (res as any).status(502).json({ message: 'Bad Gateway: Backend Monolith không phản hồi', error: err.message });
+        }
+      },
+    },
   })
 );
 

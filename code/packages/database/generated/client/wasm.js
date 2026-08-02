@@ -242,6 +242,10 @@ exports.Prisma.BookingScalarFieldEnum = {
   passengerLng: 'passengerLng',
   pickupAddress: 'pickupAddress',
   isPickedUp: 'isPickedUp',
+  dropoffLat: 'dropoffLat',
+  dropoffLng: 'dropoffLng',
+  dropoffAddress: 'dropoffAddress',
+  isDroppedOff: 'isDroppedOff',
   cancelReason: 'cancelReason',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

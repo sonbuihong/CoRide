@@ -1,12 +1,13 @@
+import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import amqp from 'amqplib';
 import { PrismaClient } from '@repo/database';
-
-dotenv.config();
 
 const app = express();
 const server = http.createServer(app);

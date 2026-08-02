@@ -1,10 +1,14 @@
-import http from 'http';
-import app from './app.js';
-import { initSocket } from './socket/socket.server.js';
-import { connectRedis } from './shared/lib/redis.js';
-import { connectRabbitMQ } from './shared/lib/rabbitmq.js';
+import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-const port = Number(process.env.PORT ?? '5001');
+import http from 'http';
+import app from './app';
+import { initSocket } from './socket/socket.server';
+import { connectRedis } from './shared/lib/redis';
+import { connectRabbitMQ } from './shared/lib/rabbitmq';
+
+const port = Number(process.env.PORT ?? '5002');
 
 // Chỉ listen khi không ở môi trường test — Jest sẽ import app trực tiếp từ app.ts
 if (process.env.NODE_ENV !== 'test') {
@@ -23,6 +27,16 @@ if (process.env.NODE_ENV !== 'test') {
   // Kết nối RabbitMQ (Publisher)
   connectRabbitMQ().catch((err) => {
     console.error('[RabbitMQ] Startup connection failed:', err.message);
+  });
+
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`[server]: Port ${port} is already in use.`);
+      console.error(`[server]: Run "taskkill /F /IM node.exe" (Windows) or "kill $(lsof -ti:${port})" (Mac/Linux) to free the port.`);
+      process.exit(1);
+    } else {
+      throw err;
+    }
   });
 
   server.listen(port, () => {

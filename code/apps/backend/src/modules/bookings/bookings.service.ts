@@ -121,6 +121,10 @@ export class BookingsService {
         passengerLat: (data as any).passengerLat,
         passengerLng: (data as any).passengerLng,
         pickupAddress: (data as any).pickupAddress ?? null,
+        // Multi-Passenger: điểm trả khách riêng (null = xuống cùng điểm đến tài xế)
+        dropoffLat: (data as any).dropoffLat ?? null,
+        dropoffLng: (data as any).dropoffLng ?? null,
+        dropoffAddress: (data as any).dropoffAddress ?? null,
       },
       include: {
         ride: { select: { origin: true, destination: true } },
@@ -219,10 +223,9 @@ export class BookingsService {
       driverDestLng: ride.destinationLng,
       passengerPickupLat: (data as any).passengerLat,
       passengerPickupLng: (data as any).passengerLng,
-      // Hành khách không cung cấp điểm đến riêng → dùng điểm đến của ride làm fallback
-      // Frontend có thể gửi thêm trường này trong tương lai
-      passengerDestLat: ride.destinationLat,
-      passengerDestLng: ride.destinationLng,
+      // Multi-Passenger: dùng điểm đến riêng của khách nếu có, fallback về điểm đến ride
+      passengerDestLat: (data as any).dropoffLat ?? ride.destinationLat,
+      passengerDestLng: (data as any).dropoffLng ?? ride.destinationLng,
       maxDetourKm: MAX_DETOUR_KM,
       maxDestDeviationKm: MAX_DEST_DEVIATION_KM,
       currentWaypoints,
@@ -237,7 +240,7 @@ export class BookingsService {
       throw new AppError(`Không thể ghép chuyến: ${reason}`, 400);
     }
 
-    // Tạo Booking PENDING với thông tin toạ độ đón
+    // Tạo Booking PENDING với thông tin toạ độ đón + điểm trả riêng (Multi-Passenger)
     const booking = await prisma.booking.create({
       data: {
         rideId,
@@ -248,6 +251,10 @@ export class BookingsService {
         passengerLat: (data as any).passengerLat,
         passengerLng: (data as any).passengerLng,
         pickupAddress: (data as any).pickupAddress ?? null,
+        // Multi-Passenger: điểm trả khách riêng
+        dropoffLat: (data as any).dropoffLat ?? null,
+        dropoffLng: (data as any).dropoffLng ?? null,
+        dropoffAddress: (data as any).dropoffAddress ?? null,
       },
       include: {
         ride: { select: { origin: true, destination: true } },
@@ -669,10 +676,29 @@ export class BookingsService {
       throw new AppError('Hành khách này chưa lên xe hoặc đã hoàn thành', 400);
     }
 
-    const updatedBooking = await prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: BookingStatus.COMPLETED },
-      include: { passenger: { select: { id: true } } }
+    if (booking.isDroppedOff) {
+      throw new AppError('Hành khách này đã được trả trước đó', 400);
+    }
+
+    // Multi-Passenger: đánh dấu trả khách + hoàn thành booking trong cùng transaction
+    // Hoàn lại 1 ghế trống sau khi trả khách (khách đã xuống xe = chỗ ngồi được giải phóng)
+    const [updatedBooking] = await prisma.$transaction(async (tx) => {
+      const dropped = await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          isDroppedOff: true,
+          status: BookingStatus.COMPLETED,
+        },
+        include: { passenger: { select: { id: true } } },
+      });
+
+      // Hoàn lại ghế trống cho chuyến đi — khách đã xuống, ghế có thể nhận khách mới
+      await tx.ride.update({
+        where: { id: booking.rideId },
+        data: { availableSeats: { increment: booking.seats } },
+      });
+
+      return [dropped];
     });
 
     // Notify passenger realtime — dùng user: prefix chuẩn
@@ -680,12 +706,19 @@ export class BookingsService {
       const completedPayload = {
         bookingId,
         rideId: booking.rideId,
+        dropoffAddress: booking.dropoffAddress ?? booking.ride.destination,
         message: 'Tài xế đã kết thúc hành trình của bạn. Cảm ơn bạn đã sử dụng dịch vụ!',
       };
 
       SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_COMPLETED, completedPayload);
       // Emit tới ride room để Driver cũng biết đã hoàn thành
       SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.BOOKING_COMPLETED, completedPayload);
+
+      // Broadcast ghế được hoàn lại — các client xem danh sách có thể thấy chuyến lại
+      SocketEventService.emitGlobal(SocketEvents.RIDE_SEATS_UPDATED, {
+        rideId: booking.rideId,
+        availableSeats: booking.ride.availableSeats + booking.seats,
+      });
     } catch (socketErr) {
       console.warn('[BookingsService] Socket emit booking:completed failed:', socketErr);
     }
@@ -848,10 +881,15 @@ export class BookingsService {
         totalPrice: true,
         status: true,
         isPickedUp: true,
+        isDroppedOff: true,
         createdAt: true,
         passengerLat: true,
         passengerLng: true,
         pickupAddress: true,
+        // Multi-Passenger: điểm trả khách riêng
+        dropoffLat: true,
+        dropoffLng: true,
+        dropoffAddress: true,
         ride: {
           select: {
             id: true,

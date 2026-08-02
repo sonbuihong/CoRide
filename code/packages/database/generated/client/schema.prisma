@@ -251,6 +251,11 @@ model Ride {
   vehicleId String?
   vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
 
+  // Quy định chuyến đi — tài xế thiết lập khi đăng chuyến
+  allowSmoking Boolean @default(false)
+  allowPets    Boolean @default(false)
+  allowLuggage Boolean @default(true)
+
   // Relations
   bookings Booking[]
   reviews  Review[]
@@ -283,6 +288,17 @@ model Booking {
   // Tài xế đã đón khách lên xe hay chưa — chỉ có ý nghĩa khi status = CONFIRMED và ride = ONGOING
   // false: đang trên đường đến điểm đón | true: đã đón khách, đang di chuyển về đích
   isPickedUp Boolean @default(false)
+
+  // Điểm trả khách (Drop-off) riêng của từng hành khách — Multi-Passenger Carpooling
+  // Khi null: khách xuống cùng điểm đến (destination) của tài xế
+  // Khi có giá trị: khách xuống tại vị trí riêng dọc đường
+  dropoffLat     Float?
+  dropoffLng     Float?
+  dropoffAddress String?
+
+  // Tài xế đã trả khách hay chưa — phân biệt "đã trả" vs "chuyến hoàn thành"
+  // Cho phép trả từng khách riêng lẻ trong chuyến Multi-Passenger
+  isDroppedOff Boolean @default(false)
 
   cancelReason String?
 

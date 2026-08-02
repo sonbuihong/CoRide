@@ -10578,6 +10578,8 @@ export namespace Prisma {
     totalPrice: number | null
     passengerLat: number | null
     passengerLng: number | null
+    dropoffLat: number | null
+    dropoffLng: number | null
   }
 
   export type BookingSumAggregateOutputType = {
@@ -10585,6 +10587,8 @@ export namespace Prisma {
     totalPrice: number | null
     passengerLat: number | null
     passengerLng: number | null
+    dropoffLat: number | null
+    dropoffLng: number | null
   }
 
   export type BookingMinAggregateOutputType = {
@@ -10599,6 +10603,10 @@ export namespace Prisma {
     passengerLng: number | null
     pickupAddress: string | null
     isPickedUp: boolean | null
+    dropoffLat: number | null
+    dropoffLng: number | null
+    dropoffAddress: string | null
+    isDroppedOff: boolean | null
     cancelReason: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -10616,6 +10624,10 @@ export namespace Prisma {
     passengerLng: number | null
     pickupAddress: string | null
     isPickedUp: boolean | null
+    dropoffLat: number | null
+    dropoffLng: number | null
+    dropoffAddress: string | null
+    isDroppedOff: boolean | null
     cancelReason: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -10633,6 +10645,10 @@ export namespace Prisma {
     passengerLng: number
     pickupAddress: number
     isPickedUp: number
+    dropoffLat: number
+    dropoffLng: number
+    dropoffAddress: number
+    isDroppedOff: number
     cancelReason: number
     createdAt: number
     updatedAt: number
@@ -10645,6 +10661,8 @@ export namespace Prisma {
     totalPrice?: true
     passengerLat?: true
     passengerLng?: true
+    dropoffLat?: true
+    dropoffLng?: true
   }
 
   export type BookingSumAggregateInputType = {
@@ -10652,6 +10670,8 @@ export namespace Prisma {
     totalPrice?: true
     passengerLat?: true
     passengerLng?: true
+    dropoffLat?: true
+    dropoffLng?: true
   }
 
   export type BookingMinAggregateInputType = {
@@ -10666,6 +10686,10 @@ export namespace Prisma {
     passengerLng?: true
     pickupAddress?: true
     isPickedUp?: true
+    dropoffLat?: true
+    dropoffLng?: true
+    dropoffAddress?: true
+    isDroppedOff?: true
     cancelReason?: true
     createdAt?: true
     updatedAt?: true
@@ -10683,6 +10707,10 @@ export namespace Prisma {
     passengerLng?: true
     pickupAddress?: true
     isPickedUp?: true
+    dropoffLat?: true
+    dropoffLng?: true
+    dropoffAddress?: true
+    isDroppedOff?: true
     cancelReason?: true
     createdAt?: true
     updatedAt?: true
@@ -10700,6 +10728,10 @@ export namespace Prisma {
     passengerLng?: true
     pickupAddress?: true
     isPickedUp?: true
+    dropoffLat?: true
+    dropoffLng?: true
+    dropoffAddress?: true
+    isDroppedOff?: true
     cancelReason?: true
     createdAt?: true
     updatedAt?: true
@@ -10804,6 +10836,10 @@ export namespace Prisma {
     passengerLng: number | null
     pickupAddress: string | null
     isPickedUp: boolean
+    dropoffLat: number | null
+    dropoffLng: number | null
+    dropoffAddress: string | null
+    isDroppedOff: boolean
     cancelReason: string | null
     createdAt: Date
     updatedAt: Date
@@ -10840,6 +10876,10 @@ export namespace Prisma {
     passengerLng?: boolean
     pickupAddress?: boolean
     isPickedUp?: boolean
+    dropoffLat?: boolean
+    dropoffLng?: boolean
+    dropoffAddress?: boolean
+    isDroppedOff?: boolean
     cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -10861,6 +10901,10 @@ export namespace Prisma {
     passengerLng?: boolean
     pickupAddress?: boolean
     isPickedUp?: boolean
+    dropoffLat?: boolean
+    dropoffLng?: boolean
+    dropoffAddress?: boolean
+    isDroppedOff?: boolean
     cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -10880,6 +10924,10 @@ export namespace Prisma {
     passengerLng?: boolean
     pickupAddress?: boolean
     isPickedUp?: boolean
+    dropoffLat?: boolean
+    dropoffLng?: boolean
+    dropoffAddress?: boolean
+    isDroppedOff?: boolean
     cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -10915,6 +10963,10 @@ export namespace Prisma {
       passengerLng: number | null
       pickupAddress: string | null
       isPickedUp: boolean
+      dropoffLat: number | null
+      dropoffLng: number | null
+      dropoffAddress: string | null
+      isDroppedOff: boolean
       cancelReason: string | null
       createdAt: Date
       updatedAt: Date
@@ -11325,6 +11377,10 @@ export namespace Prisma {
     readonly passengerLng: FieldRef<"Booking", 'Float'>
     readonly pickupAddress: FieldRef<"Booking", 'String'>
     readonly isPickedUp: FieldRef<"Booking", 'Boolean'>
+    readonly dropoffLat: FieldRef<"Booking", 'Float'>
+    readonly dropoffLng: FieldRef<"Booking", 'Float'>
+    readonly dropoffAddress: FieldRef<"Booking", 'String'>
+    readonly isDroppedOff: FieldRef<"Booking", 'Boolean'>
     readonly cancelReason: FieldRef<"Booking", 'String'>
     readonly createdAt: FieldRef<"Booking", 'DateTime'>
     readonly updatedAt: FieldRef<"Booking", 'DateTime'>
@@ -20965,6 +21021,10 @@ export namespace Prisma {
     passengerLng: 'passengerLng',
     pickupAddress: 'pickupAddress',
     isPickedUp: 'isPickedUp',
+    dropoffLat: 'dropoffLat',
+    dropoffLng: 'dropoffLng',
+    dropoffAddress: 'dropoffAddress',
+    isDroppedOff: 'isDroppedOff',
     cancelReason: 'cancelReason',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -22124,6 +22184,10 @@ export namespace Prisma {
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
     isPickedUp?: BoolFilter<"Booking"> | boolean
+    dropoffLat?: FloatNullableFilter<"Booking"> | number | null
+    dropoffLng?: FloatNullableFilter<"Booking"> | number | null
+    dropoffAddress?: StringNullableFilter<"Booking"> | string | null
+    isDroppedOff?: BoolFilter<"Booking"> | boolean
     cancelReason?: StringNullableFilter<"Booking"> | string | null
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
@@ -22144,6 +22208,10 @@ export namespace Prisma {
     passengerLng?: SortOrderInput | SortOrder
     pickupAddress?: SortOrderInput | SortOrder
     isPickedUp?: SortOrder
+    dropoffLat?: SortOrderInput | SortOrder
+    dropoffLng?: SortOrderInput | SortOrder
+    dropoffAddress?: SortOrderInput | SortOrder
+    isDroppedOff?: SortOrder
     cancelReason?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -22167,6 +22235,10 @@ export namespace Prisma {
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
     isPickedUp?: BoolFilter<"Booking"> | boolean
+    dropoffLat?: FloatNullableFilter<"Booking"> | number | null
+    dropoffLng?: FloatNullableFilter<"Booking"> | number | null
+    dropoffAddress?: StringNullableFilter<"Booking"> | string | null
+    isDroppedOff?: BoolFilter<"Booking"> | boolean
     cancelReason?: StringNullableFilter<"Booking"> | string | null
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
@@ -22187,6 +22259,10 @@ export namespace Prisma {
     passengerLng?: SortOrderInput | SortOrder
     pickupAddress?: SortOrderInput | SortOrder
     isPickedUp?: SortOrder
+    dropoffLat?: SortOrderInput | SortOrder
+    dropoffLng?: SortOrderInput | SortOrder
+    dropoffAddress?: SortOrderInput | SortOrder
+    isDroppedOff?: SortOrder
     cancelReason?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -22212,6 +22288,10 @@ export namespace Prisma {
     passengerLng?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     pickupAddress?: StringNullableWithAggregatesFilter<"Booking"> | string | null
     isPickedUp?: BoolWithAggregatesFilter<"Booking"> | boolean
+    dropoffLat?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
+    dropoffLng?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
+    dropoffAddress?: StringNullableWithAggregatesFilter<"Booking"> | string | null
+    isDroppedOff?: BoolWithAggregatesFilter<"Booking"> | boolean
     cancelReason?: StringNullableWithAggregatesFilter<"Booking"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Booking"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Booking"> | Date | string
@@ -23829,6 +23909,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -23849,6 +23933,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -23865,6 +23953,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23885,6 +23977,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23903,6 +23999,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -23918,6 +24018,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23935,6 +24039,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25602,6 +25710,10 @@ export namespace Prisma {
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
     isPickedUp?: SortOrder
+    dropoffLat?: SortOrder
+    dropoffLng?: SortOrder
+    dropoffAddress?: SortOrder
+    isDroppedOff?: SortOrder
     cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -25612,6 +25724,8 @@ export namespace Prisma {
     totalPrice?: SortOrder
     passengerLat?: SortOrder
     passengerLng?: SortOrder
+    dropoffLat?: SortOrder
+    dropoffLng?: SortOrder
   }
 
   export type BookingMaxOrderByAggregateInput = {
@@ -25626,6 +25740,10 @@ export namespace Prisma {
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
     isPickedUp?: SortOrder
+    dropoffLat?: SortOrder
+    dropoffLng?: SortOrder
+    dropoffAddress?: SortOrder
+    isDroppedOff?: SortOrder
     cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -25643,6 +25761,10 @@ export namespace Prisma {
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
     isPickedUp?: SortOrder
+    dropoffLat?: SortOrder
+    dropoffLng?: SortOrder
+    dropoffAddress?: SortOrder
+    isDroppedOff?: SortOrder
     cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -25653,6 +25775,8 @@ export namespace Prisma {
     totalPrice?: SortOrder
     passengerLat?: SortOrder
     passengerLng?: SortOrder
+    dropoffLat?: SortOrder
+    dropoffLng?: SortOrder
   }
 
   export type EnumBookingStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -28149,6 +28273,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -28167,6 +28295,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -28735,6 +28867,10 @@ export namespace Prisma {
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
     isPickedUp?: BoolFilter<"Booking"> | boolean
+    dropoffLat?: FloatNullableFilter<"Booking"> | number | null
+    dropoffLng?: FloatNullableFilter<"Booking"> | number | null
+    dropoffAddress?: StringNullableFilter<"Booking"> | string | null
+    isDroppedOff?: BoolFilter<"Booking"> | boolean
     cancelReason?: StringNullableFilter<"Booking"> | string | null
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
@@ -29349,6 +29485,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -29368,6 +29508,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -29428,6 +29572,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29447,6 +29595,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30334,6 +30486,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -30352,6 +30508,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -32892,6 +33052,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -33170,6 +33334,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33188,6 +33356,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33205,6 +33377,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33707,6 +33883,10 @@ export namespace Prisma {
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -33753,6 +33933,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33771,6 +33955,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33788,6 +33976,10 @@ export namespace Prisma {
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

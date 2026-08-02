@@ -289,6 +289,17 @@ model Booking {
   // false: đang trên đường đến điểm đón | true: đã đón khách, đang di chuyển về đích
   isPickedUp    Boolean  @default(false)
 
+  // Điểm trả khách (Drop-off) riêng của từng hành khách — Multi-Passenger Carpooling
+  // Khi null: khách xuống cùng điểm đến (destination) của tài xế
+  // Khi có giá trị: khách xuống tại vị trí riêng dọc đường
+  dropoffLat     Float?
+  dropoffLng     Float?
+  dropoffAddress String?
+
+  // Tài xế đã trả khách hay chưa — phân biệt "đã trả" vs "chuyến hoàn thành"
+  // Cho phép trả từng khách riêng lẻ trong chuyến Multi-Passenger
+  isDroppedOff   Boolean  @default(false)
+
   cancelReason  String?
 
   createdAt     DateTime      @default(now())

@@ -4,10 +4,8 @@ import * as controller from './controller';
 
 const router = Router();
 
-router.use(authenticate as any);
-
-router.get('/', controller.getNotifications as any);
-router.patch('/read-all', controller.markAllAsRead as any);
-router.patch('/:id/read', controller.markAsRead as any);
+router.get('/', authenticate as any, controller.getNotifications as any);
+router.patch('/read-all', authenticate as any, controller.markAllAsRead as any);
+router.patch('/:id/read', authenticate as any, controller.markAsRead as any);
 
 export default router;

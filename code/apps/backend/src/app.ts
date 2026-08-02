@@ -1,12 +1,14 @@
+import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec, swaggerUiOptions } from './config/swagger';
-import path from 'path';
 import fs from 'fs';
 
 // Modules
@@ -29,19 +31,18 @@ import reportsRouter from './modules/reports/reports.router';
 // Global error handler — PHẢI import cuối cùng
 import { errorHandler } from './shared/errors/errorHandler';
 
-dotenv.config({ path: require('path').resolve(__dirname, '../.env') });
-
 const app = express();
 
 // ─── Swagger UI — đặt TRƯỚC helmet() để tránh bị chặn bởi Content-Security-Policy
 // Chỉ bật ở development — production không cần expose API docs
 if (process.env.NODE_ENV !== 'production') {
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+  
   app.get('/api/docs.json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
   });
-  console.log('[docs]: Swagger UI → http://localhost:5001/api/docs');
+  console.log('[docs]: Swagger UI → http://localhost:5001/api/docs/');
 }
 
 // ─── CORS — PHẢI đặt TRƯỚC rate limiter ───────────────────────────────────────
@@ -56,7 +57,16 @@ if (process.env.NODE_ENV !== 'production') {
 // );
 
 // ─── Security Middlewares ──────────────────────────────────────────────────────
-app.use(helmet());
+// Ở môi trường development hoặc Swagger UI (/api/docs/), tắt CSP để không chặn Chrome DevTools / Socket.IO / Local assets
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV !== 'production' || req.path.startsWith('/api/docs')) {
+    return helmet({
+      contentSecurityPolicy: false,
+    })(req, res, next);
+  }
+  return helmet()(req, res, next);
+});
+
 
 // Rate limiting — chống brute-force và DDoS cơ bản
 // Development: 300 req/15 phút. Production nên giảm xuống 60-100.
