@@ -52,6 +52,13 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum PaymentMethod {
+  CASH
+  QR
+  ZALOPAY
+  WALLET
+}
+
 // Hành khách đánh giá tài xế hoặc tài xế đánh giá hành khách
 enum ReviewType {
   DRIVER // Hành khách → Tài xế
@@ -75,6 +82,7 @@ enum TripStatus {
   ACCEPTED // Tài xế đã nhận cuốc
   ARRIVING // Tài xế đang trên đường tới điểm đón
   IN_PROGRESS // Đang trong chuyến đi
+  WAITING_PAYMENT // Trạng thái chờ thanh toán
   COMPLETED // Hoàn thành
   CANCELLED // Bị hủy bởi khách hoặc tài xế
   NO_DRIVER // Hết danh sách tài xế trong bán kính, không ai nhận
@@ -159,18 +167,20 @@ model Wallet {
 }
 
 model Transaction {
-  id          String            @id @default(uuid())
-  walletId    String
-  wallet      Wallet            @relation(fields: [walletId], references: [id])
-  amount      Float
-  type        TransactionType
-  status      TransactionStatus @default(PENDING)
-  description String?
-  externalId  String?           @unique
-  bookingId   String?
-  booking     Booking?          @relation(fields: [bookingId], references: [id])
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id            String            @id @default(uuid())
+  walletId      String
+  wallet        Wallet            @relation(fields: [walletId], references: [id])
+  amount        Float
+  type          TransactionType
+  status        TransactionStatus @default(PENDING)
+  description   String?
+  externalId    String?           @unique
+  bookingId     String?
+  booking       Booking?          @relation(fields: [bookingId], references: [id])
+  tripRequestId String?
+  tripRequest   TripRequest?      @relation(fields: [tripRequestId], references: [id])
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 }
 
 model Message {
@@ -403,6 +413,11 @@ model TripRequest {
   estimatedDuration Float // Thời gian ước tính (phút)
   estimatedPrice    Float // Giá tiền ước tính (VND)
   finalPrice        Float? // Giá cuối cùng (có thể khác nếu đường đi thực tế khác)
+
+  // Thanh toán
+  paymentStatus PaymentStatus  @default(UNPAID)
+  paymentMethod PaymentMethod?
+  transactions  Transaction[]
 
   // Trạng thái lifecycle
   status TripStatus @default(PENDING)

@@ -159,6 +159,7 @@ exports.Prisma.TransactionScalarFieldEnum = {
   description: 'description',
   externalId: 'externalId',
   bookingId: 'bookingId',
+  tripRequestId: 'tripRequestId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -315,6 +316,8 @@ exports.Prisma.TripRequestScalarFieldEnum = {
   estimatedDuration: 'estimatedDuration',
   estimatedPrice: 'estimatedPrice',
   finalPrice: 'finalPrice',
+  paymentStatus: 'paymentStatus',
+  paymentMethod: 'paymentMethod',
   status: 'status',
   matchAttempts: 'matchAttempts',
   maxAttempts: 'maxAttempts',
@@ -446,12 +449,20 @@ exports.VehicleType = exports.$Enums.VehicleType = {
   CAR: 'CAR'
 };
 
+exports.PaymentMethod = exports.$Enums.PaymentMethod = {
+  CASH: 'CASH',
+  QR: 'QR',
+  ZALOPAY: 'ZALOPAY',
+  WALLET: 'WALLET'
+};
+
 exports.TripStatus = exports.$Enums.TripStatus = {
   PENDING: 'PENDING',
   MATCHING: 'MATCHING',
   ACCEPTED: 'ACCEPTED',
   ARRIVING: 'ARRIVING',
   IN_PROGRESS: 'IN_PROGRESS',
+  WAITING_PAYMENT: 'WAITING_PAYMENT',
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
   NO_DRIVER: 'NO_DRIVER'

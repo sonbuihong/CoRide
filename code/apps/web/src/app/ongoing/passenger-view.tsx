@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { User, Phone, MapPin, Navigation, Loader2, MessageSquare, MoreHorizontal } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
+import { PaymentSimulatorDialog } from '@/components/booking/payment-simulator-dialog';
+import { useState } from 'react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -33,6 +35,7 @@ interface Ride {
 interface PassengerViewData {
   id: string;
   status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'REJECTED';
+  paymentStatus?: 'UNPAID' | 'PAID' | 'REFUNDED';
   isPickedUp?: boolean;
   price?: number;
   totalPrice?: number;
@@ -105,6 +108,7 @@ function getPassengerStatusInfo(data: PassengerViewData): {
 }
 
 export default function PassengerView({ data, onRefresh, isExpanded = true, onExpand }: PassengerViewProps) {
+  const [showPayment, setShowPayment] = useState(false);
   const ride: Ride = data.ride;
   const driver: Driver | undefined = ride.driver;
   const bookingId: string = data.id;
@@ -217,12 +221,26 @@ export default function PassengerView({ data, onRefresh, isExpanded = true, onEx
           >
             Hủy chuyến
           </Button>
+        ) : (bookingStatus === 'CONFIRMED' || bookingStatus === 'COMPLETED') && data.paymentStatus === 'UNPAID' ? (
+          <Button
+            className="w-full h-14 text-[16px] rounded-full bg-[#0071e3] hover:bg-[#0071e3]/90 text-white font-semibold shadow-sm"
+            onClick={() => setShowPayment(true)}
+          >
+            Thanh toán QR
+          </Button>
         ) : (
           <div className="w-full h-14 flex items-center justify-center rounded-full border border-green-500 bg-white text-green-600 font-semibold text-[16px] shadow-sm">
             {statusText}
           </div>
         )}
       </div>
+
+      <PaymentSimulatorDialog 
+        isOpen={showPayment}
+        onClose={() => setShowPayment(false)}
+        bookingId={bookingId}
+        onPaymentSuccess={onRefresh}
+      />
     </div>
   );
 }

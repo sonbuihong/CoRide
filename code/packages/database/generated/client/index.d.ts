@@ -187,12 +187,23 @@ export const VehicleType: {
 export type VehicleType = (typeof VehicleType)[keyof typeof VehicleType]
 
 
+export const PaymentMethod: {
+  CASH: 'CASH',
+  QR: 'QR',
+  ZALOPAY: 'ZALOPAY',
+  WALLET: 'WALLET'
+};
+
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
+
+
 export const TripStatus: {
   PENDING: 'PENDING',
   MATCHING: 'MATCHING',
   ACCEPTED: 'ACCEPTED',
   ARRIVING: 'ARRIVING',
   IN_PROGRESS: 'IN_PROGRESS',
+  WAITING_PAYMENT: 'WAITING_PAYMENT',
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
   NO_DRIVER: 'NO_DRIVER'
@@ -254,6 +265,10 @@ export const VerificationStatus: typeof $Enums.VerificationStatus
 export type VehicleType = $Enums.VehicleType
 
 export const VehicleType: typeof $Enums.VehicleType
+
+export type PaymentMethod = $Enums.PaymentMethod
+
+export const PaymentMethod: typeof $Enums.PaymentMethod
 
 export type TripStatus = $Enums.TripStatus
 
@@ -2646,10 +2661,12 @@ export namespace Prisma {
    */
 
   export type TripRequestCountOutputType = {
+    transactions: number
     reports: number
   }
 
   export type TripRequestCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    transactions?: boolean | TripRequestCountOutputTypeCountTransactionsArgs
     reports?: boolean | TripRequestCountOutputTypeCountReportsArgs
   }
 
@@ -2662,6 +2679,13 @@ export namespace Prisma {
      * Select specific fields to fetch from the TripRequestCountOutputType
      */
     select?: TripRequestCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * TripRequestCountOutputType without action
+   */
+  export type TripRequestCountOutputTypeCountTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TransactionWhereInput
   }
 
   /**
@@ -5197,6 +5221,7 @@ export namespace Prisma {
     description: string | null
     externalId: string | null
     bookingId: string | null
+    tripRequestId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5210,6 +5235,7 @@ export namespace Prisma {
     description: string | null
     externalId: string | null
     bookingId: string | null
+    tripRequestId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -5223,6 +5249,7 @@ export namespace Prisma {
     description: number
     externalId: number
     bookingId: number
+    tripRequestId: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -5246,6 +5273,7 @@ export namespace Prisma {
     description?: true
     externalId?: true
     bookingId?: true
+    tripRequestId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5259,6 +5287,7 @@ export namespace Prisma {
     description?: true
     externalId?: true
     bookingId?: true
+    tripRequestId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -5272,6 +5301,7 @@ export namespace Prisma {
     description?: true
     externalId?: true
     bookingId?: true
+    tripRequestId?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -5372,6 +5402,7 @@ export namespace Prisma {
     description: string | null
     externalId: string | null
     bookingId: string | null
+    tripRequestId: string | null
     createdAt: Date
     updatedAt: Date
     _count: TransactionCountAggregateOutputType | null
@@ -5404,10 +5435,12 @@ export namespace Prisma {
     description?: boolean
     externalId?: boolean
     bookingId?: boolean
+    tripRequestId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
     booking?: boolean | Transaction$bookingArgs<ExtArgs>
+    tripRequest?: boolean | Transaction$tripRequestArgs<ExtArgs>
   }, ExtArgs["result"]["transaction"]>
 
   export type TransactionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -5419,10 +5452,12 @@ export namespace Prisma {
     description?: boolean
     externalId?: boolean
     bookingId?: boolean
+    tripRequestId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
     booking?: boolean | Transaction$bookingArgs<ExtArgs>
+    tripRequest?: boolean | Transaction$tripRequestArgs<ExtArgs>
   }, ExtArgs["result"]["transaction"]>
 
   export type TransactionSelectScalar = {
@@ -5434,6 +5469,7 @@ export namespace Prisma {
     description?: boolean
     externalId?: boolean
     bookingId?: boolean
+    tripRequestId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -5441,10 +5477,12 @@ export namespace Prisma {
   export type TransactionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
     booking?: boolean | Transaction$bookingArgs<ExtArgs>
+    tripRequest?: boolean | Transaction$tripRequestArgs<ExtArgs>
   }
   export type TransactionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
     booking?: boolean | Transaction$bookingArgs<ExtArgs>
+    tripRequest?: boolean | Transaction$tripRequestArgs<ExtArgs>
   }
 
   export type $TransactionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5452,6 +5490,7 @@ export namespace Prisma {
     objects: {
       wallet: Prisma.$WalletPayload<ExtArgs>
       booking: Prisma.$BookingPayload<ExtArgs> | null
+      tripRequest: Prisma.$TripRequestPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5462,6 +5501,7 @@ export namespace Prisma {
       description: string | null
       externalId: string | null
       bookingId: string | null
+      tripRequestId: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["transaction"]>
@@ -5830,6 +5870,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     wallet<T extends WalletDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WalletDefaultArgs<ExtArgs>>): Prisma__WalletClient<$Result.GetResult<Prisma.$WalletPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     booking<T extends Transaction$bookingArgs<ExtArgs> = {}>(args?: Subset<T, Transaction$bookingArgs<ExtArgs>>): Prisma__BookingClient<$Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    tripRequest<T extends Transaction$tripRequestArgs<ExtArgs> = {}>(args?: Subset<T, Transaction$tripRequestArgs<ExtArgs>>): Prisma__TripRequestClient<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5867,6 +5908,7 @@ export namespace Prisma {
     readonly description: FieldRef<"Transaction", 'String'>
     readonly externalId: FieldRef<"Transaction", 'String'>
     readonly bookingId: FieldRef<"Transaction", 'String'>
+    readonly tripRequestId: FieldRef<"Transaction", 'String'>
     readonly createdAt: FieldRef<"Transaction", 'DateTime'>
     readonly updatedAt: FieldRef<"Transaction", 'DateTime'>
   }
@@ -6199,6 +6241,21 @@ export namespace Prisma {
      */
     include?: BookingInclude<ExtArgs> | null
     where?: BookingWhereInput
+  }
+
+  /**
+   * Transaction.tripRequest
+   */
+  export type Transaction$tripRequestArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TripRequest
+     */
+    select?: TripRequestSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TripRequestInclude<ExtArgs> | null
+    where?: TripRequestWhereInput
   }
 
   /**
@@ -15701,6 +15758,8 @@ export namespace Prisma {
     estimatedDuration: number | null
     estimatedPrice: number | null
     finalPrice: number | null
+    paymentStatus: $Enums.PaymentStatus | null
+    paymentMethod: $Enums.PaymentMethod | null
     status: $Enums.TripStatus | null
     matchAttempts: number | null
     maxAttempts: number | null
@@ -15729,6 +15788,8 @@ export namespace Prisma {
     estimatedDuration: number | null
     estimatedPrice: number | null
     finalPrice: number | null
+    paymentStatus: $Enums.PaymentStatus | null
+    paymentMethod: $Enums.PaymentMethod | null
     status: $Enums.TripStatus | null
     matchAttempts: number | null
     maxAttempts: number | null
@@ -15757,6 +15818,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice: number
+    paymentStatus: number
+    paymentMethod: number
     status: number
     matchAttempts: number
     maxAttempts: number
@@ -15815,6 +15878,8 @@ export namespace Prisma {
     estimatedDuration?: true
     estimatedPrice?: true
     finalPrice?: true
+    paymentStatus?: true
+    paymentMethod?: true
     status?: true
     matchAttempts?: true
     maxAttempts?: true
@@ -15843,6 +15908,8 @@ export namespace Prisma {
     estimatedDuration?: true
     estimatedPrice?: true
     finalPrice?: true
+    paymentStatus?: true
+    paymentMethod?: true
     status?: true
     matchAttempts?: true
     maxAttempts?: true
@@ -15871,6 +15938,8 @@ export namespace Prisma {
     estimatedDuration?: true
     estimatedPrice?: true
     finalPrice?: true
+    paymentStatus?: true
+    paymentMethod?: true
     status?: true
     matchAttempts?: true
     maxAttempts?: true
@@ -15986,6 +16055,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice: number | null
+    paymentStatus: $Enums.PaymentStatus
+    paymentMethod: $Enums.PaymentMethod | null
     status: $Enums.TripStatus
     matchAttempts: number
     maxAttempts: number
@@ -16033,6 +16104,8 @@ export namespace Prisma {
     estimatedDuration?: boolean
     estimatedPrice?: boolean
     finalPrice?: boolean
+    paymentStatus?: boolean
+    paymentMethod?: boolean
     status?: boolean
     matchAttempts?: boolean
     maxAttempts?: boolean
@@ -16046,6 +16119,7 @@ export namespace Prisma {
     updatedAt?: boolean
     passenger?: boolean | UserDefaultArgs<ExtArgs>
     driver?: boolean | TripRequest$driverArgs<ExtArgs>
+    transactions?: boolean | TripRequest$transactionsArgs<ExtArgs>
     reports?: boolean | TripRequest$reportsArgs<ExtArgs>
     _count?: boolean | TripRequestCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["tripRequest"]>
@@ -16065,6 +16139,8 @@ export namespace Prisma {
     estimatedDuration?: boolean
     estimatedPrice?: boolean
     finalPrice?: boolean
+    paymentStatus?: boolean
+    paymentMethod?: boolean
     status?: boolean
     matchAttempts?: boolean
     maxAttempts?: boolean
@@ -16095,6 +16171,8 @@ export namespace Prisma {
     estimatedDuration?: boolean
     estimatedPrice?: boolean
     finalPrice?: boolean
+    paymentStatus?: boolean
+    paymentMethod?: boolean
     status?: boolean
     matchAttempts?: boolean
     maxAttempts?: boolean
@@ -16111,6 +16189,7 @@ export namespace Prisma {
   export type TripRequestInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     passenger?: boolean | UserDefaultArgs<ExtArgs>
     driver?: boolean | TripRequest$driverArgs<ExtArgs>
+    transactions?: boolean | TripRequest$transactionsArgs<ExtArgs>
     reports?: boolean | TripRequest$reportsArgs<ExtArgs>
     _count?: boolean | TripRequestCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -16124,6 +16203,7 @@ export namespace Prisma {
     objects: {
       passenger: Prisma.$UserPayload<ExtArgs>
       driver: Prisma.$UserPayload<ExtArgs> | null
+      transactions: Prisma.$TransactionPayload<ExtArgs>[]
       reports: Prisma.$ReportPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -16141,6 +16221,8 @@ export namespace Prisma {
       estimatedDuration: number
       estimatedPrice: number
       finalPrice: number | null
+      paymentStatus: $Enums.PaymentStatus
+      paymentMethod: $Enums.PaymentMethod | null
       status: $Enums.TripStatus
       matchAttempts: number
       maxAttempts: number
@@ -16518,6 +16600,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     passenger<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     driver<T extends TripRequest$driverArgs<ExtArgs> = {}>(args?: Subset<T, TripRequest$driverArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    transactions<T extends TripRequest$transactionsArgs<ExtArgs> = {}>(args?: Subset<T, TripRequest$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany"> | Null>
     reports<T extends TripRequest$reportsArgs<ExtArgs> = {}>(args?: Subset<T, TripRequest$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -16562,6 +16645,8 @@ export namespace Prisma {
     readonly estimatedDuration: FieldRef<"TripRequest", 'Float'>
     readonly estimatedPrice: FieldRef<"TripRequest", 'Float'>
     readonly finalPrice: FieldRef<"TripRequest", 'Float'>
+    readonly paymentStatus: FieldRef<"TripRequest", 'PaymentStatus'>
+    readonly paymentMethod: FieldRef<"TripRequest", 'PaymentMethod'>
     readonly status: FieldRef<"TripRequest", 'TripStatus'>
     readonly matchAttempts: FieldRef<"TripRequest", 'Int'>
     readonly maxAttempts: FieldRef<"TripRequest", 'Int'>
@@ -16903,6 +16988,26 @@ export namespace Prisma {
      */
     include?: UserInclude<ExtArgs> | null
     where?: UserWhereInput
+  }
+
+  /**
+   * TripRequest.transactions
+   */
+  export type TripRequest$transactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transaction
+     */
+    select?: TransactionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransactionInclude<ExtArgs> | null
+    where?: TransactionWhereInput
+    orderBy?: TransactionOrderByWithRelationInput | TransactionOrderByWithRelationInput[]
+    cursor?: TransactionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TransactionScalarFieldEnum | TransactionScalarFieldEnum[]
   }
 
   /**
@@ -20923,6 +21028,7 @@ export namespace Prisma {
     description: 'description',
     externalId: 'externalId',
     bookingId: 'bookingId',
+    tripRequestId: 'tripRequestId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -21109,6 +21215,8 @@ export namespace Prisma {
     estimatedDuration: 'estimatedDuration',
     estimatedPrice: 'estimatedPrice',
     finalPrice: 'finalPrice',
+    paymentStatus: 'paymentStatus',
+    paymentMethod: 'paymentMethod',
     status: 'status',
     matchAttempts: 'matchAttempts',
     maxAttempts: 'maxAttempts',
@@ -21403,6 +21511,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'PaymentMethod'
+   */
+  export type EnumPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentMethod'>
+    
+
+
+  /**
+   * Reference to a field of type 'PaymentMethod[]'
+   */
+  export type ListEnumPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentMethod[]'>
+    
+
+
+  /**
    * Reference to a field of type 'TripStatus'
    */
   export type EnumTripStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TripStatus'>
@@ -21678,10 +21800,12 @@ export namespace Prisma {
     description?: StringNullableFilter<"Transaction"> | string | null
     externalId?: StringNullableFilter<"Transaction"> | string | null
     bookingId?: StringNullableFilter<"Transaction"> | string | null
+    tripRequestId?: StringNullableFilter<"Transaction"> | string | null
     createdAt?: DateTimeFilter<"Transaction"> | Date | string
     updatedAt?: DateTimeFilter<"Transaction"> | Date | string
     wallet?: XOR<WalletRelationFilter, WalletWhereInput>
     booking?: XOR<BookingNullableRelationFilter, BookingWhereInput> | null
+    tripRequest?: XOR<TripRequestNullableRelationFilter, TripRequestWhereInput> | null
   }
 
   export type TransactionOrderByWithRelationInput = {
@@ -21693,10 +21817,12 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     externalId?: SortOrderInput | SortOrder
     bookingId?: SortOrderInput | SortOrder
+    tripRequestId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     wallet?: WalletOrderByWithRelationInput
     booking?: BookingOrderByWithRelationInput
+    tripRequest?: TripRequestOrderByWithRelationInput
   }
 
   export type TransactionWhereUniqueInput = Prisma.AtLeast<{
@@ -21711,10 +21837,12 @@ export namespace Prisma {
     status?: EnumTransactionStatusFilter<"Transaction"> | $Enums.TransactionStatus
     description?: StringNullableFilter<"Transaction"> | string | null
     bookingId?: StringNullableFilter<"Transaction"> | string | null
+    tripRequestId?: StringNullableFilter<"Transaction"> | string | null
     createdAt?: DateTimeFilter<"Transaction"> | Date | string
     updatedAt?: DateTimeFilter<"Transaction"> | Date | string
     wallet?: XOR<WalletRelationFilter, WalletWhereInput>
     booking?: XOR<BookingNullableRelationFilter, BookingWhereInput> | null
+    tripRequest?: XOR<TripRequestNullableRelationFilter, TripRequestWhereInput> | null
   }, "id" | "externalId">
 
   export type TransactionOrderByWithAggregationInput = {
@@ -21726,6 +21854,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     externalId?: SortOrderInput | SortOrder
     bookingId?: SortOrderInput | SortOrder
+    tripRequestId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: TransactionCountOrderByAggregateInput
@@ -21747,6 +21876,7 @@ export namespace Prisma {
     description?: StringNullableWithAggregatesFilter<"Transaction"> | string | null
     externalId?: StringNullableWithAggregatesFilter<"Transaction"> | string | null
     bookingId?: StringNullableWithAggregatesFilter<"Transaction"> | string | null
+    tripRequestId?: StringNullableWithAggregatesFilter<"Transaction"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Transaction"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Transaction"> | Date | string
   }
@@ -22625,6 +22755,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFilter<"TripRequest"> | number
     estimatedPrice?: FloatFilter<"TripRequest"> | number
     finalPrice?: FloatNullableFilter<"TripRequest"> | number | null
+    paymentStatus?: EnumPaymentStatusFilter<"TripRequest"> | $Enums.PaymentStatus
+    paymentMethod?: EnumPaymentMethodNullableFilter<"TripRequest"> | $Enums.PaymentMethod | null
     status?: EnumTripStatusFilter<"TripRequest"> | $Enums.TripStatus
     matchAttempts?: IntFilter<"TripRequest"> | number
     maxAttempts?: IntFilter<"TripRequest"> | number
@@ -22638,6 +22770,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"TripRequest"> | Date | string
     passenger?: XOR<UserRelationFilter, UserWhereInput>
     driver?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    transactions?: TransactionListRelationFilter
     reports?: ReportListRelationFilter
   }
 
@@ -22656,6 +22789,8 @@ export namespace Prisma {
     estimatedDuration?: SortOrder
     estimatedPrice?: SortOrder
     finalPrice?: SortOrderInput | SortOrder
+    paymentStatus?: SortOrder
+    paymentMethod?: SortOrderInput | SortOrder
     status?: SortOrder
     matchAttempts?: SortOrder
     maxAttempts?: SortOrder
@@ -22669,6 +22804,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     passenger?: UserOrderByWithRelationInput
     driver?: UserOrderByWithRelationInput
+    transactions?: TransactionOrderByRelationAggregateInput
     reports?: ReportOrderByRelationAggregateInput
   }
 
@@ -22690,6 +22826,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFilter<"TripRequest"> | number
     estimatedPrice?: FloatFilter<"TripRequest"> | number
     finalPrice?: FloatNullableFilter<"TripRequest"> | number | null
+    paymentStatus?: EnumPaymentStatusFilter<"TripRequest"> | $Enums.PaymentStatus
+    paymentMethod?: EnumPaymentMethodNullableFilter<"TripRequest"> | $Enums.PaymentMethod | null
     status?: EnumTripStatusFilter<"TripRequest"> | $Enums.TripStatus
     matchAttempts?: IntFilter<"TripRequest"> | number
     maxAttempts?: IntFilter<"TripRequest"> | number
@@ -22703,6 +22841,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"TripRequest"> | Date | string
     passenger?: XOR<UserRelationFilter, UserWhereInput>
     driver?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    transactions?: TransactionListRelationFilter
     reports?: ReportListRelationFilter
   }, "id">
 
@@ -22721,6 +22860,8 @@ export namespace Prisma {
     estimatedDuration?: SortOrder
     estimatedPrice?: SortOrder
     finalPrice?: SortOrderInput | SortOrder
+    paymentStatus?: SortOrder
+    paymentMethod?: SortOrderInput | SortOrder
     status?: SortOrder
     matchAttempts?: SortOrder
     maxAttempts?: SortOrder
@@ -22757,6 +22898,8 @@ export namespace Prisma {
     estimatedDuration?: FloatWithAggregatesFilter<"TripRequest"> | number
     estimatedPrice?: FloatWithAggregatesFilter<"TripRequest"> | number
     finalPrice?: FloatNullableWithAggregatesFilter<"TripRequest"> | number | null
+    paymentStatus?: EnumPaymentStatusWithAggregatesFilter<"TripRequest"> | $Enums.PaymentStatus
+    paymentMethod?: EnumPaymentMethodNullableWithAggregatesFilter<"TripRequest"> | $Enums.PaymentMethod | null
     status?: EnumTripStatusWithAggregatesFilter<"TripRequest"> | $Enums.TripStatus
     matchAttempts?: IntWithAggregatesFilter<"TripRequest"> | number
     maxAttempts?: IntWithAggregatesFilter<"TripRequest"> | number
@@ -23343,6 +23486,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     wallet: WalletCreateNestedOneWithoutTransactionsInput
     booking?: BookingCreateNestedOneWithoutTransactionsInput
+    tripRequest?: TripRequestCreateNestedOneWithoutTransactionsInput
   }
 
   export type TransactionUncheckedCreateInput = {
@@ -23354,6 +23498,7 @@ export namespace Prisma {
     description?: string | null
     externalId?: string | null
     bookingId?: string | null
+    tripRequestId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -23369,6 +23514,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     wallet?: WalletUpdateOneRequiredWithoutTransactionsNestedInput
     booking?: BookingUpdateOneWithoutTransactionsNestedInput
+    tripRequest?: TripRequestUpdateOneWithoutTransactionsNestedInput
   }
 
   export type TransactionUncheckedUpdateInput = {
@@ -23380,6 +23526,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     bookingId?: NullableStringFieldUpdateOperationsInput | string | null
+    tripRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -23393,6 +23540,7 @@ export namespace Prisma {
     description?: string | null
     externalId?: string | null
     bookingId?: string | null
+    tripRequestId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -23417,6 +23565,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     bookingId?: NullableStringFieldUpdateOperationsInput | string | null
+    tripRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24400,6 +24549,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -24413,6 +24564,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     passenger: UserCreateNestedOneWithoutTripsAsPassengerInput
     driver?: UserCreateNestedOneWithoutTripsAsDriverInput
+    transactions?: TransactionCreateNestedManyWithoutTripRequestInput
     reports?: ReportCreateNestedManyWithoutTripRequestInput
   }
 
@@ -24431,6 +24583,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -24442,6 +24596,7 @@ export namespace Prisma {
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    transactions?: TransactionUncheckedCreateNestedManyWithoutTripRequestInput
     reports?: ReportUncheckedCreateNestedManyWithoutTripRequestInput
   }
 
@@ -24458,6 +24613,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -24471,6 +24628,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     passenger?: UserUpdateOneRequiredWithoutTripsAsPassengerNestedInput
     driver?: UserUpdateOneWithoutTripsAsDriverNestedInput
+    transactions?: TransactionUpdateManyWithoutTripRequestNestedInput
     reports?: ReportUpdateManyWithoutTripRequestNestedInput
   }
 
@@ -24489,6 +24647,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -24500,6 +24660,7 @@ export namespace Prisma {
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactions?: TransactionUncheckedUpdateManyWithoutTripRequestNestedInput
     reports?: ReportUncheckedUpdateManyWithoutTripRequestNestedInput
   }
 
@@ -24518,6 +24679,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -24544,6 +24707,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -24572,6 +24737,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -25340,6 +25507,11 @@ export namespace Prisma {
     isNot?: BookingWhereInput | null
   }
 
+  export type TripRequestNullableRelationFilter = {
+    is?: TripRequestWhereInput | null
+    isNot?: TripRequestWhereInput | null
+  }
+
   export type TransactionCountOrderByAggregateInput = {
     id?: SortOrder
     walletId?: SortOrder
@@ -25349,6 +25521,7 @@ export namespace Prisma {
     description?: SortOrder
     externalId?: SortOrder
     bookingId?: SortOrder
+    tripRequestId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -25366,6 +25539,7 @@ export namespace Prisma {
     description?: SortOrder
     externalId?: SortOrder
     bookingId?: SortOrder
+    tripRequestId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -25379,6 +25553,7 @@ export namespace Prisma {
     description?: SortOrder
     externalId?: SortOrder
     bookingId?: SortOrder
+    tripRequestId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -26035,6 +26210,13 @@ export namespace Prisma {
     not?: NestedEnumVehicleTypeFilter<$PrismaModel> | $Enums.VehicleType
   }
 
+  export type EnumPaymentMethodNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPaymentMethodNullableFilter<$PrismaModel> | $Enums.PaymentMethod | null
+  }
+
   export type EnumTripStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.TripStatus | EnumTripStatusFieldRefInput<$PrismaModel>
     in?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
@@ -26062,6 +26244,8 @@ export namespace Prisma {
     estimatedDuration?: SortOrder
     estimatedPrice?: SortOrder
     finalPrice?: SortOrder
+    paymentStatus?: SortOrder
+    paymentMethod?: SortOrder
     status?: SortOrder
     matchAttempts?: SortOrder
     maxAttempts?: SortOrder
@@ -26104,6 +26288,8 @@ export namespace Prisma {
     estimatedDuration?: SortOrder
     estimatedPrice?: SortOrder
     finalPrice?: SortOrder
+    paymentStatus?: SortOrder
+    paymentMethod?: SortOrder
     status?: SortOrder
     matchAttempts?: SortOrder
     maxAttempts?: SortOrder
@@ -26132,6 +26318,8 @@ export namespace Prisma {
     estimatedDuration?: SortOrder
     estimatedPrice?: SortOrder
     finalPrice?: SortOrder
+    paymentStatus?: SortOrder
+    paymentMethod?: SortOrder
     status?: SortOrder
     matchAttempts?: SortOrder
     maxAttempts?: SortOrder
@@ -26167,6 +26355,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumVehicleTypeFilter<$PrismaModel>
     _max?: NestedEnumVehicleTypeFilter<$PrismaModel>
+  }
+
+  export type EnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel> | $Enums.PaymentMethod | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
+    _max?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
   }
 
   export type EnumTripStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -26324,11 +26522,6 @@ export namespace Prisma {
   export type RideNullableRelationFilter = {
     is?: RideWhereInput | null
     isNot?: RideWhereInput | null
-  }
-
-  export type TripRequestNullableRelationFilter = {
-    is?: TripRequestWhereInput | null
-    isNot?: TripRequestWhereInput | null
   }
 
   export type ReportCountOrderByAggregateInput = {
@@ -27094,6 +27287,12 @@ export namespace Prisma {
     connect?: BookingWhereUniqueInput
   }
 
+  export type TripRequestCreateNestedOneWithoutTransactionsInput = {
+    create?: XOR<TripRequestCreateWithoutTransactionsInput, TripRequestUncheckedCreateWithoutTransactionsInput>
+    connectOrCreate?: TripRequestCreateOrConnectWithoutTransactionsInput
+    connect?: TripRequestWhereUniqueInput
+  }
+
   export type EnumTransactionTypeFieldUpdateOperationsInput = {
     set?: $Enums.TransactionType
   }
@@ -27118,6 +27317,16 @@ export namespace Prisma {
     delete?: BookingWhereInput | boolean
     connect?: BookingWhereUniqueInput
     update?: XOR<XOR<BookingUpdateToOneWithWhereWithoutTransactionsInput, BookingUpdateWithoutTransactionsInput>, BookingUncheckedUpdateWithoutTransactionsInput>
+  }
+
+  export type TripRequestUpdateOneWithoutTransactionsNestedInput = {
+    create?: XOR<TripRequestCreateWithoutTransactionsInput, TripRequestUncheckedCreateWithoutTransactionsInput>
+    connectOrCreate?: TripRequestCreateOrConnectWithoutTransactionsInput
+    upsert?: TripRequestUpsertWithoutTransactionsInput
+    disconnect?: TripRequestWhereInput | boolean
+    delete?: TripRequestWhereInput | boolean
+    connect?: TripRequestWhereUniqueInput
+    update?: XOR<XOR<TripRequestUpdateToOneWithWhereWithoutTransactionsInput, TripRequestUpdateWithoutTransactionsInput>, TripRequestUncheckedUpdateWithoutTransactionsInput>
   }
 
   export type RideCreateNestedOneWithoutMessagesInput = {
@@ -27558,11 +27767,25 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
+  export type TransactionCreateNestedManyWithoutTripRequestInput = {
+    create?: XOR<TransactionCreateWithoutTripRequestInput, TransactionUncheckedCreateWithoutTripRequestInput> | TransactionCreateWithoutTripRequestInput[] | TransactionUncheckedCreateWithoutTripRequestInput[]
+    connectOrCreate?: TransactionCreateOrConnectWithoutTripRequestInput | TransactionCreateOrConnectWithoutTripRequestInput[]
+    createMany?: TransactionCreateManyTripRequestInputEnvelope
+    connect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+  }
+
   export type ReportCreateNestedManyWithoutTripRequestInput = {
     create?: XOR<ReportCreateWithoutTripRequestInput, ReportUncheckedCreateWithoutTripRequestInput> | ReportCreateWithoutTripRequestInput[] | ReportUncheckedCreateWithoutTripRequestInput[]
     connectOrCreate?: ReportCreateOrConnectWithoutTripRequestInput | ReportCreateOrConnectWithoutTripRequestInput[]
     createMany?: ReportCreateManyTripRequestInputEnvelope
     connect?: ReportWhereUniqueInput | ReportWhereUniqueInput[]
+  }
+
+  export type TransactionUncheckedCreateNestedManyWithoutTripRequestInput = {
+    create?: XOR<TransactionCreateWithoutTripRequestInput, TransactionUncheckedCreateWithoutTripRequestInput> | TransactionCreateWithoutTripRequestInput[] | TransactionUncheckedCreateWithoutTripRequestInput[]
+    connectOrCreate?: TransactionCreateOrConnectWithoutTripRequestInput | TransactionCreateOrConnectWithoutTripRequestInput[]
+    createMany?: TransactionCreateManyTripRequestInputEnvelope
+    connect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
   }
 
   export type ReportUncheckedCreateNestedManyWithoutTripRequestInput = {
@@ -27574,6 +27797,10 @@ export namespace Prisma {
 
   export type EnumVehicleTypeFieldUpdateOperationsInput = {
     set?: $Enums.VehicleType
+  }
+
+  export type NullableEnumPaymentMethodFieldUpdateOperationsInput = {
+    set?: $Enums.PaymentMethod | null
   }
 
   export type EnumTripStatusFieldUpdateOperationsInput = {
@@ -27598,6 +27825,20 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTripsAsDriverInput, UserUpdateWithoutTripsAsDriverInput>, UserUncheckedUpdateWithoutTripsAsDriverInput>
   }
 
+  export type TransactionUpdateManyWithoutTripRequestNestedInput = {
+    create?: XOR<TransactionCreateWithoutTripRequestInput, TransactionUncheckedCreateWithoutTripRequestInput> | TransactionCreateWithoutTripRequestInput[] | TransactionUncheckedCreateWithoutTripRequestInput[]
+    connectOrCreate?: TransactionCreateOrConnectWithoutTripRequestInput | TransactionCreateOrConnectWithoutTripRequestInput[]
+    upsert?: TransactionUpsertWithWhereUniqueWithoutTripRequestInput | TransactionUpsertWithWhereUniqueWithoutTripRequestInput[]
+    createMany?: TransactionCreateManyTripRequestInputEnvelope
+    set?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    disconnect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    delete?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    connect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    update?: TransactionUpdateWithWhereUniqueWithoutTripRequestInput | TransactionUpdateWithWhereUniqueWithoutTripRequestInput[]
+    updateMany?: TransactionUpdateManyWithWhereWithoutTripRequestInput | TransactionUpdateManyWithWhereWithoutTripRequestInput[]
+    deleteMany?: TransactionScalarWhereInput | TransactionScalarWhereInput[]
+  }
+
   export type ReportUpdateManyWithoutTripRequestNestedInput = {
     create?: XOR<ReportCreateWithoutTripRequestInput, ReportUncheckedCreateWithoutTripRequestInput> | ReportCreateWithoutTripRequestInput[] | ReportUncheckedCreateWithoutTripRequestInput[]
     connectOrCreate?: ReportCreateOrConnectWithoutTripRequestInput | ReportCreateOrConnectWithoutTripRequestInput[]
@@ -27610,6 +27851,20 @@ export namespace Prisma {
     update?: ReportUpdateWithWhereUniqueWithoutTripRequestInput | ReportUpdateWithWhereUniqueWithoutTripRequestInput[]
     updateMany?: ReportUpdateManyWithWhereWithoutTripRequestInput | ReportUpdateManyWithWhereWithoutTripRequestInput[]
     deleteMany?: ReportScalarWhereInput | ReportScalarWhereInput[]
+  }
+
+  export type TransactionUncheckedUpdateManyWithoutTripRequestNestedInput = {
+    create?: XOR<TransactionCreateWithoutTripRequestInput, TransactionUncheckedCreateWithoutTripRequestInput> | TransactionCreateWithoutTripRequestInput[] | TransactionUncheckedCreateWithoutTripRequestInput[]
+    connectOrCreate?: TransactionCreateOrConnectWithoutTripRequestInput | TransactionCreateOrConnectWithoutTripRequestInput[]
+    upsert?: TransactionUpsertWithWhereUniqueWithoutTripRequestInput | TransactionUpsertWithWhereUniqueWithoutTripRequestInput[]
+    createMany?: TransactionCreateManyTripRequestInputEnvelope
+    set?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    disconnect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    delete?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    connect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    update?: TransactionUpdateWithWhereUniqueWithoutTripRequestInput | TransactionUpdateWithWhereUniqueWithoutTripRequestInput[]
+    updateMany?: TransactionUpdateManyWithWhereWithoutTripRequestInput | TransactionUpdateManyWithWhereWithoutTripRequestInput[]
+    deleteMany?: TransactionScalarWhereInput | TransactionScalarWhereInput[]
   }
 
   export type ReportUncheckedUpdateManyWithoutTripRequestNestedInput = {
@@ -28110,6 +28365,13 @@ export namespace Prisma {
     not?: NestedEnumVehicleTypeFilter<$PrismaModel> | $Enums.VehicleType
   }
 
+  export type NestedEnumPaymentMethodNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPaymentMethodNullableFilter<$PrismaModel> | $Enums.PaymentMethod | null
+  }
+
   export type NestedEnumTripStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.TripStatus | EnumTripStatusFieldRefInput<$PrismaModel>
     in?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
@@ -28125,6 +28387,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumVehicleTypeFilter<$PrismaModel>
     _max?: NestedEnumVehicleTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel> | $Enums.PaymentMethod | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
+    _max?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumTripStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -28328,6 +28600,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -28340,6 +28614,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     driver?: UserCreateNestedOneWithoutTripsAsDriverInput
+    transactions?: TransactionCreateNestedManyWithoutTripRequestInput
     reports?: ReportCreateNestedManyWithoutTripRequestInput
   }
 
@@ -28357,6 +28632,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -28368,6 +28645,7 @@ export namespace Prisma {
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    transactions?: TransactionUncheckedCreateNestedManyWithoutTripRequestInput
     reports?: ReportUncheckedCreateNestedManyWithoutTripRequestInput
   }
 
@@ -28394,6 +28672,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -28406,6 +28686,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     passenger: UserCreateNestedOneWithoutTripsAsPassengerInput
+    transactions?: TransactionCreateNestedManyWithoutTripRequestInput
     reports?: ReportCreateNestedManyWithoutTripRequestInput
   }
 
@@ -28423,6 +28704,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -28434,6 +28717,7 @@ export namespace Prisma {
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    transactions?: TransactionUncheckedCreateNestedManyWithoutTripRequestInput
     reports?: ReportUncheckedCreateNestedManyWithoutTripRequestInput
   }
 
@@ -28910,6 +29194,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFilter<"TripRequest"> | number
     estimatedPrice?: FloatFilter<"TripRequest"> | number
     finalPrice?: FloatNullableFilter<"TripRequest"> | number | null
+    paymentStatus?: EnumPaymentStatusFilter<"TripRequest"> | $Enums.PaymentStatus
+    paymentMethod?: EnumPaymentMethodNullableFilter<"TripRequest"> | $Enums.PaymentMethod | null
     status?: EnumTripStatusFilter<"TripRequest"> | $Enums.TripStatus
     matchAttempts?: IntFilter<"TripRequest"> | number
     maxAttempts?: IntFilter<"TripRequest"> | number
@@ -29319,6 +29605,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     booking?: BookingCreateNestedOneWithoutTransactionsInput
+    tripRequest?: TripRequestCreateNestedOneWithoutTransactionsInput
   }
 
   export type TransactionUncheckedCreateWithoutWalletInput = {
@@ -29329,6 +29616,7 @@ export namespace Prisma {
     description?: string | null
     externalId?: string | null
     bookingId?: string | null
+    tripRequestId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -29448,6 +29736,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Transaction"> | string | null
     externalId?: StringNullableFilter<"Transaction"> | string | null
     bookingId?: StringNullableFilter<"Transaction"> | string | null
+    tripRequestId?: StringNullableFilter<"Transaction"> | string | null
     createdAt?: DateTimeFilter<"Transaction"> | Date | string
     updatedAt?: DateTimeFilter<"Transaction"> | Date | string
   }
@@ -29520,6 +29809,73 @@ export namespace Prisma {
   export type BookingCreateOrConnectWithoutTransactionsInput = {
     where: BookingWhereUniqueInput
     create: XOR<BookingCreateWithoutTransactionsInput, BookingUncheckedCreateWithoutTransactionsInput>
+  }
+
+  export type TripRequestCreateWithoutTransactionsInput = {
+    id?: string
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    passenger: UserCreateNestedOneWithoutTripsAsPassengerInput
+    driver?: UserCreateNestedOneWithoutTripsAsDriverInput
+    reports?: ReportCreateNestedManyWithoutTripRequestInput
+  }
+
+  export type TripRequestUncheckedCreateWithoutTransactionsInput = {
+    id?: string
+    passengerId: string
+    driverId?: string | null
+    originAddress: string
+    originLat: number
+    originLng: number
+    destAddress: string
+    destLat: number
+    destLng: number
+    vehicleType?: $Enums.VehicleType
+    estimatedDistance: number
+    estimatedDuration: number
+    estimatedPrice: number
+    finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
+    status?: $Enums.TripStatus
+    matchAttempts?: number
+    maxAttempts?: number
+    matchRadius?: number
+    matchedAt?: Date | string | null
+    startedAt?: Date | string | null
+    completedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    reports?: ReportUncheckedCreateNestedManyWithoutTripRequestInput
+  }
+
+  export type TripRequestCreateOrConnectWithoutTransactionsInput = {
+    where: TripRequestWhereUniqueInput
+    create: XOR<TripRequestCreateWithoutTransactionsInput, TripRequestUncheckedCreateWithoutTransactionsInput>
   }
 
   export type WalletUpsertWithoutTransactionsInput = {
@@ -29602,6 +29958,79 @@ export namespace Prisma {
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TripRequestUpsertWithoutTransactionsInput = {
+    update: XOR<TripRequestUpdateWithoutTransactionsInput, TripRequestUncheckedUpdateWithoutTransactionsInput>
+    create: XOR<TripRequestCreateWithoutTransactionsInput, TripRequestUncheckedCreateWithoutTransactionsInput>
+    where?: TripRequestWhereInput
+  }
+
+  export type TripRequestUpdateToOneWithWhereWithoutTransactionsInput = {
+    where?: TripRequestWhereInput
+    data: XOR<TripRequestUpdateWithoutTransactionsInput, TripRequestUncheckedUpdateWithoutTransactionsInput>
+  }
+
+  export type TripRequestUpdateWithoutTransactionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    passenger?: UserUpdateOneRequiredWithoutTripsAsPassengerNestedInput
+    driver?: UserUpdateOneWithoutTripsAsDriverNestedInput
+    reports?: ReportUpdateManyWithoutTripRequestNestedInput
+  }
+
+  export type TripRequestUncheckedUpdateWithoutTransactionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    passengerId?: StringFieldUpdateOperationsInput | string
+    driverId?: NullableStringFieldUpdateOperationsInput | string | null
+    originAddress?: StringFieldUpdateOperationsInput | string
+    originLat?: FloatFieldUpdateOperationsInput | number
+    originLng?: FloatFieldUpdateOperationsInput | number
+    destAddress?: StringFieldUpdateOperationsInput | string
+    destLat?: FloatFieldUpdateOperationsInput | number
+    destLng?: FloatFieldUpdateOperationsInput | number
+    vehicleType?: EnumVehicleTypeFieldUpdateOperationsInput | $Enums.VehicleType
+    estimatedDistance?: FloatFieldUpdateOperationsInput | number
+    estimatedDuration?: FloatFieldUpdateOperationsInput | number
+    estimatedPrice?: FloatFieldUpdateOperationsInput | number
+    finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
+    status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
+    matchAttempts?: IntFieldUpdateOperationsInput | number
+    maxAttempts?: IntFieldUpdateOperationsInput | number
+    matchRadius?: FloatFieldUpdateOperationsInput | number
+    matchedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reports?: ReportUncheckedUpdateManyWithoutTripRequestNestedInput
   }
 
   export type RideCreateWithoutMessagesInput = {
@@ -30964,6 +31393,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     wallet: WalletCreateNestedOneWithoutTransactionsInput
+    tripRequest?: TripRequestCreateNestedOneWithoutTransactionsInput
   }
 
   export type TransactionUncheckedCreateWithoutBookingInput = {
@@ -30974,6 +31404,7 @@ export namespace Prisma {
     status?: $Enums.TransactionStatus
     description?: string | null
     externalId?: string | null
+    tripRequestId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -31940,6 +32371,42 @@ export namespace Prisma {
     create: XOR<UserCreateWithoutTripsAsDriverInput, UserUncheckedCreateWithoutTripsAsDriverInput>
   }
 
+  export type TransactionCreateWithoutTripRequestInput = {
+    id?: string
+    amount: number
+    type: $Enums.TransactionType
+    status?: $Enums.TransactionStatus
+    description?: string | null
+    externalId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    wallet: WalletCreateNestedOneWithoutTransactionsInput
+    booking?: BookingCreateNestedOneWithoutTransactionsInput
+  }
+
+  export type TransactionUncheckedCreateWithoutTripRequestInput = {
+    id?: string
+    walletId: string
+    amount: number
+    type: $Enums.TransactionType
+    status?: $Enums.TransactionStatus
+    description?: string | null
+    externalId?: string | null
+    bookingId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TransactionCreateOrConnectWithoutTripRequestInput = {
+    where: TransactionWhereUniqueInput
+    create: XOR<TransactionCreateWithoutTripRequestInput, TransactionUncheckedCreateWithoutTripRequestInput>
+  }
+
+  export type TransactionCreateManyTripRequestInputEnvelope = {
+    data: TransactionCreateManyTripRequestInput | TransactionCreateManyTripRequestInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ReportCreateWithoutTripRequestInput = {
     id?: string
     reason: string
@@ -32126,6 +32593,22 @@ export namespace Prisma {
     vehicles?: VehicleUncheckedUpdateManyWithoutUserNestedInput
     reportsSent?: ReportUncheckedUpdateManyWithoutReporterNestedInput
     reportsReceived?: ReportUncheckedUpdateManyWithoutReportedNestedInput
+  }
+
+  export type TransactionUpsertWithWhereUniqueWithoutTripRequestInput = {
+    where: TransactionWhereUniqueInput
+    update: XOR<TransactionUpdateWithoutTripRequestInput, TransactionUncheckedUpdateWithoutTripRequestInput>
+    create: XOR<TransactionCreateWithoutTripRequestInput, TransactionUncheckedCreateWithoutTripRequestInput>
+  }
+
+  export type TransactionUpdateWithWhereUniqueWithoutTripRequestInput = {
+    where: TransactionWhereUniqueInput
+    data: XOR<TransactionUpdateWithoutTripRequestInput, TransactionUncheckedUpdateWithoutTripRequestInput>
+  }
+
+  export type TransactionUpdateManyWithWhereWithoutTripRequestInput = {
+    where: TransactionScalarWhereInput
+    data: XOR<TransactionUpdateManyMutationInput, TransactionUncheckedUpdateManyWithoutTripRequestInput>
   }
 
   export type ReportUpsertWithWhereUniqueWithoutTripRequestInput = {
@@ -32642,6 +33125,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -32655,6 +33140,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     passenger: UserCreateNestedOneWithoutTripsAsPassengerInput
     driver?: UserCreateNestedOneWithoutTripsAsDriverInput
+    transactions?: TransactionCreateNestedManyWithoutTripRequestInput
   }
 
   export type TripRequestUncheckedCreateWithoutReportsInput = {
@@ -32672,6 +33158,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -32683,6 +33171,7 @@ export namespace Prisma {
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    transactions?: TransactionUncheckedCreateNestedManyWithoutTripRequestInput
   }
 
   export type TripRequestCreateOrConnectWithoutReportsInput = {
@@ -32961,6 +33450,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -32974,6 +33465,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     passenger?: UserUpdateOneRequiredWithoutTripsAsPassengerNestedInput
     driver?: UserUpdateOneWithoutTripsAsDriverNestedInput
+    transactions?: TransactionUpdateManyWithoutTripRequestNestedInput
   }
 
   export type TripRequestUncheckedUpdateWithoutReportsInput = {
@@ -32991,6 +33483,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -33002,6 +33496,7 @@ export namespace Prisma {
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactions?: TransactionUncheckedUpdateManyWithoutTripRequestNestedInput
   }
 
   export type RideCreateManyDriverInput = {
@@ -33075,6 +33570,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -33102,6 +33599,8 @@ export namespace Prisma {
     estimatedDuration: number
     estimatedPrice: number
     finalPrice?: number | null
+    paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     status?: $Enums.TripStatus
     matchAttempts?: number
     maxAttempts?: number
@@ -33399,6 +33898,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -33411,6 +33912,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     driver?: UserUpdateOneWithoutTripsAsDriverNestedInput
+    transactions?: TransactionUpdateManyWithoutTripRequestNestedInput
     reports?: ReportUpdateManyWithoutTripRequestNestedInput
   }
 
@@ -33428,6 +33930,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -33439,6 +33943,7 @@ export namespace Prisma {
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactions?: TransactionUncheckedUpdateManyWithoutTripRequestNestedInput
     reports?: ReportUncheckedUpdateManyWithoutTripRequestNestedInput
   }
 
@@ -33456,6 +33961,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -33482,6 +33989,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -33494,6 +34003,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     passenger?: UserUpdateOneRequiredWithoutTripsAsPassengerNestedInput
+    transactions?: TransactionUpdateManyWithoutTripRequestNestedInput
     reports?: ReportUpdateManyWithoutTripRequestNestedInput
   }
 
@@ -33511,6 +34021,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -33522,6 +34034,7 @@ export namespace Prisma {
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactions?: TransactionUncheckedUpdateManyWithoutTripRequestNestedInput
     reports?: ReportUncheckedUpdateManyWithoutTripRequestNestedInput
   }
 
@@ -33539,6 +34052,8 @@ export namespace Prisma {
     estimatedDuration?: FloatFieldUpdateOperationsInput | number
     estimatedPrice?: FloatFieldUpdateOperationsInput | number
     finalPrice?: NullableFloatFieldUpdateOperationsInput | number | null
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     status?: EnumTripStatusFieldUpdateOperationsInput | $Enums.TripStatus
     matchAttempts?: IntFieldUpdateOperationsInput | number
     maxAttempts?: IntFieldUpdateOperationsInput | number
@@ -33832,6 +34347,7 @@ export namespace Prisma {
     description?: string | null
     externalId?: string | null
     bookingId?: string | null
+    tripRequestId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -33846,6 +34362,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     booking?: BookingUpdateOneWithoutTransactionsNestedInput
+    tripRequest?: TripRequestUpdateOneWithoutTransactionsNestedInput
   }
 
   export type TransactionUncheckedUpdateWithoutWalletInput = {
@@ -33856,6 +34373,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     bookingId?: NullableStringFieldUpdateOperationsInput | string | null
+    tripRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -33868,6 +34386,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
     bookingId?: NullableStringFieldUpdateOperationsInput | string | null
+    tripRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -34086,6 +34605,7 @@ export namespace Prisma {
     status?: $Enums.TransactionStatus
     description?: string | null
     externalId?: string | null
+    tripRequestId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -34100,6 +34620,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     wallet?: WalletUpdateOneRequiredWithoutTransactionsNestedInput
+    tripRequest?: TripRequestUpdateOneWithoutTransactionsNestedInput
   }
 
   export type TransactionUncheckedUpdateWithoutBookingInput = {
@@ -34110,6 +34631,7 @@ export namespace Prisma {
     status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    tripRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -34122,8 +34644,22 @@ export namespace Prisma {
     status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    tripRequestId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransactionCreateManyTripRequestInput = {
+    id?: string
+    walletId: string
+    amount: number
+    type: $Enums.TransactionType
+    status?: $Enums.TransactionStatus
+    description?: string | null
+    externalId?: string | null
+    bookingId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type ReportCreateManyTripRequestInput = {
@@ -34136,6 +34672,45 @@ export namespace Prisma {
     status?: $Enums.ReportStatus
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type TransactionUpdateWithoutTripRequestInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    wallet?: WalletUpdateOneRequiredWithoutTransactionsNestedInput
+    booking?: BookingUpdateOneWithoutTransactionsNestedInput
+  }
+
+  export type TransactionUncheckedUpdateWithoutTripRequestInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletId?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    bookingId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransactionUncheckedUpdateManyWithoutTripRequestInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletId?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    externalId?: NullableStringFieldUpdateOperationsInput | string | null
+    bookingId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ReportUpdateWithoutTripRequestInput = {

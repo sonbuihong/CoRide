@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import * as jose from 'jose';
+import crypto from 'crypto';
 import { extendedPrisma as prisma } from '@repo/database';
 import { RegisterInput, LoginInput } from '@repo/shared';
 import { AppError } from '../../shared/errors/AppError';
@@ -67,11 +68,13 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       new jose.SignJWT({ userId })
         .setProtectedHeader({ alg: 'HS256' })
+        .setJti(crypto.randomUUID())
         .setIssuedAt()
         .setExpirationTime(ACCESS_TOKEN_EXPIRES)
         .sign(secret),
       new jose.SignJWT({ userId })
         .setProtectedHeader({ alg: 'HS256' })
+        .setJti(crypto.randomUUID())
         .setIssuedAt()
         .setExpirationTime(REFRESH_TOKEN_EXPIRES)
         .sign(secret),

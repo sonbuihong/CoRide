@@ -5,8 +5,12 @@ import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getDirections, formatDuration, decodePolyline } from '@/lib/goong';
-import GoongMap from '@/components/goong/goong-map';
+import dynamic from 'next/dynamic';
 
+const GoongMap = dynamic(() => import('@/components/goong/goong-map'), {
+  ssr: false,
+  loading: () => <div className="w-full h-full min-h-[200px] flex items-center justify-center bg-[rgba(0,0,0,0.03)] animate-pulse rounded-[14px]" />
+});
 interface Location {
   lat: number;
   lng: number;

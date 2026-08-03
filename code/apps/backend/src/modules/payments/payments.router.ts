@@ -26,6 +26,20 @@ router.post('/create', authenticate, PaymentsController.createPayment);
 router.post('/callback', PaymentsController.handleCallback);
 
 /**
+ * @route GET /api/payments/simulator/qr/:tripId
+ * @desc Lấy mã QR giả lập thanh toán
+ * @access Private
+ */
+router.get('/simulator/qr/:tripId', authenticate, PaymentsController.getSimulatorQR);
+
+/**
+ * @route POST /api/payments/simulator/confirm
+ * @desc Xác nhận đã thanh toán giả lập
+ * @access Private
+ */
+router.post('/simulator/confirm', authenticate, PaymentsController.confirmSimulatorPayment);
+
+/**
  * @route GET /api/payments/admin/transactions
  * @desc Lấy danh sách giao dịch toàn hệ thống
  * @access Private (Admin only)

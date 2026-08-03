@@ -2,3 +2,4 @@
 docs/
 tasks-manager/
 node_modules/
+.env
