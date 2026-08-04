@@ -1,57 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+'use client';
+
+import React, { useEffect, useState, useRef } from 'react';
+import * as maplibregl from 'maplibre-gl';
 import { Loader2 } from 'lucide-react';
+import { getDirections, decodePolyline } from '@/lib/goong';
 
 interface BookingDirectionsMapProps {
   pickupLat: number;
   pickupLng: number;
 }
 
-// Fix Leaflet's default icon issue with webpack/Next.js
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-});
-
-// Custom icons
-const driverIcon = L.divIcon({
-  className: '', // Removes default leaflet-div-icon styles
-  html: '<div class="driver-location-marker"></div>',
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-});
-
-const pickupIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-// Helper component to adjust map bounds
-const MapBounds = ({ driverPos, pickupPos }: { driverPos: [number, number]; pickupPos: [number, number] }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (driverPos && pickupPos) {
-      const bounds = L.latLngBounds([driverPos, pickupPos]);
-      map.fitBounds(bounds, { padding: [50, 50], animate: false });
-    }
-  }, [map, driverPos, pickupPos]);
-  return null;
-};
-
 const BookingDirectionsMap: React.FC<BookingDirectionsMapProps> = ({ pickupLat, pickupLng }) => {
   const [driverPos, setDriverPos] = useState<[number, number] | null>(null);
-  const [route, setRoute] = useState<[number, number][]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  
+  const MAP_KEY = process.env.NEXT_PUBLIC_GOONG_MAPTILES_KEY || '';
 
   useEffect(() => {
     // 1. Get driver location
@@ -62,29 +29,10 @@ const BookingDirectionsMap: React.FC<BookingDirectionsMapProps> = ({ pickupLat, 
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      (position) => {
         const currentPos: [number, number] = [position.coords.latitude, position.coords.longitude];
         setDriverPos(currentPos);
-
-        // 2. Fetch directions from OSRM
-        try {
-          // OSRM expects: longitude,latitude
-          const response = await fetch(
-            `https://router.project-osrm.org/route/v1/driving/${currentPos[1]},${currentPos[0]};${pickupLng},${pickupLat}?overview=full&geometries=geojson`
-          );
-          const data = await response.json();
-          if (data.code === 'Ok' && data.routes.length > 0) {
-            // GeoJSON returns [lng, lat], we need [lat, lng] for Leaflet Polyline
-            const coordinates = data.routes[0].geometry.coordinates.map((c: [number, number]) => [c[1], c[0]]);
-            setRoute(coordinates);
-          } else {
-            setError('Không thể tìm thấy đường đi.');
-          }
-        } catch (err: unknown) {
-          setError('Lỗi khi lấy thông tin đường đi.');
-        } finally {
-          setLoading(false);
-        }
+        setLoading(false);
       },
       () => {
         setError('Không thể lấy vị trí hiện tại. Vui lòng cấp quyền truy cập vị trí.');
@@ -92,7 +40,96 @@ const BookingDirectionsMap: React.FC<BookingDirectionsMapProps> = ({ pickupLat, 
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
-  }, [pickupLat, pickupLng]);
+  }, []);
+
+  useEffect(() => {
+    if (!driverPos || !mapContainerRef.current || mapRef.current) return;
+
+    // Initialize MapLibre
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: `https://tiles.goong.io/assets/goong_map_web.json?api_key=${MAP_KEY}`,
+      center: [driverPos[1], driverPos[0]], // [lng, lat]
+      zoom: 13,
+    });
+
+    map.on('load', async () => {
+      // Add markers
+      const driverEl = document.createElement('div');
+      driverEl.className = 'driver-location-marker';
+      driverEl.style.width = '18px';
+      driverEl.style.height = '18px';
+      driverEl.style.backgroundColor = '#4285F4';
+      driverEl.style.borderRadius = '50%';
+      driverEl.style.border = '2px solid white';
+      driverEl.style.boxShadow = '0 0 4px rgba(0,0,0,0.3)';
+
+      new maplibregl.Marker({ element: driverEl })
+        .setLngLat([driverPos[1], driverPos[0]])
+        .addTo(map);
+
+      new maplibregl.Marker({ color: '#EA4335' })
+        .setLngLat([pickupLng, pickupLat])
+        .addTo(map);
+
+      // Fit bounds
+      const bounds = new maplibregl.LngLatBounds()
+        .extend([driverPos[1], driverPos[0]])
+        .extend([pickupLng, pickupLat]);
+        
+      map.fitBounds(bounds, { padding: 50 });
+
+      // Fetch directions using Goong API
+      try {
+        const originStr = `${driverPos[0]},${driverPos[1]}`;
+        const destStr = `${pickupLat},${pickupLng}`;
+        const data = await getDirections(originStr, destStr);
+
+        if (data && data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          if (route.overview_polyline?.points) {
+            const decoded = decodePolyline(route.overview_polyline.points);
+            
+            map.addSource('route', {
+              type: 'geojson',
+              data: {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: decoded, // decodePolyline already returns [lng, lat]
+                },
+              },
+            });
+
+            map.addLayer({
+              id: 'route',
+              type: 'line',
+              source: 'route',
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round',
+              },
+              paint: {
+                'line-color': '#0071e3',
+                'line-width': 5,
+                'line-opacity': 0.8,
+              },
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching directions:', err);
+      }
+    });
+
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [driverPos, pickupLat, pickupLng, MAP_KEY]);
 
   if (loading) {
     return (
@@ -111,26 +148,9 @@ const BookingDirectionsMap: React.FC<BookingDirectionsMapProps> = ({ pickupLat, 
     );
   }
 
-  const pickupPos: [number, number] = [pickupLat, pickupLng];
-
   return (
     <div className="h-80 w-full rounded-xl overflow-hidden border border-gray-200 shadow-sm z-0 relative">
-      <MapContainer 
-        center={driverPos} 
-        zoom={13} 
-        style={{ height: '100%', width: '100%', zIndex: 0 }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Marker position={driverPos} icon={driverIcon} />
-        <Marker position={pickupPos} icon={pickupIcon} />
-        {route.length > 0 && (
-          <Polyline positions={route} color="#0071e3" weight={5} opacity={0.7} />
-        )}
-        <MapBounds driverPos={driverPos} pickupPos={pickupPos} />
-      </MapContainer>
+      <div ref={mapContainerRef} className="w-full h-full" />
     </div>
   );
 };

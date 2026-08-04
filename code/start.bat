@@ -44,12 +44,8 @@ goto menu
 
 :backend_web_prisma
 echo.
-echo [INFO] Dang khoi dong Backend + Web + Prisma (5 Cua so)...
-start cmd /c "title Prisma Studio & cd packages\database & npx prisma studio"
-start cmd /c "title Backend & cd apps\backend & npm run dev"
-start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
-start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
-start cmd /c "title Web Frontend & cd apps\web & npm run dev"
+echo [INFO] Dang khoi dong Backend + Web + Prisma (1 Cua so, nhieu tab)...
+wt --title "Prisma Studio" -d packages\database cmd /c "npx prisma studio" ; new-tab --title "Backend" -d apps\backend cmd /c "npm run dev" ; new-tab --title "API Gateway" -d apps\api-gateway cmd /c "npm run dev" ; new-tab --title "Notification Service" -d apps\notification-service cmd /c "npm run dev" ; new-tab --title "Web Frontend" -d apps\web cmd /c "npm run dev"
 timeout /t 10 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
@@ -59,13 +55,8 @@ goto menu
 
 :all
 echo.
-echo [INFO] Dang khoi dong tat ca cac dich vu...
-start cmd /c "title Prisma Studio & cd packages\database & npx prisma studio"
-start cmd /c "title Backend & cd apps\backend & npm run dev"
-start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
-start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
-start cmd /c "title Web Frontend & cd apps\web & npm run dev"
-start cmd /c "title Mobile & cd apps\mobile & npm run start -- -c"
+echo [INFO] Dang khoi dong tat ca cac dich vu (1 Cua so, nhieu tab)...
+wt --title "Prisma Studio" -d packages\database cmd /c "npx prisma studio" ; new-tab --title "Backend" -d apps\backend cmd /c "npm run dev" ; new-tab --title "API Gateway" -d apps\api-gateway cmd /c "npm run dev" ; new-tab --title "Notification Service" -d apps\notification-service cmd /c "npm run dev" ; new-tab --title "Web Frontend" -d apps\web cmd /c "npm run dev" ; new-tab --title "Mobile" -d apps\mobile cmd /c "npm run start -- -c"
 timeout /t 10 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
@@ -75,10 +66,8 @@ goto menu
 
 :backend
 echo.
-echo [INFO] Dang khoi dong Backend...
-start cmd /c "title Backend & cd apps\backend & npm run dev"
-start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
-start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
+echo [INFO] Dang khoi dong Backend (1 Cua so, nhieu tab)...
+wt --title "Backend" -d apps\backend cmd /c "npm run dev" ; new-tab --title "Notification Service" -d apps\notification-service cmd /c "npm run dev" ; new-tab --title "API Gateway" -d apps\api-gateway cmd /c "npm run dev"
 timeout /t 10 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 echo [SUCCESS] Da khoi dong Backend.
@@ -87,11 +76,8 @@ goto menu
 
 :web
 echo.
-echo [INFO] Dang khoi dong Web Frontend va Backend...
-start cmd /c "title Backend & cd apps\backend & npm run dev"
-start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
-start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
-start cmd /c "title Web Frontend & cd apps\web & npm run dev"
+echo [INFO] Dang khoi dong Web Frontend va Backend (1 Cua so, nhieu tab)...
+wt --title "Backend" -d apps\backend cmd /c "npm run dev" ; new-tab --title "Notification Service" -d apps\notification-service cmd /c "npm run dev" ; new-tab --title "API Gateway" -d apps\api-gateway cmd /c "npm run dev" ; new-tab --title "Web Frontend" -d apps\web cmd /c "npm run dev"
 timeout /t 10 /nobreak > nul
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
@@ -101,22 +87,16 @@ goto menu
 
 :mobile_web
 echo.
-echo [INFO] Dang khoi dong Mobile (Web Preview) va Backend...
-start cmd /c "title Backend & cd apps\backend & npm run dev"
-start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
-start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
-start cmd /c "title Mobile & cd apps\mobile & pnpm run web"
+echo [INFO] Dang khoi dong Mobile (Web Preview) va Backend (1 Cua so, nhieu tab)...
+wt --title "Backend" -d apps\backend cmd /c "npm run dev" ; new-tab --title "Notification Service" -d apps\notification-service cmd /c "npm run dev" ; new-tab --title "API Gateway" -d apps\api-gateway cmd /c "npm run dev" ; new-tab --title "Mobile" -d apps\mobile cmd /c "pnpm run web"
 echo [SUCCESS] Da khoi dong Mobile va Backend.
 pause
 goto menu
 
 :mobile_qr
 echo.
-echo [INFO] Dang khoi dong Expo (Scan QR Code) va Backend...
-start cmd /c "title Backend & cd apps\backend & npm run dev"
-start cmd /c "title Notification Service & cd apps\notification-service & npm run dev"
-start cmd /c "title API Gateway & cd apps\api-gateway & npm run dev"
-start cmd /c "title Mobile & cd apps\mobile & pnpm expo start -c"
+echo [INFO] Dang khoi dong Expo (Scan QR Code) va Backend (1 Cua so, nhieu tab)...
+wt --title "Backend" -d apps\backend cmd /c "npm run dev" ; new-tab --title "Notification Service" -d apps\notification-service cmd /c "npm run dev" ; new-tab --title "API Gateway" -d apps\api-gateway cmd /c "npm run dev" ; new-tab --title "Mobile" -d apps\mobile cmd /c "pnpm expo start -c"
 echo [SUCCESS] Da khoi dong Mobile va Backend.
 pause
 goto menu
@@ -124,9 +104,7 @@ goto menu
 :prisma
 echo.
 echo [INFO] Dang khoi dong Prisma Studio...
-pushd packages\database
-start cmd /c "title Prisma Studio & npx prisma studio"
-popd
+wt --title "Prisma Studio" -d packages\database cmd /c "npx prisma studio"
 timeout /t 5 /nobreak > nul
 start "" http://localhost:5555
 pause
@@ -144,7 +122,7 @@ goto menu
 echo.
 echo [INFO] Dang dong tat ca cac cua so CMD va Node.exe tren may tinh (Ngoai tru Menu)...
 taskkill /F /IM node.exe /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE neq CoRide Development Menu" /IM cmd.exe /T > nul 2>&1
+taskkill /F /FI "WINDOWTITLE ne CoRide Development Menu*" /IM WindowsTerminal.exe /T > nul 2>&1
 echo [SUCCESS] Da dong tat ca dich vu thanh cong.
 pause
 goto menu
@@ -153,7 +131,7 @@ goto menu
 echo.
 echo [INFO] Dang dong tat ca cac cua so CMD va Node.exe tren may tinh...
 taskkill /F /IM node.exe /T > nul 2>&1
-taskkill /F /IM cmd.exe /T > nul 2>&1
+taskkill /F /IM WindowsTerminal.exe /T > nul 2>&1
 echo [SUCCESS] Da dong tat ca dich vu va thoat.
 endlocal
 exit

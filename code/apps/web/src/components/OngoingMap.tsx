@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useEffect, useState, useRef } from 'react';
+import * as maplibregl from 'maplibre-gl';
 import { Loader2 } from 'lucide-react';
+import { getGoongMultiStopRoute, decodeGoongPolyline } from '../lib/tsp.utils';
 
 interface OngoingMapProps {
   originLat: number;
@@ -15,64 +14,6 @@ interface OngoingMapProps {
   useCustomOrder?: boolean;
 }
 
-// Fix Leaflet's default icon issue
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-});
-
-// Custom icons
-const originIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const destIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const createNumberedIcon = (number: number) => {
-  return L.divIcon({
-    className: 'custom-numbered-icon',
-    html: `<div style="background-color: #f97316; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 14px;">${number}</div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-  });
-};
-
-const driverIcon = L.divIcon({
-  className: '', // Removes default leaflet-div-icon styles
-  html: '<div class="driver-location-marker"></div>',
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-});
-
-import { getGoongMultiStopRoute, decodeGoongPolyline } from '../lib/tsp.utils';
-
-// Helper component to adjust map bounds
-const MapBounds = ({ originPos, destPos, waypoints = [] }: { originPos: [number, number]; destPos: [number, number]; waypoints?: [number, number][] }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (originPos && destPos) {
-      const bounds = L.latLngBounds([originPos, destPos, ...waypoints]);
-      map.fitBounds(bounds, { padding: [50, 50], animate: false });
-    }
-  }, [map, originPos, destPos, waypoints]);
-  return null;
-};
-
 const OngoingMap: React.FC<OngoingMapProps> = ({ 
   originLat, originLng, destLat, destLng, 
   waypoints = [], driverLocation = null,
@@ -82,8 +23,13 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  
+  const MAP_KEY = process.env.NEXT_PUBLIC_GOONG_MAPTILES_KEY || '';
+
   // Dùng ref để tránh gọi onRouteOptimized liên tục (infinite loop)
-  const lastOptimizedIds = React.useRef<string>('');
+  const lastOptimizedIds = useRef<string>('');
 
   useEffect(() => {
     const fetchRoute = async () => {
@@ -124,9 +70,9 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
               // Mảng data.waypoints map 1-1 với: Origin, WP1, WP2..., Destination
               const middleWaypoints = data.waypoints.slice(1, -1);
               const optimalOrderIds = middleWaypoints
-                .map((wp: any, idx: number) => ({ id: waypoints[idx].id, order: wp.waypoint_index }))
-                .sort((a: any, b: any) => a.order - b.order)
-                .map((item: any) => item.id as string);
+                .map((wp: { waypoint_index: number }, idx: number) => ({ id: waypoints[idx].id, order: wp.waypoint_index }))
+                .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
+                .map((item: { id: string | undefined }) => item.id as string);
                 
               const currentIdsString = optimalOrderIds.join(',');
               if (lastOptimizedIds.current !== currentIdsString) {
@@ -157,15 +103,121 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
 
     fetchRoute();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [originLat, originLng, destLat, destLng, driverLocation, waypoints.map(w => w.id).join(','), useCustomOrder]);
+  }, [originLat, originLng, destLat, destLng, driverLocation?.lat, driverLocation?.lng, waypoints.map(w => w.id).join(','), useCustomOrder]);
 
-  // Remove early return for loading and error to prevent MapContainer from unmounting
-
-  // Tính toán lại originPos cho marker
   const startLat = driverLocation?.lat ?? originLat;
   const startLng = driverLocation?.lng ?? originLng;
-  
-  // Nếu tọa độ không hợp lệ, không render Map để tránh lỗi Leaflet "Cannot read properties of null (reading 'lat')"
+
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+    if (typeof startLat !== 'number' || typeof startLng !== 'number' || typeof destLat !== 'number' || typeof destLng !== 'number') {
+      return;
+    }
+
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: `https://tiles.goong.io/assets/goong_map_web.json?api_key=${MAP_KEY}`,
+      center: [startLng, startLat],
+      zoom: 13,
+    });
+
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [startLat, startLng, destLat, destLng, MAP_KEY]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || typeof startLat !== 'number' || typeof startLng !== 'number' || typeof destLat !== 'number' || typeof destLng !== 'number') return;
+
+    // Remove existing markers
+    const existingMarkers = document.querySelectorAll('.goong-map-marker');
+    existingMarkers.forEach(m => m.remove());
+
+    // Add origin marker
+    const originEl = document.createElement('div');
+    originEl.className = 'goong-map-marker';
+    originEl.style.width = '20px';
+    originEl.style.height = '20px';
+    originEl.style.backgroundColor = '#4285F4';
+    originEl.style.borderRadius = '50%';
+    originEl.style.border = '3px solid white';
+    originEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+    new maplibregl.Marker({ element: originEl }).setLngLat([startLng, startLat]).addTo(map);
+
+    // Add dest marker
+    const destEl = document.createElement('div');
+    destEl.className = 'goong-map-marker';
+    destEl.style.width = '25px';
+    destEl.style.height = '41px';
+    destEl.style.backgroundImage = 'url(https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png)';
+    destEl.style.backgroundSize = '100% 100%';
+    new maplibregl.Marker({ element: destEl, offset: [0, -20] }).setLngLat([destLng, destLat]).addTo(map);
+
+    // Add waypoints
+    waypoints.forEach((wp, i) => {
+      const wpEl = document.createElement('div');
+      wpEl.className = 'goong-map-marker';
+      wpEl.innerHTML = `<div style="background-color: #f97316; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 14px;">${i + 1}</div>`;
+      new maplibregl.Marker({ element: wpEl }).setLngLat([wp.lng, wp.lat]).addTo(map);
+    });
+
+    // Update route polyline
+    if (map.getSource('route')) {
+      (map.getSource('route') as maplibregl.GeoJSONSource).setData({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: route,
+        },
+      });
+    } else if (route.length > 0) {
+      map.on('load', () => {
+        if (!map.getSource('route')) {
+          map.addSource('route', {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: route,
+              },
+            },
+          });
+          map.addLayer({
+            id: 'route',
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round',
+            },
+            paint: {
+              'line-color': '#0071e3',
+              'line-width': 5,
+              'line-opacity': 0.8,
+            },
+          });
+        }
+      });
+    }
+
+    // Fit bounds
+    const bounds = new maplibregl.LngLatBounds();
+    bounds.extend([startLng, startLat]);
+    bounds.extend([destLng, destLat]);
+    waypoints.forEach(wp => bounds.extend([wp.lng, wp.lat]));
+    
+    if (!bounds.isEmpty()) {
+      map.fitBounds(bounds, { padding: 50 });
+    }
+  }, [startLat, startLng, destLat, destLng, waypoints, route]);
+
   if (typeof startLat !== 'number' || typeof startLng !== 'number' || typeof destLat !== 'number' || typeof destLng !== 'number') {
     return (
       <div className="h-full w-full z-0 relative bg-gray-50 flex flex-col items-center justify-center border border-gray-100 rounded-[24px]">
@@ -175,46 +227,20 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
     );
   }
 
-  const originPos: [number, number] = [startLat, startLng];
-  const destPos: [number, number] = [destLat, destLng];
-  const waypointsPos: [number, number][] = waypoints.map(wp => [wp.lat, wp.lng]);
-
   return (
     <div className="h-full w-full z-0 relative">
       {loading && route.length === 0 && (
-        <div className="absolute inset-0 z-[1000] flex flex-col items-center justify-center bg-gray-50">
+        <div className="absolute inset-0 z-[1000] flex flex-col items-center justify-center bg-white/70">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
           <p className="mt-4 text-sm text-gray-500 font-medium">Đang tìm đường...</p>
         </div>
       )}
       {error && route.length === 0 && (
-        <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-red-50 p-4 text-center">
+        <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-red-50/90 p-4 text-center">
           <p className="text-sm text-red-600 font-medium">{error}</p>
         </div>
       )}
-      <MapContainer 
-        center={originPos} 
-        zoom={13} 
-        style={{ height: '100%', width: '100%', zIndex: 0 }}
-        zoomControl={false} // Ẩn nút zoom để giao diện giống mobile app
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" // Map style sáng, đẹp giống Apple Maps
-        />
-        <Marker position={originPos} icon={originIcon} />
-        <Marker position={destPos} icon={destIcon} />
-        {waypointsPos.map((wp, i) => (
-          <Marker key={i} position={wp} icon={createNumberedIcon(i + 1)} />
-        ))}
-        {driverLocation && (
-          <Marker position={[driverLocation.lat, driverLocation.lng]} icon={driverIcon} />
-        )}
-        {route.length > 0 && (
-          <Polyline positions={route} color="#0071e3" weight={5} opacity={0.8} />
-        )}
-        <MapBounds originPos={originPos} destPos={destPos} waypoints={waypointsPos} />
-      </MapContainer>
+      <div ref={mapContainerRef} className="w-full h-full" />
     </div>
   );
 };

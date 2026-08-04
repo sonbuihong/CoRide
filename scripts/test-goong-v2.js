@@ -1,10 +1,11 @@
+require('dotenv').config();
 const axios = require('axios');
 
 async function test() {
   try {
     const response = await axios.get(`https://rsapi.goong.io/v2/direction`, {
       params: {
-        api_key: "HBO3HIULACZABQUhNY9yM34OFlxYmVKvMnEijabz",
+        api_key: process.env.GOONG_API_KEY,
         origin: "21.028511,105.804817",
         destination: "21.022736,105.801944",
         vehicle: "car",

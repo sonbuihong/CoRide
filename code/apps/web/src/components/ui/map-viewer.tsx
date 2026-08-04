@@ -53,7 +53,13 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     isValidCoord(destination?.lng);
 
   useEffect(() => {
-    if (!hasValidCoords) {
+    if (!hasValidCoords || !origin || !destination) {
+      setPolyline([]);
+      setRouteInfo(null);
+      return;
+    }
+
+    if (origin.lat === destination.lat && origin.lng === destination.lng) {
       setPolyline([]);
       setRouteInfo(null);
       return;

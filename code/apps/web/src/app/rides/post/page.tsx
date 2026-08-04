@@ -15,7 +15,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { AddressAutocomplete } from '../../../components/ui/address-autocomplete';
 import { useAuth } from '@/components/providers/auth-provider';
-import { getDirections, formatDuration } from '../../../lib/goong';
+import { getDirections, formatDuration, reverseGeocodeStructured } from '../../../lib/goong';
 import RideRouteMap from '@/components/rides/ride-route-map';
 
 // Dynamic import: Goong Maps chỉ chạy trên client (không tương thích SSR)
@@ -371,6 +371,10 @@ export default function PostRidePage() {
   // ============================================================
   useEffect(() => {
     if (!originCoords || !destinationCoords) { setRouteInfo(null); return; }
+    if (originCoords.lat === destinationCoords.lat && originCoords.lng === destinationCoords.lng) {
+      setRouteInfo(null);
+      return;
+    }
     setIsCalculatingRoute(true);
     getDirections(`${originCoords.lat},${originCoords.lng}`, `${destinationCoords.lat},${destinationCoords.lng}`)
       .then((data) => {
@@ -397,6 +401,14 @@ export default function PostRidePage() {
     if (!originCoords || !destinationCoords || !vehicleId) {
       setEstimatedPrice(null);
       setPriceEstimateError(null);
+      setValue('pricePerSeat', 0);
+      return;
+    }
+
+    // Nếu điểm đón và điểm đến trùng nhau
+    if (originCoords.lat === destinationCoords.lat && originCoords.lng === destinationCoords.lng) {
+      setEstimatedPrice(null);
+      setPriceEstimateError('Điểm đón và điểm đến không được trùng nhau');
       setValue('pricePerSeat', 0);
       return;
     }
@@ -712,7 +724,6 @@ export default function PostRidePage() {
                         setOriginCoords({ lat, lng });
                         if (!prov) {
                           try {
-                            const { reverseGeocodeStructured } = await import('@/lib/goong');
                             const data = await reverseGeocodeStructured(lat, lng);
                             if (data) { prov = data.province; dist = data.district; ward = data.ward; }
                           } catch { /* bỏ qua lỗi reverse geocode */ }
@@ -755,7 +766,6 @@ export default function PostRidePage() {
                         setDestinationCoords({ lat, lng });
                         if (!prov) {
                           try {
-                            const { reverseGeocodeStructured } = await import('@/lib/goong');
                             const data = await reverseGeocodeStructured(lat, lng);
                             if (data) { prov = data.province; dist = data.district; ward = data.ward; }
                           } catch { /* bỏ qua lỗi reverse geocode */ }

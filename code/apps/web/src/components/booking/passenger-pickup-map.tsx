@@ -1,21 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import * as maplibregl from 'maplibre-gl';
 import { Loader2, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { reverseGeocode } from '@/lib/goong';
-
-// Fix Leaflet's default icon issue
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-});
 
 interface PassengerPickupMapProps {
   onConfirm: (lat: number, lng: number, address: string) => void;
@@ -24,23 +13,15 @@ interface PassengerPickupMapProps {
   defaultLng?: number;
 }
 
-// Component bắt sự kiện di chuyển bản đồ để đổi toạ độ
-function MapEvents({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
-  const map = useMapEvents({
-    moveend() {
-      const center = map.getCenter();
-      onLocationSelect(center.lat, center.lng);
-    },
-  });
-  return null;
-}
-
 export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, defaultLng = 105.8542 }: PassengerPickupMapProps) {
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [address, setAddress] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [loadingAddress, setLoadingAddress] = useState(false);
-  const mapRef = useRef<L.Map>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+
+  const MAP_KEY = process.env.NEXT_PUBLIC_GOONG_MAPTILES_KEY || '';
 
   useEffect(() => {
     if ('geolocation' in navigator) {
@@ -61,6 +42,30 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
     }
   }, [defaultLat, defaultLng]);
 
+  // Khởi tạo bản đồ MapLibre
+  useEffect(() => {
+    if (loading || !position || !mapContainerRef.current || mapRef.current) return;
+
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: `https://tiles.goong.io/assets/goong_map_web.json?api_key=${MAP_KEY}`,
+      center: [position[1], position[0]], // [lng, lat]
+      zoom: 15,
+    });
+
+    map.on('moveend', () => {
+      const center = map.getCenter();
+      setPosition([center.lat, center.lng]);
+    });
+
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [loading, position, MAP_KEY]);
+
   // Reverse geocode whenever position changes
   useEffect(() => {
     const fetchAddress = async () => {
@@ -69,7 +74,8 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
       try {
         const result = await reverseGeocode(position[0], position[1]);
         setAddress(result || 'Không thể xác định địa chỉ');
-      } catch (error) {
+      } catch (err) {
+        console.error(err);
         setAddress('Không thể xác định địa chỉ');
       } finally {
         setLoadingAddress(false);
@@ -84,10 +90,6 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
     return () => clearTimeout(timer);
   }, [position]);
 
-  const handleMapMoveEnd = (lat: number, lng: number) => {
-    setPosition([lat, lng]);
-  };
-
   if (loading || !position) {
     return (
       <div className="flex flex-col items-center justify-center h-[300px] w-full bg-gray-50 rounded-md">
@@ -99,40 +101,33 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
 
   return (
     <div className="space-y-4">
-      <div className="relative h-[300px] w-full rounded-md overflow-hidden border border-gray-200">
-        <MapContainer
-          center={position}
-          zoom={15}
-          style={{ height: '100%', width: '100%', zIndex: 0 }}
-          ref={mapRef}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          />
-          <MapEvents onLocationSelect={handleMapMoveEnd} />
-        </MapContainer>
+      <div className="relative h-[300px] w-full rounded-md overflow-hidden border border-gray-200 bg-gray-100">
+        <div ref={mapContainerRef} className="w-full h-full z-0" />
         
         {/* Shadow của ghim ở giữa bản đồ */}
-        <div className="absolute top-1/2 left-1/2 z-[399] pointer-events-none" style={{ transform: 'translate(-12px, -41px)' }}>
+        <div className="absolute top-1/2 left-1/2 z-[10] pointer-events-none" style={{ transform: 'translate(-12px, -41px)' }}>
           <img 
             src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png"
             alt="shadow"
+            width={41}
+            height={41}
             style={{ width: '41px', height: '41px' }}
           />
         </div>
         {/* Ghim cố định ở giữa bản đồ */}
-        <div className="absolute top-1/2 left-1/2 z-[400] pointer-events-none" style={{ transform: 'translate(-50%, -100%)' }}>
+        <div className="absolute top-1/2 left-1/2 z-[11] pointer-events-none" style={{ transform: 'translate(-50%, -100%)' }}>
           <img 
             src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png"
             alt="marker"
+            width={25}
+            height={41}
             style={{ width: '25px', height: '41px' }}
           />
         </div>
 
         {/* Nút re-center về vị trí hiện tại */}
         <button
-          className="absolute bottom-2 right-2 z-[400] bg-white p-2 rounded-full shadow-md text-gray-700 hover:text-blue-600 focus:outline-none"
+          className="absolute bottom-4 right-2 z-[11] bg-white p-2 rounded-full shadow-md text-gray-700 hover:text-blue-600 focus:outline-none"
           onClick={() => {
             if ('geolocation' in navigator) {
               navigator.geolocation.getCurrentPosition(
@@ -140,7 +135,7 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
                   const newPos: [number, number] = [pos.coords.latitude, pos.coords.longitude];
                   setPosition(newPos);
                   if (mapRef.current) {
-                    mapRef.current.setView(newPos, 15);
+                    mapRef.current.flyTo({ center: [newPos[1], newPos[0]], zoom: 15 });
                   }
                 }
               );

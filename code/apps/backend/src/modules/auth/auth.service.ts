@@ -14,6 +14,10 @@ const getSecret = () =>
     process.env.JWT_SECRET ?? 'super-secret-fallback-key'
   );
 
+// In-memory cache to handle concurrent refresh requests (Grace period / Lock)
+// Key: old refresh token, Value: Promise of new token pair
+const refreshLocks = new Map<string, Promise<{ accessToken: string, refreshToken: string }>>();
+
 export class AuthService {
   static async registerUser(data: RegisterInput) {
     const existingUser = await prisma.user.findUnique({
@@ -91,35 +95,56 @@ export class AuthService {
   }
 
   static async refreshTokens(token: string) {
-    const secret = getSecret();
-    let userId: string;
+    // 1. Kiểm tra xem token này có đang được refresh bởi một request chạy song song không
+    if (refreshLocks.has(token)) {
+      // Nếu có, chờ request đó hoàn thành và trả về cùng kết quả (chống double-refresh)
+      return refreshLocks.get(token)!;
+    }
+
+    const refreshPromise = (async () => {
+      const secret = getSecret();
+      let userId: string;
+
+      try {
+        const { payload } = await jose.jwtVerify(token, secret);
+        userId = payload.userId as string;
+      } catch {
+        throw new AppError('Refresh token không hợp lệ', 401);
+      }
+
+      const storedToken = await prisma.refreshToken.findUnique({
+        where: { token },
+      });
+
+      if (
+        !storedToken ||
+        storedToken.revoked ||
+        storedToken.expiresAt < new Date()
+      ) {
+        throw new AppError('Refresh token không hợp lệ hoặc đã hết hạn', 401);
+      }
+
+      // Token rotation: thu hồi token cũ, cấp cặp token mới
+      await prisma.refreshToken.update({
+        where: { id: storedToken.id },
+        data: { revoked: true },
+      });
+
+      return this.generateTokenPair(userId);
+    })();
+
+    // Lưu vào lock để các request song song dùng chung
+    refreshLocks.set(token, refreshPromise);
 
     try {
-      const { payload } = await jose.jwtVerify(token, secret);
-      userId = payload.userId as string;
-    } catch {
-      throw new AppError('Refresh token không hợp lệ', 401);
+      const result = await refreshPromise;
+      // Giữ lock trong 3 giây để xử lý các request tới trễ do network jitter
+      setTimeout(() => refreshLocks.delete(token), 3000);
+      return result;
+    } catch (error) {
+      refreshLocks.delete(token);
+      throw error;
     }
-
-    const storedToken = await prisma.refreshToken.findUnique({
-      where: { token },
-    });
-
-    if (
-      !storedToken ||
-      storedToken.revoked ||
-      storedToken.expiresAt < new Date()
-    ) {
-      throw new AppError('Refresh token không hợp lệ hoặc đã hết hạn', 401);
-    }
-
-    // Token rotation: thu hồi token cũ, cấp cặp token mới
-    await prisma.refreshToken.update({
-      where: { id: storedToken.id },
-      data: { revoked: true },
-    });
-
-    return this.generateTokenPair(userId);
   }
 
   static async logout(token: string) {

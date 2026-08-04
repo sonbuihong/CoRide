@@ -5,19 +5,8 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { autocompleteAddress, getPlaceDetail } from '@/lib/goong';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import * as maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Khai báo maplibregl trên window để TypeScript không báo lỗi
-// MapLibre GL được load qua CDN script (không qua npm) theo tài liệu Goong
-// ─────────────────────────────────────────────────────────────────────────────
-declare global {
-  interface Window {
-    maplibregl: any;
-  }
-}
-
+import { Map as MapLibreMap, Marker, Popup, LngLatBounds } from 'maplibre-gl';
+// MapLibre GL được load qua npm
 // ─────────────────────────────────────────────────────────────────────────────
 // Danh sách kiểu bản đồ Goong (5 kiểu, dùng 3 kiểu phổ biến nhất)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -200,7 +189,7 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    const mapInstance = new maplibregl.Map({
+    const mapInstance = new MapLibreMap({
       container: mapContainerRef.current,
       style: `${MAP_STYLES[0].url(MAP_KEY)}`,
       zoom,
@@ -234,9 +223,6 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
   useEffect(() => {
     if (!isMapReady || !mapRef.current) return;
     const map = mapRef.current;
-    const ml = window.maplibregl;
-
-    // Xoá toàn bộ marker cũ
     markerInstancesRef.current.forEach((m) => m.remove());
     markerInstancesRef.current = [];
 
@@ -262,7 +248,7 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
       const anchorOpts = m.type === 'dot'
         ? { element: el }
         : { element: el, anchor: 'bottom' as const };
-      const marker = new maplibregl.Marker(anchorOpts)
+      const marker = new Marker(anchorOpts)
         .setLngLat(m.position)
         .addTo(map);
       markerInstancesRef.current.push(marker);
@@ -323,7 +309,7 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
       // Popup thông tin ở giữa route
       if (routeInfo && allCoords.length > 1) {
         const midPoint = allCoords[Math.floor(allCoords.length / 2)];
-        popupInstanceRef.current = new maplibregl.Popup({ closeOnClick: false, closeButton: false })
+        popupInstanceRef.current = new Popup({ closeOnClick: false, closeButton: false })
           .setLngLat(midPoint as [number, number])
           .setHTML(`
             <div class="px-2 py-1 text-center font-sans">
@@ -337,7 +323,7 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
       // Zoom fit toàn bộ route
       const bounds = allCoords.reduce(
         (b, coord) => b.extend(coord as [number, number]),
-        new maplibregl.LngLatBounds(allCoords[0] as [number, number], allCoords[0] as [number, number])
+        new LngLatBounds(allCoords[0] as [number, number], allCoords[0] as [number, number])
       );
       map.fitBounds(bounds, { padding: 60, maxZoom: 15 });
     }
@@ -378,8 +364,7 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
     setSuggestions([]);
 
     const map = mapRef.current;
-    const ml = window.maplibregl;
-    if (!map || !ml) return;
+    if (!map) return;
 
     try {
       const detail = await getPlaceDetail(suggestion.place_id);
@@ -389,7 +374,7 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
 
         // Thêm marker tại vị trí tìm kiếm (dùng pin style)
         const el = createMarkerElement('pin', '#EA4335');
-        const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(lngLat).addTo(map);
+        const marker = new Marker({ element: el, anchor: 'bottom' }).setLngLat(lngLat).addTo(map);
         markerInstancesRef.current.push(marker);
 
         // Cập nhật vòng tròn xung quanh điểm tìm kiếm

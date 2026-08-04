@@ -3,13 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { getDirections, formatDistance, formatDuration, decodePolyline } from '@/lib/goong';
 
 const GoongMap = dynamic(() => import('@/components/goong/goong-map'), {
   ssr: false,
   loading: () => <div className="w-full h-full min-h-[200px] flex items-center justify-center bg-[rgba(0,0,0,0.03)] animate-pulse rounded-[14px]" />
 });
-
-import { getDirections, formatDistance, formatDuration, decodePolyline } from '@/lib/goong';
 
 interface RideRouteMapProps {
   origin: { lat: number; lng: number };
@@ -36,6 +35,11 @@ const RideRouteMap = ({ origin, destination, onRouteCalculated }: RideRouteMapPr
 
   useEffect(() => {
     if (!hasValidCoords) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (origin.lat === destination.lat && origin.lng === destination.lng) {
       setIsLoading(false);
       return;
     }
