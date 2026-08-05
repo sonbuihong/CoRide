@@ -7,12 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Calendar, Clock, Users, CreditCard, MessageSquare, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@/components/providers/auth-provider';
 
 export default function BookingDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { data: booking, isLoading, error } = useBookingDetail(id as string);
   const { mutate: cancelBooking, isPending: isCancelling } = useCancelBooking();
 

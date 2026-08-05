@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from './AppError';
+import { ZodError } from 'zod';
 
 /**
  * Global error handler — phải đặt CUỐI CÙNG trong Express middleware chain.
@@ -16,6 +17,15 @@ export const errorHandler = (
   // Lỗi có chủ ý (AppError) — trả về message trực tiếp cho client
   if (err instanceof AppError) {
     res.status(err.statusCode).json({ message: err.message });
+    return;
+  }
+  
+  // Lỗi xác thực dữ liệu (Zod)
+  if (err instanceof ZodError) {
+    res.status(400).json({ 
+      message: 'Dữ liệu không hợp lệ', 
+      errors: err.errors 
+    });
     return;
   }
 

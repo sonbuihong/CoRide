@@ -63,7 +63,7 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
             // Lấy polyline
             const trip = data.trips[0];
             const polylineCoords = decodeGoongPolyline(trip.geometry);
-            setRoute(polylineCoords);
+            setRoute(polylineCoords.map(c => [c[1], c[0]]));
 
             // Lấy thứ tự đón khách
             if (data.waypoints && onRouteOptimized) {
@@ -87,7 +87,7 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
           // 2. Nếu <= 1 waypoint HOẶC useCustomOrder = true, gọi API Direction từng chặng
           const polylineCoords = await getGoongMultiStopRoute(startCoord, waypoints, destCoord);
           if (polylineCoords.length > 0) {
-            setRoute(polylineCoords);
+            setRoute(polylineCoords.map(c => [c[1], c[0]]));
           } else {
             setError('Không thể tìm thấy đường đi (Goong Direction API).');
           }
@@ -176,9 +176,11 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
         },
       });
     } else if (route.length > 0) {
-      map.on('load', () => {
-        if (!map.getSource('route')) {
-          map.addSource('route', {
+      const addRoute = () => {
+        if (!mapRef.current) return;
+        const currentMap = mapRef.current;
+        if (!currentMap.getSource('route')) {
+          currentMap.addSource('route', {
             type: 'geojson',
             data: {
               type: 'Feature',
@@ -189,7 +191,7 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
               },
             },
           });
-          map.addLayer({
+          currentMap.addLayer({
             id: 'route',
             type: 'line',
             source: 'route',
@@ -204,7 +206,13 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
             },
           });
         }
-      });
+      };
+
+      if (map.loaded()) {
+        addRoute();
+      } else {
+        map.once('load', addRoute);
+      }
     }
 
     // Fit bounds

@@ -238,7 +238,7 @@ export default function OngoingPage() {
           (err) => {
             console.error('Lỗi định vị tài xế:', err);
           },
-          { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+          { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
         );
       }
     }

@@ -120,17 +120,18 @@ goto menu
 
 :kill_all
 echo.
-echo [INFO] Dang dong tat ca cac cua so CMD va Node.exe tren may tinh (Ngoai tru Menu)...
+echo [INFO] Dang dong tat ca cac tab dich vu va Node.exe tren may tinh (Ngoai tru Menu)...
 taskkill /F /IM node.exe /T > nul 2>&1
-taskkill /F /FI "WINDOWTITLE ne CoRide Development Menu*" /IM WindowsTerminal.exe /T > nul 2>&1
+wmic process where "name='cmd.exe' and (commandline like '%%npm run dev%%' or commandline like '%%prisma studio%%' or commandline like '%%npm run start%%' or commandline like '%%pnpm run web%%' or commandline like '%%pnpm expo start%%')" call terminate > nul 2>&1
 echo [SUCCESS] Da dong tat ca dich vu thanh cong.
 pause
 goto menu
 
 :kill_all_and_exit
 echo.
-echo [INFO] Dang dong tat ca cac cua so CMD va Node.exe tren may tinh...
+echo [INFO] Dang dong tat ca cac tab dich vu va Node.exe tren may tinh...
 taskkill /F /IM node.exe /T > nul 2>&1
+wmic process where "name='cmd.exe' and (commandline like '%%npm run dev%%' or commandline like '%%prisma studio%%' or commandline like '%%npm run start%%' or commandline like '%%pnpm run web%%' or commandline like '%%pnpm expo start%%')" call terminate > nul 2>&1
 taskkill /F /IM WindowsTerminal.exe /T > nul 2>&1
 echo [SUCCESS] Da dong tat ca dich vu va thoat.
 endlocal

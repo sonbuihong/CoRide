@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from '@/lib/axios';
+import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 
 export const useMyBookings = (role: 'passenger' | 'driver', page: number = 1) => {

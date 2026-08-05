@@ -446,9 +446,16 @@ export default function PostRidePage() {
         // Bỏ qua lỗi ERR_CANCELED — do AbortController chủ động hủy, không phải lỗi thực
         if ((err as { code?: string }).code === 'ERR_CANCELED') return;
 
-        console.error('[PostRide] Lỗi lấy giá tự động:', err);
+        const serverMessage = ((err as { response?: { data?: { message?: string } } }).response)?.data?.message;
+
+        // Chỉ log khi là lỗi mạng thực sự (không có response từ server)
+        // Lỗi 4xx có message từ server chỉ hiển thị trên UI, không log console
+        if (!serverMessage) {
+          console.error('[PostRide] Lỗi lấy giá tự động:', err);
+        }
+
         setPriceEstimateError(
-          ((err as { response?: { data?: { message?: string } } }).response)?.data?.message ||
+          serverMessage ||
           'Hệ thống chưa cấu hình giá cho loại xe này. Vui lòng liên hệ admin.'
         );
         setEstimatedPrice(null);
