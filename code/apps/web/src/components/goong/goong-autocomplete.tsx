@@ -163,7 +163,7 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
   };
 
   const appleInputClass = 
-    "h-[52px] md:h-[60px] rounded-[12px] md:rounded-[14px] bg-[#fafafc] border-[2px] border-[rgba(0,0,0,0.04)] pl-3 md:pl-4 pr-16 md:pr-20 pt-4 md:pt-5 pb-1 text-[15px] md:text-[17px] text-[#1d1d1f] transition-all hover:bg-[rgba(0,0,0,0.02)] focus:bg-white focus:border-[rgba(0,0,0,0.08)] focus:outline focus:outline-[2px] focus:outline-[#0071e3] focus:outline-offset-1 dark:bg-[rgba(255,255,255,0.05)] dark:border-[rgba(255,255,255,0.05)] dark:text-white dark:focus:bg-[rgba(255,255,255,0.08)]";
+    "h-[52px] md:h-[60px] rounded-[12px] md:rounded-[14px] bg-[#fafafc] border-[2px] border-[rgba(0,0,0,0.04)] pl-3 md:pl-4 pr-16 md:pr-20 pt-4 md:pt-5 pb-1 text-[15px] md:text-[17px] text-[#1d1d1f] transition-all hover:bg-[rgba(0,0,0,0.02)] focus:bg-white focus:border-[rgba(0,0,0,0.08)] focus:outline focus:outline-[2px] focus:outline-[#0071e3] focus:outline-offset-1 dark:bg-[rgba(255,255,255,0.05)] dark:border-[rgba(255,255,255,0.05)] dark:text-white dark:focus:bg-[rgba(255,255,255,0.08)] text-ellipsis overflow-hidden whitespace-nowrap";
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>

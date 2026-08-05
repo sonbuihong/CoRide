@@ -61,7 +61,7 @@ export function LoginForm() {
       if (userData?.role === 'ADMIN') {
         router.push('/admin');
       } else {
-        router.push('/rides/search');
+        router.push('/rides');
       }
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };

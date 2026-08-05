@@ -39,7 +39,7 @@ if (process.env.NODE_ENV !== 'test') {
     }
   });
 
-  server.listen(port, () => {
+  server.listen(port, '0.0.0.0', () => {
     console.log(`[server]: Running at http://localhost:${port}`);
     console.log(`[server]: Environment: ${process.env.NODE_ENV ?? 'development'}`);
   });

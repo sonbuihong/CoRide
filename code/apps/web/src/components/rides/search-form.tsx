@@ -9,19 +9,22 @@ import GoongAutocomplete from '../goong/goong-autocomplete';
 import { reverseGeocodeDetailed, cleanAddressText, buildFullAddressFromDetail } from '@/lib/goong';
 
 // ==========================================
-// THIẾT KẾ APPLE: Utilities CSS
+// THIẾT KẾ MỚI TỪ HÌNH ẢNH (WIDGET DỌC)
 // ==========================================
-const appleInputWrapperClass = 
-  "flex-1 relative group";
+const inputWrapperClass = 
+  "flex-1 relative group w-full bg-[#f7f7f9] dark:bg-[rgba(255,255,255,0.05)] rounded-2xl border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.05)] transition-all hover:bg-[rgba(0,0,0,0.02)] focus-within:bg-white dark:focus-within:bg-[rgba(255,255,255,0.08)] focus-within:border-[rgba(0,0,0,0.08)] focus-within:ring-2 focus-within:ring-[#0071e3] focus-within:ring-offset-1";
 
-const appleLabelClass = 
-  "absolute left-3 md:left-4 top-1.5 md:top-2 text-[9px] md:text-[10px] font-semibold uppercase tracking-wider text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)] z-10 flex items-center gap-1.5";
+const labelContainerClass = 
+  "absolute left-4 top-3 flex items-center gap-1.5 z-10 w-[calc(100%-48px)]";
 
-const appleInputClass = 
-  "w-full h-[52px] md:h-[60px] pl-3 pr-3 md:pl-4 md:pr-4 pt-4 md:pt-5 pb-1 rounded-[12px] md:rounded-[14px] bg-[#fafafc] border-[2px] border-[rgba(0,0,0,0.04)] text-[15px] md:text-[17px] font-medium text-[#1d1d1f] transition-all hover:bg-[rgba(0,0,0,0.02)] focus:bg-white focus:border-[rgba(0,0,0,0.08)] focus:outline focus:outline-[2px] focus:outline-[#0071e3] focus:outline-offset-1 dark:bg-[rgba(255,255,255,0.05)] dark:border-[rgba(255,255,255,0.05)] dark:text-white dark:focus:bg-[rgba(255,255,255,0.08)]";
+const labelTextClass = 
+  "text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5";
 
-const appleSubmitButtonClass = 
-  "h-[52px] md:h-[60px] px-8 rounded-[12px] md:rounded-[14px] bg-[#0071e3] text-white text-[15px] md:text-[17px] font-medium tracking-tight transition-all hover:bg-[#0077ED] active:scale-95 flex items-center justify-center shrink-0 w-full md:w-auto shadow-[0_4px_14px_rgba(0,113,227,0.4)]";
+const inputClass = 
+  "w-full h-[64px] pl-4 pr-12 pt-7 pb-2 bg-transparent text-[16px] font-medium text-[#1d1d1f] dark:text-white placeholder:text-gray-400 focus:outline-none appearance-none";
+
+const submitButtonClass = 
+  "w-full h-[54px] rounded-xl bg-[#0071e3] text-white text-[16px] font-semibold tracking-tight transition-all hover:bg-[#0077ED] active:scale-[0.98] flex items-center justify-center mt-1";
 
 interface SearchFormProps {
   onSearch: (filters: SearchRideInput) => void;
@@ -57,18 +60,10 @@ export function SearchForm({ onSearch, initialValues }: SearchFormProps) {
     setValue('destination', address);
   };
 
-  /**
-   * GPS → reverseGeocodeDetailed → ghép name + address ngay lập tức
-   * Goong reverse geocode đã trả đầy đủ (name, address, compound, geometry)
-   * → Chỉ cần 1 API call thay vì 3 (reverse + autocomplete + Place Detail)
-   */
   const resolveGpsToAddress = async (lat: number, lng: number): Promise<string | null> => {
     const result = await reverseGeocodeDetailed(lat, lng);
     if (!result) return null;
 
-    // Ghép name + address giống buildFullAddressFromDetail
-    // VD: name="Circle K", address="91 Trung Kính, Trung Hòa, Cầu Giấy, Hà Nội"
-    // → "Circle K, 91 Trung Kính, Trung Hòa, Cầu Giấy, Hà Nội"
     const fullAddress = buildFullAddressFromDetail({
       name: result.name,
       formatted_address: result.address,
@@ -77,16 +72,6 @@ export function SearchForm({ onSearch, initialValues }: SearchFormProps) {
     return fullAddress || cleanAddressText(result.address);
   };
 
-  /**
-   * Auto-fill GPS được bỏ qua khi mount (đã xóa useEffect auto-trigger).
-   * WHY: Tránh reverse-geocode call bất ngờ ngay khi trang load mà user
-   * chưa có hành động gì. User chủ động bấm nút khi cần.
-   */
-
-  /**
-   * Lấy vị trí GPS → autocomplete → điền địa chỉ chi tiết vào ô "Điểm đi"
-   * Chỉ được gọi khi user bấm nút (manual trigger)
-   */
   const handleAutoFillOrigin = () => {
     if (!navigator.geolocation) {
       alert('Trình duyệt không hỗ trợ định vị GPS.');
@@ -99,8 +84,6 @@ export function SearchForm({ onSearch, initialValues }: SearchFormProps) {
         try {
           const address = await resolveGpsToAddress(coords.latitude, coords.longitude);
           if (address) {
-            // Chỉ cần setValue — GoongAutocomplete là controlled component riêng
-            // Không cần force re-render bằng key vì điểm đi được lưu trong react-hook-form
             setValue('origin', address);
           } else {
             alert('Không thể xác định địa chỉ từ vị trí hiện tại.');
@@ -128,68 +111,85 @@ export function SearchForm({ onSearch, initialValues }: SearchFormProps) {
     <div className="w-full relative">
       <form 
         onSubmit={handleSubmit(onSubmit)} 
-        className="flex flex-col md:flex-row gap-2.5 md:gap-3 p-2.5 md:p-3 bg-white dark:bg-[#1d1d1f] rounded-[20px] md:rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.05)]"
+        className="flex flex-col gap-3 p-4 bg-white dark:bg-[#1d1d1f] rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-[rgba(0,0,0,0.04)] dark:border-[rgba(255,255,255,0.05)] w-full max-w-[400px] mx-auto md:mx-0"
       >
         
-        {/* Origin — có nút GPS auto-fill */}
-        <div className={appleInputWrapperClass}>
-          <label htmlFor="origin" className={appleLabelClass}>
-            <MapPin className="h-2.5 w-2.5" /> Điểm đi
-            {/* Nút nhỏ lấy vị trí hiện tại — nằm cùng hàng với label */}
+        {/* Origin */}
+        <div className={inputWrapperClass}>
+          <div className={labelContainerClass}>
+            <MapPin className="h-3 w-3 text-gray-400" />
+            <span className={labelTextClass}>Điểm đi</span>
+            {/* Auto-fill button */}
             <button
               type="button"
               onClick={handleAutoFillOrigin}
               disabled={isLocating}
               title="Dùng vị trí hiện tại"
-              className="flex items-center gap-0.5 text-[#0071e3] hover:text-[#0077ed] transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-1"
+              className="flex items-center gap-1 text-[#0071e3] hover:text-[#0077ed] transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-2"
             >
               {isLocating ? (
-                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
-                <Navigation className="h-2.5 w-2.5" />
+                <Navigation className="h-3 w-3" />
               )}
-              <span className="text-[9px] font-semibold uppercase tracking-wider">
+              <span className="text-[10px] font-bold uppercase tracking-wider">
                 {isLocating ? 'Đang lấy...' : 'Vị trí của tôi'}
               </span>
             </button>
-          </label>
-          <GoongAutocomplete
-            placeholder="Bạn muốn đi từ đâu?"
-            defaultValue={initialValues?.origin || ''}
-            onSelect={handleOriginSelect}
-            className="w-full"
-          />
+          </div>
+          
+          <div className="relative">
+            <GoongAutocomplete
+              placeholder="Sử dụng vị trí hiện tại"
+              defaultValue={initialValues?.origin || ''}
+              onSelect={handleOriginSelect}
+              className={inputClass}
+            />
+            <div className="absolute right-4 top-[22px] pointer-events-none">
+               <Search className="h-5 w-5 text-gray-400" />
+            </div>
+          </div>
         </div>
 
         {/* Destination */}
-        <div className={appleInputWrapperClass}>
-          <label htmlFor="destination" className={appleLabelClass}>
-            <MapPin className="h-2.5 w-2.5" /> Điểm đến
-          </label>
-          <GoongAutocomplete
-            placeholder="Bạn muốn đi đến đâu?"
-            defaultValue={initialValues?.destination}
-            onSelect={handleDestSelect}
-            className="w-full"
-          />
+        <div className={inputWrapperClass}>
+          <div className={labelContainerClass}>
+            <MapPin className="h-3 w-3 text-gray-400" />
+            <span className={labelTextClass}>Điểm đến</span>
+          </div>
+          <div className="relative">
+            <GoongAutocomplete
+              placeholder="Bạn muốn đi đâu"
+              defaultValue={initialValues?.destination}
+              onSelect={handleDestSelect}
+              className={inputClass}
+            />
+            <div className="absolute right-4 top-[22px] pointer-events-none">
+               <Search className="h-5 w-5 text-gray-400" />
+            </div>
+          </div>
         </div>
 
         {/* Date */}
-        <div className={appleInputWrapperClass}>
-          <label htmlFor="date" className={appleLabelClass}>
-            <Calendar className="h-2.5 w-2.5" /> Ngày đi
-          </label>
-          <input
-            id="date"
-            type="date"
-            className={appleInputClass}
-            {...register('date')}
-          />
+        <div className={inputWrapperClass}>
+          <div className={labelContainerClass}>
+            <Calendar className="h-3 w-3 text-gray-400" />
+            <span className={labelTextClass}>Ngày đi</span>
+          </div>
+          <div className="relative">
+            <input
+              id="date"
+              type="date"
+              className={inputClass}
+              {...register('date')}
+            />
+            {/* Native date inputs have their own calendar icon on some browsers, so we might not need an absolute icon here, but keeping it to match design if standard input is overridden */}
+          </div>
         </div>
 
         {/* Submit */}
-        <button type="submit" className={appleSubmitButtonClass}>
-          <Search className="mr-2 h-5 w-5" />
+        <button type="submit" className={submitButtonClass}>
+          <Search className="mr-2 h-5 w-5" strokeWidth={2.5} />
           Tìm kiếm
         </button>
       </form>

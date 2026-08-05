@@ -12,7 +12,7 @@ import RideRouteMap from '@/components/rides/ride-route-map';
 import { useSocket } from '@/components/providers/socket-provider';
 import { toast } from 'sonner';
 
-function SearchResults() {
+function RidesList() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -213,92 +213,101 @@ function SearchResults() {
   ];
 
   return (
-    <div className="min-h-screen md:h-screen md:overflow-hidden bg-[#f0f0f5] dark:bg-[#0a0a0c] font-sans -mt-[64px] pt-[88px] pb-4 md:pb-6 px-4 md:px-6 lg:px-8 flex flex-col md:flex-row gap-4 md:gap-6 relative">
-      
-      {/* Decorative ambient background */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#0071e3] opacity-[0.03] dark:opacity-[0.07] blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[60%] bg-[#0071e3] opacity-[0.02] dark:opacity-[0.05] blur-[120px] rounded-full"></div>
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-black font-sans -mt-[64px] pt-[64px]">
+      {/* 1. Cinematic Hero Section (Dark Theme by default) */}
+      <div className="w-full bg-black text-white pt-16 md:pt-28 pb-32 md:pb-40 px-4 relative overflow-hidden flex flex-col items-center">
+        {/* Subtle blue glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#0071e3] opacity-20 blur-[120px] rounded-full pointer-events-none"></div>
+        
+        <div className="max-w-5xl mx-auto text-center relative z-10 w-full">
+          <h1 className="text-[40px] md:text-[64px] font-semibold tracking-[-0.015em] leading-[1.07] mb-4 text-white">
+            Khởi hành cùng nhau.
+          </h1>
+          <p className="text-[17px] md:text-[21px] text-[rgba(255,255,255,0.72)] tracking-[-0.015em] max-w-[600px] mx-auto mb-12">
+            Chia sẻ hành trình, tiết kiệm chi phí và bảo vệ môi trường. Hàng ngàn chuyến đi thân thiện đang chờ bạn.
+          </p>
+
+          <div className="w-full max-w-[600px] mx-auto relative group mt-8">
+            {/* Horizontal Search Bar (Click to navigate) */}
+            <div 
+              onClick={() => router.push('/rides/search')}
+              className="w-full h-[64px] md:h-[72px] bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] backdrop-blur-xl border border-[rgba(255,255,255,0.2)] rounded-[980px] flex items-center px-6 md:px-8 cursor-pointer transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:scale-[1.02] hover:shadow-[0_16px_48px_rgba(0,113,227,0.3)]"
+            >
+              <Search className="h-6 w-6 md:h-7 md:w-7 text-[rgba(255,255,255,0.7)] group-hover:text-white transition-colors mr-4" strokeWidth={2.5} />
+              <div className="flex-1 text-left">
+                <span className="text-[17px] md:text-[19px] font-medium text-[rgba(255,255,255,0.7)] group-hover:text-white transition-colors tracking-tight">
+                  Bạn muốn đi đâu?
+                </span>
+              </div>
+              <div className="hidden md:flex items-center justify-center bg-white text-black text-[12px] font-bold px-3 py-1.5 rounded-full ml-4 shadow-sm">
+                Tìm kiếm
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Left Panel: Search & Results */}
-      <div className="w-full md:w-[400px] lg:w-[460px] h-full flex flex-col gap-4 z-10">
-        
-        {/* Title */}
-        <div className="shrink-0 pt-2 pb-1 px-1">
-          <h1 className="text-[28px] md:text-[34px] font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white leading-tight">
-            Kết quả tìm kiếm
-          </h1>
-          <p className="text-[14px] text-gray-500 dark:text-gray-400 mt-1">
-            {rides.length} chuyến đi được tìm thấy
-          </p>
-        </div>
-
-        {/* Search Widget */}
-        <div className="shrink-0 relative z-20">
-          <SearchForm onSearch={handleSearch} initialValues={initialValues} />
-        </div>
-
-        {/* Results List */}
-        <div className="flex-1 overflow-y-auto bg-white/70 dark:bg-[#1c1c1e]/70 backdrop-blur-2xl rounded-[32px] p-2 md:p-3 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-white/50 dark:border-white/5 custom-scrollbar">
+      {/* 2. Content Section (Light/Dark Contextual) */}
+      <div className="w-full bg-[#f5f5f7] dark:bg-[#000000] py-16 px-4">
+        <div className="max-w-[1070px] mx-auto">
           
-          <div className="flex items-center justify-between px-3 pt-2 pb-3 sticky top-0 bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-md z-10 rounded-t-[24px]">
-            <span className="text-[14px] font-medium text-gray-500">Danh sách chuyến đi</span>
+          <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4">
+            <h2 className="text-[28px] md:text-[40px] font-semibold tracking-[-0.015em] leading-[1.1] text-[#1d1d1f] dark:text-white text-center md:text-left">
+              {loading ? 'Đang tìm kiếm...' : (rides.length > 0 ? `Khám phá ${rides.length} chuyến đi` : 'Chưa tìm thấy chuyến đi')}
+            </h2>
             <button
               onClick={() => fetchRides(getCurrentFilters())}
               disabled={loading}
-              className="flex items-center justify-center gap-1.5 px-4 py-1.5 rounded-[980px] bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800 transition-all text-[13px] font-medium text-[#1d1d1f] dark:text-white disabled:opacity-50 active:scale-95"
-              title="Làm mới danh sách"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-[980px] bg-[rgba(0,0,0,0.05)] dark:bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(0,0,0,0.08)] dark:hover:bg-[rgba(255,255,255,0.15)] transition-colors text-[14px] font-medium text-[#1d1d1f] dark:text-white disabled:opacity-50"
             >
-              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Làm mới
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Làm mới danh sách
             </button>
           </div>
 
-          <div className="px-1">
+          <div className="w-full">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin text-[#0071e3]" />
-                <p className="text-[14px] text-gray-500 tracking-tight">Đang quét hệ thống...</p>
+              <div className="flex flex-col items-center justify-center py-32 space-y-4">
+                <Loader2 className="h-10 w-10 animate-spin text-[#0071e3]" />
+                <p className="text-[17px] text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)] tracking-[-0.015em]">Đang quét hệ thống...</p>
               </div>
             ) : error ? (
-              <div className="flex flex-col items-center justify-center py-16 bg-red-50/50 dark:bg-red-900/10 rounded-[24px] text-[#d93025] space-y-3 m-2 border border-red-100 dark:border-red-900/30">
-                <AlertCircle className="h-8 w-8 opacity-80" />
-                <p className="text-[15px] font-medium tracking-tight text-center px-4">{error}</p>
+              <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-[#1d1d1f] rounded-[24px] text-[#d93025] space-y-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-transparent">
+                <AlertCircle className="h-12 w-12 opacity-80" />
+                <p className="text-[19px] font-medium tracking-tight text-center max-w-[400px]">{error}</p>
                 <button 
                   onClick={() => fetchRides(initialValues)}
-                  className="mt-2 text-[#0071e3] text-[14px] hover:underline font-medium"
+                  className="mt-4 text-[#0066cc] dark:text-[#2997ff] text-[17px] hover:underline flex items-center"
                 >
                   Thử lại
                 </button>
               </div>
             ) : rides.length > 0 ? (
-              <div className="flex flex-col gap-3 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 {rides.map((ride) => (
-                  <div key={ride.id} className="transition-transform hover:-translate-y-0.5 duration-300">
-                    <RideCard 
-                      ride={ride} 
-                      userLocation={userLocation}
-                      onMouseEnter={() => setHoveredRide(ride)}
-                      onMouseLeave={() => setHoveredRide(null)}
-                    />
-                  </div>
+                  <RideCard 
+                    key={ride.id} 
+                    ride={ride} 
+                    userLocation={userLocation}
+                    onMouseEnter={() => setHoveredRide(ride)}
+                    onMouseLeave={() => setHoveredRide(null)}
+                  />
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center space-y-4 m-2">
-                <div className="h-16 w-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                  <Car className="h-8 w-8 text-gray-400" />
+              <div className="flex flex-col items-center justify-center py-32 bg-white dark:bg-[#1d1d1f] rounded-[24px] space-y-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                <div className="h-20 w-20 bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.04)] rounded-full flex items-center justify-center">
+                  <Car className="h-10 w-10 text-[rgba(0,0,0,0.32)] dark:text-[rgba(255,255,255,0.32)]" />
                 </div>
-                <div>
-                  <p className="text-[17px] font-semibold text-[#1d1d1f] dark:text-white tracking-tight">Không tìm thấy chuyến đi</p>
-                  <p className="text-[14px] text-gray-500 mt-1 max-w-[250px] mx-auto leading-relaxed">
+                <div className="text-center space-y-2">
+                  <p className="text-[24px] font-semibold text-[#1d1d1f] dark:text-white tracking-[-0.015em]">Chưa có chuyến đi nào phù hợp</p>
+                  <p className="text-[17px] text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)] max-w-md mx-auto tracking-[-0.015em] leading-relaxed">
                     Hãy thử thay đổi điểm đến hoặc ngày đi để có nhiều sự lựa chọn hơn.
                   </p>
                 </div>
                 <button 
                   onClick={() => handleSearch({ origin: '', destination: '', date: '' })}
-                  className="bg-[#0071e3] text-white hover:bg-[#0077ED] active:scale-95 px-6 py-2.5 rounded-[980px] text-[15px] font-medium tracking-tight transition-all mt-2 shadow-md shadow-blue-500/20"
+                  className="bg-[#0071e3] text-white hover:bg-[#0077ED] active:scale-95 px-6 py-3 rounded-[980px] text-[17px] font-medium tracking-tight transition-all mt-6"
                 >
                   Xóa bộ lọc
                 </button>
@@ -307,73 +316,18 @@ function SearchResults() {
           </div>
         </div>
       </div>
-
-      {/* Right Panel: Map */}
-      <div className="hidden md:block flex-1 h-full relative z-10">
-        <div className="w-full h-full rounded-[32px] overflow-hidden bg-white/70 dark:bg-[#1c1c1e]/70 backdrop-blur-2xl border border-white/50 dark:border-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative">
-          {hoveredRide ? (
-            <div className="w-full h-full p-2">
-              {hoveredRide.originLat && hoveredRide.originLng && hoveredRide.destinationLat && hoveredRide.destinationLng ? (
-                <div className="w-full h-full rounded-[24px] overflow-hidden shadow-inner">
-                  <RideRouteMap 
-                    origin={{ lat: hoveredRide.originLat, lng: hoveredRide.originLng }}
-                    destination={{ lat: hoveredRide.destinationLat, lng: hoveredRide.destinationLng }}
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-gray-400 bg-gray-50 dark:bg-gray-900 rounded-[24px]">
-                  <Map className="h-10 w-10 mb-3 opacity-50" strokeWidth={1.5} />
-                  <p className="text-[15px] font-medium">Chưa có toạ độ chi tiết cho chuyến đi này</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-              <div className="relative">
-                <div className="absolute inset-0 bg-[#0071e3] blur-[40px] opacity-20 rounded-full animate-pulse"></div>
-                <div className="h-20 w-20 bg-white dark:bg-[#2c2c2e] rounded-full shadow-xl flex items-center justify-center mb-6 relative z-10 border border-gray-100 dark:border-gray-700">
-                  <Map className="h-8 w-8 text-[#0071e3]" strokeWidth={1.5} />
-                </div>
-              </div>
-              <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white mb-2">
-                Bản đồ lộ trình
-              </h3>
-              <p className="text-[15px] text-gray-500 max-w-[280px] leading-relaxed">
-                Rê chuột vào một thẻ chuyến đi bên trái để xem trước lộ trình trực quan trên bản đồ.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Global styles for custom scrollbar in this layout */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: rgba(150, 150, 150, 0.3);
-          border-radius: 20px;
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: rgba(200, 200, 200, 0.2);
-        }
-      `}} />
     </div>
   );
 }
 
-export default function SearchClient() {
+export default function RidesClient() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#f5f5f7] flex justify-center items-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#0071e3]" />
       </div>
     }>
-      <SearchResults />
+      <RidesList />
     </Suspense>
   );
 }
