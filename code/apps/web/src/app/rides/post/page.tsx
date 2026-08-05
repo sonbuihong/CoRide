@@ -952,9 +952,9 @@ export default function PostRidePage() {
           {/* ===== RIGHT: OPTIONS & PREVIEW ===== */}
           <div className="w-full lg:w-[320px] flex-shrink-0 space-y-4">
 
-            {/* Map card */}
+            {/* Map card — chỉ hiện trên desktop (lg+), mobile dùng map preview inline trong form */}
             {(originCoords || destinationCoords) && (
-              <div className={`${cls.card} overflow-hidden`}>
+              <div className={`hidden lg:block ${cls.card} overflow-hidden`}>
                 <div className="p-4 pb-2">
                   <p className="text-[13px] font-semibold text-[#1d1d1f] dark:text-white">Bản đồ lộ trình</p>
                 </div>
