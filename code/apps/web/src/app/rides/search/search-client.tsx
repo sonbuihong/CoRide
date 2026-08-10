@@ -22,6 +22,7 @@ function SearchResults() {
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [hoveredRide, setHoveredRide] = useState<Ride | null>(null);
+  const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
   const { socket } = useSocket();
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -213,7 +214,7 @@ function SearchResults() {
   ];
 
   return (
-    <div className="min-h-screen md:h-screen md:overflow-hidden bg-[#f0f0f5] dark:bg-[#0a0a0c] font-sans -mt-[64px] pt-[88px] pb-4 md:pb-6 px-4 md:px-6 lg:px-8 flex flex-col md:flex-row gap-4 md:gap-6 relative">
+    <div className="h-[100dvh] md:h-screen overflow-hidden bg-[#f0f0f5] dark:bg-[#0a0a0c] font-sans -mt-[64px] pt-[80px] md:pt-[88px] pb-4 md:pb-6 px-4 md:px-6 lg:px-8 flex flex-col md:flex-row gap-4 md:gap-6 relative">
       
       {/* Decorative ambient background */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -222,14 +223,14 @@ function SearchResults() {
       </div>
 
       {/* Left Panel: Search & Results */}
-      <div className="w-full md:w-[400px] lg:w-[460px] h-full flex flex-col gap-4 z-10">
+      <div className={`w-full md:w-[400px] lg:w-[460px] h-full flex-col gap-4 z-10 ${mobileView === 'list' ? 'flex' : 'hidden md:flex'}`}>
         
         {/* Title */}
         <div className="shrink-0 pt-2 pb-1 px-1">
-          <h1 className="text-[28px] md:text-[34px] font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white leading-tight">
+          <h1 className="text-[24px] md:text-[34px] font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white leading-tight">
             Kết quả tìm kiếm
           </h1>
-          <p className="text-[14px] text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-[13px] md:text-[14px] text-gray-500 dark:text-gray-400 mt-1">
             {rides.length} chuyến đi được tìm thấy
           </p>
         </div>
@@ -281,6 +282,13 @@ function SearchResults() {
                       userLocation={userLocation}
                       onMouseEnter={() => setHoveredRide(ride)}
                       onMouseLeave={() => setHoveredRide(null)}
+                      onClick={() => {
+                        setHoveredRide(ride);
+                        // Chỉ tự động chuyển sang map trên mobile khi bấm vào card
+                        if (window.innerWidth < 768) {
+                          setMobileView('map');
+                        }
+                      }}
                     />
                   </div>
                 ))}
@@ -309,8 +317,8 @@ function SearchResults() {
       </div>
 
       {/* Right Panel: Map */}
-      <div className="hidden md:block flex-1 h-full relative z-10">
-        <div className="w-full h-full rounded-[32px] overflow-hidden bg-white/70 dark:bg-[#1c1c1e]/70 backdrop-blur-2xl border border-white/50 dark:border-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative">
+      <div className={`flex-1 h-full relative z-10 ${mobileView === 'map' ? 'block' : 'hidden md:block'}`}>
+        <div className="w-full h-full rounded-[24px] md:rounded-[32px] overflow-hidden bg-white/70 dark:bg-[#1c1c1e]/70 backdrop-blur-2xl border border-white/50 dark:border-white/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative">
           {hoveredRide ? (
             <div className="w-full h-full p-2">
               {hoveredRide.originLat && hoveredRide.originLng && hoveredRide.destinationLat && hoveredRide.destinationLng ? (
@@ -335,15 +343,38 @@ function SearchResults() {
                   <Map className="h-8 w-8 text-[#0071e3]" strokeWidth={1.5} />
                 </div>
               </div>
-              <h3 className="text-[22px] font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white mb-2">
+              <h3 className="text-[20px] md:text-[22px] font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white mb-2">
                 Bản đồ lộ trình
               </h3>
-              <p className="text-[15px] text-gray-500 max-w-[280px] leading-relaxed">
+              <p className="text-[14px] md:text-[15px] text-gray-500 max-w-[280px] leading-relaxed hidden md:block">
                 Rê chuột vào một thẻ chuyến đi bên trái để xem trước lộ trình trực quan trên bản đồ.
+              </p>
+              <p className="text-[14px] md:text-[15px] text-gray-500 max-w-[280px] leading-relaxed md:hidden">
+                Bấm vào "Danh sách" và chọn một chuyến đi để xem lộ trình trên bản đồ.
               </p>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Mobile Toggle Button */}
+      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <button
+          onClick={() => setMobileView(prev => prev === 'list' ? 'map' : 'list')}
+          className="flex items-center gap-2 px-6 py-3 bg-[#1d1d1f] dark:bg-white text-white dark:text-[#1d1d1f] rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.12)] font-medium text-[15px] transition-transform active:scale-95"
+        >
+          {mobileView === 'list' ? (
+            <>
+              <Map className="w-5 h-5" />
+              Bản đồ
+            </>
+          ) : (
+            <>
+              <LayoutGrid className="w-5 h-5" />
+              Danh sách
+            </>
+          )}
+        </button>
       </div>
       
       {/* Global styles for custom scrollbar in this layout */}

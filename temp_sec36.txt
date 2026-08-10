@@ -1,0 +1,76 @@
+\section{Biểu đồ tuần tự (Sequence Diagram)}
+
+Biểu đồ tuần tự được sử dụng để mô tả sự tương tác giữa các tác nhân và các thành phần của hệ thống theo thứ tự thời gian. Nếu biểu đồ hoạt động tập trung vào luồng nghiệp vụ thì biểu đồ tuần tự làm rõ thành phần nào gửi yêu cầu, thành phần nào xử lý và thứ tự các thông điệp được trao đổi trong quá trình thực hiện nghiệp vụ.
+
+Trong CoRide, các biểu đồ tuần tự được xây dựng cho những nghiệp vụ có sự phối hợp giữa nhiều thành phần hoặc có cơ chế xử lý đáng chú ý, gồm đăng nhập, xác thực Driver, tạo chuyến Carpooling, xử lý Booking, điều phối Ride-Hailing, trao đổi tin nhắn thời gian thực .
+
+\subsection{Biểu đồ tuần tự đăng nhập và xác thực}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Hinhve/sources/seq_login_new.pdf}
+    \caption{Biểu đồ tuần tự đăng nhập hệ thống}
+    \label{fig:seq_login_new}
+\end{figure}
+
+\subsection{Biểu đồ tuần tự xác thực Driver}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Hinhve/sources/seq_kyc_submit.pdf}
+    \caption{Biểu đồ tuần tự gửi hồ sơ xác thực Driver}
+    \label{fig:seq_kyc_submit}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Hinhve/sources/seq_kyc_review.pdf}
+    \caption{Biểu đồ tuần tự Admin duyệt hồ sơ Driver}
+    \label{fig:seq_kyc_review}
+\end{figure}
+
+\subsection{Biểu đồ tuần tự tạo chuyến Carpooling}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Hinhve/sources/seq_create_ride.pdf}
+    \caption{Biểu đồ tuần tự tạo chuyến Carpooling}
+    \label{fig:seq_create_ride}
+\end{figure}
+
+\subsection{Biểu đồ tuần tự Booking và xử lý Booking}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Hinhve/sources/seq_create_booking.pdf}
+    \caption{Biểu đồ tuần tự tạo Booking (Giai đoạn 1)}
+    \label{fig:seq_create_booking}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Hinhve/sources/seq_process_booking.pdf}
+    \caption{Biểu đồ tuần tự Driver xử lý Booking (Giai đoạn 2)}
+    \label{fig:seq_process_booking}
+\end{figure}
+
+\subsection{Biểu đồ tuần tự Waterfall Matching}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Hinhve/sources/seq_waterfall_matching.pdf}
+    \caption{Biểu đồ tuần tự Waterfall Matching}
+    \label{fig:seq_waterfall_matching}
+\end{figure}
+
+\subsection{Biểu đồ tuần tự Chat Realtime}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Hinhve/sources/seq_chat_realtime.pdf}
+    \caption{Biểu đồ tuần tự Chat Realtime}
+    \label{fig:seq_chat_realtime}
+\end{figure}
+
+
+

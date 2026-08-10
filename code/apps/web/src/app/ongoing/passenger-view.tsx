@@ -5,6 +5,8 @@ import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 import { PaymentSimulatorDialog } from '@/components/booking/payment-simulator-dialog';
 import { useState } from 'react';
+import { ChatWindow } from '@/components/chat/chat-window';
+import { useAuth } from '@/components/providers/auth-provider';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -109,6 +111,9 @@ function getPassengerStatusInfo(data: PassengerViewData): {
 
 export default function PassengerView({ data, onRefresh, isExpanded = true, onExpand }: PassengerViewProps) {
   const [showPayment, setShowPayment] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const { user } = useAuth();
+  
   const ride: Ride = data.ride;
   const driver: Driver | undefined = ride.driver;
   const bookingId: string = data.id;
@@ -197,7 +202,7 @@ export default function PassengerView({ data, onRefresh, isExpanded = true, onEx
               <Phone className="w-6 h-6 text-gray-700" fill="currentColor" />
               <span className="text-[12px] text-gray-700 font-medium">Gọi</span>
             </a>
-            <button className="flex flex-col items-center gap-1 flex-1 hover:bg-gray-50 py-1 border-r border-gray-100">
+            <button className="flex flex-col items-center gap-1 flex-1 hover:bg-gray-50 py-1 border-r border-gray-100" onClick={() => setShowChat(true)}>
               <MessageSquare className="w-6 h-6 text-gray-700" fill="currentColor" />
               <span className="text-[12px] text-gray-700 font-medium">Nhắn tin</span>
             </button>
@@ -241,6 +246,20 @@ export default function PassengerView({ data, onRefresh, isExpanded = true, onEx
         bookingId={bookingId}
         onPaymentSuccess={onRefresh}
       />
+
+      {showChat && driver && user && (
+        <div className="fixed inset-0 z-50 bg-black/20 flex flex-col justify-end sm:justify-center sm:items-center">
+          <div className="w-full sm:max-w-md bg-background h-[75vh] sm:h-[500px] sm:rounded-lg shadow-xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-10">
+            <ChatWindow
+              rideId={ride.id}
+              otherUserId={driver.id}
+              otherUserName={`${driver.firstName} ${driver.lastName}`}
+              currentUserId={user.id}
+              onClose={() => setShowChat(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -61,22 +61,8 @@ export const createBooking = async (req: Request, res: Response) => {
         },
       });
 
-      // 5. Cập nhật availableSeats và trạng thái Ride
-      const newAvailableSeats = ride.availableSeats - seats;
-      let newRideStatus = ride.status;
-      
-      // (Yêu cầu 6) Khi availableSeats về 0 sau booking: cập nhật ride.status = RideStatus.FULL
-      if (newAvailableSeats === 0) {
-        newRideStatus = 'FULL' as any; // Ép kiểu nếu Prisma Client chưa update kịp
-      }
-
-      await tx.ride.update({
-        where: { id: rideId },
-        data: {
-          availableSeats: newAvailableSeats,
-          status: newRideStatus,
-        },
-      });
+      // Trong mô hình mới, ghế sẽ được giảm khi Driver xác nhận (confirmBooking)
+      // Nên tạo booking PENDING không thay đổi số ghế ngay
 
       // 6. Tạo Notification trong DB cho tài xế
       await tx.notification.create({
@@ -105,6 +91,7 @@ export const confirmBooking = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
+    // 1. Kiểm tra cơ bản
     const booking = await prisma.booking.findUnique({
       where: { id },
       include: { ride: true },
@@ -114,23 +101,60 @@ export const confirmBooking = async (req: Request, res: Response) => {
     if (booking.ride.driverId !== driverId) throw new Error('Bạn không có quyền xác nhận đặt chỗ này');
     if (booking.status !== 'PENDING') throw new Error('Trạng thái không hợp lệ để xác nhận');
 
-    const updatedBooking = await prisma.booking.update({
-      where: { id },
-      data: { status: 'CONFIRMED' },
-    });
+    // 2. Transaction cập nhật theo Atomic Conditional Update
+    const result = await prisma.$transaction(async (tx: any) => {
+      // Khóa và xác nhận yêu cầu đặt chỗ nếu đang PENDING
+      const updatedBookings = await tx.booking.updateMany({
+        where: { id: id, status: "PENDING" },
+        data: { status: "CONFIRMED" },
+      });
 
-    await prisma.notification.create({
-      data: {
-        userId: booking.passengerId,
-        title: 'Đặt chỗ được xác nhận',
-        content: `Tài xế đã xác nhận đặt chỗ của bạn.`,
-        type: 'BOOKING_STATUS',
+      if (updatedBookings.count === 0) {
+        throw new Error("Đặt chỗ này đã được xử lý hoặc không còn ở trạng thái PENDING");
       }
+
+      // Giảm số ghế của chuyến đi một cách an toàn (Nguyên tử)
+      const updatedRides = await tx.ride.updateMany({
+        where: { 
+          id: booking.rideId, 
+          status: { in: ["SCHEDULED", "ONGOING"] },
+          availableSeats: { gte: booking.seats } 
+        },
+        data: { availableSeats: { decrement: booking.seats } },
+      });
+
+      if (updatedRides.count === 0) {
+        throw new Error("Chuyến đi không còn đủ ghế trống");
+      }
+
+      // Tự động đánh dấu FULL nếu hết ghế
+      const currentRide = await tx.ride.findUnique({ 
+        where: { id: booking.rideId } 
+      });
+
+      if (currentRide && currentRide.availableSeats === 0) {
+        await tx.ride.update({ 
+          where: { id: currentRide.id }, 
+          data: { status: "FULL" } 
+        });
+      }
+
+      // Notification
+      await tx.notification.create({
+        data: {
+          userId: booking.passengerId,
+          title: 'Đặt chỗ được xác nhận',
+          content: `Tài xế đã xác nhận đặt chỗ của bạn.`,
+          type: 'BOOKING_STATUS',
+        }
+      });
+
+      return await tx.booking.findUnique({ where: { id } });
     });
 
     emitNotification(booking.passengerId, 'Đặt chỗ được xác nhận', `Tài xế đã xác nhận đặt chỗ của bạn.`);
 
-    res.json({ success: true, data: updatedBooking });
+    res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
   }
@@ -167,22 +191,22 @@ export const cancelBooking = async (req: Request, res: Response) => {
         },
       });
 
-      // 2. Hoàn trả availableSeats
-      // (Yêu cầu 7) Khi booking bị huỷ và availableSeats > 0 trở lại: cập nhật ride.status = SCHEDULED
-      const newAvailableSeats = booking.ride.availableSeats + booking.seats;
-      let newRideStatus = booking.ride.status;
-      
-      if (newAvailableSeats > 0 && booking.ride.status === ('FULL' as any)) {
-        newRideStatus = 'SCHEDULED';
+      // 2. Hoàn trả availableSeats nếu Booking này đã CONFIRMED
+      if (booking.status === 'CONFIRMED') {
+        const updatedRides = await tx.ride.updateMany({
+          where: { id: booking.rideId },
+          data: { availableSeats: { increment: booking.seats } },
+        });
+        
+        // (Yêu cầu 7) Cập nhật trạng thái chuyến đi nếu cần
+        const currentRide = await tx.ride.findUnique({ where: { id: booking.rideId } });
+        if (currentRide && currentRide.availableSeats > 0 && currentRide.status === 'FULL') {
+          await tx.ride.update({
+            where: { id: currentRide.id },
+            data: { status: 'SCHEDULED' }
+          });
+        }
       }
-
-      await tx.ride.update({
-        where: { id: booking.rideId },
-        data: {
-          availableSeats: newAvailableSeats,
-          status: newRideStatus,
-        },
-      });
 
       // 3. Notification
       const targetUserId = isPassenger ? booking.ride.driverId : booking.passengerId;

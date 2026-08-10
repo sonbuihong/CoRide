@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { register, login, refresh, logout, getMe } from '../controllers/authController';
+import { register, login, refresh, logout, getMe, forgotPassword, resetPassword } from '../controllers/authController';
 import { verifyToken } from '../middlewares/verifyToken';
 import { loginRateLimiter } from '../middlewares/rateLimiter';
 import { asyncHandler } from '../middlewares/asyncHandler';
@@ -19,6 +19,16 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().email('Email không hợp lệ'),
   password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
+});
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Email không hợp lệ'),
+});
+
+const resetPasswordSchema = z.object({
+  email: z.string().email('Email không hợp lệ'),
+  otp: z.string().length(6, 'Mã OTP phải có 6 chữ số'),
+  newPassword: z.string().min(8, 'Mật khẩu phải chứa ít nhất 8 ký tự'),
 });
 
 // Middleware Validate Request
@@ -45,5 +55,7 @@ router.post('/login', loginRateLimiter, validateRequest(loginSchema), asyncHandl
 router.post('/refresh', asyncHandler(refresh));
 router.post('/logout', asyncHandler(logout));
 router.get('/me', verifyToken, asyncHandler(getMe));
+router.post('/forgot-password', validateRequest(forgotPasswordSchema), asyncHandler(forgotPassword));
+router.post('/reset-password', validateRequest(resetPasswordSchema), asyncHandler(resetPassword));
 
 export default router;

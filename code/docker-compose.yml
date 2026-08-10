@@ -74,6 +74,45 @@ services:
       retries: 3
     restart: unless-stopped
 
+  # Notification Service
+  notification-service:
+    build:
+      context: .
+      dockerfile: apps/notification-service/Dockerfile
+    container_name: coride_notification_service
+    ports:
+      - "5003:5003"
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - DATABASE_URL=postgresql://root:rootpassword@postgres_db:5432/coride_db?schema=public
+      - REDIS_URL=redis://redis_cache:6379
+      - PORT=5003
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres_db:
+        condition: service_healthy
+      redis_cache:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    container_name: coride_api_gateway
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - BACKEND_URL=http://backend:5002
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5003
+    depends_on:
+      - backend
+      - notification-service
+    restart: unless-stopped
+
   # Web Frontend Service
   web:
     build:
@@ -87,7 +126,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5001/api}
     depends_on:
-      - backend
+      - api-gateway
     restart: unless-stopped
 
 volumes:

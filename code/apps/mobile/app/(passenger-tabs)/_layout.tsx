@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Home, Car, Bell, User } from 'lucide-react-native';
+import { Home, Car, Bell, User, Zap } from 'lucide-react-native';
 
 export default function TabLayout() {
   const activeColor = '#3B82F6'; // CoRide Blue
@@ -40,6 +40,13 @@ export default function TabLayout() {
         options={{
           title: 'Chuyến đi',
           tabBarIcon: ({ color, size }) => <Car size={24} color={color} strokeWidth={2.5} />,
+        }}
+      />
+      <Tabs.Screen
+        name="ride-hailing"
+        options={{
+          title: 'Gọi Xe Nhanh',
+          tabBarIcon: ({ color, size }) => <Zap size={24} color={color} strokeWidth={2.5} />,
         }}
       />
       <Tabs.Screen

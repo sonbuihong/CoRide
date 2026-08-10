@@ -1,12 +1,17 @@
 import { Tabs } from 'expo-router';
 import { Calendar, Bell, PlusCircle, User, CarFront } from 'lucide-react-native';
 
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Alert } from 'react-native';
 import { useAppModeGuard } from '../../src/hooks/useAppModeGuard';
+import React, { useEffect, useState } from 'react';
+import { socketService } from '../../src/services/socket.service';
+import { tripService } from '../../src/services/trip.service';
+import { useRouter } from 'expo-router';
 
 export default function DriverTabLayout() {
   const activeColor = '#3B82F6'; // CoRide Blue
   const inactiveColor = '#64748B'; // Text Secondary
+  const router = useRouter();
 
   // Chạy guard để bảo vệ route này
   const { isGuardLoading } = useAppModeGuard();
@@ -18,6 +23,41 @@ export default function DriverTabLayout() {
       </View>
     );
   }
+
+  useEffect(() => {
+    const handleNewRequest = (data: any) => {
+      Alert.alert(
+        'Cuốc xe mới!',
+        `Khách: ${data.passenger.firstName}\nĐón: ${data.originAddress}\nĐến: ${data.destAddress}\nGiá: ${data.estimatedPrice}đ`,
+        [
+          {
+            text: 'Từ chối',
+            onPress: () => socketService.emit('trip:reject', { tripId: data.tripId }),
+            style: 'cancel',
+          },
+          {
+            text: 'Nhận cuốc',
+            onPress: () => {
+              socketService.emit('trip:accept', { tripId: data.tripId });
+            },
+          },
+        ]
+      );
+    };
+
+    const handleAcceptConfirmed = (data: any) => {
+      Alert.alert('Thành công', 'Đã nhận cuốc xe!');
+      router.push('/driver/active-trip' as any);
+    };
+
+    socketService.on('trip:new_request', handleNewRequest);
+    socketService.on('trip:accept_confirmed', handleAcceptConfirmed);
+
+    return () => {
+      socketService.off('trip:new_request', handleNewRequest);
+      socketService.off('trip:accept_confirmed', handleAcceptConfirmed);
+    };
+  }, []);
 
   return (
     <Tabs

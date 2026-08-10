@@ -136,6 +136,22 @@ export default function BookingManageScreen() {
                 )}
               </View>
             </View>
+
+            {/* Nút Chat */}
+            <TouchableOpacity
+              onPress={() => router.push({
+                pathname: `/chat/${booking.rideId}` as any,
+                params: {
+                  rideId: booking.rideId,
+                  otherUserId: displayUser.id,
+                  otherUserName: `${displayUser.firstName} ${displayUser.lastName}`
+                }
+              })}
+              className="w-10 h-10 rounded-full bg-blue-50 items-center justify-center border border-blue-100 ml-3 shadow-sm active:bg-blue-100"
+              accessibilityLabel="Nhắn tin"
+            >
+              <MessageSquare size={18} color="#3B82F6" />
+            </TouchableOpacity>
           </View>
         </View>
 

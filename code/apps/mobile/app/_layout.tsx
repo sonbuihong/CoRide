@@ -96,6 +96,7 @@ function RootLayoutNav() {
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       <Stack.Screen name="report-modal" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="cancel-modal" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="chat/[rideId]" options={{ headerShown: false }} />
     </Stack>
   );
 }

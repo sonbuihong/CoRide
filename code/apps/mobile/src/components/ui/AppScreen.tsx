@@ -25,8 +25,7 @@ export const AppScreen: React.FC<AppScreenProps> = ({
   }
 
   return (
-    <View className={`${baseStyle} ${className}`} {...props}>
-      {children}
-    </View>
+    // @ts-ignore
+    <View style={[{ flex: 1, backgroundColor: '#FFFFFF' }, style]}>{children}</View>
   );
 };

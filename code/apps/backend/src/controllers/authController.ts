@@ -179,3 +179,58 @@ export const getMe = async (req: Request, res: Response) => {
     },
   });
 };
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    // Để bảo mật, không báo lỗi user không tồn tại, nhưng có thể báo lỗi tạm thời để dễ debug
+    return res.status(404).json({ success: false, error: 'Email không tồn tại trong hệ thống' });
+  }
+
+  // Tạo mã OTP ngẫu nhiên 6 chữ số
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // Lưu OTP vào Redis với thời gian sống 5 phút (300 giây)
+  const redisKey = `otp:${email}`;
+  await redis.set(redisKey, otp, 'EX', 300);
+
+  // TODO: Gửi email chứa OTP cho người dùng
+  console.log(`[MAIL MOCK] MÃ OTP QUÊN MẬT KHẨU CỦA EMAIL ${email} LÀ: ${otp}`);
+
+  res.json({
+    success: true,
+    data: {
+      message: 'Mã OTP đã được gửi đến email của bạn',
+    },
+  });
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email, otp, newPassword } = req.body;
+
+  const redisKey = `otp:${email}`;
+  const storedOtp = await redis.get(redisKey);
+
+  if (!storedOtp || storedOtp !== otp) {
+    return res.status(400).json({ success: false, error: 'Mã OTP không hợp lệ hoặc đã hết hạn' });
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+
+  await prisma.user.update({
+    where: { email },
+    data: { password: hashedPassword },
+  });
+
+  // Xóa mã OTP sau khi sử dụng
+  await redis.del(redisKey);
+
+  res.json({
+    success: true,
+    data: {
+      message: 'Mật khẩu đã được cập nhật thành công',
+    },
+  });
+};

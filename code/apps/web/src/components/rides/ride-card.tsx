@@ -32,6 +32,7 @@ interface RideCardProps {
   userLocation?: { lat: number; lng: number } | null;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  onClick?: () => void;
 }
 
 // Haversine formula to calculate distance in km
@@ -49,7 +50,7 @@ function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon
   return R * c;
 }
 
-export function RideCard({ ride, userLocation, onMouseEnter, onMouseLeave }: RideCardProps) {
+export function RideCard({ ride, userLocation, onMouseEnter, onMouseLeave, onClick }: RideCardProps) {
   const departureDate = new Date(ride.departureTime);
   const formattedDate = departureDate.toLocaleDateString('vi-VN', {
     weekday: 'short',
@@ -74,9 +75,10 @@ export function RideCard({ ride, userLocation, onMouseEnter, onMouseLeave }: Rid
 
   return (
     <div 
-      className="group relative w-full bg-white dark:bg-[#1d1d1f] rounded-[24px] p-6 sm:p-8 transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-transparent hover:border-[rgba(0,0,0,0.04)] dark:hover:border-[rgba(255,255,255,0.05)] overflow-hidden"
+      className="group relative w-full bg-white dark:bg-[#1d1d1f] rounded-[24px] p-6 sm:p-8 transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-transparent hover:border-[rgba(0,0,0,0.04)] dark:hover:border-[rgba(255,255,255,0.05)] overflow-hidden cursor-pointer"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={onClick}
     >
       
       <div className="flex flex-col md:flex-row gap-8 justify-between">

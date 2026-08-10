@@ -1,0 +1,117 @@
+\subsection{Đặc tả Use Case UC12 -- Booking Carpooling}
+
+\begin{table}[H]
+\centering
+\caption{Đặc tả Use Case UC12 -- Booking Carpooling} \label{tab:uc12_spec}
+\begin{tabularx}{\textwidth}{|p{3.5cm}|X|}
+\hline
+\textbf{Thuộc tính} & \textbf{Nội dung} \\ \hline
+\textbf{Mã Use Case} & UC12 \\ \hline
+\textbf{Tên Use Case} & Booking Carpooling \\ \hline
+\textbf{Mục tiêu} & Cho phép Passenger gửi yêu cầu Booking đối với một chuyến Carpooling đang mở để chờ Driver xác nhận. \\ \hline
+\textbf{Tác nhân chính} & Passenger \\ \hline
+\textbf{Tác nhân phụ} & Driver \\ \hline
+\textbf{Phạm vi} & Hệ thống CoRide \\ \hline
+\textbf{Sự kiện kích hoạt} & Passenger chọn chức năng Đặt chỗ \\ \hline
+\textbf{Tiền điều kiện} & 
+(1) Passenger đã đăng nhập hệ thống.\newline
+(2) Ride đang ở trạng thái SCHEDULED.\newline
+(3) Ride còn ghế trống.\newline
+(4) Passenger chưa có Booking hợp lệ cho cùng Ride. \\ \hline
+\textbf{Hậu điều kiện} & Nếu thành công, hệ thống tạo một Booking mới với trạng thái PENDING và gửi thông báo đến Driver để xử lý yêu cầu. \\ \hline
+\textbf{Luồng sự kiện chính} & 
+1. Passenger tìm kiếm và chọn một chuyến Carpooling phù hợp.\newline
+2. Hệ thống hiển thị thông tin chi tiết của Ride.\newline
+3. Passenger chọn chức năng Booking.\newline
+4. Hệ thống kiểm tra trạng thái Ride và số ghế còn trống.\newline
+5. Hệ thống kiểm tra Passenger chưa có Booking hợp lệ đối với Ride này.\newline
+6. Hệ thống tạo bản ghi Booking với trạng thái PENDING.\newline
+7. Hệ thống gửi thông báo tới Driver về yêu cầu Booking mới.\newline
+8. Hệ thống thông báo Passenger gửi yêu cầu thành công. \\ \hline
+\textbf{Luồng phát sinh} & 
+\textbf{A1. Ride đã hết ghế}\newline
+Tại bước 4, nếu số ghế còn trống bằng 0, hệ thống từ chối yêu cầu Booking. Hệ thống hiển thị thông báo " Ride đã hết chỗ." Use Case kết thúc.\newline\newline
+\textbf{A2. Ride không còn khả dụng}\newline
+Tại bước 4, nếu Ride không còn ở trạng thái SCHEDULED, hệ thống từ chối yêu cầu Booking và thông báo "Ride không còn khả dụng". Use Case kết thúc.\newline\newline
+\textbf{A3. Đã tồn tại Booking}\\newline{}Tại bước 5, nếu Passenger đã có một Booking đang hoạt động đối với Ride này, hệ thống từ chối tạo Booking mới và hiển thị thông báo "Yêu cầu Booking đã tồn tại". Use Case kết thúc.\newline\newline
+\textbf{A4. Lỗi lưu dữ liệu}\\newline{}Tại bước 6, nếu xảy ra lỗi khi tạo Booking, hệ thống hủy toàn bộ thao tác, không lưu Booking và hiển thị thông báo "Gửi yêu cầu Booking không thành công". Use Case kết thúc. \\ \hline
+\textbf{Quy tắc nghiệp vụ} & 
+- Passenger không được Booking chuyến do chính mình tạo.\newline
+- Không thể gửi Booking nếu chuyến đã hết ghế trống.\newline
+- Một Passenger chỉ có thể giữ một Booking PENDING hoặc CONFIRMED cho cùng một chuyến.\newline
+- Hệ thống sử dụng cơ chế transaction để tránh tình trạng overbooking khi nhiều hành khách cùng đặt chỗ. \\ \hline
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    % TODO: Uncomment khi đã có file ảnh trong thư mục Hinhve
+    % \includegraphics[width=\textwidth,height=0.95\textheight,keepaspectratio]{Hinhve/act_uc12.png}
+    \caption{Biểu đồ hoạt động Use Case UC12 - Booking Carpooling}
+    \label{fig:act_uc12}
+\end{figure}
+
+Biểu đồ hoạt động tại Hình~\ref{fig:act_uc12} mô tả toàn bộ quy trình từ khi Passenger lựa chọn Ride đến khi hệ thống tạo yêu cầu Booking. Quy trình bắt đầu bằng việc Passenger chọn một chuyến Carpooling phù hợp, sau đó hệ thống lần lượt kiểm tra trạng thái Ride, số ghế còn trống và điều kiện tồn tại của Booking trước khi tạo bản ghi mới với trạng thái PENDING. Nếu bất kỳ điều kiện nào không được đáp ứng, hệ thống sẽ dừng quy trình và trả về thông báo lỗi tương ứng. Ngược lại, khi việc tạo Booking thành công, hệ thống gửi thông báo tới Driver để tiếp tục xử lý ở Use Case UC13 - Xử lý yêu cầu Booking. Cách mô tả này phản ánh rõ luồng nghiệp vụ chính và các nhánh xử lý ngoại lệ, đồng thời là cơ sở để xây dựng Sequence Diagram và State Machine Diagram của quy trình Booking ở các mục tiếp theo.
+
+\subsection{Đặc tả Use Case UC13 -- Xử lý yêu cầu Booking}
+
+\begin{table}[H]
+\centering
+\caption{Đặc tả Use Case UC13 -- Xử lý yêu cầu Booking} \label{tab:uc13_spec}
+\begin{tabularx}{\textwidth}{|p{3.5cm}|X|}
+\hline
+\textbf{Thuộc tính} & \textbf{Nội dung} \\ \hline
+\textbf{Mã Use Case} & UC13 \\ \hline
+\textbf{Tên Use Case} & Xử lý yêu cầu Booking \\ \hline
+\textbf{Mục tiêu} & Cho phép Driver xem và xử lý các yêu cầu Booking của Passenger đối với chuyến Carpooling do mình tạo. \\ \hline
+\textbf{Tác nhân chính} & Driver \\ \hline
+\textbf{Tác nhân phụ} & Passenger \\ \hline
+\textbf{Phạm vi} & Hệ thống CoRide \\ \hline
+\textbf{Sự kiện kích hoạt} & Driver chọn chức năng Xử lý yêu cầu Booking \\ \hline
+\textbf{Tiền điều kiện} & 
+(1) Driver đã đăng nhập.\newline
+(2) Driver là người tạo chuyến Carpooling.\newline
+(3) Booking tồn tại và đang ở trạng thái PENDING. \\ \hline
+\textbf{Hậu điều kiện} & Booking được cập nhật sang CONFIRMED hoặc REJECTED. Nếu xác nhận thành công, số ghế khả dụng của Ride được cập nhật và Passenger nhận được thông báo kết quả. \\ \hline
+\textbf{Luồng sự kiện chính} & 
+1. Driver mở danh sách các yêu cầu Booking của Ride.\newline
+2. Hệ thống hiển thị các Booking đang ở trạng thái PENDING.\newline
+3. Driver chọn một Booking cần xử lý.\newline
+4. Driver chọn Chấp nhận yêu cầu Booking.\newline
+5. Hệ thống kiểm tra trạng thái Booking và số ghế còn trống của Ride.\newline
+6. Hệ thống cập nhật Booking sang trạng thái CONFIRMED và giảm số ghế còn lại của Ride.\newline
+7. Hệ thống gửi thông báo kết quả tới Passenger.\newline
+8. Hệ thống hiển thị thông báo xử lý thành công. \\ \hline
+\textbf{Luồng phát sinh} & 
+\textbf{A1. Driver từ chối yêu cầu}\\newline{}Tại bước 4, nếu Driver chọn "Từ chối", hệ thống cập nhật trạng thái Booking thành REJECTED và gửi thông báo kết quả tới Passenger. Use Case kết thúc.\newline\newline
+\textbf{A2. Không còn đủ ghế trống}\\newline{}Tại bước 5, nếu số ghế còn lại của Ride không đáp ứng số ghế Passenger yêu cầu, hệ thống từ chối thao tác xác nhận và giữ Booking ở trạng thái PENDING để Driver tiếp tục xử lý. Hệ thống thông báo "Ride không còn đủ số ghế yêu cầu". Use Case kết thúc.\newline\newline
+\textbf{A3. Booking đã được xử lý}\newline
+Tại bước 5, nếu Booking không còn ở trạng thái PENDING, hệ thống từ chối thao tác. Hệ thống hiển thị thông báo Booking đã được xử lý trước đó. Use Case kết thúc.\newline\newline
+\textbf{A4. Lỗi cập nhật dữ liệu}\newline
+Nếu xảy ra lỗi trong quá trình cập nhật Booking hoặc số ghế, hệ thống hủy thao tác cập nhật. Hệ thống thông báo xử lý không thành công. \\ \hline
+\textbf{Quy tắc nghiệp vụ} & 
+- Một Booking chỉ được xử lý một lần (PENDING $
+ightarrow$ CONFIRMED hoặc REJECTED).
+\newline
+- Không được xác nhận vượt quá số ghế khả dụng của chuyến.
+\newline
+- Driver chỉ xử lý Booking của chính chuyến đi do mình tạo.
+\newline
+- Khi xác nhận, hệ thống phải trừ đúng số lượng ghế từ số ghế khả dụng bằng Database Transaction.
+\newline
+- Booking đã bị từ chối không thể được khôi phục trạng thái. \\ \hline
+\end{tabularx}
+\end{table}
+
+Trong hệ thống CoRide, việc xác nhận Booking được thực hiện theo cơ chế Transaction cơ sở dữ liệu (transaction) kết hợp với cập nhật nguyên tử số ghế còn lại nhằm tránh hiện tượng nhiều Passenger đồng thời được xác nhận vượt quá số ghế khả dụng (overbooking). Chi tiết kỹ thuật triển khai sẽ được phân tích ở phần thiết kế và Sequence Diagram, không trình bày trong Use Case Specification vì đặc tả Use Case chỉ mô tả hành vi nghiệp vụ của hệ thống.
+
+\begin{figure}[H]
+    \centering
+    % TODO: Uncomment khi đã có file ảnh trong thư mục Hinhve
+    % \includegraphics[width=\textwidth,height=0.95\textheight,keepaspectratio]{Hinhve/act_uc13.png}
+    \caption{Biểu đồ hoạt động Use Case UC13 - Xử lý yêu cầu Booking}
+    \label{fig:act_uc13}
+\end{figure}
+
+Biểu đồ hoạt động tại Hình~\ref{fig:act_uc13} mô tả quy trình xử lý một yêu cầu Booking từ khi Driver mở danh sách Booking đến khi hệ thống cập nhật kết quả xử lý. Sau khi Driver lựa chọn một yêu cầu, hệ thống kiểm tra trạng thái hiện tại của Booking và số ghế còn trống của Ride. Nếu các điều kiện đều thỏa mãn và Driver chấp nhận yêu cầu, hệ thống cập nhật trạng thái Booking thành CONFIRMED, điều chỉnh số ghế khả dụng của Ride và gửi thông báo cho Passenger. Ngược lại, nếu Driver từ chối hoặc điều kiện xử lý không còn hợp lệ, hệ thống cập nhật trạng thái phù hợp hoặc trả về thông báo lỗi. Quy trình này thể hiện rõ các nhánh quyết định và là cơ sở để xây dựng Sequence Diagram cũng như State Machine Diagram của đối tượng Booking ở các mục tiếp theo.
+

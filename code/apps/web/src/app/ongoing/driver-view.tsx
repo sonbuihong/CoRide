@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { User, Phone, MapPin, Navigation, CheckCircle, XCircle, Users as UsersIcon, Map, Loader2, MessageSquare, MoreHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
+import { ChatWindow } from '@/components/chat/chat-window';
+import { useAuth } from '@/components/providers/auth-provider';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -93,6 +95,7 @@ function getDriverPrimaryAction(ride: Ride): {
 
 export default function DriverView({ data, onRefresh, isExpanded = true, onExpand, activeOrder, onReorder }: DriverViewProps) {
   const ride: Ride = data.ride;
+  const { user } = useAuth();
 
   const [loadingPrimary, setLoadingPrimary] = useState(false);
   const [loadingBooking, setLoadingBooking] = useState<Record<string, boolean>>({});
@@ -100,6 +103,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
   const [loadingCancel, setLoadingCancel] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [detailIndex, setDetailIndex] = useState(0);
+  const [showChat, setShowChat] = useState<{ isOpen: boolean; bookingId?: string; passengerId?: string; passengerName?: string }>({ isOpen: false });
 
   // ─── Handlers ────────────────────────────────────────────────────────
 
@@ -384,7 +388,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
               <Phone className="w-4 h-4 text-gray-700" fill="currentColor" />
               <span className="text-[10px] text-gray-700 font-semibold">Gọi</span>
             </a>
-            <button className="flex flex-col items-center gap-0.5 flex-1 hover:bg-gray-50 py-1 border-r border-border">
+            <button className="flex flex-col items-center gap-0.5 flex-1 hover:bg-gray-50 py-1 border-r border-border" onClick={() => setShowChat({ isOpen: true, bookingId: nextBookingToFocus.id, passengerId: nextBookingToFocus.passenger.id, passengerName: `${nextBookingToFocus.passenger.firstName} ${nextBookingToFocus.passenger.lastName}` })}>
               <MessageSquare className="w-4 h-4 text-gray-700" fill="currentColor" />
               <span className="text-[10px] text-gray-700 font-semibold">Nhắn tin</span>
             </button>
@@ -603,7 +607,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
                   <Phone className="w-6 h-6 text-gray-700" fill="currentColor" />
                   <span className="text-[12px] text-gray-700 font-medium">Gọi</span>
                 </a>
-                <button className="flex flex-col items-center gap-1 flex-1 py-2 hover:bg-gray-50">
+                <button className="flex flex-col items-center gap-1 flex-1 py-2 hover:bg-gray-50" onClick={() => { const b = confirmedBookings[detailIndex] || nextBookingToFocus; if (b) setShowChat({ isOpen: true, bookingId: b.id, passengerId: b.passenger.id, passengerName: `${b.passenger.firstName} ${b.passenger.lastName}` }) }}>
                   <MessageSquare className="w-6 h-6 text-gray-700" fill="currentColor" />
                   <span className="text-[12px] text-gray-700 font-medium">Nhắn tin</span>
                 </button>
@@ -665,6 +669,20 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
                 Huỷ chuyến
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showChat.isOpen && showChat.passengerId && user && (
+        <div className="fixed inset-0 z-50 bg-black/20 flex flex-col justify-end sm:justify-center sm:items-center">
+          <div className="w-full sm:max-w-md bg-background h-[75vh] sm:h-[500px] sm:rounded-lg shadow-xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-10">
+            <ChatWindow
+              rideId={ride.id}
+              otherUserId={showChat.passengerId}
+              otherUserName={showChat.passengerName || ''}
+              currentUserId={user.id}
+              onClose={() => setShowChat({ isOpen: false })}
+            />
           </div>
         </div>
       )}

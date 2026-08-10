@@ -22,7 +22,7 @@ export default function ForgotPasswordPage() {
       await apiClient.post('/auth/forgot-password', { email });
       setStep(2);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Có lỗi xảy ra khi gửi email');
+      setError(err.response?.data?.error || 'Có lỗi xảy ra khi gửi email');
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
       await apiClient.post('/auth/reset-password', { email, otp, newPassword });
       setStep(3);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Mã OTP không hợp lệ hoặc đã hết hạn');
+      setError(err.response?.data?.error || 'Mã OTP không hợp lệ hoặc đã hết hạn');
     } finally {
       setLoading(false);
     }
@@ -109,7 +109,7 @@ export default function ForgotPasswordPage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-transparent dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
-                  placeholder="Ít nhất 6 ký tự"
+                  placeholder="Ít nhất 8 ký tự"
                   required
                 />
               </div>
