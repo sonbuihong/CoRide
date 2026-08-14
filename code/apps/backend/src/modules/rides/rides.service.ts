@@ -3,6 +3,9 @@ import { Prisma } from '@repo/database';
 import { CreateRideInput, SearchRideInput, SocketEvents } from '@repo/shared';
 import { AppError } from '../../shared/errors/AppError';
 import { SocketEventService } from '../../socket/socket.events';
+import { RideMatchingService } from './ride-matching.service';
+import { PricingService } from '../pricing/pricing.service';
+import { getDriverLocation } from '../../shared/lib/redis';
 
 const DRIVER_SELECT = {
   driver: {
@@ -14,6 +17,13 @@ const DRIVER_SELECT = {
       driverRating: true,
       driverRatingCount: true,
       isDriverVerified: true,
+    },
+  },
+  vehicle: {
+    select: {
+      licensePlate: true,
+      type: true,
+      color: true,
     },
   },
 } satisfies Prisma.RideInclude;
@@ -39,7 +49,7 @@ export class RidesService {
     const activeDriverRide = await prisma.ride.findFirst({
       where: {
         driverId,
-        status: { in: ['SCHEDULED', 'ONGOING'] },
+        status: { in: ['SCHEDULED', 'FULL', 'ONGOING'] },
       },
     });
 
@@ -56,7 +66,7 @@ export class RidesService {
         passengerId: driverId,
         status: { in: ['PENDING', 'CONFIRMED'] },
         ride: {
-          status: { in: ['SCHEDULED', 'ONGOING'] },
+          status: { in: ['SCHEDULED', 'FULL', 'ONGOING'] },
         },
       },
     });
@@ -67,6 +77,48 @@ export class RidesService {
         400
       );
     }
+
+    // Backend kiểm tra lại các trường cốt lõi; không tin việc frontend đã đi đủ wizard.
+    if (!data.origin?.trim() || !data.destination?.trim()) {
+      throw new AppError('Điểm đi và điểm đến là bắt buộc', 400);
+    }
+    if (
+      data.originLat == null || data.originLng == null ||
+      data.destinationLat == null || data.destinationLng == null
+    ) {
+      throw new AppError('Tọa độ điểm đi và điểm đến là bắt buộc', 400);
+    }
+    if (data.originLat === data.destinationLat && data.originLng === data.destinationLng) {
+      throw new AppError('Điểm đi và điểm đến không được trùng nhau', 400);
+    }
+    if (!data.routePolyline || data.distance == null || data.distance <= 0 || data.duration == null || data.duration <= 0) {
+      throw new AppError('Lộ trình chuyến đi chưa hợp lệ', 400);
+    }
+    if (!data.vehicleId) {
+      throw new AppError('Phương tiện là bắt buộc', 400);
+    }
+
+    const vehicle = await prisma.vehicle.findFirst({
+      where: { id: data.vehicleId, userId: driverId, status: 'ACTIVE' },
+      select: { type: true },
+    });
+    if (!vehicle) throw new AppError('Phương tiện không hợp lệ hoặc không thuộc tài xế', 400);
+
+    const maximumSeats = vehicle.type === 'BIKE' ? 1 : 4;
+    if (data.availableSeats > maximumSeats) {
+      throw new AppError(`Phương tiện này chỉ được mở tối đa ${maximumSeats} ghế`, 400);
+    }
+
+    // Backend là nguồn giá chuẩn; không tin giá client gửi lên.
+    const estimate = await PricingService.estimateCarpool(
+      data.originLat,
+      data.originLng,
+      data.destinationLat,
+      data.destinationLng,
+      vehicle.type,
+      data.availableSeats
+    );
+    const systemPricePerSeat = estimate.recommendedPricePerSeat;
 
     // 4. Tạo chuyến đi
     const departureTime = new Date(data.departureTime);
@@ -81,11 +133,27 @@ export class RidesService {
         destinationLng: data.destinationLng ?? null,
         distance: data.distance ?? null,
         duration: data.duration ?? null,
+        routePolyline: data.routePolyline ?? null,
         departureTime,
         availableSeats: data.availableSeats,
-        pricePerSeat: data.pricePerSeat,
+        offeredSeats: data.availableSeats,
+        pricePerSeat: systemPricePerSeat,
         description: data.description ?? null,
+        originHouseNumber: data.originHouseNumber ?? null,
+        originStreet: data.originStreet ?? null,
+        originWard: data.originWard ?? null,
+        originDistrict: data.originDistrict ?? null,
+        originProvince: data.originProvince ?? null,
+        originAddressType: data.originAddressType ?? null,
+        destHouseNumber: data.destHouseNumber ?? null,
+        destStreet: data.destStreet ?? null,
+        destWard: data.destWard ?? null,
+        destDistrict: data.destDistrict ?? null,
+        destProvince: data.destProvince ?? null,
+        destAddressType: data.destAddressType ?? null,
+        addressDetailLevel: data.addressDetailLevel ?? null,
         // Quy định chuyến đi
+        allowRoutePickup: data.allowRoutePickup ?? true,
         allowSmoking: data.allowSmoking ?? false,
         allowPets: data.allowPets ?? false,
         allowLuggage: data.allowLuggage ?? true,
@@ -108,7 +176,16 @@ export class RidesService {
   }
 
   static async searchRides(filters: SearchRideInput) {
-    const { origin, destination, date, driverId } = filters;
+    const {
+      origin, originLat, originLng,
+      destination, destinationLat, destinationLng,
+      date, seats = 1, maxPrice, departurePeriod, vehicleType, driverId,
+    } = filters;
+    const requestedSeats = Math.max(1, Number(seats) || 1);
+    const hasOriginCoordinates = originLat != null && originLng != null;
+    const hasDestinationCoordinates = destinationLat != null && destinationLng != null;
+    const hasPassengerRoute =
+      hasOriginCoordinates && hasDestinationCoordinates;
 
     // Dùng Prisma.RideWhereInput thay vì any để đảm bảo type safety
     const where: Prisma.RideWhereInput = {};
@@ -118,19 +195,30 @@ export class RidesService {
       where.driverId = driverId;
     } else {
       // Hành khách tìm chuyến — chỉ lấy chuyến còn ghế
-      where.availableSeats = { gt: 0 };
+      where.availableSeats = { gte: requestedSeats };
     }
 
-    if (origin) {
+    // Khi có đủ tọa độ, Route-Aware Matching sẽ thay thế so khớp chuỗi địa chỉ.
+    // Text search vẫn là fallback cho dữ liệu cũ hoặc khi người dùng chưa chọn gợi ý Goong.
+    if (origin && !hasOriginCoordinates) {
       where.origin = { contains: origin, mode: 'insensitive' };
     }
 
-    if (destination) {
+    if (destination && !hasDestinationCoordinates) {
       where.destination = { contains: destination, mode: 'insensitive' };
+    }
+
+    if (maxPrice != null) {
+      where.pricePerSeat = { lte: maxPrice };
+    }
+
+    if (vehicleType) {
+      where.vehicle = { is: { type: vehicleType } };
     }
 
     if (date) {
       const searchDate = new Date(date);
+      const hasSelectedTime = date.includes('T');
       const startOfDay = new Date(searchDate);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(searchDate);
@@ -140,10 +228,32 @@ export class RidesService {
       // Thêm buffer 1 giờ vào quá khứ để không bị ẩn chuyến đi vừa tạo hoặc tài xế đến trễ một chút
       const pastBuffer = new Date(now.getTime() - 60 * 60 * 1000);
 
-      if (!driverId) {
+      if (!driverId && hasPassengerRoute) {
+        // Một tài xế có thể xuất phát trước giờ hành khách mong muốn rồi mới tới
+        // điểm đón dọc đường. Lấy tập ứng viên rộng, thuật toán ETA sẽ lọc chính xác.
+        const candidateStart = new Date(Math.max(now.getTime(), startOfDay.getTime()));
+        const candidateEnd = hasSelectedTime
+          ? new Date(searchDate.getTime() + 30 * 60_000)
+          : endOfDay;
+        if (startOfDay <= now && endOfDay >= now) {
+          where.OR = [
+            { status: 'SCHEDULED', departureTime: { gte: candidateStart, lte: candidateEnd } },
+            { status: 'ONGOING', departureTime: { gte: startOfDay, lte: endOfDay } },
+          ];
+        } else {
+          where.status = 'SCHEDULED';
+          where.departureTime = { gte: candidateStart, lte: candidateEnd };
+        }
+      } else if (!driverId) {
+        if (hasSelectedTime) {
+          // datetime-local biểu thị thời điểm người dùng thực sự muốn khởi hành.
+          // Chỉ trả về chuyến đã lên lịch từ thời điểm đó đến hết ngày.
+          where.status = 'SCHEDULED';
+          where.departureTime = { gte: searchDate, lte: endOfDay };
+        }
         // Khách tìm: nếu tìm ngày hôm nay, lấy SCHEDULED từ pastBuffer đến hết ngày
         // VÀ lấy các chuyến ONGOING trong ngày hôm nay (dù khởi hành trước đó)
-        if (startOfDay <= now && endOfDay >= now) {
+        else if (startOfDay <= now && endOfDay >= now) {
           where.OR = [
             { status: 'SCHEDULED', departureTime: { gte: pastBuffer, lte: endOfDay } },
             { status: 'ONGOING', departureTime: { gte: startOfDay, lte: endOfDay } }
@@ -157,6 +267,11 @@ export class RidesService {
         // Tài xế tìm: lấy toàn bộ trong ngày
         where.departureTime = { gte: startOfDay, lte: endOfDay };
       }
+    } else if (!driverId && hasPassengerRoute) {
+      where.OR = [
+        { status: 'SCHEDULED', departureTime: { gte: new Date() } },
+        { status: 'ONGOING' },
+      ];
     } else if (!driverId) {
       // Không truyền date (mặc định lấy từ now)
       const pastBuffer = new Date(Date.now() - 60 * 60 * 1000);
@@ -166,11 +281,86 @@ export class RidesService {
       ];
     }
 
-    return prisma.ride.findMany({
+    const rides = await prisma.ride.findMany({
       where,
       include: DRIVER_SELECT,
       orderBy: { departureTime: 'asc' },
     });
+
+    const candidateRides = departurePeriod
+      ? rides.filter((ride) => {
+          // CoRide hiện phục vụ tại Việt Nam (UTC+7). Lọc khung giờ theo giờ địa
+          // phương thay vì timezone của máy chủ để kết quả luôn nhất quán.
+          const localHour = (ride.departureTime.getUTCHours() + 7) % 24;
+          if (departurePeriod === 'MORNING') return localHour >= 5 && localHour < 12;
+          if (departurePeriod === 'AFTERNOON') return localHour >= 12 && localHour < 18;
+          return localHour >= 18 || localHour < 5;
+        })
+      : rides;
+
+    if (driverId) return candidateRides;
+
+    if (hasPassengerRoute) {
+      const desiredTime = date ? new Date(date) : undefined;
+      const matchedRides = await Promise.all(candidateRides.map(async (ride) => {
+          const liveLocation = ride.status === 'ONGOING'
+            ? await getDriverLocation(ride.driverId)
+            : null;
+          const driverCurrentLocation = liveLocation &&
+            (!liveLocation.rideId || liveLocation.rideId === ride.id)
+            ? { lat: liveLocation.latitude, lng: liveLocation.longitude }
+            : undefined;
+          const match = RideMatchingService.match(ride, {
+            origin: { lat: originLat, lng: originLng },
+            destination: { lat: destinationLat, lng: destinationLng },
+            desiredTime,
+          }, driverCurrentLocation);
+          return match ? {
+            ...ride,
+            ...match,
+            currentDriverLat: driverCurrentLocation?.lat ?? null,
+            currentDriverLng: driverCurrentLocation?.lng ?? null,
+            driverLocationUpdatedAt: liveLocation?.updatedAt ?? null,
+          } : null;
+        }));
+      return matchedRides
+        .filter((ride): ride is NonNullable<typeof ride> => ride !== null)
+        .sort((first, second) =>
+          second.matchScore - first.matchScore ||
+          first.departureTime.getTime() - second.departureTime.getTime()
+        );
+    }
+
+    if (hasDestinationCoordinates) {
+      const matchedRides = await Promise.all(candidateRides.map(async (ride) => {
+          const liveLocation = ride.status === 'ONGOING'
+            ? await getDriverLocation(ride.driverId)
+            : null;
+          const driverCurrentLocation = liveLocation &&
+            (!liveLocation.rideId || liveLocation.rideId === ride.id)
+            ? { lat: liveLocation.latitude, lng: liveLocation.longitude }
+            : undefined;
+          const match = RideMatchingService.matchDestination(ride, {
+            lat: destinationLat,
+            lng: destinationLng,
+          }, driverCurrentLocation);
+          return match ? {
+            ...ride,
+            ...match,
+            currentDriverLat: driverCurrentLocation?.lat ?? null,
+            currentDriverLng: driverCurrentLocation?.lng ?? null,
+            driverLocationUpdatedAt: liveLocation?.updatedAt ?? null,
+          } : null;
+        }));
+      return matchedRides
+        .filter((ride): ride is NonNullable<typeof ride> => ride !== null)
+        .sort((first, second) =>
+          second.matchScore - first.matchScore ||
+          first.departureTime.getTime() - second.departureTime.getTime()
+        );
+    }
+
+    return candidateRides;
   }
 
   static async getRideById(id: string) {
@@ -180,7 +370,16 @@ export class RidesService {
     });
 
     if (!ride) throw new AppError('Không tìm thấy chuyến đi', 404);
-    return ride;
+    if (ride.status !== 'ONGOING') return ride;
+
+    const liveLocation = await getDriverLocation(ride.driverId);
+    const belongsToRide = liveLocation && (!liveLocation.rideId || liveLocation.rideId === ride.id);
+    return {
+      ...ride,
+      currentDriverLat: belongsToRide ? liveLocation.latitude : null,
+      currentDriverLng: belongsToRide ? liveLocation.longitude : null,
+      driverLocationUpdatedAt: belongsToRide ? liveLocation.updatedAt : null,
+    };
   }
 
   static async updateRide(
@@ -249,8 +448,8 @@ export class RidesService {
 
     // Logic kiểm tra chuyển đổi trạng thái hợp lệ
     if (status === 'ONGOING') {
-      if (ride.status !== 'SCHEDULED') {
-        throw new AppError('Chỉ có thể bắt đầu chuyến đi đang ở trạng thái Đã lên lịch (SCHEDULED)', 400);
+      if (ride.status !== 'SCHEDULED' && ride.status !== 'FULL') {
+        throw new AppError('Chỉ có thể bắt đầu chuyến đi đang mở hoặc đã đủ chỗ', 400);
       }
     } else if (status === 'COMPLETED') {
       if (ride.status !== 'ONGOING') {
@@ -334,4 +533,3 @@ export class RidesService {
     return updatedRide;
   }
 }
-

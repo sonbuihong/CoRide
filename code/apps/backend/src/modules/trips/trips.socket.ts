@@ -55,31 +55,46 @@ export const registerTripsSocket = (io: Server, socket: Socket, userId: string) 
   });
 
   // Tài xế gửi vị trí
-  socket.on(SocketEvents.DRIVER_UPDATE_LOCATION, async (data: { tripId: string; latitude: number; longitude: number; heading?: number; speed?: number }) => {
-    if (!data || typeof data.tripId !== 'string' || typeof data.latitude !== 'number' || typeof data.longitude !== 'number') return;
+  socket.on(SocketEvents.DRIVER_UPDATE_LOCATION, async (data: { tripId: string; latitude: number; longitude: number; heading?: number; speed?: number; accuracy?: number }) => {
+    if (
+      !data || typeof data.tripId !== 'string' ||
+      !Number.isFinite(data.latitude) || !Number.isFinite(data.longitude) ||
+      data.latitude < -90 || data.latitude > 90 ||
+      data.longitude < -180 || data.longitude > 180 ||
+      (data.accuracy != null && (!Number.isFinite(data.accuracy) || data.accuracy > 100))
+    ) return;
     
     // Kiểm tra quyền: chỉ driver thật mới được gửi vị trí
     if (socket.data.tripRoles?.[data.tripId] !== 'DRIVER') return;
 
     try {
       // Cập nhật lên Redis (dùng cho backend)
-      await updateDriverLocation(userId, data.latitude, data.longitude);
-      await refreshDriverOnline(userId);
+      const updatedAt = Date.now();
+      await Promise.all([
+        updateDriverLocation(userId, data.latitude, data.longitude, {
+          rideId: data.tripId,
+          accuracy: data.accuracy,
+          updatedAt,
+        }),
+        refreshDriverOnline(userId),
+      ]);
 
       // Broadcast tới tất cả user trong room ngoại trừ người gửi
       const roomName = `trip:${data.tripId}`;
       const payload: TripLocationUpdatedPayload = {
         eventId: `loc_${Date.now()}_${userId}`,
-        updatedAt: new Date().toISOString(),
+        updatedAt: new Date(updatedAt).toISOString(),
         tripId: data.tripId,
         driverId: userId,
         latitude: data.latitude,
         longitude: data.longitude,
         heading: data.heading,
-        speed: data.speed
+        speed: data.speed,
+        accuracy: data.accuracy,
       };
 
       socket.to(roomName).emit(SocketEvents.TRIP_LOCATION_UPDATED, payload);
+      socket.to(`ride:${data.tripId}`).emit(SocketEvents.DRIVER_LOCATION, payload);
     } catch (error) {
       console.error('[Socket] DRIVER_UPDATE_LOCATION error:', error);
     }

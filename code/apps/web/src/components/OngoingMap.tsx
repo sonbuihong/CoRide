@@ -25,6 +25,7 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
   
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const driverMarkerRef = useRef<maplibregl.Marker | null>(null);
   
   const MAP_KEY = process.env.NEXT_PUBLIC_GOONG_MAPTILES_KEY || '';
 
@@ -103,7 +104,7 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
 
     fetchRoute();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [originLat, originLng, destLat, destLng, driverLocation?.lat, driverLocation?.lng, waypoints.map(w => w.id).join(','), useCustomOrder]);
+  }, [originLat, originLng, destLat, destLng, waypoints.map(w => w.id).join(','), useCustomOrder]);
 
   const startLat = driverLocation?.lat ?? originLat;
   const startLng = driverLocation?.lng ?? originLng;
@@ -117,40 +118,49 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: `https://tiles.goong.io/assets/goong_map_web.json?api_key=${MAP_KEY}`,
-      center: [startLng, startLat],
+      center: [originLng, originLat],
       zoom: 13,
     });
 
     mapRef.current = map;
 
+    const driverElement = document.createElement('div');
+    driverElement.className = 'goong-driver-marker';
+    driverElement.style.width = '20px';
+    driverElement.style.height = '20px';
+    driverElement.style.backgroundColor = '#4285F4';
+    driverElement.style.borderRadius = '50%';
+    driverElement.style.border = '3px solid white';
+    driverElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+    driverMarkerRef.current = new maplibregl.Marker({ element: driverElement })
+      .setLngLat([startLng, startLat])
+      .addTo(map);
+
     return () => {
+      driverMarkerRef.current?.remove();
+      driverMarkerRef.current = null;
       map.remove();
       mapRef.current = null;
     };
-  }, [startLat, startLng, destLat, destLng, MAP_KEY]);
+  // Marker tài xế được cập nhật riêng, không khởi tạo lại bản đồ theo GPS.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [originLat, originLng, destLat, destLng, MAP_KEY]);
+
+  useEffect(() => {
+    driverMarkerRef.current?.setLngLat([startLng, startLat]);
+  }, [startLat, startLng]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || typeof startLat !== 'number' || typeof startLng !== 'number' || typeof destLat !== 'number' || typeof destLng !== 'number') return;
 
     // Remove existing markers
-    const existingMarkers = document.querySelectorAll('.goong-map-marker');
+    const existingMarkers = mapContainerRef.current?.querySelectorAll('.goong-static-marker') ?? [];
     existingMarkers.forEach(m => m.remove());
-
-    // Add origin marker
-    const originEl = document.createElement('div');
-    originEl.className = 'goong-map-marker';
-    originEl.style.width = '20px';
-    originEl.style.height = '20px';
-    originEl.style.backgroundColor = '#4285F4';
-    originEl.style.borderRadius = '50%';
-    originEl.style.border = '3px solid white';
-    originEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-    new maplibregl.Marker({ element: originEl }).setLngLat([startLng, startLat]).addTo(map);
 
     // Add dest marker
     const destEl = document.createElement('div');
-    destEl.className = 'goong-map-marker';
+    destEl.className = 'goong-static-marker';
     destEl.style.width = '25px';
     destEl.style.height = '41px';
     destEl.style.backgroundImage = 'url(https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png)';
@@ -160,7 +170,7 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
     // Add waypoints
     waypoints.forEach((wp, i) => {
       const wpEl = document.createElement('div');
-      wpEl.className = 'goong-map-marker';
+      wpEl.className = 'goong-static-marker';
       wpEl.innerHTML = `<div style="background-color: #f97316; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 14px;">${i + 1}</div>`;
       new maplibregl.Marker({ element: wpEl }).setLngLat([wp.lng, wp.lat]).addTo(map);
     });
@@ -217,14 +227,14 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
 
     // Fit bounds
     const bounds = new maplibregl.LngLatBounds();
-    bounds.extend([startLng, startLat]);
+    bounds.extend([originLng, originLat]);
     bounds.extend([destLng, destLat]);
     waypoints.forEach(wp => bounds.extend([wp.lng, wp.lat]));
     
     if (!bounds.isEmpty()) {
       map.fitBounds(bounds, { padding: 50 });
     }
-  }, [startLat, startLng, destLat, destLng, waypoints, route]);
+  }, [originLat, originLng, destLat, destLng, waypoints, route]);
 
   if (typeof startLat !== 'number' || typeof startLng !== 'number' || typeof destLat !== 'number' || typeof destLng !== 'number') {
     return (

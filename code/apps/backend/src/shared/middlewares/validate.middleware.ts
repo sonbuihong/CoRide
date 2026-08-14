@@ -24,18 +24,12 @@ export const validate = (schema: ZodSchema, target: RequestTarget = 'body') => {
       );
     }
 
-    // Ghi đè dữ liệu đã parse vào req
-    // Lưu ý: Express 5 không cho phép gán lại req.query trực tiếp (getter-only)
-    // Dùng Object.assign để mutate object thay vì thay thế reference
+    // Ghi đè body/params sau khi parse. Riêng Express 5 cung cấp req.query
+    // qua getter nên lưu kết quả đã coerce vào res.locals cho controller dùng.
     if (target === 'body') {
       req.body = result.data;
     } else if (target === 'query') {
-      // Xóa keys cũ rồi copy keys mới vào (tránh lỗi getter-only của Express 5)
-      Object.keys(req.query).forEach((key) => {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete (req.query as Record<string, unknown>)[key];
-      });
-      Object.assign(req.query, result.data);
+      res.locals.validatedQuery = result.data;
     } else if (target === 'params') {
       Object.assign(req.params, result.data);
     }

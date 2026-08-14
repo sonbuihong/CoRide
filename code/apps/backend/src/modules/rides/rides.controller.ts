@@ -22,7 +22,8 @@ export const searchRides = async (
 ): Promise<void> => {
   try {
     // req.query đã được validate bởi validate(searchRideSchema, 'query') trong router
-    const rides = await RidesService.searchRides(req.query as unknown as SearchRideInput);
+    const filters = (res.locals.validatedQuery ?? req.query) as SearchRideInput;
+    const rides = await RidesService.searchRides(filters);
     res.json({ rides, total: rides.length });
   } catch (error) {
     next(error);

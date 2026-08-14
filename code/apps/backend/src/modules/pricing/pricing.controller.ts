@@ -1,9 +1,34 @@
 import { Request, Response, NextFunction } from 'express';
 import { PricingService } from './pricing.service';
-import { estimatePriceSchema, upsertPricingConfigSchema } from './pricing.validation';
+import { estimateCarpoolPriceSchema, estimatePriceSchema, upsertPricingConfigSchema } from './pricing.validation';
 import { VehicleType } from '@repo/database';
 
 export class PricingController {
+  static async estimateCarpool(req: Request, res: Response, next: NextFunction) {
+    try {
+      const parsed = estimateCarpoolPriceSchema.parse({
+        originLat: Number(req.query.originLat),
+        originLng: Number(req.query.originLng),
+        destLat: Number(req.query.destLat),
+        destLng: Number(req.query.destLng),
+        vehicleType: req.query.vehicleType,
+        offeredSeats: req.query.offeredSeats,
+        tollCost: req.query.tollCost,
+      });
+      const result = await PricingService.estimateCarpool(
+        parsed.originLat,
+        parsed.originLng,
+        parsed.destLat,
+        parsed.destLng,
+        parsed.vehicleType as VehicleType,
+        parsed.offeredSeats,
+        parsed.tollCost
+      );
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
   /**
    * GET /api/pricing/estimate
    * Ước tính giá cho 1 loại xe cụ thể.

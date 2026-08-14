@@ -191,7 +191,7 @@ function BookContent() {
                 Hãy thử thay đổi điểm đến hoặc ngày đi. Hoặc xem tất cả chuyến hiện có.
               </p>
             </div>
-            <Link href="/rides/search">
+            <Link href="/rides">
               <button className="flex items-center gap-2 bg-[#7c3aed] text-white hover:bg-[#6d28d9] px-6 py-2.5 rounded-[980px] text-[14px] font-medium tracking-[-0.12px] transition-colors mt-2">
                 Xem tất cả chuyến đi
                 <ArrowRight className="h-4 w-4" />

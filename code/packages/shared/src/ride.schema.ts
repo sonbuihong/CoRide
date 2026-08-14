@@ -33,6 +33,7 @@ export const createRideSchema = z.object({
   destinationLng: z.number().optional(),
   distance: z.number().optional(),
   duration: z.number().optional(),
+  routePolyline: z.string().optional(),
   departureTime: z.string({
     required_error: "Thời gian khởi hành là bắt buộc",
   }).refine((val) => !isNaN(Date.parse(val)), {
@@ -48,6 +49,7 @@ export const createRideSchema = z.object({
   }).min(0, "Giá không được âm"),
   description: z.string().max(1000, "Mô tả không được vượt quá 1000 ký tự").optional().or(z.literal('')),
   // Quy định chuyến đi — mặc định được xử lý ở backend nếu không truyền
+  allowRoutePickup: z.boolean().optional(),
   allowSmoking: z.boolean().optional(),
   allowPets: z.boolean().optional(),
   allowLuggage: z.boolean().optional(),
@@ -57,8 +59,16 @@ export const createRideSchema = z.object({
 
 export const searchRideSchema = z.object({
   origin: z.string().optional().or(z.literal('')),
+  originLat: z.coerce.number().min(-90).max(90).optional(),
+  originLng: z.coerce.number().min(-180).max(180).optional(),
   destination: z.string().optional().or(z.literal('')),
+  destinationLat: z.coerce.number().min(-90).max(90).optional(),
+  destinationLng: z.coerce.number().min(-180).max(180).optional(),
   date: z.string().optional().or(z.literal('')),
+  seats: z.coerce.number().int().min(1).max(10).optional(),
+  maxPrice: z.coerce.number().min(0).optional(),
+  departurePeriod: z.enum(['MORNING', 'AFTERNOON', 'EVENING']).optional(),
+  vehicleType: z.enum(['BIKE', 'CAR']).optional(),
   driverId: z.string().optional().or(z.literal('')),
 });
 

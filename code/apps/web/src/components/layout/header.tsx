@@ -85,7 +85,7 @@ export const Header: React.FC = () => {
         title: 'Chế độ Hành khách',
         desc: 'Bạn đang ở chế độ Hành khách. Tại đây, bạn có thể tìm kiếm chuyến đi, đặt chỗ và xem lịch sử các chuyến đã đồng hành.'
       });
-      router.push('/rides/search');
+      router.push('/rides');
     } else {
       setRolePopupContent({
         title: 'Chế độ Tài xế',
@@ -198,7 +198,7 @@ export const Header: React.FC = () => {
             ) : (
               user ? (
                 <>
-                  <Link href="/rides/search" className={getLinkClass('/rides/search')}>
+                  <Link href="/rides" className={getLinkClass('/rides')}>
                     <Search className="h-4 w-4" /> Tìm chuyến
                   </Link>
                   <Link href="/my-bookings" className={getLinkClass('/my-bookings')}>
@@ -206,7 +206,7 @@ export const Header: React.FC = () => {
                   </Link>
                 </>
               ) : (
-                <Link className={getLinkClass('/rides/search')} href="/rides/search">
+                <Link className={getLinkClass('/rides')} href="/rides">
                   <Search className="h-3.5 w-3.5" /> Tìm chuyến đi
                 </Link>
               )
@@ -318,7 +318,7 @@ export const Header: React.FC = () => {
                       ) : (
                         user ? (
                           <>
-                            <Link href="/rides/search" className={getLinkClass('/rides/search')}>
+                            <Link href="/rides" className={getLinkClass('/rides')}>
                               <Search className="h-4 w-4" /> Tìm chuyến
                             </Link>
                             <Link href="/my-bookings" className={getLinkClass('/my-bookings')}>
@@ -326,7 +326,7 @@ export const Header: React.FC = () => {
                             </Link>
                           </>
                         ) : (
-                          <Link className={getLinkClass('/rides/search')} href="/rides/search">
+                          <Link className={getLinkClass('/rides')} href="/rides">
                             <Search className="h-3.5 w-3.5" /> Tìm chuyến đi
                           </Link>
                         )

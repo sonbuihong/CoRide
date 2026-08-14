@@ -29,7 +29,7 @@ export function useActiveRideLock() {
         } else {
           // Nếu không có chuyến đi mà đang ở trang /ongoing, đẩy ra trang chủ
           if (pathname === '/ongoing') {
-            router.replace('/rides/search');
+            router.replace('/rides');
           }
         }
       } catch (error) {

@@ -61,7 +61,9 @@ export const cancelBooking = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { cancelReason } = req.body;
+    // Axios có thể gửi PATCH không body từ các màn hình cũ. Không destructure
+    // trực tiếp `undefined` vì sẽ biến một lỗi nghiệp vụ thành HTTP 500.
+    const cancelReason = req.body?.cancelReason ?? 'Hành khách chủ động hủy đặt chỗ';
     const booking = await BookingsService.cancelBooking(
       req.user!.id,
       (req.params.id as string),
@@ -92,7 +94,10 @@ export const getRideBookings = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const bookings = await BookingsService.getRideBookings((req.params.rideId as string));
+    const bookings = await BookingsService.getRideBookings(
+      req.user!.id,
+      req.params.rideId as string
+    );
     res.json({ bookings });
   } catch (error) {
     next(error);
@@ -136,6 +141,22 @@ export const confirmPassengerPickup = async (
       req.params.id as string
     );
     res.json({ message: 'Đã xác nhận đón hành khách', booking });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const markDriverArrived = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const booking = await BookingsService.markDriverArrived(
+      req.user!.id,
+      req.params.id as string
+    );
+    res.json({ message: 'Đã thông báo tài xế tới điểm đón', booking });
   } catch (error) {
     next(error);
   }

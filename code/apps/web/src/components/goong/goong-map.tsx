@@ -59,6 +59,8 @@ interface MarkerConfig {
   color?: string;
   /** 'pin' = Google Maps-style teardrop (điểm đến), 'dot' = chấm tròn pulse (vị trí hiện tại) */
   type?: 'pin' | 'dot';
+  /** Canvas layer giữ tọa độ chính xác hơn DOM marker ở mức zoom rất rộng. */
+  renderMode?: 'dom' | 'layer';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -68,11 +70,17 @@ interface MarkerConfig {
 // ─────────────────────────────────────────────────────────────────────────────
 function createMarkerElement(type: 'pin' | 'dot' = 'pin', color?: string): HTMLDivElement {
   const el = document.createElement('div');
+  // MapLibre quản lý transform trên chính root element này. Giữ kích thước và
+  // box model ổn định để anchor không đổi khi zoom hoặc thay đổi pitch.
+  el.style.boxSizing = 'border-box';
+  el.style.pointerEvents = 'none';
 
   if (type === 'dot') {
     // Vị trí hiện tại: chấm xanh dương + pulse
     const dotColor = color || '#4285F4';
     el.style.cssText = 'position: relative; width: 22px; height: 22px;';
+    el.style.boxSizing = 'border-box';
+    el.style.pointerEvents = 'none';
 
     // Vòng pulse bao ngoài
     const pulse = document.createElement('div');
@@ -109,7 +117,8 @@ function createMarkerElement(type: 'pin' | 'dot' = 'pin', color?: string): HTMLD
     const pinColor = color || '#EA4335';
     el.style.cssText = `
       position: relative; width: 30px; height: 42px;
-      cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+      box-sizing: border-box; pointer-events: none;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
     `;
 
     // SVG pin giống Google Maps
@@ -127,6 +136,9 @@ function createMarkerElement(type: 'pin' | 'dot' = 'pin', color?: string): HTMLD
 interface PolylineConfig {
   positions: Array<[number, number]>; // [lng, lat]
   color?: string;
+  width?: number;
+  opacity?: number;
+  dashArray?: number[];
 }
 
 interface RouteInfo {
@@ -255,19 +267,97 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
     // Xóa layer 'circle-outline' trước nếu nó đang tồn tại
     if (map.getLayer('circle-outline')) map.removeLayer('circle-outline');
 
-    // Sau đó mới xoá layer và source 'circle' / 'route'
-    ['circle', 'route'].forEach((id) => {
+    const markerLayerIds = (map.getStyle()?.layers ?? [])
+      .map((layer: { id: string }) => layer.id)
+      .filter((id: string) => id.startsWith('coordinate-marker-'));
+    markerLayerIds.forEach((id: string) => {
+      if (map.getLayer(id)) map.removeLayer(id);
+    });
+
+    const markerSourceIds = Object.keys(map.getStyle()?.sources ?? {})
+      .filter((id) => id.startsWith('coordinate-marker-'));
+    markerSourceIds.forEach((id) => {
+      if (map.getSource(id)) map.removeSource(id);
+    });
+
+    // Mỗi polyline là một source/layer riêng để có thể dùng màu và kiểu nét
+    // khác nhau. Dọn toàn bộ layer cũ trước khi vẽ lại.
+    const routeLayerIds = (map.getStyle()?.layers ?? [])
+      .map((layer: { id: string }) => layer.id)
+      .filter((id: string) => id === 'route' || id.startsWith('route-'));
+    routeLayerIds.forEach((id: string) => {
+      if (map.getLayer(id)) map.removeLayer(id);
+    });
+
+    const routeSourceIds = Object.keys(map.getStyle()?.sources ?? {})
+      .filter((id) => id === 'route' || id.startsWith('route-'));
+    ['circle', ...routeSourceIds].forEach((id) => {
       if (map.getLayer(id)) map.removeLayer(id);
       if (map.getSource(id)) map.removeSource(id);
     });
 
+    const canvasMarkerLayerIds: string[] = [];
+
     // Vẽ markers
     markers.forEach((m, idx) => {
+      if (m.renderMode === 'layer') {
+        const markerId = `coordinate-marker-${idx}`;
+        const mainLayerId = `${markerId}-main`;
+        map.addSource(markerId, {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'Point', coordinates: m.position },
+          },
+        });
+        map.addLayer({
+          id: mainLayerId,
+          type: 'circle',
+          source: markerId,
+          paint: {
+            'circle-radius': m.type === 'pin' ? 10 : 8,
+            'circle-color': m.color || '#0071e3',
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 3,
+            'circle-opacity': 1,
+            'circle-pitch-alignment': 'viewport',
+            'circle-pitch-scale': 'viewport',
+          },
+        });
+        canvasMarkerLayerIds.push(mainLayerId);
+
+        // Điểm đến có tâm trắng để phân biệt với điểm đón mà không dùng một
+        // SVG/HTML có anchor dễ sai lệch khi zoom rộng.
+        if (m.type === 'pin') {
+          const centerLayerId = `${markerId}-center`;
+          map.addLayer({
+            id: centerLayerId,
+            type: 'circle',
+            source: markerId,
+            paint: {
+              'circle-radius': 3,
+              'circle-color': '#ffffff',
+              'circle-pitch-alignment': 'viewport',
+              'circle-pitch-scale': 'viewport',
+            },
+          });
+          canvasMarkerLayerIds.push(centerLayerId);
+        }
+        return;
+      }
+
       // m.position đã là [lng, lat] (theo interface)
       const el = createMarkerElement(m.type || 'pin', m.color);
-      const anchorOpts = m.type === 'dot'
-        ? { element: el }
-        : { element: el, anchor: 'bottom' as const };
+      const anchorOpts = {
+        element: el,
+        anchor: m.type === 'dot' ? 'center' as const : 'bottom' as const,
+        // Không làm tròn vị trí chiếu về pixel nguyên. Sai số nửa pixel gần như
+        // không thấy khi zoom gần nhưng có thể tương ứng hàng trăm mét/km khi zoom rộng.
+        subpixelPositioning: true,
+        pitchAlignment: 'viewport' as const,
+        rotationAlignment: 'viewport' as const,
+      };
       const marker = new maplibregl.Marker(anchorOpts)
         .setLngLat(m.position)
         .addTo(map);
@@ -303,32 +393,42 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
       }
     });
 
-    // Vẽ polyline route
+    // Vẽ từng polyline route bằng layer độc lập.
     if (polylines.length > 0) {
-      const allCoords = polylines.flatMap((p) => p.positions);
-      map.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: { type: 'LineString', coordinates: allCoords },
-        },
-      });
-      map.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'route',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-color': polylines[0].color || '#0071e3',
-          'line-width': 5,
-          'line-opacity': 0.9,
-        },
+      const drawablePolylines = polylines.filter((polyline) => polyline.positions.length >= 2);
+      const allCoords = [
+        ...drawablePolylines.flatMap((polyline) => polyline.positions),
+        ...markers.map((marker) => marker.position),
+      ];
+
+      drawablePolylines.forEach((polyline, index) => {
+        const routeId = `route-${index}`;
+        map.addSource(routeId, {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'LineString', coordinates: polyline.positions },
+          },
+        });
+        map.addLayer({
+          id: routeId,
+          type: 'line',
+          source: routeId,
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: {
+            'line-color': polyline.color || '#0071e3',
+            'line-width': polyline.width ?? 5,
+            'line-opacity': polyline.opacity ?? 0.9,
+            ...(polyline.dashArray ? { 'line-dasharray': polyline.dashArray } : {}),
+          },
+        });
       });
 
       // Popup thông tin ở giữa route
-      if (routeInfo && allCoords.length > 1) {
-        const midPoint = allCoords[Math.floor(allCoords.length / 2)];
+      const primaryRoute = drawablePolylines[0]?.positions ?? [];
+      if (routeInfo && primaryRoute.length > 1) {
+        const midPoint = primaryRoute[Math.floor(primaryRoute.length / 2)];
         popupInstanceRef.current = new maplibregl.Popup({ closeOnClick: false, closeButton: false })
           .setLngLat(midPoint as [number, number])
           .setHTML(`
@@ -341,12 +441,20 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
       }
 
       // Zoom fit toàn bộ route
-      const bounds = allCoords.reduce(
-        (b: any, coord: any) => b.extend(coord as [number, number]),
-        new maplibregl.LngLatBounds(allCoords[0] as [number, number], allCoords[0] as [number, number])
-      );
-      map.fitBounds(bounds, { padding: 60, maxZoom: 15 });
+      if (allCoords.length > 0) {
+        const bounds = allCoords.reduce(
+          (b: any, coord: any) => b.extend(coord as [number, number]),
+          new maplibregl.LngLatBounds(allCoords[0] as [number, number], allCoords[0] as [number, number])
+        );
+        map.fitBounds(bounds, { padding: 60, maxZoom: 15 });
+      }
     }
+
+    // Route được thêm sau marker, vì vậy đưa marker canvas lên trên cùng sau
+    // khi hoàn tất để icon luôn nhìn thấy nhưng tâm vẫn neo đúng tọa độ.
+    canvasMarkerLayerIds.forEach((layerId) => {
+      if (map.getLayer(layerId)) map.moveLayer(layerId);
+    });
   }, [isMapReady, markers, polylines, routeInfo, circleRadius]);
 
   // ── Đóng dropdown tìm kiếm khi click ra ngoài ────────────────────────────
@@ -394,7 +502,13 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
 
         // Thêm marker tại vị trí tìm kiếm (dùng pin style)
         const el = createMarkerElement('pin', '#EA4335');
-        const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(lngLat).addTo(map);
+        const marker = new maplibregl.Marker({
+          element: el,
+          anchor: 'bottom',
+          subpixelPositioning: true,
+          pitchAlignment: 'viewport',
+          rotationAlignment: 'viewport',
+        }).setLngLat(lngLat).addTo(map);
         markerInstancesRef.current.push(marker);
 
         // Cập nhật vòng tròn xung quanh điểm tìm kiếm

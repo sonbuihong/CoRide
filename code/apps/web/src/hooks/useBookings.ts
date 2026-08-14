@@ -2,12 +2,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 
+const getApiErrorMessage = (error: unknown, fallback: string) =>
+  (error as { response?: { data?: { message?: string } } }).response?.data?.message || fallback;
+
 export const useMyBookings = (role: 'passenger' | 'driver', page: number = 1) => {
   return useQuery({
     queryKey: ['bookings', role, page],
     queryFn: async () => {
-      const { data } = await apiClient.get(`/bookings?role=${role}&page=${page}`);
-      return data.data;
+      const endpoint = role === 'passenger' ? '/bookings/my' : '/bookings/driver';
+      const { data } = await apiClient.get(endpoint);
+      return { bookings: data.bookings ?? [] };
     },
   });
 };
@@ -17,7 +21,7 @@ export const useBookingDetail = (id: string) => {
     queryKey: ['booking', id],
     queryFn: async () => {
       const { data } = await apiClient.get(`/bookings/${id}`);
-      return data.data;
+      return data.booking;
     },
     enabled: !!id,
   });
@@ -29,15 +33,15 @@ export const useCreateBooking = () => {
   return useMutation({
     mutationFn: async (payload: { rideId: string; seats: number }) => {
       const { data } = await apiClient.post('/bookings', payload);
-      return data.data;
+      return data.booking;
     },
     onSuccess: () => {
       toast.success('Đặt chỗ thành công! Chờ tài xế xác nhận.');
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['ride'] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Lỗi khi đặt chỗ');
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Lỗi khi đặt chỗ'));
     },
   });
 };
@@ -47,16 +51,16 @@ export const useConfirmBooking = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data } = await apiClient.patch(`/bookings/${id}/confirm`);
-      return data.data;
+      const { data } = await apiClient.patch(`/bookings/${id}/status`, { status: 'CONFIRMED' });
+      return data.booking;
     },
     onSuccess: (data) => {
       toast.success('Đã xác nhận đặt chỗ');
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['booking', data.id] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Lỗi khi xác nhận');
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Lỗi khi xác nhận'));
     },
   });
 };
@@ -67,7 +71,7 @@ export const useCancelBooking = () => {
   return useMutation({
     mutationFn: async ({ id, cancelReason }: { id: string; cancelReason?: string }) => {
       const { data } = await apiClient.patch(`/bookings/${id}/cancel`, { cancelReason });
-      return data.data;
+      return data.booking;
     },
     onSuccess: (data) => {
       toast.success('Đã huỷ đặt chỗ');
@@ -75,8 +79,8 @@ export const useCancelBooking = () => {
       queryClient.invalidateQueries({ queryKey: ['booking', data.id] });
       queryClient.invalidateQueries({ queryKey: ['ride'] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Lỗi khi huỷ đặt chỗ');
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Lỗi khi huỷ đặt chỗ'));
     },
   });
 };

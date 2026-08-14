@@ -204,9 +204,12 @@ exports.Prisma.RideScalarFieldEnum = {
   destinationLng: 'destinationLng',
   distance: 'distance',
   duration: 'duration',
+  routePolyline: 'routePolyline',
   departureTime: 'departureTime',
   availableSeats: 'availableSeats',
+  offeredSeats: 'offeredSeats',
   pricePerSeat: 'pricePerSeat',
+  tollCost: 'tollCost',
   status: 'status',
   description: 'description',
   createdAt: 'createdAt',
@@ -226,6 +229,7 @@ exports.Prisma.RideScalarFieldEnum = {
   addressDetailLevel: 'addressDetailLevel',
   cancelReason: 'cancelReason',
   vehicleId: 'vehicleId',
+  allowRoutePickup: 'allowRoutePickup',
   allowSmoking: 'allowSmoking',
   allowPets: 'allowPets',
   allowLuggage: 'allowLuggage'
@@ -237,16 +241,22 @@ exports.Prisma.BookingScalarFieldEnum = {
   passengerId: 'passengerId',
   seats: 'seats',
   totalPrice: 'totalPrice',
+  sharedDistanceKm: 'sharedDistanceKm',
+  detourKm: 'detourKm',
+  priceBreakdown: 'priceBreakdown',
   status: 'status',
   paymentStatus: 'paymentStatus',
   passengerLat: 'passengerLat',
   passengerLng: 'passengerLng',
   pickupAddress: 'pickupAddress',
   isPickedUp: 'isPickedUp',
+  driverArrivedAt: 'driverArrivedAt',
+  pickedUpAt: 'pickedUpAt',
   dropoffLat: 'dropoffLat',
   dropoffLng: 'dropoffLng',
   dropoffAddress: 'dropoffAddress',
   isDroppedOff: 'isDroppedOff',
+  droppedOffAt: 'droppedOffAt',
   cancelReason: 'cancelReason',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -339,6 +349,14 @@ exports.Prisma.PricingConfigScalarFieldEnum = {
   pricePerMinute: 'pricePerMinute',
   baseDistance: 'baseDistance',
   minFare: 'minFare',
+  fuelPrice: 'fuelPrice',
+  fuelConsumption: 'fuelConsumption',
+  vehicleOverheadRatio: 'vehicleOverheadRatio',
+  minimumDriverShare: 'minimumDriverShare',
+  driverPriceAdjustment: 'driverPriceAdjustment',
+  roundingUnit: 'roundingUnit',
+  maxDetourKm: 'maxDetourKm',
+  maxDetourRatio: 'maxDetourRatio',
   isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -383,6 +401,11 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -391,6 +414,12 @@ exports.Prisma.QueryMode = {
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 exports.Role = exports.$Enums.Role = {
   USER: 'USER',

@@ -4,11 +4,11 @@ import goongService from './goong.service';
 class GoongController {
   /**
    * GET /api/goong/autocomplete
-   * Autocomplete V1 — gợi ý địa điểm với đầy đủ params: query, location, limit, radius, more_compound
+   * Autocomplete V1/V2 — version=v2 trả địa chỉ theo địa giới sau sáp nhập
    */
   async autocomplete(req: Request, res: Response) {
     try {
-      const { query, limit, location, radius, more_compound } = req.query;
+      const { query, limit, location, radius, more_compound, version } = req.query;
 
       if (!query || typeof query !== 'string') {
         return res.status(400).json({ message: 'Query parameter is required' });
@@ -18,13 +18,15 @@ class GoongController {
       const radiusNum = radius ? parseInt(radius as string, 10) : undefined;
       // more_compound mặc định true — trả thêm quận/xã/tỉnh tách sẵn
       const moreCompound = more_compound !== 'false';
+      const apiVersion = version === 'v2' ? 'v2' : 'v1';
 
       const results = await goongService.autocomplete(
         query,
         limitNum,
         location as string | undefined,
         radiusNum,
-        moreCompound
+        moreCompound,
+        apiVersion
       );
 
       res.json(results);
@@ -148,13 +150,14 @@ class GoongController {
    */
   async getPlaceDetail(req: Request, res: Response) {
     try {
-      const { place_id } = req.query;
+      const { place_id, version } = req.query;
 
       if (!place_id || typeof place_id !== 'string') {
         return res.status(400).json({ message: 'Place ID parameter is required' });
       }
 
-      const result = await goongService.getPlaceDetail(place_id);
+      const apiVersion = version === 'v2' ? 'v2' : 'v1';
+      const result = await goongService.getPlaceDetail(place_id, apiVersion);
 
       if (!result) {
         return res.status(404).json({ message: 'Không tìm thấy địa điểm' });

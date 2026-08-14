@@ -18,6 +18,12 @@ export const estimatePriceSchema = z.object({
   vehicleType: z.enum(['BIKE', 'CAR']).optional(),
 });
 
+export const estimateCarpoolPriceSchema = estimatePriceSchema.extend({
+  vehicleType: z.enum(['BIKE', 'CAR']),
+  offeredSeats: z.coerce.number().int().min(1).max(7),
+  tollCost: z.coerce.number().min(0).optional(),
+});
+
 /**
  * Schema validate request upsert PricingConfig (Admin).
  */
@@ -33,6 +39,14 @@ export const upsertPricingConfigSchema = z.object({
   baseDistance: z.number().min(0).optional(),
   minFare: z.number().min(0).optional(),
   isActive: z.boolean().optional(),
+  fuelPrice: z.number().positive().optional(),
+  fuelConsumption: z.number().positive().optional(),
+  vehicleOverheadRatio: z.number().min(0).max(2).optional(),
+  minimumDriverShare: z.number().min(0.2).max(1).optional(),
+  driverPriceAdjustment: z.number().min(0).max(0.15).optional(),
+  roundingUnit: z.number().int().positive().optional(),
+  maxDetourKm: z.number().positive().optional(),
+  maxDetourRatio: z.number().positive().max(1).optional(),
 });
 
 export type EstimatePriceInput = z.infer<typeof estimatePriceSchema>;

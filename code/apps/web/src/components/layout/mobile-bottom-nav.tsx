@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useRoleMode } from '@/components/providers/role-mode-provider';
-import { Search, Bookmark, Car, PlusSquare, Users, User, LayoutDashboard, Home, Clock, Bell, Grid, LayoutGrid } from 'lucide-react';
+import { Car, PlusSquare, Users, User, LayoutDashboard, Home, Clock, Bell, LayoutGrid } from 'lucide-react';
 
 export function MobileBottomNav() {
   const { user, loading } = useAuth();
@@ -44,7 +44,7 @@ export function MobileBottomNav() {
   } else {
     // Passenger - exact visual match
     tabs = [
-      { name: '', href: '/rides/search', icon: Home, isHome: true },
+      { name: '', href: '/rides', icon: Home, isHome: true },
       { name: '', href: '/my-bookings', icon: Clock },
       { name: '', href: '/notifications', icon: Bell },
       { name: '', href: '/profile', icon: User },
@@ -56,11 +56,11 @@ export function MobileBottomNav() {
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1d1d1f] border-t border-gray-200 dark:border-gray-800 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.04)]">
       {/* Container for absolute floating items */}
       <div className="flex items-center justify-around h-[65px] px-2 relative">
-        {tabs.map((tab, idx) => {
+        {tabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive = pathname === tab.href || (tab.href !== '/admin' && tab.href !== '#' && pathname.startsWith(tab.href) && tab.href !== '/profile' && tab.href !== '/rides/search' && tab.href !== '/rides/post');
+          const isActive = pathname === tab.href || (tab.href !== '/admin' && tab.href !== '#' && pathname.startsWith(tab.href) && tab.href !== '/profile' && tab.href !== '/rides' && tab.href !== '/rides/post');
           const isStrictActive = pathname === tab.href;
-          const active = tab.href === '/profile' || tab.href === '/rides/search' || tab.href === '/rides/post' || tab.href === '/admin' ? isStrictActive : isActive;
+          const active = tab.href === '/profile' || tab.href === '/rides' || tab.href === '/rides/post' || tab.href === '/admin' ? isStrictActive : isActive;
           
           if (isAdmin || isDriverMode) {
              return (
