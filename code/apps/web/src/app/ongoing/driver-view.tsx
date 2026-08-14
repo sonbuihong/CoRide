@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { User, Phone, MapPin, Navigation, CheckCircle, XCircle, Users as UsersIcon, Map, Loader2, MessageSquare, MoreHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { User, Phone, MapPin, Navigation, CheckCircle, XCircle, Loader2, MessageSquare, MoreHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 import { ChatWindow } from '@/components/chat/chat-window';
@@ -25,9 +25,16 @@ interface Booking {
   price?: number;
   status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'REJECTED';
   isPickedUp: boolean;
+  isDroppedOff?: boolean;
+  driverArrivedAt?: string | null;
+  pickedUpAt?: string | null;
+  droppedOffAt?: string | null;
   passengerLat?: number | null;
   passengerLng?: number | null;
   pickupAddress?: string | null;
+  dropoffLat?: number | null;
+  dropoffLng?: number | null;
+  dropoffAddress?: string | null;
   passenger: Passenger;
 }
 
@@ -39,7 +46,7 @@ interface Ride {
   destination: string;
   destinationLat?: number | null;
   destinationLng?: number | null;
-  status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+  status: 'SCHEDULED' | 'FULL' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
   vehicleType?: string;
   bookings?: Booking[];
 }
@@ -62,10 +69,9 @@ function getDriverPrimaryAction(ride: Ride): {
   apiCall: () => Promise<void>;
 } | null {
   const confirmedBookings = ride.bookings?.filter(b => b.status === 'CONFIRMED') ?? [];
-  const unpickedBookings = confirmedBookings.filter(b => !b.isPickedUp);
-  const hasPickedUpSomeone = confirmedBookings.some(b => b.isPickedUp);
 
   if (ride.status === 'ONGOING') {
+    if (confirmedBookings.length > 0) return null;
     return {
       label: 'Hoàn thành chuyến',
       variant: 'complete',
@@ -75,17 +81,14 @@ function getDriverPrimaryAction(ride: Ride): {
     };
   }
 
-  if (ride.status === 'SCHEDULED') {
-    if (hasPickedUpSomeone && unpickedBookings.length === 0) {
-      return {
-        label: 'Bắt đầu chuyến',
-        variant: 'start',
-        apiCall: async () => {
-          await apiClient.patch(`/rides/${ride.id}/status`, { status: 'ONGOING' });
-        },
-      };
-    }
-    return null;
+  if (ride.status === 'SCHEDULED' || ride.status === 'FULL') {
+    return {
+      label: 'Bắt đầu chuyến',
+      variant: 'start',
+      apiCall: async () => {
+        await apiClient.patch(`/rides/${ride.id}/status`, { status: 'ONGOING' });
+      },
+    };
   }
 
   return null;
@@ -93,7 +96,7 @@ function getDriverPrimaryAction(ride: Ride): {
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-export default function DriverView({ data, onRefresh, isExpanded = true, onExpand, activeOrder, onReorder }: DriverViewProps) {
+export default function DriverView({ data, onRefresh, isExpanded = true, onExpand, activeOrder }: DriverViewProps) {
   const ride: Ride = data.ride;
   const { user } = useAuth();
 
@@ -160,6 +163,22 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
     }
   };
 
+  const handleDriverArrived = async (bookingId: string) => {
+    if (loadingPickup[bookingId]) return;
+
+    setLoadingPickup(prev => ({ ...prev, [bookingId]: true }));
+    try {
+      await apiClient.patch(`/bookings/${bookingId}/arrived`);
+      toast.success('Đã thông báo cho hành khách rằng bạn đã tới');
+      onRefresh();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Không thể cập nhật điểm đón');
+    } finally {
+      setLoadingPickup(prev => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
   const handleDropoffPassenger = async (bookingId: string) => {
     if (loadingPickup[bookingId]) return;
 
@@ -211,12 +230,15 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
       .find(b => !b.isPickedUp && b.status === 'CONFIRMED') 
     || confirmedBookings.find(b => b.isPickedUp && b.status === 'CONFIRMED' && ride.status === 'ONGOING');
 
-  let unpickedBookingsList = ride.bookings?.filter(b => 
-    (b.status === 'CONFIRMED' || b.status === 'PENDING') && !b.isPickedUp && b.passengerLat && b.passengerLng
-  ) || [];
+  let remainingStops = ride.bookings?.filter(b => {
+    if (b.status !== 'CONFIRMED' || b.isDroppedOff) return false;
+    return b.isPickedUp
+      ? b.dropoffLat != null && b.dropoffLng != null
+      : b.passengerLat != null && b.passengerLng != null;
+  }) || [];
   
   if (activeOrder && activeOrder.length > 0) {
-    unpickedBookingsList = [...unpickedBookingsList].sort((a, b) => {
+    remainingStops = [...remainingStops].sort((a, b) => {
       const idxA = activeOrder.indexOf(a.id);
       const idxB = activeOrder.indexOf(b.id);
       if (idxA === -1 && idxB === -1) return 0;
@@ -226,21 +248,35 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
     });
   }
   
-  const waypointsParam = unpickedBookingsList.length > 0
-    ? `&waypoints=${unpickedBookingsList.map(b => `${b.passengerLat},${b.passengerLng}`).join('|')}`
+  const waypointsParam = remainingStops.length > 0
+    ? `&waypoints=${remainingStops.map(b => b.isPickedUp ? `${b.dropoffLat},${b.dropoffLng}` : `${b.passengerLat},${b.passengerLng}`).join('|')}`
     : '';
 
   const mapLink = `https://www.google.com/maps/dir/?api=1&destination=${ride.destinationLat},${ride.destinationLng}${waypointsParam}&travelmode=driving`;
 
   const nextDestinationName = nextBookingToFocus && !nextBookingToFocus.isPickedUp
     ? nextBookingToFocus.pickupAddress
-    : ride.destination;
+    : nextBookingToFocus?.dropoffAddress || ride.destination;
 
-  let mainButton: { label: string; action: () => void; loading: boolean; variant: 'default' | 'pickup' | 'dropoff' } | null = null;
+  let mainButton: { label: string; action: () => void; loading: boolean; variant: 'default' | 'arrive' | 'pickup' | 'dropoff' } | null = null;
 
-  if (nextBookingToFocus && !nextBookingToFocus.isPickedUp && nextBookingToFocus.status === 'CONFIRMED') {
+  if ((ride.status === 'SCHEDULED' || ride.status === 'FULL') && primaryAction) {
+    mainButton = {
+      label: primaryAction.label,
+      action: handlePrimaryAction,
+      loading: loadingPrimary,
+      variant: 'default'
+    };
+  } else if (nextBookingToFocus && !nextBookingToFocus.isPickedUp && !nextBookingToFocus.driverArrivedAt && nextBookingToFocus.status === 'CONFIRMED') {
      mainButton = {
        label: 'Đã đến điểm đón',
+       action: () => handleDriverArrived(nextBookingToFocus.id),
+       loading: loadingPickup[nextBookingToFocus.id] || false,
+       variant: 'arrive'
+     };
+  } else if (nextBookingToFocus && !nextBookingToFocus.isPickedUp && nextBookingToFocus.driverArrivedAt && nextBookingToFocus.status === 'CONFIRMED') {
+     mainButton = {
+       label: 'Xác nhận khách đã lên xe',
        action: () => handlePickupPassenger(nextBookingToFocus.id),
        loading: loadingPickup[nextBookingToFocus.id] || false,
        variant: 'pickup'
@@ -265,7 +301,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
   let headerStatusColor = 'text-gray-600';
   let headerStatusText = 'Đang xử lý';
 
-  if (ride.status === 'SCHEDULED') {
+  if (ride.status === 'SCHEDULED' || ride.status === 'FULL') {
     if (nextBookingToFocus && !nextBookingToFocus.isPickedUp) {
        headerStatusText = `${confirmedBookings.length} • Đón khách`;
        headerStatusColor = 'text-green-600';
@@ -274,7 +310,10 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
        headerStatusColor = 'text-primary';
     }
   } else if (ride.status === 'ONGOING') {
-    if (nextBookingToFocus && nextBookingToFocus.isPickedUp) {
+    if (nextBookingToFocus?.driverArrivedAt && !nextBookingToFocus.isPickedUp) {
+       headerStatusText = 'Đang chờ khách lên xe';
+       headerStatusColor = 'text-[#0071e3]';
+    } else if (nextBookingToFocus && nextBookingToFocus.isPickedUp) {
        headerStatusText = 'Trả khách';
        headerStatusColor = 'text-orange-600';
     } else if (nextBookingToFocus && !nextBookingToFocus.isPickedUp) {
@@ -295,7 +334,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
         <button className="flex flex-col items-center gap-0.5 w-12" onClick={onExpand}>
           <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
             <span className="text-[13px] font-bold text-gray-700">
-              {unpickedBookingsList.length > 0 ? unpickedBookingsList.length : '1'}
+              {remainingStops.length > 0 ? remainingStops.length : '1'}
             </span>
           </div>
           <span className="text-[9px] text-gray-500 font-medium">Địa điểm</span>

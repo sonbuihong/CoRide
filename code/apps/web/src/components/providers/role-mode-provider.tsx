@@ -44,7 +44,7 @@ export function RoleModeProvider({ children }: { children: ReactNode }) {
     if (!pathname) return;
 
     const driverRoutes = ['/rides/post', '/my-rides', '/booking-requests'];
-    const passengerRoutes = ['/rides/search', '/my-bookings'];
+    const passengerRoutes = ['/rides', '/my-bookings'];
 
     if (driverRoutes.some((route) => pathname.startsWith(route))) {
       setModeState((prev) => {

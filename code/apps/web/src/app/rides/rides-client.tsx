@@ -192,7 +192,7 @@ function RidesList() {
     if (filters.destination) params.set('destination', filters.destination);
     if (filters.date) params.set('date', filters.date);
     
-    router.push(`/rides/search?${params.toString()}`);
+    router.push(`/rides?${params.toString()}`);
   };
 
   const initialValues = {
@@ -230,7 +230,7 @@ function RidesList() {
           <div className="w-full max-w-[600px] mx-auto relative group mt-8">
             {/* Horizontal Search Bar (Click to navigate) */}
             <div 
-              onClick={() => router.push('/rides/search')}
+              onClick={() => router.push('/rides')}
               className="w-full h-[64px] md:h-[72px] bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.15)] backdrop-blur-xl border border-[rgba(255,255,255,0.2)] rounded-[980px] flex items-center px-6 md:px-8 cursor-pointer transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:scale-[1.02] hover:shadow-[0_16px_48px_rgba(0,113,227,0.3)]"
             >
               <Search className="h-6 w-6 md:h-7 md:w-7 text-[rgba(255,255,255,0.7)] group-hover:text-white transition-colors mr-4" strokeWidth={2.5} />

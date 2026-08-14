@@ -87,7 +87,12 @@ export const swaggerSpec = {
       // ── Ride ──────────────────────────────────────────────────────────────
       CreateRideInput: {
         type: 'object',
-        required: ['origin', 'destination', 'departureTime', 'availableSeats', 'pricePerSeat'],
+        required: [
+          'origin', 'originLat', 'originLng',
+          'destination', 'destinationLat', 'destinationLng',
+          'departureTime', 'vehicleId', 'availableSeats', 'pricePerSeat',
+          'distance', 'duration', 'routePolyline',
+        ],
         properties: {
           origin: { type: 'string', example: 'Hà Nội' },
           originLat: { type: 'number', example: 21.0285 },
@@ -95,6 +100,10 @@ export const swaggerSpec = {
           destination: { type: 'string', example: 'Hải Phòng' },
           destinationLat: { type: 'number', example: 20.8449 },
           destinationLng: { type: 'number', example: 106.6881 },
+          vehicleId: { type: 'string', format: 'uuid' },
+          distance: { type: 'number', example: 14.2, description: 'Khoảng cách theo km' },
+          duration: { type: 'number', example: 35, description: 'Thời gian theo phút' },
+          routePolyline: { type: 'string', description: 'Polyline đã mã hóa của tuyến đường' },
           departureTime: {
             type: 'string',
             format: 'date-time',
@@ -102,6 +111,7 @@ export const swaggerSpec = {
           },
           availableSeats: { type: 'integer', minimum: 1, example: 3 },
           pricePerSeat: { type: 'number', minimum: 0, example: 150000 },
+          allowRoutePickup: { type: 'boolean', default: true },
           description: { type: 'string', example: 'Đi qua QL5, khởi hành đúng giờ' },
         },
       },

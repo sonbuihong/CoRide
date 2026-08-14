@@ -122,7 +122,9 @@ export default function PassengerView({ data, onRefresh, isExpanded = true, onEx
   const handleCancelBooking = async () => {
     if (!confirm('Bạn có chắc chắn muốn hủy đặt chỗ này?')) return;
     try {
-      await apiClient.patch(`/bookings/${bookingId}/cancel`);
+      await apiClient.patch(`/bookings/${bookingId}/cancel`, {
+        cancelReason: 'Hành khách chủ động hủy đặt chỗ',
+      });
       toast.success('Đã hủy đặt chỗ');
       onRefresh();
     } catch (error: unknown) {

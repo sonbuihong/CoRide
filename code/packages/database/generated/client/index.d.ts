@@ -9164,7 +9164,9 @@ export namespace Prisma {
     distance: number | null
     duration: number | null
     availableSeats: number | null
+    offeredSeats: number | null
     pricePerSeat: number | null
+    tollCost: number | null
   }
 
   export type RideSumAggregateOutputType = {
@@ -9175,7 +9177,9 @@ export namespace Prisma {
     distance: number | null
     duration: number | null
     availableSeats: number | null
+    offeredSeats: number | null
     pricePerSeat: number | null
+    tollCost: number | null
   }
 
   export type RideMinAggregateOutputType = {
@@ -9189,9 +9193,12 @@ export namespace Prisma {
     destinationLng: number | null
     distance: number | null
     duration: number | null
+    routePolyline: string | null
     departureTime: Date | null
     availableSeats: number | null
+    offeredSeats: number | null
     pricePerSeat: number | null
+    tollCost: number | null
     status: $Enums.RideStatus | null
     description: string | null
     createdAt: Date | null
@@ -9211,6 +9218,7 @@ export namespace Prisma {
     addressDetailLevel: string | null
     cancelReason: string | null
     vehicleId: string | null
+    allowRoutePickup: boolean | null
     allowSmoking: boolean | null
     allowPets: boolean | null
     allowLuggage: boolean | null
@@ -9227,9 +9235,12 @@ export namespace Prisma {
     destinationLng: number | null
     distance: number | null
     duration: number | null
+    routePolyline: string | null
     departureTime: Date | null
     availableSeats: number | null
+    offeredSeats: number | null
     pricePerSeat: number | null
+    tollCost: number | null
     status: $Enums.RideStatus | null
     description: string | null
     createdAt: Date | null
@@ -9249,6 +9260,7 @@ export namespace Prisma {
     addressDetailLevel: string | null
     cancelReason: string | null
     vehicleId: string | null
+    allowRoutePickup: boolean | null
     allowSmoking: boolean | null
     allowPets: boolean | null
     allowLuggage: boolean | null
@@ -9265,9 +9277,12 @@ export namespace Prisma {
     destinationLng: number
     distance: number
     duration: number
+    routePolyline: number
     departureTime: number
     availableSeats: number
+    offeredSeats: number
     pricePerSeat: number
+    tollCost: number
     status: number
     description: number
     createdAt: number
@@ -9287,6 +9302,7 @@ export namespace Prisma {
     addressDetailLevel: number
     cancelReason: number
     vehicleId: number
+    allowRoutePickup: number
     allowSmoking: number
     allowPets: number
     allowLuggage: number
@@ -9302,7 +9318,9 @@ export namespace Prisma {
     distance?: true
     duration?: true
     availableSeats?: true
+    offeredSeats?: true
     pricePerSeat?: true
+    tollCost?: true
   }
 
   export type RideSumAggregateInputType = {
@@ -9313,7 +9331,9 @@ export namespace Prisma {
     distance?: true
     duration?: true
     availableSeats?: true
+    offeredSeats?: true
     pricePerSeat?: true
+    tollCost?: true
   }
 
   export type RideMinAggregateInputType = {
@@ -9327,9 +9347,12 @@ export namespace Prisma {
     destinationLng?: true
     distance?: true
     duration?: true
+    routePolyline?: true
     departureTime?: true
     availableSeats?: true
+    offeredSeats?: true
     pricePerSeat?: true
+    tollCost?: true
     status?: true
     description?: true
     createdAt?: true
@@ -9349,6 +9372,7 @@ export namespace Prisma {
     addressDetailLevel?: true
     cancelReason?: true
     vehicleId?: true
+    allowRoutePickup?: true
     allowSmoking?: true
     allowPets?: true
     allowLuggage?: true
@@ -9365,9 +9389,12 @@ export namespace Prisma {
     destinationLng?: true
     distance?: true
     duration?: true
+    routePolyline?: true
     departureTime?: true
     availableSeats?: true
+    offeredSeats?: true
     pricePerSeat?: true
+    tollCost?: true
     status?: true
     description?: true
     createdAt?: true
@@ -9387,6 +9414,7 @@ export namespace Prisma {
     addressDetailLevel?: true
     cancelReason?: true
     vehicleId?: true
+    allowRoutePickup?: true
     allowSmoking?: true
     allowPets?: true
     allowLuggage?: true
@@ -9403,9 +9431,12 @@ export namespace Prisma {
     destinationLng?: true
     distance?: true
     duration?: true
+    routePolyline?: true
     departureTime?: true
     availableSeats?: true
+    offeredSeats?: true
     pricePerSeat?: true
+    tollCost?: true
     status?: true
     description?: true
     createdAt?: true
@@ -9425,6 +9456,7 @@ export namespace Prisma {
     addressDetailLevel?: true
     cancelReason?: true
     vehicleId?: true
+    allowRoutePickup?: true
     allowSmoking?: true
     allowPets?: true
     allowLuggage?: true
@@ -9528,9 +9560,12 @@ export namespace Prisma {
     destinationLng: number | null
     distance: number | null
     duration: number | null
+    routePolyline: string | null
     departureTime: Date
     availableSeats: number
+    offeredSeats: number
     pricePerSeat: number
+    tollCost: number
     status: $Enums.RideStatus
     description: string | null
     createdAt: Date
@@ -9550,6 +9585,7 @@ export namespace Prisma {
     addressDetailLevel: string | null
     cancelReason: string | null
     vehicleId: string | null
+    allowRoutePickup: boolean
     allowSmoking: boolean
     allowPets: boolean
     allowLuggage: boolean
@@ -9585,9 +9621,12 @@ export namespace Prisma {
     destinationLng?: boolean
     distance?: boolean
     duration?: boolean
+    routePolyline?: boolean
     departureTime?: boolean
     availableSeats?: boolean
+    offeredSeats?: boolean
     pricePerSeat?: boolean
+    tollCost?: boolean
     status?: boolean
     description?: boolean
     createdAt?: boolean
@@ -9607,6 +9646,7 @@ export namespace Prisma {
     addressDetailLevel?: boolean
     cancelReason?: boolean
     vehicleId?: boolean
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -9630,9 +9670,12 @@ export namespace Prisma {
     destinationLng?: boolean
     distance?: boolean
     duration?: boolean
+    routePolyline?: boolean
     departureTime?: boolean
     availableSeats?: boolean
+    offeredSeats?: boolean
     pricePerSeat?: boolean
+    tollCost?: boolean
     status?: boolean
     description?: boolean
     createdAt?: boolean
@@ -9652,6 +9695,7 @@ export namespace Prisma {
     addressDetailLevel?: boolean
     cancelReason?: boolean
     vehicleId?: boolean
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -9670,9 +9714,12 @@ export namespace Prisma {
     destinationLng?: boolean
     distance?: boolean
     duration?: boolean
+    routePolyline?: boolean
     departureTime?: boolean
     availableSeats?: boolean
+    offeredSeats?: boolean
     pricePerSeat?: boolean
+    tollCost?: boolean
     status?: boolean
     description?: boolean
     createdAt?: boolean
@@ -9692,6 +9739,7 @@ export namespace Prisma {
     addressDetailLevel?: boolean
     cancelReason?: boolean
     vehicleId?: boolean
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -9732,9 +9780,12 @@ export namespace Prisma {
       destinationLng: number | null
       distance: number | null
       duration: number | null
+      routePolyline: string | null
       departureTime: Date
       availableSeats: number
+      offeredSeats: number
       pricePerSeat: number
+      tollCost: number
       status: $Enums.RideStatus
       description: string | null
       createdAt: Date
@@ -9754,6 +9805,7 @@ export namespace Prisma {
       addressDetailLevel: string | null
       cancelReason: string | null
       vehicleId: string | null
+      allowRoutePickup: boolean
       allowSmoking: boolean
       allowPets: boolean
       allowLuggage: boolean
@@ -10166,9 +10218,12 @@ export namespace Prisma {
     readonly destinationLng: FieldRef<"Ride", 'Float'>
     readonly distance: FieldRef<"Ride", 'Float'>
     readonly duration: FieldRef<"Ride", 'Float'>
+    readonly routePolyline: FieldRef<"Ride", 'String'>
     readonly departureTime: FieldRef<"Ride", 'DateTime'>
     readonly availableSeats: FieldRef<"Ride", 'Int'>
+    readonly offeredSeats: FieldRef<"Ride", 'Int'>
     readonly pricePerSeat: FieldRef<"Ride", 'Float'>
+    readonly tollCost: FieldRef<"Ride", 'Float'>
     readonly status: FieldRef<"Ride", 'RideStatus'>
     readonly description: FieldRef<"Ride", 'String'>
     readonly createdAt: FieldRef<"Ride", 'DateTime'>
@@ -10188,6 +10243,7 @@ export namespace Prisma {
     readonly addressDetailLevel: FieldRef<"Ride", 'String'>
     readonly cancelReason: FieldRef<"Ride", 'String'>
     readonly vehicleId: FieldRef<"Ride", 'String'>
+    readonly allowRoutePickup: FieldRef<"Ride", 'Boolean'>
     readonly allowSmoking: FieldRef<"Ride", 'Boolean'>
     readonly allowPets: FieldRef<"Ride", 'Boolean'>
     readonly allowLuggage: FieldRef<"Ride", 'Boolean'>
@@ -10633,6 +10689,8 @@ export namespace Prisma {
   export type BookingAvgAggregateOutputType = {
     seats: number | null
     totalPrice: number | null
+    sharedDistanceKm: number | null
+    detourKm: number | null
     passengerLat: number | null
     passengerLng: number | null
     dropoffLat: number | null
@@ -10642,6 +10700,8 @@ export namespace Prisma {
   export type BookingSumAggregateOutputType = {
     seats: number | null
     totalPrice: number | null
+    sharedDistanceKm: number | null
+    detourKm: number | null
     passengerLat: number | null
     passengerLng: number | null
     dropoffLat: number | null
@@ -10654,16 +10714,21 @@ export namespace Prisma {
     passengerId: string | null
     seats: number | null
     totalPrice: number | null
+    sharedDistanceKm: number | null
+    detourKm: number | null
     status: $Enums.BookingStatus | null
     paymentStatus: $Enums.PaymentStatus | null
     passengerLat: number | null
     passengerLng: number | null
     pickupAddress: string | null
     isPickedUp: boolean | null
+    driverArrivedAt: Date | null
+    pickedUpAt: Date | null
     dropoffLat: number | null
     dropoffLng: number | null
     dropoffAddress: string | null
     isDroppedOff: boolean | null
+    droppedOffAt: Date | null
     cancelReason: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -10675,16 +10740,21 @@ export namespace Prisma {
     passengerId: string | null
     seats: number | null
     totalPrice: number | null
+    sharedDistanceKm: number | null
+    detourKm: number | null
     status: $Enums.BookingStatus | null
     paymentStatus: $Enums.PaymentStatus | null
     passengerLat: number | null
     passengerLng: number | null
     pickupAddress: string | null
     isPickedUp: boolean | null
+    driverArrivedAt: Date | null
+    pickedUpAt: Date | null
     dropoffLat: number | null
     dropoffLng: number | null
     dropoffAddress: string | null
     isDroppedOff: boolean | null
+    droppedOffAt: Date | null
     cancelReason: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -10696,16 +10766,22 @@ export namespace Prisma {
     passengerId: number
     seats: number
     totalPrice: number
+    sharedDistanceKm: number
+    detourKm: number
+    priceBreakdown: number
     status: number
     paymentStatus: number
     passengerLat: number
     passengerLng: number
     pickupAddress: number
     isPickedUp: number
+    driverArrivedAt: number
+    pickedUpAt: number
     dropoffLat: number
     dropoffLng: number
     dropoffAddress: number
     isDroppedOff: number
+    droppedOffAt: number
     cancelReason: number
     createdAt: number
     updatedAt: number
@@ -10716,6 +10792,8 @@ export namespace Prisma {
   export type BookingAvgAggregateInputType = {
     seats?: true
     totalPrice?: true
+    sharedDistanceKm?: true
+    detourKm?: true
     passengerLat?: true
     passengerLng?: true
     dropoffLat?: true
@@ -10725,6 +10803,8 @@ export namespace Prisma {
   export type BookingSumAggregateInputType = {
     seats?: true
     totalPrice?: true
+    sharedDistanceKm?: true
+    detourKm?: true
     passengerLat?: true
     passengerLng?: true
     dropoffLat?: true
@@ -10737,16 +10817,21 @@ export namespace Prisma {
     passengerId?: true
     seats?: true
     totalPrice?: true
+    sharedDistanceKm?: true
+    detourKm?: true
     status?: true
     paymentStatus?: true
     passengerLat?: true
     passengerLng?: true
     pickupAddress?: true
     isPickedUp?: true
+    driverArrivedAt?: true
+    pickedUpAt?: true
     dropoffLat?: true
     dropoffLng?: true
     dropoffAddress?: true
     isDroppedOff?: true
+    droppedOffAt?: true
     cancelReason?: true
     createdAt?: true
     updatedAt?: true
@@ -10758,16 +10843,21 @@ export namespace Prisma {
     passengerId?: true
     seats?: true
     totalPrice?: true
+    sharedDistanceKm?: true
+    detourKm?: true
     status?: true
     paymentStatus?: true
     passengerLat?: true
     passengerLng?: true
     pickupAddress?: true
     isPickedUp?: true
+    driverArrivedAt?: true
+    pickedUpAt?: true
     dropoffLat?: true
     dropoffLng?: true
     dropoffAddress?: true
     isDroppedOff?: true
+    droppedOffAt?: true
     cancelReason?: true
     createdAt?: true
     updatedAt?: true
@@ -10779,16 +10869,22 @@ export namespace Prisma {
     passengerId?: true
     seats?: true
     totalPrice?: true
+    sharedDistanceKm?: true
+    detourKm?: true
+    priceBreakdown?: true
     status?: true
     paymentStatus?: true
     passengerLat?: true
     passengerLng?: true
     pickupAddress?: true
     isPickedUp?: true
+    driverArrivedAt?: true
+    pickedUpAt?: true
     dropoffLat?: true
     dropoffLng?: true
     dropoffAddress?: true
     isDroppedOff?: true
+    droppedOffAt?: true
     cancelReason?: true
     createdAt?: true
     updatedAt?: true
@@ -10887,16 +10983,22 @@ export namespace Prisma {
     passengerId: string
     seats: number
     totalPrice: number
+    sharedDistanceKm: number | null
+    detourKm: number | null
+    priceBreakdown: JsonValue | null
     status: $Enums.BookingStatus
     paymentStatus: $Enums.PaymentStatus
     passengerLat: number | null
     passengerLng: number | null
     pickupAddress: string | null
     isPickedUp: boolean
+    driverArrivedAt: Date | null
+    pickedUpAt: Date | null
     dropoffLat: number | null
     dropoffLng: number | null
     dropoffAddress: string | null
     isDroppedOff: boolean
+    droppedOffAt: Date | null
     cancelReason: string | null
     createdAt: Date
     updatedAt: Date
@@ -10927,16 +11029,22 @@ export namespace Prisma {
     passengerId?: boolean
     seats?: boolean
     totalPrice?: boolean
+    sharedDistanceKm?: boolean
+    detourKm?: boolean
+    priceBreakdown?: boolean
     status?: boolean
     paymentStatus?: boolean
     passengerLat?: boolean
     passengerLng?: boolean
     pickupAddress?: boolean
     isPickedUp?: boolean
+    driverArrivedAt?: boolean
+    pickedUpAt?: boolean
     dropoffLat?: boolean
     dropoffLng?: boolean
     dropoffAddress?: boolean
     isDroppedOff?: boolean
+    droppedOffAt?: boolean
     cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -10952,16 +11060,22 @@ export namespace Prisma {
     passengerId?: boolean
     seats?: boolean
     totalPrice?: boolean
+    sharedDistanceKm?: boolean
+    detourKm?: boolean
+    priceBreakdown?: boolean
     status?: boolean
     paymentStatus?: boolean
     passengerLat?: boolean
     passengerLng?: boolean
     pickupAddress?: boolean
     isPickedUp?: boolean
+    driverArrivedAt?: boolean
+    pickedUpAt?: boolean
     dropoffLat?: boolean
     dropoffLng?: boolean
     dropoffAddress?: boolean
     isDroppedOff?: boolean
+    droppedOffAt?: boolean
     cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -10975,16 +11089,22 @@ export namespace Prisma {
     passengerId?: boolean
     seats?: boolean
     totalPrice?: boolean
+    sharedDistanceKm?: boolean
+    detourKm?: boolean
+    priceBreakdown?: boolean
     status?: boolean
     paymentStatus?: boolean
     passengerLat?: boolean
     passengerLng?: boolean
     pickupAddress?: boolean
     isPickedUp?: boolean
+    driverArrivedAt?: boolean
+    pickedUpAt?: boolean
     dropoffLat?: boolean
     dropoffLng?: boolean
     dropoffAddress?: boolean
     isDroppedOff?: boolean
+    droppedOffAt?: boolean
     cancelReason?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -11014,16 +11134,22 @@ export namespace Prisma {
       passengerId: string
       seats: number
       totalPrice: number
+      sharedDistanceKm: number | null
+      detourKm: number | null
+      priceBreakdown: Prisma.JsonValue | null
       status: $Enums.BookingStatus
       paymentStatus: $Enums.PaymentStatus
       passengerLat: number | null
       passengerLng: number | null
       pickupAddress: string | null
       isPickedUp: boolean
+      driverArrivedAt: Date | null
+      pickedUpAt: Date | null
       dropoffLat: number | null
       dropoffLng: number | null
       dropoffAddress: string | null
       isDroppedOff: boolean
+      droppedOffAt: Date | null
       cancelReason: string | null
       createdAt: Date
       updatedAt: Date
@@ -11428,16 +11554,22 @@ export namespace Prisma {
     readonly passengerId: FieldRef<"Booking", 'String'>
     readonly seats: FieldRef<"Booking", 'Int'>
     readonly totalPrice: FieldRef<"Booking", 'Float'>
+    readonly sharedDistanceKm: FieldRef<"Booking", 'Float'>
+    readonly detourKm: FieldRef<"Booking", 'Float'>
+    readonly priceBreakdown: FieldRef<"Booking", 'Json'>
     readonly status: FieldRef<"Booking", 'BookingStatus'>
     readonly paymentStatus: FieldRef<"Booking", 'PaymentStatus'>
     readonly passengerLat: FieldRef<"Booking", 'Float'>
     readonly passengerLng: FieldRef<"Booking", 'Float'>
     readonly pickupAddress: FieldRef<"Booking", 'String'>
     readonly isPickedUp: FieldRef<"Booking", 'Boolean'>
+    readonly driverArrivedAt: FieldRef<"Booking", 'DateTime'>
+    readonly pickedUpAt: FieldRef<"Booking", 'DateTime'>
     readonly dropoffLat: FieldRef<"Booking", 'Float'>
     readonly dropoffLng: FieldRef<"Booking", 'Float'>
     readonly dropoffAddress: FieldRef<"Booking", 'String'>
     readonly isDroppedOff: FieldRef<"Booking", 'Boolean'>
+    readonly droppedOffAt: FieldRef<"Booking", 'DateTime'>
     readonly cancelReason: FieldRef<"Booking", 'String'>
     readonly createdAt: FieldRef<"Booking", 'DateTime'>
     readonly updatedAt: FieldRef<"Booking", 'DateTime'>
@@ -17063,6 +17195,14 @@ export namespace Prisma {
     pricePerMinute: number | null
     baseDistance: number | null
     minFare: number | null
+    fuelPrice: number | null
+    fuelConsumption: number | null
+    vehicleOverheadRatio: number | null
+    minimumDriverShare: number | null
+    driverPriceAdjustment: number | null
+    roundingUnit: number | null
+    maxDetourKm: number | null
+    maxDetourRatio: number | null
   }
 
   export type PricingConfigSumAggregateOutputType = {
@@ -17071,6 +17211,14 @@ export namespace Prisma {
     pricePerMinute: number | null
     baseDistance: number | null
     minFare: number | null
+    fuelPrice: number | null
+    fuelConsumption: number | null
+    vehicleOverheadRatio: number | null
+    minimumDriverShare: number | null
+    driverPriceAdjustment: number | null
+    roundingUnit: number | null
+    maxDetourKm: number | null
+    maxDetourRatio: number | null
   }
 
   export type PricingConfigMinAggregateOutputType = {
@@ -17081,6 +17229,14 @@ export namespace Prisma {
     pricePerMinute: number | null
     baseDistance: number | null
     minFare: number | null
+    fuelPrice: number | null
+    fuelConsumption: number | null
+    vehicleOverheadRatio: number | null
+    minimumDriverShare: number | null
+    driverPriceAdjustment: number | null
+    roundingUnit: number | null
+    maxDetourKm: number | null
+    maxDetourRatio: number | null
     isActive: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -17094,6 +17250,14 @@ export namespace Prisma {
     pricePerMinute: number | null
     baseDistance: number | null
     minFare: number | null
+    fuelPrice: number | null
+    fuelConsumption: number | null
+    vehicleOverheadRatio: number | null
+    minimumDriverShare: number | null
+    driverPriceAdjustment: number | null
+    roundingUnit: number | null
+    maxDetourKm: number | null
+    maxDetourRatio: number | null
     isActive: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -17107,6 +17271,14 @@ export namespace Prisma {
     pricePerMinute: number
     baseDistance: number
     minFare: number
+    fuelPrice: number
+    fuelConsumption: number
+    vehicleOverheadRatio: number
+    minimumDriverShare: number
+    driverPriceAdjustment: number
+    roundingUnit: number
+    maxDetourKm: number
+    maxDetourRatio: number
     isActive: number
     createdAt: number
     updatedAt: number
@@ -17120,6 +17292,14 @@ export namespace Prisma {
     pricePerMinute?: true
     baseDistance?: true
     minFare?: true
+    fuelPrice?: true
+    fuelConsumption?: true
+    vehicleOverheadRatio?: true
+    minimumDriverShare?: true
+    driverPriceAdjustment?: true
+    roundingUnit?: true
+    maxDetourKm?: true
+    maxDetourRatio?: true
   }
 
   export type PricingConfigSumAggregateInputType = {
@@ -17128,6 +17308,14 @@ export namespace Prisma {
     pricePerMinute?: true
     baseDistance?: true
     minFare?: true
+    fuelPrice?: true
+    fuelConsumption?: true
+    vehicleOverheadRatio?: true
+    minimumDriverShare?: true
+    driverPriceAdjustment?: true
+    roundingUnit?: true
+    maxDetourKm?: true
+    maxDetourRatio?: true
   }
 
   export type PricingConfigMinAggregateInputType = {
@@ -17138,6 +17326,14 @@ export namespace Prisma {
     pricePerMinute?: true
     baseDistance?: true
     minFare?: true
+    fuelPrice?: true
+    fuelConsumption?: true
+    vehicleOverheadRatio?: true
+    minimumDriverShare?: true
+    driverPriceAdjustment?: true
+    roundingUnit?: true
+    maxDetourKm?: true
+    maxDetourRatio?: true
     isActive?: true
     createdAt?: true
     updatedAt?: true
@@ -17151,6 +17347,14 @@ export namespace Prisma {
     pricePerMinute?: true
     baseDistance?: true
     minFare?: true
+    fuelPrice?: true
+    fuelConsumption?: true
+    vehicleOverheadRatio?: true
+    minimumDriverShare?: true
+    driverPriceAdjustment?: true
+    roundingUnit?: true
+    maxDetourKm?: true
+    maxDetourRatio?: true
     isActive?: true
     createdAt?: true
     updatedAt?: true
@@ -17164,6 +17368,14 @@ export namespace Prisma {
     pricePerMinute?: true
     baseDistance?: true
     minFare?: true
+    fuelPrice?: true
+    fuelConsumption?: true
+    vehicleOverheadRatio?: true
+    minimumDriverShare?: true
+    driverPriceAdjustment?: true
+    roundingUnit?: true
+    maxDetourKm?: true
+    maxDetourRatio?: true
     isActive?: true
     createdAt?: true
     updatedAt?: true
@@ -17264,6 +17476,14 @@ export namespace Prisma {
     pricePerMinute: number
     baseDistance: number
     minFare: number
+    fuelPrice: number
+    fuelConsumption: number
+    vehicleOverheadRatio: number
+    minimumDriverShare: number
+    driverPriceAdjustment: number
+    roundingUnit: number
+    maxDetourKm: number
+    maxDetourRatio: number
     isActive: boolean
     createdAt: Date
     updatedAt: Date
@@ -17296,6 +17516,14 @@ export namespace Prisma {
     pricePerMinute?: boolean
     baseDistance?: boolean
     minFare?: boolean
+    fuelPrice?: boolean
+    fuelConsumption?: boolean
+    vehicleOverheadRatio?: boolean
+    minimumDriverShare?: boolean
+    driverPriceAdjustment?: boolean
+    roundingUnit?: boolean
+    maxDetourKm?: boolean
+    maxDetourRatio?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -17309,6 +17537,14 @@ export namespace Prisma {
     pricePerMinute?: boolean
     baseDistance?: boolean
     minFare?: boolean
+    fuelPrice?: boolean
+    fuelConsumption?: boolean
+    vehicleOverheadRatio?: boolean
+    minimumDriverShare?: boolean
+    driverPriceAdjustment?: boolean
+    roundingUnit?: boolean
+    maxDetourKm?: boolean
+    maxDetourRatio?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -17322,6 +17558,14 @@ export namespace Prisma {
     pricePerMinute?: boolean
     baseDistance?: boolean
     minFare?: boolean
+    fuelPrice?: boolean
+    fuelConsumption?: boolean
+    vehicleOverheadRatio?: boolean
+    minimumDriverShare?: boolean
+    driverPriceAdjustment?: boolean
+    roundingUnit?: boolean
+    maxDetourKm?: boolean
+    maxDetourRatio?: boolean
     isActive?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -17339,6 +17583,14 @@ export namespace Prisma {
       pricePerMinute: number
       baseDistance: number
       minFare: number
+      fuelPrice: number
+      fuelConsumption: number
+      vehicleOverheadRatio: number
+      minimumDriverShare: number
+      driverPriceAdjustment: number
+      roundingUnit: number
+      maxDetourKm: number
+      maxDetourRatio: number
       isActive: boolean
       createdAt: Date
       updatedAt: Date
@@ -17742,6 +17994,14 @@ export namespace Prisma {
     readonly pricePerMinute: FieldRef<"PricingConfig", 'Float'>
     readonly baseDistance: FieldRef<"PricingConfig", 'Float'>
     readonly minFare: FieldRef<"PricingConfig", 'Float'>
+    readonly fuelPrice: FieldRef<"PricingConfig", 'Float'>
+    readonly fuelConsumption: FieldRef<"PricingConfig", 'Float'>
+    readonly vehicleOverheadRatio: FieldRef<"PricingConfig", 'Float'>
+    readonly minimumDriverShare: FieldRef<"PricingConfig", 'Float'>
+    readonly driverPriceAdjustment: FieldRef<"PricingConfig", 'Float'>
+    readonly roundingUnit: FieldRef<"PricingConfig", 'Int'>
+    readonly maxDetourKm: FieldRef<"PricingConfig", 'Float'>
+    readonly maxDetourRatio: FieldRef<"PricingConfig", 'Float'>
     readonly isActive: FieldRef<"PricingConfig", 'Boolean'>
     readonly createdAt: FieldRef<"PricingConfig", 'DateTime'>
     readonly updatedAt: FieldRef<"PricingConfig", 'DateTime'>
@@ -21085,9 +21345,12 @@ export namespace Prisma {
     destinationLng: 'destinationLng',
     distance: 'distance',
     duration: 'duration',
+    routePolyline: 'routePolyline',
     departureTime: 'departureTime',
     availableSeats: 'availableSeats',
+    offeredSeats: 'offeredSeats',
     pricePerSeat: 'pricePerSeat',
+    tollCost: 'tollCost',
     status: 'status',
     description: 'description',
     createdAt: 'createdAt',
@@ -21107,6 +21370,7 @@ export namespace Prisma {
     addressDetailLevel: 'addressDetailLevel',
     cancelReason: 'cancelReason',
     vehicleId: 'vehicleId',
+    allowRoutePickup: 'allowRoutePickup',
     allowSmoking: 'allowSmoking',
     allowPets: 'allowPets',
     allowLuggage: 'allowLuggage'
@@ -21121,16 +21385,22 @@ export namespace Prisma {
     passengerId: 'passengerId',
     seats: 'seats',
     totalPrice: 'totalPrice',
+    sharedDistanceKm: 'sharedDistanceKm',
+    detourKm: 'detourKm',
+    priceBreakdown: 'priceBreakdown',
     status: 'status',
     paymentStatus: 'paymentStatus',
     passengerLat: 'passengerLat',
     passengerLng: 'passengerLng',
     pickupAddress: 'pickupAddress',
     isPickedUp: 'isPickedUp',
+    driverArrivedAt: 'driverArrivedAt',
+    pickedUpAt: 'pickedUpAt',
     dropoffLat: 'dropoffLat',
     dropoffLng: 'dropoffLng',
     dropoffAddress: 'dropoffAddress',
     isDroppedOff: 'isDroppedOff',
+    droppedOffAt: 'droppedOffAt',
     cancelReason: 'cancelReason',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -21241,6 +21511,14 @@ export namespace Prisma {
     pricePerMinute: 'pricePerMinute',
     baseDistance: 'baseDistance',
     minFare: 'minFare',
+    fuelPrice: 'fuelPrice',
+    fuelConsumption: 'fuelConsumption',
+    vehicleOverheadRatio: 'vehicleOverheadRatio',
+    minimumDriverShare: 'minimumDriverShare',
+    driverPriceAdjustment: 'driverPriceAdjustment',
+    roundingUnit: 'roundingUnit',
+    maxDetourKm: 'maxDetourKm',
+    maxDetourRatio: 'maxDetourRatio',
     isActive: 'isActive',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -21300,6 +21578,14 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
   export const QueryMode: {
     default: 'default',
     insensitive: 'insensitive'
@@ -21314,6 +21600,15 @@ export namespace Prisma {
   };
 
   export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   /**
@@ -21437,6 +21732,13 @@ export namespace Prisma {
    * Reference to a field of type 'RideStatus[]'
    */
   export type ListEnumRideStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RideStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
     
 
 
@@ -22091,9 +22393,12 @@ export namespace Prisma {
     destinationLng?: FloatNullableFilter<"Ride"> | number | null
     distance?: FloatNullableFilter<"Ride"> | number | null
     duration?: FloatNullableFilter<"Ride"> | number | null
+    routePolyline?: StringNullableFilter<"Ride"> | string | null
     departureTime?: DateTimeFilter<"Ride"> | Date | string
     availableSeats?: IntFilter<"Ride"> | number
+    offeredSeats?: IntFilter<"Ride"> | number
     pricePerSeat?: FloatFilter<"Ride"> | number
+    tollCost?: FloatFilter<"Ride"> | number
     status?: EnumRideStatusFilter<"Ride"> | $Enums.RideStatus
     description?: StringNullableFilter<"Ride"> | string | null
     createdAt?: DateTimeFilter<"Ride"> | Date | string
@@ -22113,6 +22418,7 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableFilter<"Ride"> | string | null
     cancelReason?: StringNullableFilter<"Ride"> | string | null
     vehicleId?: StringNullableFilter<"Ride"> | string | null
+    allowRoutePickup?: BoolFilter<"Ride"> | boolean
     allowSmoking?: BoolFilter<"Ride"> | boolean
     allowPets?: BoolFilter<"Ride"> | boolean
     allowLuggage?: BoolFilter<"Ride"> | boolean
@@ -22135,9 +22441,12 @@ export namespace Prisma {
     destinationLng?: SortOrderInput | SortOrder
     distance?: SortOrderInput | SortOrder
     duration?: SortOrderInput | SortOrder
+    routePolyline?: SortOrderInput | SortOrder
     departureTime?: SortOrder
     availableSeats?: SortOrder
+    offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
+    tollCost?: SortOrder
     status?: SortOrder
     description?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -22157,6 +22466,7 @@ export namespace Prisma {
     addressDetailLevel?: SortOrderInput | SortOrder
     cancelReason?: SortOrderInput | SortOrder
     vehicleId?: SortOrderInput | SortOrder
+    allowRoutePickup?: SortOrder
     allowSmoking?: SortOrder
     allowPets?: SortOrder
     allowLuggage?: SortOrder
@@ -22182,9 +22492,12 @@ export namespace Prisma {
     destinationLng?: FloatNullableFilter<"Ride"> | number | null
     distance?: FloatNullableFilter<"Ride"> | number | null
     duration?: FloatNullableFilter<"Ride"> | number | null
+    routePolyline?: StringNullableFilter<"Ride"> | string | null
     departureTime?: DateTimeFilter<"Ride"> | Date | string
     availableSeats?: IntFilter<"Ride"> | number
+    offeredSeats?: IntFilter<"Ride"> | number
     pricePerSeat?: FloatFilter<"Ride"> | number
+    tollCost?: FloatFilter<"Ride"> | number
     status?: EnumRideStatusFilter<"Ride"> | $Enums.RideStatus
     description?: StringNullableFilter<"Ride"> | string | null
     createdAt?: DateTimeFilter<"Ride"> | Date | string
@@ -22204,6 +22517,7 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableFilter<"Ride"> | string | null
     cancelReason?: StringNullableFilter<"Ride"> | string | null
     vehicleId?: StringNullableFilter<"Ride"> | string | null
+    allowRoutePickup?: BoolFilter<"Ride"> | boolean
     allowSmoking?: BoolFilter<"Ride"> | boolean
     allowPets?: BoolFilter<"Ride"> | boolean
     allowLuggage?: BoolFilter<"Ride"> | boolean
@@ -22226,9 +22540,12 @@ export namespace Prisma {
     destinationLng?: SortOrderInput | SortOrder
     distance?: SortOrderInput | SortOrder
     duration?: SortOrderInput | SortOrder
+    routePolyline?: SortOrderInput | SortOrder
     departureTime?: SortOrder
     availableSeats?: SortOrder
+    offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
+    tollCost?: SortOrder
     status?: SortOrder
     description?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -22248,6 +22565,7 @@ export namespace Prisma {
     addressDetailLevel?: SortOrderInput | SortOrder
     cancelReason?: SortOrderInput | SortOrder
     vehicleId?: SortOrderInput | SortOrder
+    allowRoutePickup?: SortOrder
     allowSmoking?: SortOrder
     allowPets?: SortOrder
     allowLuggage?: SortOrder
@@ -22272,9 +22590,12 @@ export namespace Prisma {
     destinationLng?: FloatNullableWithAggregatesFilter<"Ride"> | number | null
     distance?: FloatNullableWithAggregatesFilter<"Ride"> | number | null
     duration?: FloatNullableWithAggregatesFilter<"Ride"> | number | null
+    routePolyline?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     departureTime?: DateTimeWithAggregatesFilter<"Ride"> | Date | string
     availableSeats?: IntWithAggregatesFilter<"Ride"> | number
+    offeredSeats?: IntWithAggregatesFilter<"Ride"> | number
     pricePerSeat?: FloatWithAggregatesFilter<"Ride"> | number
+    tollCost?: FloatWithAggregatesFilter<"Ride"> | number
     status?: EnumRideStatusWithAggregatesFilter<"Ride"> | $Enums.RideStatus
     description?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Ride"> | Date | string
@@ -22294,6 +22615,7 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     cancelReason?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     vehicleId?: StringNullableWithAggregatesFilter<"Ride"> | string | null
+    allowRoutePickup?: BoolWithAggregatesFilter<"Ride"> | boolean
     allowSmoking?: BoolWithAggregatesFilter<"Ride"> | boolean
     allowPets?: BoolWithAggregatesFilter<"Ride"> | boolean
     allowLuggage?: BoolWithAggregatesFilter<"Ride"> | boolean
@@ -22308,16 +22630,22 @@ export namespace Prisma {
     passengerId?: StringFilter<"Booking"> | string
     seats?: IntFilter<"Booking"> | number
     totalPrice?: FloatFilter<"Booking"> | number
+    sharedDistanceKm?: FloatNullableFilter<"Booking"> | number | null
+    detourKm?: FloatNullableFilter<"Booking"> | number | null
+    priceBreakdown?: JsonNullableFilter<"Booking">
     status?: EnumBookingStatusFilter<"Booking"> | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
     passengerLat?: FloatNullableFilter<"Booking"> | number | null
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
     isPickedUp?: BoolFilter<"Booking"> | boolean
+    driverArrivedAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
+    pickedUpAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
     dropoffLat?: FloatNullableFilter<"Booking"> | number | null
     dropoffLng?: FloatNullableFilter<"Booking"> | number | null
     dropoffAddress?: StringNullableFilter<"Booking"> | string | null
     isDroppedOff?: BoolFilter<"Booking"> | boolean
+    droppedOffAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
     cancelReason?: StringNullableFilter<"Booking"> | string | null
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
@@ -22332,16 +22660,22 @@ export namespace Prisma {
     passengerId?: SortOrder
     seats?: SortOrder
     totalPrice?: SortOrder
+    sharedDistanceKm?: SortOrderInput | SortOrder
+    detourKm?: SortOrderInput | SortOrder
+    priceBreakdown?: SortOrderInput | SortOrder
     status?: SortOrder
     paymentStatus?: SortOrder
     passengerLat?: SortOrderInput | SortOrder
     passengerLng?: SortOrderInput | SortOrder
     pickupAddress?: SortOrderInput | SortOrder
     isPickedUp?: SortOrder
+    driverArrivedAt?: SortOrderInput | SortOrder
+    pickedUpAt?: SortOrderInput | SortOrder
     dropoffLat?: SortOrderInput | SortOrder
     dropoffLng?: SortOrderInput | SortOrder
     dropoffAddress?: SortOrderInput | SortOrder
     isDroppedOff?: SortOrder
+    droppedOffAt?: SortOrderInput | SortOrder
     cancelReason?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -22359,16 +22693,22 @@ export namespace Prisma {
     passengerId?: StringFilter<"Booking"> | string
     seats?: IntFilter<"Booking"> | number
     totalPrice?: FloatFilter<"Booking"> | number
+    sharedDistanceKm?: FloatNullableFilter<"Booking"> | number | null
+    detourKm?: FloatNullableFilter<"Booking"> | number | null
+    priceBreakdown?: JsonNullableFilter<"Booking">
     status?: EnumBookingStatusFilter<"Booking"> | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
     passengerLat?: FloatNullableFilter<"Booking"> | number | null
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
     isPickedUp?: BoolFilter<"Booking"> | boolean
+    driverArrivedAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
+    pickedUpAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
     dropoffLat?: FloatNullableFilter<"Booking"> | number | null
     dropoffLng?: FloatNullableFilter<"Booking"> | number | null
     dropoffAddress?: StringNullableFilter<"Booking"> | string | null
     isDroppedOff?: BoolFilter<"Booking"> | boolean
+    droppedOffAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
     cancelReason?: StringNullableFilter<"Booking"> | string | null
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
@@ -22383,16 +22723,22 @@ export namespace Prisma {
     passengerId?: SortOrder
     seats?: SortOrder
     totalPrice?: SortOrder
+    sharedDistanceKm?: SortOrderInput | SortOrder
+    detourKm?: SortOrderInput | SortOrder
+    priceBreakdown?: SortOrderInput | SortOrder
     status?: SortOrder
     paymentStatus?: SortOrder
     passengerLat?: SortOrderInput | SortOrder
     passengerLng?: SortOrderInput | SortOrder
     pickupAddress?: SortOrderInput | SortOrder
     isPickedUp?: SortOrder
+    driverArrivedAt?: SortOrderInput | SortOrder
+    pickedUpAt?: SortOrderInput | SortOrder
     dropoffLat?: SortOrderInput | SortOrder
     dropoffLng?: SortOrderInput | SortOrder
     dropoffAddress?: SortOrderInput | SortOrder
     isDroppedOff?: SortOrder
+    droppedOffAt?: SortOrderInput | SortOrder
     cancelReason?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -22412,16 +22758,22 @@ export namespace Prisma {
     passengerId?: StringWithAggregatesFilter<"Booking"> | string
     seats?: IntWithAggregatesFilter<"Booking"> | number
     totalPrice?: FloatWithAggregatesFilter<"Booking"> | number
+    sharedDistanceKm?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
+    detourKm?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
+    priceBreakdown?: JsonNullableWithAggregatesFilter<"Booking">
     status?: EnumBookingStatusWithAggregatesFilter<"Booking"> | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusWithAggregatesFilter<"Booking"> | $Enums.PaymentStatus
     passengerLat?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     passengerLng?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     pickupAddress?: StringNullableWithAggregatesFilter<"Booking"> | string | null
     isPickedUp?: BoolWithAggregatesFilter<"Booking"> | boolean
+    driverArrivedAt?: DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
+    pickedUpAt?: DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
     dropoffLat?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     dropoffLng?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     dropoffAddress?: StringNullableWithAggregatesFilter<"Booking"> | string | null
     isDroppedOff?: BoolWithAggregatesFilter<"Booking"> | boolean
+    droppedOffAt?: DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
     cancelReason?: StringNullableWithAggregatesFilter<"Booking"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Booking"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Booking"> | Date | string
@@ -22924,6 +23276,14 @@ export namespace Prisma {
     pricePerMinute?: FloatFilter<"PricingConfig"> | number
     baseDistance?: FloatFilter<"PricingConfig"> | number
     minFare?: FloatFilter<"PricingConfig"> | number
+    fuelPrice?: FloatFilter<"PricingConfig"> | number
+    fuelConsumption?: FloatFilter<"PricingConfig"> | number
+    vehicleOverheadRatio?: FloatFilter<"PricingConfig"> | number
+    minimumDriverShare?: FloatFilter<"PricingConfig"> | number
+    driverPriceAdjustment?: FloatFilter<"PricingConfig"> | number
+    roundingUnit?: IntFilter<"PricingConfig"> | number
+    maxDetourKm?: FloatFilter<"PricingConfig"> | number
+    maxDetourRatio?: FloatFilter<"PricingConfig"> | number
     isActive?: BoolFilter<"PricingConfig"> | boolean
     createdAt?: DateTimeFilter<"PricingConfig"> | Date | string
     updatedAt?: DateTimeFilter<"PricingConfig"> | Date | string
@@ -22937,6 +23297,14 @@ export namespace Prisma {
     pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
+    fuelPrice?: SortOrder
+    fuelConsumption?: SortOrder
+    vehicleOverheadRatio?: SortOrder
+    minimumDriverShare?: SortOrder
+    driverPriceAdjustment?: SortOrder
+    roundingUnit?: SortOrder
+    maxDetourKm?: SortOrder
+    maxDetourRatio?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -22953,6 +23321,14 @@ export namespace Prisma {
     pricePerMinute?: FloatFilter<"PricingConfig"> | number
     baseDistance?: FloatFilter<"PricingConfig"> | number
     minFare?: FloatFilter<"PricingConfig"> | number
+    fuelPrice?: FloatFilter<"PricingConfig"> | number
+    fuelConsumption?: FloatFilter<"PricingConfig"> | number
+    vehicleOverheadRatio?: FloatFilter<"PricingConfig"> | number
+    minimumDriverShare?: FloatFilter<"PricingConfig"> | number
+    driverPriceAdjustment?: FloatFilter<"PricingConfig"> | number
+    roundingUnit?: IntFilter<"PricingConfig"> | number
+    maxDetourKm?: FloatFilter<"PricingConfig"> | number
+    maxDetourRatio?: FloatFilter<"PricingConfig"> | number
     isActive?: BoolFilter<"PricingConfig"> | boolean
     createdAt?: DateTimeFilter<"PricingConfig"> | Date | string
     updatedAt?: DateTimeFilter<"PricingConfig"> | Date | string
@@ -22966,6 +23342,14 @@ export namespace Prisma {
     pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
+    fuelPrice?: SortOrder
+    fuelConsumption?: SortOrder
+    vehicleOverheadRatio?: SortOrder
+    minimumDriverShare?: SortOrder
+    driverPriceAdjustment?: SortOrder
+    roundingUnit?: SortOrder
+    maxDetourKm?: SortOrder
+    maxDetourRatio?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -22987,6 +23371,14 @@ export namespace Prisma {
     pricePerMinute?: FloatWithAggregatesFilter<"PricingConfig"> | number
     baseDistance?: FloatWithAggregatesFilter<"PricingConfig"> | number
     minFare?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    fuelPrice?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    fuelConsumption?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    vehicleOverheadRatio?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    minimumDriverShare?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    driverPriceAdjustment?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    roundingUnit?: IntWithAggregatesFilter<"PricingConfig"> | number
+    maxDetourKm?: FloatWithAggregatesFilter<"PricingConfig"> | number
+    maxDetourRatio?: FloatWithAggregatesFilter<"PricingConfig"> | number
     isActive?: BoolWithAggregatesFilter<"PricingConfig"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"PricingConfig"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PricingConfig"> | Date | string
@@ -23778,9 +24170,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -23799,6 +24194,7 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -23821,9 +24217,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -23843,6 +24242,7 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -23862,9 +24262,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23883,6 +24286,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -23905,9 +24309,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23927,6 +24334,7 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -23947,9 +24355,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -23969,6 +24380,7 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -23984,9 +24396,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24005,6 +24420,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -24021,9 +24437,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24043,6 +24462,7 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -24052,16 +24472,22 @@ export namespace Prisma {
     id?: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24076,16 +24502,22 @@ export namespace Prisma {
     passengerId: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24096,16 +24528,22 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24120,16 +24558,22 @@ export namespace Prisma {
     passengerId?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24142,16 +24586,22 @@ export namespace Prisma {
     passengerId: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24161,16 +24611,22 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24182,16 +24638,22 @@ export namespace Prisma {
     passengerId?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24760,6 +25222,14 @@ export namespace Prisma {
     pricePerMinute?: number
     baseDistance?: number
     minFare?: number
+    fuelPrice?: number
+    fuelConsumption?: number
+    vehicleOverheadRatio?: number
+    minimumDriverShare?: number
+    driverPriceAdjustment?: number
+    roundingUnit?: number
+    maxDetourKm?: number
+    maxDetourRatio?: number
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24773,6 +25243,14 @@ export namespace Prisma {
     pricePerMinute?: number
     baseDistance?: number
     minFare?: number
+    fuelPrice?: number
+    fuelConsumption?: number
+    vehicleOverheadRatio?: number
+    minimumDriverShare?: number
+    driverPriceAdjustment?: number
+    roundingUnit?: number
+    maxDetourKm?: number
+    maxDetourRatio?: number
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24786,6 +25264,14 @@ export namespace Prisma {
     pricePerMinute?: FloatFieldUpdateOperationsInput | number
     baseDistance?: FloatFieldUpdateOperationsInput | number
     minFare?: FloatFieldUpdateOperationsInput | number
+    fuelPrice?: FloatFieldUpdateOperationsInput | number
+    fuelConsumption?: FloatFieldUpdateOperationsInput | number
+    vehicleOverheadRatio?: FloatFieldUpdateOperationsInput | number
+    minimumDriverShare?: FloatFieldUpdateOperationsInput | number
+    driverPriceAdjustment?: FloatFieldUpdateOperationsInput | number
+    roundingUnit?: IntFieldUpdateOperationsInput | number
+    maxDetourKm?: FloatFieldUpdateOperationsInput | number
+    maxDetourRatio?: FloatFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24799,6 +25285,14 @@ export namespace Prisma {
     pricePerMinute?: FloatFieldUpdateOperationsInput | number
     baseDistance?: FloatFieldUpdateOperationsInput | number
     minFare?: FloatFieldUpdateOperationsInput | number
+    fuelPrice?: FloatFieldUpdateOperationsInput | number
+    fuelConsumption?: FloatFieldUpdateOperationsInput | number
+    vehicleOverheadRatio?: FloatFieldUpdateOperationsInput | number
+    minimumDriverShare?: FloatFieldUpdateOperationsInput | number
+    driverPriceAdjustment?: FloatFieldUpdateOperationsInput | number
+    roundingUnit?: IntFieldUpdateOperationsInput | number
+    maxDetourKm?: FloatFieldUpdateOperationsInput | number
+    maxDetourRatio?: FloatFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24812,6 +25306,14 @@ export namespace Prisma {
     pricePerMinute?: number
     baseDistance?: number
     minFare?: number
+    fuelPrice?: number
+    fuelConsumption?: number
+    vehicleOverheadRatio?: number
+    minimumDriverShare?: number
+    driverPriceAdjustment?: number
+    roundingUnit?: number
+    maxDetourKm?: number
+    maxDetourRatio?: number
     isActive?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -24825,6 +25327,14 @@ export namespace Prisma {
     pricePerMinute?: FloatFieldUpdateOperationsInput | number
     baseDistance?: FloatFieldUpdateOperationsInput | number
     minFare?: FloatFieldUpdateOperationsInput | number
+    fuelPrice?: FloatFieldUpdateOperationsInput | number
+    fuelConsumption?: FloatFieldUpdateOperationsInput | number
+    vehicleOverheadRatio?: FloatFieldUpdateOperationsInput | number
+    minimumDriverShare?: FloatFieldUpdateOperationsInput | number
+    driverPriceAdjustment?: FloatFieldUpdateOperationsInput | number
+    roundingUnit?: IntFieldUpdateOperationsInput | number
+    maxDetourKm?: FloatFieldUpdateOperationsInput | number
+    maxDetourRatio?: FloatFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24838,6 +25348,14 @@ export namespace Prisma {
     pricePerMinute?: FloatFieldUpdateOperationsInput | number
     baseDistance?: FloatFieldUpdateOperationsInput | number
     minFare?: FloatFieldUpdateOperationsInput | number
+    fuelPrice?: FloatFieldUpdateOperationsInput | number
+    fuelConsumption?: FloatFieldUpdateOperationsInput | number
+    vehicleOverheadRatio?: FloatFieldUpdateOperationsInput | number
+    minimumDriverShare?: FloatFieldUpdateOperationsInput | number
+    driverPriceAdjustment?: FloatFieldUpdateOperationsInput | number
+    roundingUnit?: IntFieldUpdateOperationsInput | number
+    maxDetourKm?: FloatFieldUpdateOperationsInput | number
+    maxDetourRatio?: FloatFieldUpdateOperationsInput | number
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -25708,9 +26226,12 @@ export namespace Prisma {
     destinationLng?: SortOrder
     distance?: SortOrder
     duration?: SortOrder
+    routePolyline?: SortOrder
     departureTime?: SortOrder
     availableSeats?: SortOrder
+    offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
+    tollCost?: SortOrder
     status?: SortOrder
     description?: SortOrder
     createdAt?: SortOrder
@@ -25730,6 +26251,7 @@ export namespace Prisma {
     addressDetailLevel?: SortOrder
     cancelReason?: SortOrder
     vehicleId?: SortOrder
+    allowRoutePickup?: SortOrder
     allowSmoking?: SortOrder
     allowPets?: SortOrder
     allowLuggage?: SortOrder
@@ -25743,7 +26265,9 @@ export namespace Prisma {
     distance?: SortOrder
     duration?: SortOrder
     availableSeats?: SortOrder
+    offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
+    tollCost?: SortOrder
   }
 
   export type RideMaxOrderByAggregateInput = {
@@ -25757,9 +26281,12 @@ export namespace Prisma {
     destinationLng?: SortOrder
     distance?: SortOrder
     duration?: SortOrder
+    routePolyline?: SortOrder
     departureTime?: SortOrder
     availableSeats?: SortOrder
+    offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
+    tollCost?: SortOrder
     status?: SortOrder
     description?: SortOrder
     createdAt?: SortOrder
@@ -25779,6 +26306,7 @@ export namespace Prisma {
     addressDetailLevel?: SortOrder
     cancelReason?: SortOrder
     vehicleId?: SortOrder
+    allowRoutePickup?: SortOrder
     allowSmoking?: SortOrder
     allowPets?: SortOrder
     allowLuggage?: SortOrder
@@ -25795,9 +26323,12 @@ export namespace Prisma {
     destinationLng?: SortOrder
     distance?: SortOrder
     duration?: SortOrder
+    routePolyline?: SortOrder
     departureTime?: SortOrder
     availableSeats?: SortOrder
+    offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
+    tollCost?: SortOrder
     status?: SortOrder
     description?: SortOrder
     createdAt?: SortOrder
@@ -25817,6 +26348,7 @@ export namespace Prisma {
     addressDetailLevel?: SortOrder
     cancelReason?: SortOrder
     vehicleId?: SortOrder
+    allowRoutePickup?: SortOrder
     allowSmoking?: SortOrder
     allowPets?: SortOrder
     allowLuggage?: SortOrder
@@ -25830,7 +26362,9 @@ export namespace Prisma {
     distance?: SortOrder
     duration?: SortOrder
     availableSeats?: SortOrder
+    offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
+    tollCost?: SortOrder
   }
 
   export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -25858,6 +26392,28 @@ export namespace Prisma {
     _min?: NestedEnumRideStatusFilter<$PrismaModel>
     _max?: NestedEnumRideStatusFilter<$PrismaModel>
   }
+  export type JsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type EnumBookingStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.BookingStatus | EnumBookingStatusFieldRefInput<$PrismaModel>
@@ -25873,22 +26429,39 @@ export namespace Prisma {
     not?: NestedEnumPaymentStatusFilter<$PrismaModel> | $Enums.PaymentStatus
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type BookingCountOrderByAggregateInput = {
     id?: SortOrder
     rideId?: SortOrder
     passengerId?: SortOrder
     seats?: SortOrder
     totalPrice?: SortOrder
+    sharedDistanceKm?: SortOrder
+    detourKm?: SortOrder
+    priceBreakdown?: SortOrder
     status?: SortOrder
     paymentStatus?: SortOrder
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
     isPickedUp?: SortOrder
+    driverArrivedAt?: SortOrder
+    pickedUpAt?: SortOrder
     dropoffLat?: SortOrder
     dropoffLng?: SortOrder
     dropoffAddress?: SortOrder
     isDroppedOff?: SortOrder
+    droppedOffAt?: SortOrder
     cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -25897,6 +26470,8 @@ export namespace Prisma {
   export type BookingAvgOrderByAggregateInput = {
     seats?: SortOrder
     totalPrice?: SortOrder
+    sharedDistanceKm?: SortOrder
+    detourKm?: SortOrder
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     dropoffLat?: SortOrder
@@ -25909,16 +26484,21 @@ export namespace Prisma {
     passengerId?: SortOrder
     seats?: SortOrder
     totalPrice?: SortOrder
+    sharedDistanceKm?: SortOrder
+    detourKm?: SortOrder
     status?: SortOrder
     paymentStatus?: SortOrder
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
     isPickedUp?: SortOrder
+    driverArrivedAt?: SortOrder
+    pickedUpAt?: SortOrder
     dropoffLat?: SortOrder
     dropoffLng?: SortOrder
     dropoffAddress?: SortOrder
     isDroppedOff?: SortOrder
+    droppedOffAt?: SortOrder
     cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -25930,16 +26510,21 @@ export namespace Prisma {
     passengerId?: SortOrder
     seats?: SortOrder
     totalPrice?: SortOrder
+    sharedDistanceKm?: SortOrder
+    detourKm?: SortOrder
     status?: SortOrder
     paymentStatus?: SortOrder
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
     isPickedUp?: SortOrder
+    driverArrivedAt?: SortOrder
+    pickedUpAt?: SortOrder
     dropoffLat?: SortOrder
     dropoffLng?: SortOrder
     dropoffAddress?: SortOrder
     isDroppedOff?: SortOrder
+    droppedOffAt?: SortOrder
     cancelReason?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -25948,10 +26533,37 @@ export namespace Prisma {
   export type BookingSumOrderByAggregateInput = {
     seats?: SortOrder
     totalPrice?: SortOrder
+    sharedDistanceKm?: SortOrder
+    detourKm?: SortOrder
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     dropoffLat?: SortOrder
     dropoffLng?: SortOrder
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type EnumBookingStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -25972,6 +26584,20 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumPaymentStatusFilter<$PrismaModel>
     _max?: NestedEnumPaymentStatusFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type EnumReviewTypeFilter<$PrismaModel = never> = {
@@ -26039,17 +26665,6 @@ export namespace Prisma {
     not?: NestedEnumVerificationStatusFilter<$PrismaModel> | $Enums.VerificationStatus
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type DriverVerificationCountOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
@@ -26109,20 +26724,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumVerificationStatusFilter<$PrismaModel>
     _max?: NestedEnumVerificationStatusFilter<$PrismaModel>
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type ProvinceMappingOldProvinceEffectiveDateCompoundUniqueInput = {
@@ -26385,6 +26986,14 @@ export namespace Prisma {
     pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
+    fuelPrice?: SortOrder
+    fuelConsumption?: SortOrder
+    vehicleOverheadRatio?: SortOrder
+    minimumDriverShare?: SortOrder
+    driverPriceAdjustment?: SortOrder
+    roundingUnit?: SortOrder
+    maxDetourKm?: SortOrder
+    maxDetourRatio?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -26396,6 +27005,14 @@ export namespace Prisma {
     pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
+    fuelPrice?: SortOrder
+    fuelConsumption?: SortOrder
+    vehicleOverheadRatio?: SortOrder
+    minimumDriverShare?: SortOrder
+    driverPriceAdjustment?: SortOrder
+    roundingUnit?: SortOrder
+    maxDetourKm?: SortOrder
+    maxDetourRatio?: SortOrder
   }
 
   export type PricingConfigMaxOrderByAggregateInput = {
@@ -26406,6 +27023,14 @@ export namespace Prisma {
     pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
+    fuelPrice?: SortOrder
+    fuelConsumption?: SortOrder
+    vehicleOverheadRatio?: SortOrder
+    minimumDriverShare?: SortOrder
+    driverPriceAdjustment?: SortOrder
+    roundingUnit?: SortOrder
+    maxDetourKm?: SortOrder
+    maxDetourRatio?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -26419,6 +27044,14 @@ export namespace Prisma {
     pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
+    fuelPrice?: SortOrder
+    fuelConsumption?: SortOrder
+    vehicleOverheadRatio?: SortOrder
+    minimumDriverShare?: SortOrder
+    driverPriceAdjustment?: SortOrder
+    roundingUnit?: SortOrder
+    maxDetourKm?: SortOrder
+    maxDetourRatio?: SortOrder
     isActive?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -26430,6 +27063,14 @@ export namespace Prisma {
     pricePerMinute?: SortOrder
     baseDistance?: SortOrder
     minFare?: SortOrder
+    fuelPrice?: SortOrder
+    fuelConsumption?: SortOrder
+    vehicleOverheadRatio?: SortOrder
+    minimumDriverShare?: SortOrder
+    driverPriceAdjustment?: SortOrder
+    roundingUnit?: SortOrder
+    maxDetourKm?: SortOrder
+    maxDetourRatio?: SortOrder
   }
 
   export type EnumVehicleStatusFilter<$PrismaModel = never> = {
@@ -27643,6 +28284,10 @@ export namespace Prisma {
     set?: $Enums.PaymentStatus
   }
 
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type RideUpdateOneRequiredWithoutBookingsNestedInput = {
     create?: XOR<RideCreateWithoutBookingsInput, RideUncheckedCreateWithoutBookingsInput>
     connectOrCreate?: RideCreateOrConnectWithoutBookingsInput
@@ -27741,10 +28386,6 @@ export namespace Prisma {
 
   export type EnumVerificationStatusFieldUpdateOperationsInput = {
     set?: $Enums.VerificationStatus
-  }
-
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
   }
 
   export type UserUpdateOneRequiredWithoutDriverVerificationNestedInput = {
@@ -28279,6 +28920,39 @@ export namespace Prisma {
     not?: NestedEnumPaymentStatusFilter<$PrismaModel> | $Enums.PaymentStatus
   }
 
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
   export type NestedEnumBookingStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.BookingStatus | EnumBookingStatusFieldRefInput<$PrismaModel>
     in?: $Enums.BookingStatus[] | ListEnumBookingStatusFieldRefInput<$PrismaModel>
@@ -28297,6 +28971,20 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumPaymentStatusFilter<$PrismaModel>
     _max?: NestedEnumPaymentStatusFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumReviewTypeFilter<$PrismaModel = never> = {
@@ -28323,17 +29011,6 @@ export namespace Prisma {
     not?: NestedEnumVerificationStatusFilter<$PrismaModel> | $Enums.VerificationStatus
   }
 
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type NestedEnumVerificationStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.VerificationStatus | EnumVerificationStatusFieldRefInput<$PrismaModel>
     in?: $Enums.VerificationStatus[] | ListEnumVerificationStatusFieldRefInput<$PrismaModel>
@@ -28342,20 +29019,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumVerificationStatusFilter<$PrismaModel>
     _max?: NestedEnumVerificationStatusFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumVehicleTypeFilter<$PrismaModel = never> = {
@@ -28453,9 +29116,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -28474,6 +29140,7 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -28494,9 +29161,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -28516,6 +29186,7 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -28539,16 +29210,22 @@ export namespace Prisma {
     id?: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -28561,16 +29238,22 @@ export namespace Prisma {
     rideId: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -29093,9 +29776,12 @@ export namespace Prisma {
     destinationLng?: FloatNullableFilter<"Ride"> | number | null
     distance?: FloatNullableFilter<"Ride"> | number | null
     duration?: FloatNullableFilter<"Ride"> | number | null
+    routePolyline?: StringNullableFilter<"Ride"> | string | null
     departureTime?: DateTimeFilter<"Ride"> | Date | string
     availableSeats?: IntFilter<"Ride"> | number
+    offeredSeats?: IntFilter<"Ride"> | number
     pricePerSeat?: FloatFilter<"Ride"> | number
+    tollCost?: FloatFilter<"Ride"> | number
     status?: EnumRideStatusFilter<"Ride"> | $Enums.RideStatus
     description?: StringNullableFilter<"Ride"> | string | null
     createdAt?: DateTimeFilter<"Ride"> | Date | string
@@ -29115,6 +29801,7 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableFilter<"Ride"> | string | null
     cancelReason?: StringNullableFilter<"Ride"> | string | null
     vehicleId?: StringNullableFilter<"Ride"> | string | null
+    allowRoutePickup?: BoolFilter<"Ride"> | boolean
     allowSmoking?: BoolFilter<"Ride"> | boolean
     allowPets?: BoolFilter<"Ride"> | boolean
     allowLuggage?: BoolFilter<"Ride"> | boolean
@@ -29145,16 +29832,22 @@ export namespace Prisma {
     passengerId?: StringFilter<"Booking"> | string
     seats?: IntFilter<"Booking"> | number
     totalPrice?: FloatFilter<"Booking"> | number
+    sharedDistanceKm?: FloatNullableFilter<"Booking"> | number | null
+    detourKm?: FloatNullableFilter<"Booking"> | number | null
+    priceBreakdown?: JsonNullableFilter<"Booking">
     status?: EnumBookingStatusFilter<"Booking"> | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
     passengerLat?: FloatNullableFilter<"Booking"> | number | null
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
     isPickedUp?: BoolFilter<"Booking"> | boolean
+    driverArrivedAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
+    pickedUpAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
     dropoffLat?: FloatNullableFilter<"Booking"> | number | null
     dropoffLng?: FloatNullableFilter<"Booking"> | number | null
     dropoffAddress?: StringNullableFilter<"Booking"> | string | null
     isDroppedOff?: BoolFilter<"Booking"> | boolean
+    droppedOffAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
     cancelReason?: StringNullableFilter<"Booking"> | string | null
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
@@ -29768,16 +30461,22 @@ export namespace Prisma {
     id?: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -29791,16 +30490,22 @@ export namespace Prisma {
     passengerId: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -29922,16 +30627,22 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29945,16 +30656,22 @@ export namespace Prisma {
     passengerId?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30043,9 +30760,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -30064,6 +30784,7 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -30085,9 +30806,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -30107,6 +30831,7 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -30283,9 +31008,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30304,6 +31032,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -30325,9 +31054,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30347,6 +31079,7 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -30909,16 +31642,22 @@ export namespace Prisma {
     id?: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -30931,16 +31670,22 @@ export namespace Prisma {
     passengerId: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -31235,9 +31980,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -31256,6 +32004,7 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -31277,9 +32026,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -31299,6 +32051,7 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -31440,9 +32193,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -31461,6 +32217,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -31482,9 +32239,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -31504,6 +32264,7 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -31615,9 +32376,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -31636,6 +32400,7 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -31657,9 +32422,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -31679,6 +32447,7 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -31855,9 +32624,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -31876,6 +32648,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -31897,9 +32670,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -31919,6 +32695,7 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -32708,9 +33485,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -32729,6 +33509,7 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -32750,9 +33531,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -32771,6 +33555,7 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -33035,9 +33820,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -33056,6 +33844,7 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -33077,9 +33866,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -33099,6 +33891,7 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -33354,9 +34147,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33375,6 +34171,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -33396,9 +34193,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33418,6 +34218,7 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -33509,9 +34310,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -33531,6 +34335,7 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -33541,16 +34346,22 @@ export namespace Prisma {
     rideId: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -33714,9 +34525,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33735,6 +34549,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -33755,9 +34570,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33777,6 +34595,7 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -33796,9 +34615,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33818,6 +34640,7 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -33827,16 +34650,22 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33849,16 +34678,22 @@ export namespace Prisma {
     rideId?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -33870,16 +34705,22 @@ export namespace Prisma {
     rideId?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34396,16 +35237,22 @@ export namespace Prisma {
     passengerId: string
     seats: number
     totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
     isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
     dropoffLat?: number | null
     dropoffLng?: number | null
     dropoffAddress?: string | null
     isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -34446,16 +35293,22 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34468,16 +35321,22 @@ export namespace Prisma {
     passengerId?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34489,16 +35348,22 @@ export namespace Prisma {
     passengerId?: StringFieldUpdateOperationsInput | string
     seats?: IntFieldUpdateOperationsInput | number
     totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
     dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
     isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34760,9 +35625,12 @@ export namespace Prisma {
     destinationLng?: number | null
     distance?: number | null
     duration?: number | null
+    routePolyline?: string | null
     departureTime: Date | string
     availableSeats: number
+    offeredSeats?: number
     pricePerSeat: number
+    tollCost?: number
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -34781,6 +35649,7 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
@@ -34796,9 +35665,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34817,6 +35689,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -34838,9 +35711,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34859,6 +35735,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -34879,9 +35756,12 @@ export namespace Prisma {
     destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
     distance?: NullableFloatFieldUpdateOperationsInput | number | null
     duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
     departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
     availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34900,6 +35780,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean

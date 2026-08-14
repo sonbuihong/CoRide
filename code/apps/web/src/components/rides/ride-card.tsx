@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Calendar, Users, Star, ChevronRight } from 'lucide-react';
+import { Bike, Calendar, Car, Users, Star, ChevronRight, Route } from 'lucide-react';
 import Link from 'next/link';
 
 export interface Driver {
@@ -25,10 +25,23 @@ export interface Ride {
   availableSeats: number;
   pricePerSeat: number;
   driver: Driver;
+  vehicle?: {
+    licensePlate: string;
+    type: 'BIKE' | 'CAR';
+    color?: string | null;
+  } | null;
+  matchType?: 'DIRECT' | 'NEARBY' | 'ON_ROUTE';
+  matchScore?: number;
+  originDistanceKm?: number;
+  pickupDistanceKm?: number;
+  dropoffDistanceKm?: number;
+  detourKm?: number;
+  routeOverlap?: number;
 }
 
 interface RideCardProps {
   ride: Ride;
+  href?: string;
   userLocation?: { lat: number; lng: number } | null;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -50,7 +63,7 @@ function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon
   return R * c;
 }
 
-export function RideCard({ ride, userLocation, onMouseEnter, onMouseLeave, onClick }: RideCardProps) {
+export function RideCard({ ride, href, userLocation, onMouseEnter, onMouseLeave, onClick }: RideCardProps) {
   const departureDate = new Date(ride.departureTime);
   const formattedDate = departureDate.toLocaleDateString('vi-VN', {
     weekday: 'short',
@@ -73,6 +86,20 @@ export function RideCard({ ride, userLocation, onMouseEnter, onMouseLeave, onCli
     );
   }
 
+  const matchLabel = ride.matchType === 'DIRECT'
+    ? 'Trùng chuyến'
+    : ride.matchType === 'NEARBY'
+      ? 'Gần tuyến'
+      : ride.matchType === 'ON_ROUTE'
+        ? 'Đón dọc đường'
+        : null;
+  const matchBadgeClass = ride.matchType === 'DIRECT'
+    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+    : ride.matchType === 'NEARBY'
+      ? 'bg-blue-50 text-[#0066cc] dark:bg-blue-500/15 dark:text-blue-300'
+      : 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300';
+  const vehicleTypeLabel = ride.vehicle?.type === 'CAR' ? 'Ô tô' : 'Xe máy';
+
   return (
     <div 
       className="group relative w-full bg-white dark:bg-[#1d1d1f] rounded-[24px] p-6 sm:p-8 transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-transparent hover:border-[rgba(0,0,0,0.04)] dark:hover:border-[rgba(255,255,255,0.05)] overflow-hidden cursor-pointer"
@@ -80,6 +107,30 @@ export function RideCard({ ride, userLocation, onMouseEnter, onMouseLeave, onCli
       onMouseLeave={onMouseLeave}
       onClick={onClick}
     >
+      {matchLabel && ride.matchScore != null && (
+        <div className="mb-5 flex flex-wrap items-center gap-2" aria-label={`Mức độ phù hợp ${ride.matchScore}%`}>
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold ${matchBadgeClass}`}>
+            <Route className="h-3.5 w-3.5" aria-hidden="true" />
+            {matchLabel}
+          </span>
+          <span className="rounded-full bg-[#1d1d1f] px-3 py-1.5 text-[12px] font-bold text-white dark:bg-white dark:text-[#1d1d1f]">
+            Phù hợp {ride.matchScore}%
+          </span>
+          {ride.pickupDistanceKm != null && ride.dropoffDistanceKm != null && (
+            <span className="text-[12px] font-medium text-gray-500 dark:text-gray-400">
+              Điểm đón {ride.pickupDistanceKm < 0.1 ? '< 100 m' : `${ride.pickupDistanceKm} km`}
+              {' · '}điểm trả {ride.dropoffDistanceKm < 0.1 ? '< 100 m' : `${ride.dropoffDistanceKm} km`}
+              {ride.detourKm != null && ride.detourKm > 0.1 ? ` · lệch tuyến ~${ride.detourKm} km` : ''}
+            </span>
+          )}
+          {ride.originDistanceKm != null && (
+            <span className="text-[12px] font-semibold text-[#0066cc] dark:text-[#2997ff]">
+              Điểm đi tài xế cách điểm đi của bạn{' '}
+              {ride.originDistanceKm < 0.1 ? '< 100 m' : `${ride.originDistanceKm} km`}
+            </span>
+          )}
+        </div>
+      )}
       
       <div className="flex flex-col md:flex-row gap-8 justify-between">
         
@@ -128,6 +179,18 @@ export function RideCard({ ride, userLocation, onMouseEnter, onMouseLeave, onCli
                 {ride.availableSeats} chỗ trống
               </span>
             </div>
+            {ride.vehicle && (
+              <div className="inline-flex items-center rounded-[980px] bg-[rgba(0,0,0,0.04)] px-3 py-1.5 dark:bg-[rgba(255,255,255,0.08)]">
+                {ride.vehicle.type === 'CAR' ? (
+                  <Car className="mr-1.5 h-3.5 w-3.5 text-[rgba(0,0,0,0.64)] dark:text-[rgba(255,255,255,0.64)]" />
+                ) : (
+                  <Bike className="mr-1.5 h-3.5 w-3.5 text-[rgba(0,0,0,0.64)] dark:text-[rgba(255,255,255,0.64)]" />
+                )}
+                <span className="text-[12px] font-medium tracking-[-0.12px] text-[#1d1d1f] dark:text-white">
+                  Phương tiện: {ride.vehicle.licensePlate} · {vehicleTypeLabel}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -172,8 +235,8 @@ export function RideCard({ ride, userLocation, onMouseEnter, onMouseLeave, onCli
               </p>
             </div>
             
-            <div className="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity mt-4">
-              <span className="text-[14px] text-[#0066cc] dark:text-[#2997ff] flex items-center hover:underline">
+            <div className="mt-4 block">
+              <span className="flex items-center rounded-full bg-[#0071e3] px-4 py-2 text-[14px] font-semibold text-white">
                 Xem chi tiết <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
               </span>
             </div>
@@ -183,7 +246,7 @@ export function RideCard({ ride, userLocation, onMouseEnter, onMouseLeave, onCli
       </div>
 
       {/* Tầng vô hình bắt sự kiện click toàn thẻ */}
-      <Link href={`/rides/${ride.id}`} className="absolute inset-0 z-10">
+      <Link href={href ?? `/rides/${ride.id}`} className="absolute inset-0 z-10">
         <span className="sr-only">Xem chi tiết chuyến đi</span>
       </Link>
     </div>

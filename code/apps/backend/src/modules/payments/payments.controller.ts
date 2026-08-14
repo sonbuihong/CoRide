@@ -84,7 +84,7 @@ export class PaymentsController {
    */
   static async getSimulatorQR(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.id;
 
       let amount = 0;

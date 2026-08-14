@@ -37,9 +37,10 @@ interface BookingButtonProps {
   availableSeats: number;
   driverId: string;
   currentUserId?: string;
+  passengerDestination?: { lat: number; lng: number };
 }
 
-export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId }: BookingButtonProps) => {
+export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId, passengerDestination }: BookingButtonProps) => {
   const [seats, setSeats] = useState(1);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -61,12 +62,16 @@ export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId 
       try {
         setCheckingActive(true);
         const res = await apiClient.get('/bookings/my');
-        const bookings = res.data?.bookings || [];
+        const bookings = (res.data?.bookings || []) as Array<{
+          status: string;
+          ride?: { status?: string };
+        }>;
         
-        // Tìm đặt chỗ được xác nhận (CONFIRMED) của chuyến đi chưa hoàn thành (SCHEDULED hoặc ONGOING)
-        const active = bookings.find((b: any) => 
-          b.status === 'CONFIRMED' && 
-          (b.ride.status === 'SCHEDULED' || b.ride.status === 'ONGOING')
+        // Backend considers both a pending request and a confirmed booking active.
+        // Keep the client guard in sync so users do not reach a guaranteed 400.
+        const active = bookings.find((b) =>
+          (b.status === 'PENDING' || b.status === 'CONFIRMED') &&
+          (b.ride?.status === 'SCHEDULED' || b.ride?.status === 'ONGOING')
         );
         
         if (active) {
@@ -90,19 +95,21 @@ export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId 
 
     setLoading(true);
     try {
-      await apiClient.post('/bookings', {
+      const response = await apiClient.post('/bookings', {
         rideId,
         seats,
         passengerLat: pickupLocation?.lat,
         passengerLng: pickupLocation?.lng,
         pickupAddress: pickupLocation?.address,
+        dropoffLat: passengerDestination?.lat,
+        dropoffLng: passengerDestination?.lng,
       });
       toast.success('Đặt chỗ thành công! Đang chờ tài xế duyệt yêu cầu của bạn.');
       setOpen(false);
       // Reset state
       setStep('map');
       setPickupLocation(null);
-      router.push('/my-bookings');
+      router.push(`/bookings/${response.data.booking.id}`);
     } catch (error: unknown) {
       console.error('Lỗi đặt chỗ:', error);
       const axiosError = error as { response?: { data?: { message?: string } } };

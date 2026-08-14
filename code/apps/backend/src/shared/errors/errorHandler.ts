@@ -34,12 +34,20 @@ export const errorHandler = (
     err instanceof Error &&
     err.constructor.name === 'PrismaClientKnownRequestError'
   ) {
-    const prismaErr = err as { code?: string };
+    const prismaErr = err as { code?: string; message?: string; meta?: unknown };
     if (prismaErr.code === 'P2002') {
       res.status(409).json({ message: 'Dữ liệu đã tồn tại trong hệ thống' });
       return;
     }
-    res.status(400).json({ message: 'Lỗi thao tác với cơ sở dữ liệu' });
+
+    // Lỗi truy vấn/kết nối Prisma phát sinh ở server, không phải request sai.
+    // Giữ chi tiết trong log để chẩn đoán nhưng không làm lộ nội bộ qua API.
+    console.error('[PRISMA ERROR]:', {
+      code: prismaErr.code,
+      message: prismaErr.message,
+      meta: prismaErr.meta,
+    });
+    res.status(500).json({ message: 'Lỗi thao tác với cơ sở dữ liệu' });
     return;
   }
 

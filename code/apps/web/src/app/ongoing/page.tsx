@@ -12,6 +12,21 @@ import { useSocket } from '@/components/providers/socket-provider';
 import { toast } from 'sonner';
 import { SocketEvents } from '@repo/shared';
 
+const GPS_MIN_INTERVAL_MS = 5_000;
+const GPS_MAX_INTERVAL_MS = 12_000;
+const GPS_MIN_DISTANCE_METERS = 40;
+const GPS_MAX_ACCURACY_METERS = 50;
+
+const distanceMeters = (first: { lat: number; lng: number }, second: { lat: number; lng: number }) => {
+  const toRadians = (degrees: number) => degrees * Math.PI / 180;
+  const earthRadiusMeters = 6_371_000;
+  const deltaLat = toRadians(second.lat - first.lat);
+  const deltaLng = toRadians(second.lng - first.lng);
+  const value = Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(toRadians(first.lat)) * Math.cos(toRadians(second.lat)) * Math.sin(deltaLng / 2) ** 2;
+  return earthRadiusMeters * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+};
+
 export default function OngoingPage() {
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,6 +41,7 @@ export default function OngoingPage() {
 
   // Ref để tránh join lại room khi component re-render
   const joinedRideIdRef = useRef<string | null>(null);
+  const lastSentLocationRef = useRef<{ lat: number; lng: number; sentAt: number } | null>(null);
 
   /**
    * Fetch dữ liệu active booking/ride từ API.
@@ -38,11 +54,11 @@ export default function OngoingPage() {
         setActiveData(res.data.activeBooking);
       } else {
         // Không có chuyến đi, đá ra ngoài
-        router.replace('/rides/search');
+        router.replace('/rides');
       }
     } catch (error) {
       console.error(error);
-      router.replace('/rides/search');
+      router.replace('/rides');
     } finally {
       setLoading(false);
     }
@@ -81,8 +97,10 @@ export default function OngoingPage() {
       // Leave room cũ nếu có
       if (joinedRideIdRef.current) {
         socket.emit('ride:leave', joinedRideIdRef.current);
+        socket.emit(SocketEvents.TRIP_LEAVE_ROOM, joinedRideIdRef.current);
       }
       socket.emit('ride:join', rideId);
+      socket.emit(SocketEvents.TRIP_JOIN_ROOM, rideId);
       joinedRideIdRef.current = rideId;
     }
 
@@ -112,14 +130,14 @@ export default function OngoingPage() {
       // Không cần fetch API vì đã biết chắc chuyến không còn active
       if (data?.status === 'COMPLETED') {
         toast.success('Chuyến đi đã hoàn thành!');
-        router.replace('/rides/search');
+        router.replace('/rides');
         return;
       }
       if (data?.status === 'CANCELLED') {
         if (activeData?.userRole !== 'DRIVER') {
           toast.error('Chuyến đi đã bị hủy bởi tài xế');
         }
-        router.replace('/rides/search');
+        router.replace('/rides');
         return;
       }
       // Các trạng thái khác (SCHEDULED → ONGOING) → fetch lại để cập nhật UI
@@ -157,15 +175,17 @@ export default function OngoingPage() {
       console.log('[Ongoing] Socket reconnected — re-joining ride room and fetching data');
       // Re-join ride room sau reconnect
       socket.emit('ride:join', rideId);
+      socket.emit(SocketEvents.TRIP_JOIN_ROOM, rideId);
       await fetchActiveRide();
     };
 
     socket.on(SocketEvents.BOOKING_CONFIRMED, handleBookingConfirmed);
     socket.on(SocketEvents.BOOKING_REJECTED, handleBookingRejected);
+    socket.on(SocketEvents.BOOKING_DRIVER_ARRIVED, handleBookingPickedUp);
     socket.on(SocketEvents.BOOKING_PICKED_UP, handleBookingPickedUp);
     socket.on(SocketEvents.BOOKING_COMPLETED, handleBookingCompleted);
     socket.on(SocketEvents.RIDE_STATUS_UPDATED, handleRideStatusUpdated);
-    socket.on(SocketEvents.DRIVER_LOCATION, handleDriverLocation);
+    socket.on(SocketEvents.TRIP_LOCATION_UPDATED, handleDriverLocation);
     socket.on(SocketEvents.BOOKING_NEW_REQUEST, handleNewBookingRequest);
     socket.on('connect', handleReconnect);
 
@@ -173,10 +193,11 @@ export default function OngoingPage() {
       // Cleanup: bỏ tất cả listeners để tránh memory leak và duplicate handlers
       socket.off(SocketEvents.BOOKING_CONFIRMED, handleBookingConfirmed);
       socket.off(SocketEvents.BOOKING_REJECTED, handleBookingRejected);
+      socket.off(SocketEvents.BOOKING_DRIVER_ARRIVED, handleBookingPickedUp);
       socket.off(SocketEvents.BOOKING_PICKED_UP, handleBookingPickedUp);
       socket.off(SocketEvents.BOOKING_COMPLETED, handleBookingCompleted);
       socket.off(SocketEvents.RIDE_STATUS_UPDATED, handleRideStatusUpdated);
-      socket.off(SocketEvents.DRIVER_LOCATION, handleDriverLocation);
+      socket.off(SocketEvents.TRIP_LOCATION_UPDATED, handleDriverLocation);
       socket.off(SocketEvents.BOOKING_NEW_REQUEST, handleNewBookingRequest);
       socket.off('connect', handleReconnect);
     };
@@ -190,6 +211,7 @@ export default function OngoingPage() {
       const rideId = activeData.ride?.id;
       if (rideId && socket) {
         socket.emit('ride:join', rideId);
+        socket.emit(SocketEvents.TRIP_JOIN_ROOM, rideId);
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,6 +235,7 @@ export default function OngoingPage() {
     return () => {
       if (socket && joinedRideIdRef.current) {
         socket.emit('ride:leave', joinedRideIdRef.current);
+        socket.emit(SocketEvents.TRIP_LEAVE_ROOM, joinedRideIdRef.current);
         joinedRideIdRef.current = null;
       }
     };
@@ -228,11 +251,32 @@ export default function OngoingPage() {
         watchId = navigator.geolocation.watchPosition(
           (pos) => {
             const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            const now = Date.now();
+            const previous = lastSentLocationRef.current;
+            const elapsed = previous ? now - previous.sentAt : Number.POSITIVE_INFINITY;
+            const moved = previous ? distanceMeters(previous, loc) : Number.POSITIVE_INFINITY;
+            const hasAcceptableAccuracy = pos.coords.accuracy <= GPS_MAX_ACCURACY_METERS;
+            const shouldPublish = hasAcceptableAccuracy && (
+              !previous ||
+              elapsed >= GPS_MAX_INTERVAL_MS ||
+              (elapsed >= GPS_MIN_INTERVAL_MS && moved >= GPS_MIN_DISTANCE_METERS)
+            );
+
+            if (!shouldPublish) return;
+
+            lastSentLocationRef.current = { ...loc, sentAt: now };
             setDriverLocation(loc);
-            
-            // Nếu muốn, emit vị trí mới của tài xế lên socket để khách thấy
-            if (socket && isConnected) {
-              socket.emit('driver:location', loc);
+
+            const rideId = activeData?.ride?.id;
+            if (socket && isConnected && rideId) {
+              socket.emit(SocketEvents.DRIVER_UPDATE_LOCATION, {
+                tripId: rideId,
+                latitude: loc.lat,
+                longitude: loc.lng,
+                heading: pos.coords.heading ?? undefined,
+                speed: pos.coords.speed ?? undefined,
+                accuracy: pos.coords.accuracy,
+              });
             }
           },
           (err) => {
@@ -247,7 +291,7 @@ export default function OngoingPage() {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, [activeData?.userRole, socket, isConnected]);
+  }, [activeData?.ride?.id, activeData?.userRole, socket, isConnected]);
 
   const activeOrder = useCustomOrder ? customOrder : optimalOrder;
 
@@ -257,8 +301,15 @@ export default function OngoingPage() {
     const ride = activeData.ride;
     if (role !== 'DRIVER') return [];
     
+    // Mỗi booking chỉ đưa điểm dừng kế tiếp lên bản đồ: đón nếu khách chưa lên xe,
+    // hoặc trả nếu khách đang ở trên xe. Không đưa yêu cầu PENDING vào lộ trình.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let list = ride.bookings?.filter((b: any) => (b.status === 'CONFIRMED' || b.status === 'PENDING') && !b.isPickedUp && b.passengerLat && b.passengerLng) || [];
+    let list = ride.bookings?.filter((b: any) => {
+      if (b.status !== 'CONFIRMED' || b.isDroppedOff) return false;
+      return b.isPickedUp
+        ? b.dropoffLat != null && b.dropoffLng != null
+        : b.passengerLat != null && b.passengerLng != null;
+    }) || [];
     
     if (activeOrder.length > 0) {
       list = [...list].sort((a, b) => {
@@ -272,7 +323,11 @@ export default function OngoingPage() {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return list.map((b: any) => ({ id: b.id, lat: b.passengerLat, lng: b.passengerLng }));
+    return list.map((b: any) => ({
+      id: b.id,
+      lat: b.isPickedUp ? b.dropoffLat : b.passengerLat,
+      lng: b.isPickedUp ? b.dropoffLng : b.passengerLng,
+    }));
   }, [activeData, activeOrder]);
 
   if (loading || !activeData) {

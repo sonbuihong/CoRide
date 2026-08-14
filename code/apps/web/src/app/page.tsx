@@ -30,7 +30,7 @@ export default function Home() {
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 pt-4">
                 <Link
-                  href="/rides/search"
+                  href="/rides"
                   className="bg-white text-black font-medium text-[17px] tracking-[-0.22px] px-8 py-3 rounded-[980px] transition-transform hover:scale-105 active:scale-95"
                 >
                   Bắt đầu ngay

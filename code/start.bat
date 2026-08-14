@@ -120,19 +120,20 @@ goto menu
 
 :kill_all
 echo.
-echo [INFO] Dang dong tat ca cac tab dich vu va Node.exe tren may tinh (Ngoai tru Menu)...
-taskkill /F /IM node.exe /T > nul 2>&1
-wmic process where "name='cmd.exe' and (commandline like '%%npm run dev%%' or commandline like '%%prisma studio%%' or commandline like '%%npm run start%%' or commandline like '%%pnpm run web%%' or commandline like '%%pnpm expo start%%')" call terminate > nul 2>&1
-echo [SUCCESS] Da dong tat ca dich vu thanh cong.
+echo [INFO] Dang dong cac tab dich vu cua CoRide...
+for /f "tokens=2 delims==" %%a in ('wmic process where "name='cmd.exe' and (commandline like '%%npm run dev%%' or commandline like '%%prisma studio%%' or commandline like '%%npm run start%%' or commandline like '%%pnpm run web%%' or commandline like '%%pnpm expo start%%')" get ProcessId /value 2^>nul ^| find "="') do (
+    for /f "delims=" %%b in ("%%a") do taskkill /F /T /PID %%b > nul 2>&1
+)
+echo [SUCCESS] Da dong cac dich vu thanh cong.
 pause
 goto menu
 
 :kill_all_and_exit
 echo.
-echo [INFO] Dang dong tat ca cac tab dich vu va Node.exe tren may tinh...
-taskkill /F /IM node.exe /T > nul 2>&1
-wmic process where "name='cmd.exe' and (commandline like '%%npm run dev%%' or commandline like '%%prisma studio%%' or commandline like '%%npm run start%%' or commandline like '%%pnpm run web%%' or commandline like '%%pnpm expo start%%')" call terminate > nul 2>&1
-taskkill /F /IM WindowsTerminal.exe /T > nul 2>&1
-echo [SUCCESS] Da dong tat ca dich vu va thoat.
+echo [INFO] Dang dong cac tab dich vu cua CoRide va thoat...
+for /f "tokens=2 delims==" %%a in ('wmic process where "name='cmd.exe' and (commandline like '%%npm run dev%%' or commandline like '%%prisma studio%%' or commandline like '%%npm run start%%' or commandline like '%%pnpm run web%%' or commandline like '%%pnpm expo start%%')" get ProcessId /value 2^>nul ^| find "="') do (
+    for /f "delims=" %%b in ("%%a") do taskkill /F /T /PID %%b > nul 2>&1
+)
+echo [SUCCESS] Da dong cac dich vu va thoat.
 endlocal
 exit

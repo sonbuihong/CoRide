@@ -15,6 +15,8 @@ interface PassengerPickupMapProps {
 
 export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, defaultLng = 105.8542 }: PassengerPickupMapProps) {
   const [position, setPosition] = useState<[number, number] | null>(null);
+  // This remains stable while the live center changes during pan/zoom.
+  const [initialPosition, setInitialPosition] = useState<[number, number] | null>(null);
   const [address, setAddress] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [loadingAddress, setLoadingAddress] = useState(false);
@@ -27,31 +29,39 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setPosition([pos.coords.latitude, pos.coords.longitude]);
+          const nextPosition: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+          setPosition(nextPosition);
+          setInitialPosition(nextPosition);
           setLoading(false);
         },
         () => {
           // Lỗi lấy location, fallback về default
-          setPosition([defaultLat, defaultLng]);
+          const fallbackPosition: [number, number] = [defaultLat, defaultLng];
+          setPosition(fallbackPosition);
+          setInitialPosition(fallbackPosition);
           setLoading(false);
         }
       );
     } else {
-      setPosition([defaultLat, defaultLng]);
+      const fallbackPosition: [number, number] = [defaultLat, defaultLng];
+      setPosition(fallbackPosition);
+      setInitialPosition(fallbackPosition);
       setLoading(false);
     }
   }, [defaultLat, defaultLng]);
 
   // Khởi tạo bản đồ MapLibre
   useEffect(() => {
-    if (loading || !position || !mapContainerRef.current || mapRef.current) return;
+    if (loading || !initialPosition || !mapContainerRef.current || mapRef.current) return;
 
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: `https://tiles.goong.io/assets/goong_map_web.json?api_key=${MAP_KEY}`,
-      center: [position[1], position[0]], // [lng, lat]
+      center: [initialPosition[1], initialPosition[0]], // [lng, lat]
       zoom: 15,
     });
+
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
     map.on('moveend', () => {
       const center = map.getCenter();
@@ -64,7 +74,7 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
       map.remove();
       mapRef.current = null;
     };
-  }, [loading, position, MAP_KEY]);
+  }, [loading, initialPosition, MAP_KEY]);
 
   // Reverse geocode whenever position changes
   useEffect(() => {
@@ -104,25 +114,13 @@ export function PassengerPickupMap({ onConfirm, onCancel, defaultLat = 21.0285, 
       <div className="relative h-[300px] w-full rounded-md overflow-hidden border border-gray-200 bg-gray-100">
         <div ref={mapContainerRef} className="w-full h-full z-0" />
         
-        {/* Shadow của ghim ở giữa bản đồ */}
-        <div className="absolute top-1/2 left-1/2 z-[10] pointer-events-none" style={{ transform: 'translate(-12px, -41px)' }}>
-          <img 
-            src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png"
-            alt="shadow"
-            width={41}
-            height={41}
-            style={{ width: '41px', height: '41px' }}
-          />
-        </div>
         {/* Ghim cố định ở giữa bản đồ */}
-        <div className="absolute top-1/2 left-1/2 z-[11] pointer-events-none" style={{ transform: 'translate(-50%, -100%)' }}>
-          <img 
-            src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png"
-            alt="marker"
-            width={25}
-            height={41}
-            style={{ width: '25px', height: '41px' }}
-          />
+        <div
+          className="pointer-events-none absolute left-1/2 top-1/2 z-[11]"
+          style={{ transform: 'translate(-50%, -100%)' }}
+          aria-hidden="true"
+        >
+          <MapPin className="h-10 w-10 fill-orange-500 text-white drop-shadow-[0_3px_3px_rgba(0,0,0,0.35)]" strokeWidth={1.8} />
         </div>
 
         {/* Nút re-center về vị trí hiện tại */}

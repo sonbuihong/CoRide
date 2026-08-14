@@ -17,6 +17,7 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 // Key constants — tập trung quản lý để tránh typo và dễ refactor
 const REDIS_KEYS = {
+  DRIVER_LOCATION_META_PREFIX: 'driver:location:',
   DRIVER_LOCATIONS: 'driver_locations',       // Sorted Set (Geo) chứa toạ độ tài xế
   DRIVER_ONLINE_PREFIX: 'driver:online:',     // Key per driver: "driver:online:{driverId}"
   DRIVER_BUSY_PREFIX: 'driver:busy:',         // Driver đang trong cuốc xe
@@ -73,15 +74,24 @@ export const disconnectRedis = async (): Promise<void> => {
 export const updateDriverLocation = async (
   driverId: string,
   latitude: number,
-  longitude: number
+  longitude: number,
+  metadata?: { rideId?: string; accuracy?: number; updatedAt?: number }
 ): Promise<void> => {
   if (!redisClient.isOpen) return;
 
-  await redisClient.geoAdd(REDIS_KEYS.DRIVER_LOCATIONS, {
-    member: driverId,
-    longitude,
-    latitude,
-  });
+  const updatedAt = metadata?.updatedAt ?? Date.now();
+  await Promise.all([
+    redisClient.geoAdd(REDIS_KEYS.DRIVER_LOCATIONS, {
+      member: driverId,
+      longitude,
+      latitude,
+    }),
+    redisClient.set(
+      `${REDIS_KEYS.DRIVER_LOCATION_META_PREFIX}${driverId}`,
+      JSON.stringify({ rideId: metadata?.rideId, accuracy: metadata?.accuracy, updatedAt }),
+      { EX: 60 }
+    ),
+  ]);
 };
 
 /**
@@ -90,7 +100,10 @@ export const updateDriverLocation = async (
 export const removeDriverLocation = async (driverId: string): Promise<void> => {
   if (!redisClient.isOpen) return;
 
-  await redisClient.zRem(REDIS_KEYS.DRIVER_LOCATIONS, driverId);
+  await Promise.all([
+    redisClient.zRem(REDIS_KEYS.DRIVER_LOCATIONS, driverId),
+    redisClient.del(`${REDIS_KEYS.DRIVER_LOCATION_META_PREFIX}${driverId}`),
+  ]);
 };
 
 /**
@@ -210,8 +223,11 @@ export const refreshDriverOnline = async (driverId: string): Promise<void> => {
  */
 export const getDriverLocation = async (
   driverId: string
-): Promise<{ latitude: number; longitude: number } | null> => {
+): Promise<{ latitude: number; longitude: number; updatedAt: number; accuracy?: number; rideId?: string } | null> => {
   if (!redisClient.isOpen) return null;
+
+  const metadataRaw = await redisClient.get(`${REDIS_KEYS.DRIVER_LOCATION_META_PREFIX}${driverId}`);
+  if (!metadataRaw) return null;
 
   // GEOPOS trả về mảng [[longitude, latitude]] hoặc [null] nếu key không tồn tại
   const positions = await redisClient.geoPos(REDIS_KEYS.DRIVER_LOCATIONS, driverId);
@@ -221,9 +237,12 @@ export const getDriverLocation = async (
   }
 
   const pos = positions[0];
+  const metadata = JSON.parse(metadataRaw) as { updatedAt?: number; accuracy?: number; rideId?: string };
   return {
     longitude: Number(pos.longitude),
     latitude: Number(pos.latitude),
+    updatedAt: metadata.updatedAt ?? Date.now(),
+    accuracy: metadata.accuracy,
+    rideId: metadata.rideId,
   };
 };
-

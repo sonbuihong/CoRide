@@ -1,14 +1,16 @@
 import { extendedPrisma as prisma } from '@repo/database';
 import { CreateBookingInput, UpdateBookingStatusInput, SocketEvents } from '@repo/shared';
-import { BookingStatus } from '@repo/database';
+import { BookingStatus, Prisma } from '@repo/database';
 import { AppError } from '../../shared/errors/AppError';
 import { NotificationsService } from '../notifications/notifications.service';
 import { getDriverLocation } from '../../shared/lib/redis';
 import { SocketEventService } from '../../socket/socket.events';
 import { RouteMatchingService } from './route-matching.service';
+import { PricingService } from '../pricing/pricing.service';
+import { RideMatchingService } from '../rides/ride-matching.service';
 
 /** Ngưỡng lệch đường tối đa (km) — hành khách cách tuyến đường tài xế */
-const MAX_DETOUR_KM = 2;
+const MAX_DETOUR_KM = 5;
 /** Ngưỡng lệch điểm đến tối đa (km) — điểm đến khách cách điểm đến tài xế */
 const MAX_DEST_DEVIATION_KM = 5;
 /** Thời gian chờ tài xế phản hồi popup (ms) */
@@ -23,6 +25,7 @@ export class BookingsService {
       where: { id: rideId },
       include: {
         driver: { select: { id: true, firstName: true, lastName: true } },
+        vehicle: { select: { type: true } },
         bookings: {
           where: {
             status: { in: ['CONFIRMED', 'PENDING'] },
@@ -61,7 +64,7 @@ export class BookingsService {
     const activeDriverRide = await prisma.ride.findFirst({
       where: {
         driverId: passengerId,
-        status: { in: ['SCHEDULED', 'ONGOING'] },
+        status: { in: ['SCHEDULED', 'FULL', 'ONGOING'] },
       },
     });
 
@@ -78,7 +81,7 @@ export class BookingsService {
         passengerId,
         status: { in: ['PENDING', 'CONFIRMED'] },
         ride: {
-          status: { in: ['SCHEDULED', 'ONGOING'] },
+          status: { in: ['SCHEDULED', 'FULL', 'ONGOING'] },
         },
       },
     });
@@ -109,6 +112,20 @@ export class BookingsService {
     seats: number
   ) {
     const { rideId } = data;
+    const pickup = {
+      lat: data.passengerLat ?? ride.originLat,
+      lng: data.passengerLng ?? ride.originLng,
+    };
+    const dropoff = {
+      lat: data.dropoffLat ?? ride.destinationLat,
+      lng: data.dropoffLng ?? ride.destinationLng,
+    };
+    if (pickup.lat == null || pickup.lng == null || dropoff.lat == null || dropoff.lng == null) {
+      throw new AppError('Chuyến đi thiếu tọa độ để tính mức đóng góp carpool', 400);
+    }
+    const routeMatch = RideMatchingService.match(ride, { origin: pickup, destination: dropoff });
+    if (!routeMatch) throw new AppError('Điểm đón/trả không thỏa giới hạn lệch tuyến carpool', 400);
+    const pricing = await this.calculateBookingContribution(data, ride, seats, routeMatch.detourKm);
 
     // Tạo booking với trạng thái PENDING (chờ tài xế duyệt)
     const booking = await prisma.booking.create({
@@ -116,7 +133,10 @@ export class BookingsService {
         rideId,
         passengerId,
         seats,
-        totalPrice: ride.pricePerSeat * seats,
+        totalPrice: pricing.totalPrice,
+        sharedDistanceKm: pricing.sharedDistanceKm,
+        detourKm: pricing.detourKm,
+        priceBreakdown: pricing as unknown as Prisma.InputJsonValue,
         status: BookingStatus.PENDING,
         passengerLat: (data as any).passengerLat,
         passengerLng: (data as any).passengerLng,
@@ -240,13 +260,18 @@ export class BookingsService {
       throw new AppError(`Không thể ghép chuyến: ${reason}`, 400);
     }
 
+    const pricing = await this.calculateBookingContribution(data, ride, seats, routeCheck.detourKm);
+
     // Tạo Booking PENDING với thông tin toạ độ đón + điểm trả riêng (Multi-Passenger)
     const booking = await prisma.booking.create({
       data: {
         rideId,
         passengerId,
         seats,
-        totalPrice: ride.pricePerSeat * seats,
+        totalPrice: pricing.totalPrice,
+        sharedDistanceKm: pricing.sharedDistanceKm,
+        detourKm: pricing.detourKm,
+        priceBreakdown: pricing as unknown as Prisma.InputJsonValue,
         status: BookingStatus.PENDING,
         passengerLat: (data as any).passengerLat,
         passengerLng: (data as any).passengerLng,
@@ -284,6 +309,58 @@ export class BookingsService {
     );
 
     return booking;
+  }
+
+  private static async calculateBookingContribution(
+    data: CreateBookingInput,
+    ride: any,
+    seats: number,
+    detourKm: number
+  ) {
+    const pickup = {
+      lat: data.passengerLat ?? ride.originLat,
+      lng: data.passengerLng ?? ride.originLng,
+    };
+    const dropoff = {
+      lat: data.dropoffLat ?? ride.destinationLat,
+      lng: data.dropoffLng ?? ride.destinationLng,
+    };
+    if (pickup.lat == null || pickup.lng == null || dropoff.lat == null || dropoff.lng == null) {
+      throw new AppError('Không đủ tọa độ để tính mức đóng góp', 400);
+    }
+
+    const sharedDistanceKm = RideMatchingService.sharedRouteDistance(ride, pickup, dropoff);
+    if (sharedDistanceKm <= 0) throw new AppError('Điểm trả phải nằm sau điểm đón trên tuyến tài xế', 400);
+    const originalDistanceKm = Math.max(ride.distance ?? sharedDistanceKm, 0.001);
+    const vehicleType = ride.vehicle?.type ?? 'CAR';
+    const config = await PricingService.getActiveConfig(vehicleType);
+    const existing = await prisma.booking.aggregate({
+      where: { rideId: ride.id, status: { in: ['PENDING', 'CONFIRMED', 'COMPLETED'] } },
+      _sum: { totalPrice: true },
+    });
+    const fullRoute = PricingService.calculateCarpoolContribution({
+      sharedDistanceKm: originalDistanceKm,
+      originalDistanceKm,
+      detourKm: 0,
+      offeredSeats: ride.offeredSeats,
+      tollCost: ride.tollCost,
+    }, config);
+    const priceFactor = fullRoute.recommendedPricePerSeat > 0
+      ? ride.pricePerSeat / fullRoute.recommendedPricePerSeat
+      : 1;
+
+    return PricingService.calculateCarpoolContribution({
+      sharedDistanceKm,
+      originalDistanceKm,
+      detourKm,
+      offeredSeats: ride.offeredSeats,
+      bookedSeats: seats,
+      // Chưa có mô hình toll segment; phân bổ theo phần tuyến thực tế được dùng.
+      tollCost: ride.tollCost * Math.min(1, sharedDistanceKm / originalDistanceKm),
+      tripTollCost: ride.tollCost,
+      existingContributions: existing._sum.totalPrice ?? 0,
+      priceFactor,
+    }, config);
   }
 
   /**
@@ -636,9 +713,13 @@ export class BookingsService {
       throw new AppError('Hành khách này đã được đón', 400);
     }
 
+    if (!booking.driverArrivedAt) {
+      throw new AppError('Vui lòng xác nhận đã tới điểm đón trước khi đón khách', 400);
+    }
+
     const updatedBooking = await prisma.booking.update({
       where: { id: bookingId },
-      data: { isPickedUp: true },
+      data: { isPickedUp: true, pickedUpAt: new Date() },
       include: { passenger: { select: { id: true } } }
     });
 
@@ -656,6 +737,59 @@ export class BookingsService {
     } catch (socketErr) {
       console.warn('[BookingsService] Socket emit booking:picked_up failed:', socketErr);
     }
+
+    return updatedBooking;
+  }
+
+  static async markDriverArrived(userId: string, bookingId: string) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { ride: true, passenger: true },
+    });
+
+    if (!booking) throw new AppError('Không tìm thấy yêu cầu đặt chỗ', 404);
+    if (booking.ride.driverId !== userId) {
+      throw new AppError('Bạn không có quyền thực hiện hành động này', 403);
+    }
+    if (booking.status !== BookingStatus.CONFIRMED || booking.isPickedUp) {
+      throw new AppError('Điểm đón này không còn chờ tài xế', 400);
+    }
+    if (booking.driverArrivedAt) {
+      throw new AppError('Bạn đã thông báo tới điểm đón trước đó', 400);
+    }
+
+    const updatedBooking = await prisma.booking.update({
+      where: { id: bookingId },
+      data: { driverArrivedAt: new Date() },
+    });
+
+    const payload = {
+      bookingId,
+      rideId: booking.rideId,
+      message: 'Tài xế đã đến điểm đón. Vui lòng chuẩn bị lên xe.',
+    };
+
+    try {
+      SocketEventService.emitToUser(
+        booking.passengerId,
+        SocketEvents.BOOKING_DRIVER_ARRIVED,
+        payload
+      );
+      SocketEventService.emitToRoom(
+        `ride:${booking.rideId}`,
+        SocketEvents.BOOKING_DRIVER_ARRIVED,
+        payload
+      );
+    } catch (socketErr) {
+      console.warn('[BookingsService] Socket emit booking:driver_arrived failed:', socketErr);
+    }
+
+    NotificationsService.createNotification(
+      booking.passengerId,
+      'Tài xế đã tới điểm đón',
+      `Tài xế đang chờ bạn tại ${booking.pickupAddress ?? booking.ride.origin}`,
+      'BOOKING_STATUS'
+    ).catch((error) => console.error('[Notification Error]:', error));
 
     return updatedBooking;
   }
@@ -687,6 +821,7 @@ export class BookingsService {
         where: { id: bookingId },
         data: {
           isDroppedOff: true,
+          droppedOffAt: new Date(),
           status: BookingStatus.COMPLETED,
         },
         include: { passenger: { select: { id: true } } },
@@ -806,6 +941,15 @@ export class BookingsService {
                 driverRatingCount: true,
               },
             },
+            vehicle: {
+              select: {
+                id: true,
+                type: true,
+                color: true,
+                licensePlate: true,
+                imageUrl: true,
+              },
+            },
           },
         },
         passenger: {
@@ -829,7 +973,25 @@ export class BookingsService {
       throw new AppError('Bạn không có quyền xem thông tin này', 403);
     }
 
-    return booking;
+    const pickup = booking.passengerLat != null && booking.passengerLng != null
+      ? { lat: booking.passengerLat, lng: booking.passengerLng }
+      : booking.ride.originLat != null && booking.ride.originLng != null
+        ? { lat: booking.ride.originLat, lng: booking.ride.originLng }
+        : null;
+    const dropoff = booking.dropoffLat != null && booking.dropoffLng != null
+      ? { lat: booking.dropoffLat, lng: booking.dropoffLng }
+      : booking.ride.destinationLat != null && booking.ride.destinationLng != null
+        ? { lat: booking.ride.destinationLat, lng: booking.ride.destinationLng }
+        : null;
+    const matching = pickup && dropoff
+      ? RideMatchingService.match(booking.ride, { origin: pickup, destination: dropoff })
+      : null;
+    const detourKm = booking.detourKm ?? matching?.detourKm ?? 0;
+    const additionalTimeMinutes = booking.ride.distance && booking.ride.duration
+      ? Math.max(0, Math.round(detourKm * booking.ride.duration / booking.ride.distance))
+      : Math.max(0, Math.round(detourKm * 2));
+
+    return { ...booking, matching, additionalTimeMinutes };
   }
 
   static async getUserBookings(userId: string) {
@@ -854,7 +1016,17 @@ export class BookingsService {
     });
   }
 
-  static async getRideBookings(rideId: string) {
+  static async getRideBookings(userId: string, rideId: string) {
+    const ride = await prisma.ride.findUnique({
+      where: { id: rideId },
+      select: { driverId: true },
+    });
+
+    if (!ride) throw new AppError('Không tìm thấy chuyến đi', 404);
+    if (ride.driverId !== userId) {
+      throw new AppError('Bạn không có quyền xem hành khách của chuyến này', 403);
+    }
+
     return prisma.booking.findMany({
       where: { rideId },
       include: {
@@ -865,6 +1037,8 @@ export class BookingsService {
             lastName: true,
             phone: true,
             avatarUrl: true,
+            passengerRating: true,
+            passengerRatingCount: true,
           },
         },
       },
@@ -873,7 +1047,7 @@ export class BookingsService {
   }
 
   static async getDriverBookings(userId: string) {
-    return prisma.booking.findMany({
+    const bookings = await prisma.booking.findMany({
       where: { ride: { driverId: userId } },
       select: {
         id: true,
@@ -882,7 +1056,13 @@ export class BookingsService {
         status: true,
         isPickedUp: true,
         isDroppedOff: true,
+        driverArrivedAt: true,
+        pickedUpAt: true,
+        droppedOffAt: true,
         createdAt: true,
+        sharedDistanceKm: true,
+        detourKm: true,
+        priceBreakdown: true,
         passengerLat: true,
         passengerLng: true,
         pickupAddress: true,
@@ -901,6 +1081,10 @@ export class BookingsService {
             destinationLng: true,
             departureTime: true,
             status: true,
+            distance: true,
+            duration: true,
+            routePolyline: true,
+            allowRoutePickup: true,
           },
         },
         passenger: {
@@ -910,11 +1094,40 @@ export class BookingsService {
             lastName: true,
             phone: true,
             avatarUrl: true,
+            passengerRating: true,
+            passengerRatingCount: true,
           },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return bookings
+      .map((booking) => {
+        const pickup = booking.passengerLat != null && booking.passengerLng != null
+          ? { lat: booking.passengerLat, lng: booking.passengerLng }
+          : booking.ride.originLat != null && booking.ride.originLng != null
+            ? { lat: booking.ride.originLat, lng: booking.ride.originLng }
+            : null;
+        const dropoff = booking.dropoffLat != null && booking.dropoffLng != null
+          ? { lat: booking.dropoffLat, lng: booking.dropoffLng }
+          : booking.ride.destinationLat != null && booking.ride.destinationLng != null
+            ? { lat: booking.ride.destinationLat, lng: booking.ride.destinationLng }
+            : null;
+        const matching = pickup && dropoff
+          ? RideMatchingService.match(booking.ride, { origin: pickup, destination: dropoff })
+          : null;
+        const detourKm = booking.detourKm ?? matching?.detourKm ?? 0;
+        const additionalTimeMinutes = booking.ride.distance && booking.ride.duration
+          ? Math.max(0, Math.round(detourKm * booking.ride.duration / booking.ride.distance))
+          : Math.max(0, Math.round(detourKm * 2));
+        return { ...booking, matching, additionalTimeMinutes };
+      })
+      .sort((left, right) => {
+        if (left.status === BookingStatus.PENDING && right.status !== BookingStatus.PENDING) return -1;
+        if (right.status === BookingStatus.PENDING && left.status !== BookingStatus.PENDING) return 1;
+        return (right.matching?.matchScore ?? 0) - (left.matching?.matchScore ?? 0);
+      });
   }
 
   /**
@@ -931,7 +1144,7 @@ export class BookingsService {
         passengerId: userId,
         status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
         ride: {
-          status: { in: ['ONGOING', 'SCHEDULED'] },
+          status: { in: ['ONGOING', 'SCHEDULED', 'FULL'] },
         },
       },
       include: {
@@ -972,7 +1185,7 @@ export class BookingsService {
     const driverRide = await prisma.ride.findFirst({
       where: {
         driverId: userId,
-        status: { in: ['ONGOING', 'SCHEDULED'] },
+        status: { in: ['ONGOING', 'SCHEDULED', 'FULL'] },
       },
       include: {
         driver: {

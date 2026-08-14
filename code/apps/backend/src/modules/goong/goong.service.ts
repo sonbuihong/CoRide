@@ -2,6 +2,8 @@ import axios from 'axios';
 import goongConfig from '../../config/goong.config';
 import { goongCache } from './goong.cache';
 
+type GoongApiVersion = 'v1' | 'v2';
+
 // Interface theo Goong Autocomplete V1 response
 // Khi truyền more_compound=true → trả thêm compound (quận/xã/tỉnh)
 // Ref: https://docs.goong.io/rest/place/autocomplete/
@@ -115,7 +117,7 @@ class GoongService {
   }
 
   /**
-   * Autocomplete V1 — gợi ý địa điểm từ chuỗi tìm kiếm
+   * Autocomplete V1/V2 — V2 trả địa chỉ theo địa giới hành chính sau sáp nhập
    * Ref: https://docs.goong.io/rest/place/autocomplete/
    *
    * @param query - Từ khóa tìm kiếm (VD: "91 Trung Kính")
@@ -129,19 +131,21 @@ class GoongService {
     limit: number = 10,
     location?: string,
     radius?: number,
-    more_compound: boolean = true
+    more_compound: boolean = true,
+    version: GoongApiVersion = 'v1'
   ): Promise<AutocompleteResult[]> {
     if (!query || query.trim().length < 2) {
       return [];
     }
 
     // Cache key bao gồm tất cả params ảnh hưởng đến kết quả
-    const cacheKey = `autocomplete:${query.toLowerCase().trim()}:${limit}:${location ?? ''}:${radius ?? ''}:${more_compound}`;
+    const cacheKey = `autocomplete:${version}:${query.toLowerCase().trim()}:${limit}:${location ?? ''}:${radius ?? ''}:${more_compound}`;
     const cached = goongCache.get<AutocompleteResult[]>(cacheKey);
     if (cached) return cached;
 
     try {
-      const response = await axios.get(`${this.baseUrl}/place/autocomplete`, {
+      const endpoint = version === 'v2' ? '/v2/place/autocomplete' : '/place/autocomplete';
+      const response = await axios.get(`${this.baseUrl}${endpoint}`, {
         params: {
           api_key: this.apiKey,
           input: query,
@@ -368,17 +372,18 @@ class GoongService {
    * Lấy thông tin chi tiết về địa điểm từ place_id
    * @param placeId - ID của địa điểm
    */
-  async getPlaceDetail(placeId: string): Promise<any> {
+  async getPlaceDetail(placeId: string, version: GoongApiVersion = 'v1'): Promise<any> {
     if (!placeId) {
       return null;
     }
 
-    const cacheKey = `place-detail:${placeId}`;
+    const cacheKey = `place-detail:${version}:${placeId}`;
     const cached = goongCache.get<any>(cacheKey);
     if (cached) return cached;
 
     try {
-      const response = await axios.get(`${this.baseUrl}/place/detail`, {
+      const endpoint = version === 'v2' ? '/v2/place/detail' : '/place/detail';
+      const response = await axios.get(`${this.baseUrl}${endpoint}`, {
         params: {
           api_key: this.apiKey,
           place_id: placeId,

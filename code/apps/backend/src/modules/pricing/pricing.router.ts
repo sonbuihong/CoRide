@@ -4,6 +4,8 @@ import { authenticate, restrictTo } from '../../shared/middlewares/auth.middlewa
 
 const router = Router();
 
+router.get('/carpool-estimate', authenticate, PricingController.estimateCarpool);
+
 /**
  * @swagger
  * /api/pricing/estimate:

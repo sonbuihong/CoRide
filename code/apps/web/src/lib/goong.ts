@@ -6,6 +6,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 const GOONG_API_KEY = process.env.NEXT_PUBLIC_GOONG_API_KEY || '';
 const GOONG_BASE_URL = 'https://rsapi.goong.io';
 
+export type GoongApiVersion = 'v1' | 'v2';
+
 /**
  * Loại bỏ mã bưu chính (5-6 chữ số) và "Việt Nam" dư thừa
  * mà Goong API tự chèn vào các trường description / secondary_text.
@@ -153,6 +155,7 @@ export async function autocompleteAddress(
     location?: string; // Format: "lat,lng"
     radius?: number; // in km
     more_compound?: boolean;
+    version?: GoongApiVersion;
   }
 ): Promise<AutocompleteResult[]> {
   // Mặc định: Giới hạn 5 kết quả, tìm kiếm xung quanh Hà Nội, bán kính 10km
@@ -160,11 +163,12 @@ export async function autocompleteAddress(
     limit = 5, 
     location = '21.028511,105.804817', // Tọa độ Hà Nội
     radius = 10, 
-    more_compound 
+    more_compound,
+    version = 'v1',
   } = options || {};
 
   // JS cache: ngăn duplicate calls trong cùng tab ngay tại tầng JavaScript
-  const cacheKey = `autocomplete:${query.toLowerCase().trim()}:${limit}:${location}:${radius}:${more_compound ?? true}`;
+  const cacheKey = `autocomplete:${version}:${query.toLowerCase().trim()}:${limit}:${location}:${radius}:${more_compound ?? true}`;
   const cached = goongClientCache.get<AutocompleteResult[]>(cacheKey);
   if (cached) return cached;
 
@@ -174,6 +178,7 @@ export async function autocompleteAddress(
       limit,
       location,
       radius,
+      version,
       // more_compound=true → backend truyền cho Goong, trả thêm compound (quận/xã/tỉnh)
       more_compound: more_compound !== false ? 'true' : 'false',
     };
@@ -282,6 +287,10 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
  * Dùng để hiển thị nút "Hiện địa chỉ mới" trong UI
  */
 export async function geocodeAddressV2(address: string): Promise<GeocodeV2Result[] | null> {
+  const cacheKey = `geocode-v2:${address.toLowerCase().trim()}`;
+  const cached = goongClientCache.get<GeocodeV2Result[]>(cacheKey);
+  if (cached) return cached;
+
   try {
     const response = await axios.get(`${API_URL}/goong/geocode-v2`, {
       params: { address },
@@ -289,7 +298,9 @@ export async function geocodeAddressV2(address: string): Promise<GeocodeV2Result
     });
 
     if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-      return response.data as GeocodeV2Result[];
+      const results = response.data as GeocodeV2Result[];
+      goongClientCache.set(cacheKey, results, 300);
+      return results;
     }
     return null;
   } catch (error) {
@@ -616,11 +627,11 @@ export async function getDirections(
  * Gọi qua backend API proxy để không lộ API key trên client
  * API Docs: https://docs.goong.io/rest/place/details/
  */
-export async function getPlaceDetail(placeId: string): Promise<any> {
+export async function getPlaceDetail(placeId: string, version: GoongApiVersion = 'v1'): Promise<any> {
   try {
     // Ưu tiên gọi qua backend proxy (nhất quán với autocompleteAddress)
     const response = await axios.get(`${API_URL}/goong/place-detail`, {
-      params: { place_id: placeId },
+      params: { place_id: placeId, version },
       timeout: 5000,
     });
     return response.data?.result || response.data || null;
@@ -629,7 +640,8 @@ export async function getPlaceDetail(placeId: string): Promise<any> {
     // Fallback: gọi trực tiếp nếu backend không có route này
     if (!GOONG_API_KEY) return null;
     try {
-      const res = await axios.get(`${GOONG_BASE_URL}/place/detail`, {
+      const endpoint = version === 'v2' ? '/v2/place/detail' : '/place/detail';
+      const res = await axios.get(`${GOONG_BASE_URL}${endpoint}`, {
         params: { api_key: GOONG_API_KEY, place_id: placeId },
         timeout: 5000,
       });

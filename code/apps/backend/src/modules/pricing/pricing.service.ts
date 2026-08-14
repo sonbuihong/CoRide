@@ -27,7 +27,160 @@ export interface PriceEstimate {
   pricePerMinute: number;
 }
 
+export interface CarpoolPricingConfigLike {
+  fuelPrice: number;
+  fuelConsumption: number;
+  vehicleOverheadRatio: number;
+  minimumDriverShare: number;
+  driverPriceAdjustment: number;
+  roundingUnit: number;
+  maxDetourKm: number;
+  maxDetourRatio: number;
+}
+
+export interface CarpoolContributionInput {
+  sharedDistanceKm: number;
+  originalDistanceKm: number;
+  detourKm: number;
+  offeredSeats: number;
+  bookedSeats?: number;
+  tollCost?: number;
+  tripTollCost?: number;
+  existingContributions?: number;
+  priceFactor?: number;
+}
+
+export interface CarpoolContribution {
+  fuelCostPerKm: number;
+  vehicleCostPerKm: number;
+  sharedDistanceKm: number;
+  detourKm: number;
+  detourRatio: number;
+  distanceContribution: number;
+  tollContribution: number;
+  detourContribution: number;
+  recommendedPricePerSeat: number;
+  minimumPricePerSeat: number;
+  maximumPricePerSeat: number;
+  totalPrice: number;
+  maximumPassengerContribution: number;
+  remainingContributionCap: number;
+}
+
 export class PricingService {
+  /**
+   * Báo mức đóng góp cho một ghế carpool. Đây không phải giá taxi: không có
+   * base fare, phí phút hay surge; tài xế được tính như một người cùng chia phí.
+   */
+  static async estimateCarpool(
+    originLat: number,
+    originLng: number,
+    destLat: number,
+    destLng: number,
+    vehicleType: VehicleType,
+    offeredSeats: number,
+    tollCost = 0
+  ) {
+    const config = await this.getActiveConfig(vehicleType);
+    const directions = await goongService.directions(
+      `${originLat},${originLng}`,
+      `${destLat},${destLng}`,
+      vehicleType === 'CAR' ? 'car' : 'bike'
+    );
+    const leg = directions?.routes?.[0]?.legs?.[0];
+    if (!leg) throw new AppError('Không thể tính toán lộ trình giữa 2 điểm này', 400);
+
+    const distanceKm = leg.distance.value / 1000;
+    const contribution = this.calculateCarpoolContribution({
+      sharedDistanceKm: distanceKm,
+      originalDistanceKm: distanceKm,
+      detourKm: 0,
+      offeredSeats,
+      tollCost,
+    }, config);
+
+    return {
+      vehicleType,
+      estimatedDistance: Math.round(distanceKm * 10) / 10,
+      estimatedDuration: Math.round(leg.duration.value / 60),
+      estimatedPrice: contribution.recommendedPricePerSeat,
+      ...contribution,
+    };
+  }
+
+  static async getActiveConfig(vehicleType: VehicleType) {
+    const config = await prisma.pricingConfig.findUnique({ where: { vehicleType } });
+    if (!config || !config.isActive) {
+      throw new AppError(`Chưa có cấu hình giá cho loại xe ${vehicleType}. Vui lòng liên hệ admin.`, 400);
+    }
+    return config;
+  }
+
+  static calculateCarpoolContribution(
+    input: CarpoolContributionInput,
+    config: CarpoolPricingConfigLike
+  ): CarpoolContribution {
+    const offeredSeats = Math.max(1, Math.floor(input.offeredSeats));
+    const bookedSeats = Math.max(1, Math.floor(input.bookedSeats ?? 1));
+    const sharedDistanceKm = Math.max(0, input.sharedDistanceKm);
+    const originalDistanceKm = Math.max(0.001, input.originalDistanceKm);
+    const detourKm = Math.max(0, input.detourKm);
+    const detourRatio = detourKm / originalDistanceKm;
+
+    if (detourKm > config.maxDetourKm || detourRatio > config.maxDetourRatio) {
+      throw new AppError(
+        `Độ lệch tuyến ${detourKm.toFixed(1)}km (${Math.round(detourRatio * 100)}%) vượt giới hạn carpool`,
+        400
+      );
+    }
+
+    const fuelCostPerKm = config.fuelPrice * config.fuelConsumption / 100;
+    const vehicleCostPerKm = fuelCostPerKm * (1 + config.vehicleOverheadRatio);
+    const shares = offeredSeats + 1;
+    const distanceContribution = sharedDistanceKm * vehicleCostPerKm / shares;
+    const tollContribution = Math.max(0, input.tollCost ?? 0) / shares;
+    const detourContribution = detourKm * vehicleCostPerKm * (1 - config.minimumDriverShare);
+    const rawPerSeat = distanceContribution + tollContribution + detourContribution;
+    const roundingUnit = Math.max(1, config.roundingUnit);
+    const roundNearest = (value: number) => Math.round(value / roundingUnit) * roundingUnit;
+    const roundDown = (value: number) => Math.floor(Math.max(0, value) / roundingUnit) * roundingUnit;
+    const recommendedPricePerSeat = roundNearest(rawPerSeat);
+    const minimumPricePerSeat = roundNearest(rawPerSeat * (1 - config.driverPriceAdjustment));
+    const configuredMaximum = roundNearest(rawPerSeat * (1 + config.driverPriceAdjustment));
+
+    const tripCost = (originalDistanceKm + detourKm) * vehicleCostPerKm +
+      Math.max(0, input.tripTollCost ?? input.tollCost ?? 0);
+    const maximumPassengerContribution = tripCost * (1 - config.minimumDriverShare);
+    const remainingContributionCap = Math.max(
+      0,
+      maximumPassengerContribution - Math.max(0, input.existingContributions ?? 0)
+    );
+    const maximumPricePerSeat = Math.min(configuredMaximum, roundDown(remainingContributionCap / bookedSeats));
+    const requestedFactor = input.priceFactor ?? 1;
+    const factor = Math.max(
+      1 - config.driverPriceAdjustment,
+      Math.min(1 + config.driverPriceAdjustment, requestedFactor)
+    );
+    const adjustedPerSeat = roundNearest(rawPerSeat * factor);
+    const totalPrice = Math.min(adjustedPerSeat * bookedSeats, roundDown(remainingContributionCap));
+
+    return {
+      fuelCostPerKm,
+      vehicleCostPerKm,
+      sharedDistanceKm,
+      detourKm,
+      detourRatio,
+      distanceContribution,
+      tollContribution,
+      detourContribution,
+      recommendedPricePerSeat,
+      minimumPricePerSeat,
+      maximumPricePerSeat,
+      totalPrice,
+      maximumPassengerContribution,
+      remainingContributionCap,
+    };
+  }
   /**
    * Ước tính giá chuyến đi giữa 2 điểm.
    *
@@ -156,6 +309,14 @@ export class PricingService {
     baseDistance?: number;
     minFare?: number;
     isActive?: boolean;
+    fuelPrice?: number;
+    fuelConsumption?: number;
+    vehicleOverheadRatio?: number;
+    minimumDriverShare?: number;
+    driverPriceAdjustment?: number;
+    roundingUnit?: number;
+    maxDetourKm?: number;
+    maxDetourRatio?: number;
   }) {
     return prisma.pricingConfig.upsert({
       where: { vehicleType: data.vehicleType },
@@ -167,6 +328,14 @@ export class PricingService {
         baseDistance: data.baseDistance ?? 0, // Đặt mặc định 0 vì tính trực tiếp theo số km
         minFare: data.minFare ?? 0,
         isActive: data.isActive ?? true,
+        fuelPrice: data.fuelPrice ?? 22119,
+        fuelConsumption: data.fuelConsumption ?? 6.5,
+        vehicleOverheadRatio: data.vehicleOverheadRatio ?? 0.5,
+        minimumDriverShare: data.minimumDriverShare ?? 0.2,
+        driverPriceAdjustment: data.driverPriceAdjustment ?? 0.15,
+        roundingUnit: data.roundingUnit ?? 1000,
+        maxDetourKm: data.maxDetourKm ?? 5,
+        maxDetourRatio: data.maxDetourRatio ?? 0.1,
       },
       update: {
         baseFare: data.baseFare,
@@ -175,6 +344,14 @@ export class PricingService {
         ...(data.baseDistance !== undefined && { baseDistance: data.baseDistance }),
         ...(data.minFare !== undefined && { minFare: data.minFare }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
+        ...(data.fuelPrice !== undefined && { fuelPrice: data.fuelPrice }),
+        ...(data.fuelConsumption !== undefined && { fuelConsumption: data.fuelConsumption }),
+        ...(data.vehicleOverheadRatio !== undefined && { vehicleOverheadRatio: data.vehicleOverheadRatio }),
+        ...(data.minimumDriverShare !== undefined && { minimumDriverShare: data.minimumDriverShare }),
+        ...(data.driverPriceAdjustment !== undefined && { driverPriceAdjustment: data.driverPriceAdjustment }),
+        ...(data.roundingUnit !== undefined && { roundingUnit: data.roundingUnit }),
+        ...(data.maxDetourKm !== undefined && { maxDetourKm: data.maxDetourKm }),
+        ...(data.maxDetourRatio !== undefined && { maxDetourRatio: data.maxDetourRatio }),
       },
     });
   }

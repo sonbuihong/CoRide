@@ -229,9 +229,12 @@ model Ride {
   destinationLng Float?
   distance       Float?
   duration       Float?
+  routePolyline  String?    @db.Text
   departureTime  DateTime
   availableSeats Int
+  offeredSeats   Int        @default(1) // Số ghế mở bán ban đầu, cố định trong công thức chia chi phí
   pricePerSeat   Float
+  tollCost       Float      @default(0) // Tổng phí cầu đường của tuyến tài xế (VND)
   status         RideStatus @default(SCHEDULED)
   description    String?
   createdAt      DateTime   @default(now())
@@ -262,6 +265,7 @@ model Ride {
   vehicle        Vehicle?   @relation(fields: [vehicleId], references: [id])
 
   // Quy định chuyến đi — tài xế thiết lập khi đăng chuyến
+  allowRoutePickup Boolean  @default(true)
   allowSmoking   Boolean    @default(false)
   allowPets      Boolean    @default(false)
   allowLuggage   Boolean    @default(true)
@@ -284,6 +288,9 @@ model Booking {
   passenger     User          @relation("PassengerBookings", fields: [passengerId], references: [id])
   seats         Int
   totalPrice    Float
+  sharedDistanceKm Float?   // Quãng đường hành khách thực sự đi chung với tài xế
+  detourKm        Float?    // Quãng đường phát sinh do đón/trả booking này
+  priceBreakdown  Json?     // Chi tiết tính đóng góp để có thể kiểm tra/audit
   status        BookingStatus @default(PENDING)
   paymentStatus PaymentStatus @default(UNPAID)
   transactions  Transaction[]
@@ -298,6 +305,8 @@ model Booking {
   // Tài xế đã đón khách lên xe hay chưa — chỉ có ý nghĩa khi status = CONFIRMED và ride = ONGOING
   // false: đang trên đường đến điểm đón | true: đã đón khách, đang di chuyển về đích
   isPickedUp    Boolean  @default(false)
+  driverArrivedAt DateTime? // Tài xế đã báo tới điểm đón, chưa đồng nghĩa khách đã lên xe
+  pickedUpAt      DateTime? // Thời điểm khách thực tế lên xe
 
   // Điểm trả khách (Drop-off) riêng của từng hành khách — Multi-Passenger Carpooling
   // Khi null: khách xuống cùng điểm đến (destination) của tài xế
@@ -309,6 +318,7 @@ model Booking {
   // Tài xế đã trả khách hay chưa — phân biệt "đã trả" vs "chuyến hoàn thành"
   // Cho phép trả từng khách riêng lẻ trong chuyến Multi-Passenger
   isDroppedOff   Boolean  @default(false)
+  droppedOffAt   DateTime? // Thời điểm hoàn tất điểm trả của booking
 
   cancelReason  String?
 
@@ -458,6 +468,15 @@ model PricingConfig {
   pricePerMinute Float     @default(0) // Giá mỗi phút thời gian chờ/kẹt xe (VND), VD: 500
   baseDistance Float       @default(2) // Km đầu tiên đã tính trong baseFare, VD: 2km
   minFare      Float       @default(0) // Giá tối thiểu (nếu khoảng cách quá ngắn)
+  // Cấu hình đóng góp chi phí carpool (không phải giá taxi)
+  fuelPrice             Float @default(22119) // VND/lít
+  fuelConsumption       Float @default(6.5)   // lít/100km
+  vehicleOverheadRatio  Float @default(0.5)   // bảo dưỡng, khấu hao = 50% nhiên liệu
+  minimumDriverShare    Float @default(0.2)   // tài xế luôn chịu tối thiểu 20%
+  driverPriceAdjustment Float @default(0.15)  // biên điều chỉnh ±15%
+  roundingUnit          Int   @default(1000)  // làm tròn đến 1.000 VND
+  maxDetourKm           Float @default(5)
+  maxDetourRatio        Float @default(0.1)
   isActive     Boolean     @default(true)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt

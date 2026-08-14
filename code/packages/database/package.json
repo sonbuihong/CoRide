@@ -8,7 +8,8 @@
     "generate": "prisma generate",
     "db:push": "prisma db push",
     "dev": "tsc --watch",
-    "seed-admin": "tsx prisma/seed-admin.ts"
+    "seed-admin": "tsx prisma/seed-admin.ts",
+    "seed-test-rides": "tsx prisma/seed-test-rides.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0"
