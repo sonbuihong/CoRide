@@ -139,6 +139,9 @@ interface PolylineConfig {
   width?: number;
   opacity?: number;
   dashArray?: number[];
+  outlineColor?: string;
+  outlineWidth?: number;
+  outlineOpacity?: number;
 }
 
 interface RouteInfo {
@@ -411,6 +414,21 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
             geometry: { type: 'LineString', coordinates: polyline.positions },
           },
         });
+
+        if (polyline.outlineWidth && polyline.outlineWidth > (polyline.width ?? 5)) {
+          map.addLayer({
+            id: `${routeId}-outline`,
+            type: 'line',
+            source: routeId,
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': polyline.outlineColor || '#ffffff',
+              'line-width': polyline.outlineWidth,
+              'line-opacity': polyline.outlineOpacity ?? 0.9,
+            },
+          });
+        }
+
         map.addLayer({
           id: routeId,
           type: 'line',
