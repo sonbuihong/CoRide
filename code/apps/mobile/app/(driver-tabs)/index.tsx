@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Image } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Bell, PlusCircle, CarFront, FileText, Landmark, ShieldCheck, Star } from 'lucide-react-native';
+import { CarFront, FileText, Landmark, Star } from 'lucide-react-native';
 
 import { rideService } from '../../src/services/ride.service';
 import { socketService } from '../../src/services/socket.service';
@@ -11,12 +10,13 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { RideCard } from '../../src/components/RideCard';
 import { AppText } from '../../src/components/ui/AppText';
 import { AppButton } from '../../src/components/ui/AppButton';
+import { useDriverAvailability } from '../../src/hooks/useDriverAvailability';
 
 export default function DriverHomeScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { isOnline, isChanging, goOnline, goOffline } = useDriverAvailability();
   
   const { data: rides, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['my-driver-rides'],
@@ -47,40 +47,11 @@ export default function DriverHomeScreen() {
     };
   }, [refetch, queryClient]);
 
-  const displayAvatar = user?.avatarUrl || user?.avatar;
   // Giả lập/lấy thu nhập thực tế từ ví tài xế
   const driverEarnings = (user as any)?.wallet?.driverEarnings || 0;
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      {/* Header cá nhân hóa chế độ Tài xế */}
-      <View className="flex-row items-center justify-between px-6 py-4 bg-background">
-        <View className="flex-row items-center">
-          {displayAvatar ? (
-            <Image source={{ uri: displayAvatar }} className="w-12 h-12 rounded-full mr-3 bg-slate-100" />
-          ) : (
-            <View className="w-12 h-12 rounded-full mr-3 bg-driver/10 items-center justify-center border border-driver/20">
-              <AppText variant="h2" weight="bold" className="text-driver">
-                {user?.firstName?.charAt(0) || 'D'}
-              </AppText>
-            </View>
-          )}
-          <View>
-            <AppText variant="caption" className="text-text-secondary">Chế độ Tài xế,</AppText>
-            <AppText variant="body" weight="bold" className="text-text-primary">
-              {user?.firstName} {user?.lastName}
-            </AppText>
-          </View>
-        </View>
-        <TouchableOpacity 
-          className="w-10 h-10 rounded-full bg-surface border border-border/30 items-center justify-center shadow-sm active:bg-slate-50"
-          accessibilityRole="button"
-          accessibilityLabel="Xem thông báo tài xế"
-        >
-          <Bell size={20} color="#64748B" />
-        </TouchableOpacity>
-      </View>
-
+    <View className="flex-1 bg-background">
       <ScrollView 
         className="flex-1"
         showsVerticalScrollIndicator={false}
@@ -90,15 +61,25 @@ export default function DriverHomeScreen() {
       >
         <View className="px-6 py-2">
           <AppText variant="h1" weight="bold" className="text-text-primary mb-1">
-            Bảng điều khiển tài xế
+            Sẵn sàng cho hành trình mới?
           </AppText>
           <AppText variant="bodySmall" className="text-text-secondary">
-            Theo dõi doanh thu hành trình và quản lý các yêu cầu đặt chỗ của bạn.
+            Bật trực tuyến để nhận chuyến hoặc đăng trước một hành trình đi chung.
           </AppText>
         </View>
 
         {/* Panel Thu nhập và Chỉ số Vận hành (Earnings Board) */}
         <View className="px-6 mt-4 mb-6">
+          <View className={`mb-4 rounded-2xl border p-4 ${isOnline ? 'border-green-200 bg-green-50' : 'border-slate-200 bg-white'}`}>
+            <AppText weight="bold" className="text-text-primary">{isOnline ? 'Đang sẵn sàng nhận cuốc' : 'Bạn đang ngoại tuyến'}</AppText>
+            <AppText variant="caption" className="mb-3 mt-1 text-text-secondary">Bật trực tuyến để hệ thống có thể gửi yêu cầu gọi xe nhanh gần bạn.</AppText>
+            <AppButton
+              title={isOnline ? 'Ngừng nhận cuốc' : 'Bắt đầu nhận cuốc'}
+              variant={isOnline ? 'outline' : 'driver'}
+              isLoading={isChanging}
+              onPress={isOnline ? goOffline : goOnline}
+            />
+          </View>
           <View className="bg-surface p-5 rounded-3xl border border-border/40 shadow-sm">
             <View className="flex-row justify-between items-center mb-4 pb-4 border-b border-slate-100">
               <View>

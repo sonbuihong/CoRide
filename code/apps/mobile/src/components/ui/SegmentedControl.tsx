@@ -37,7 +37,7 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
             accessibilityRole="tab"
             accessibilityState={{ selected: isSelected }}
             accessibilityLabel={segment}
-            className={`flex-1 py-2 px-4 rounded-lg items-center justify-center transition-all ${
+            className={`flex-1 min-h-11 px-2 rounded-lg items-center justify-center ${
               isSelected ? 'bg-surface shadow-sm' : 'bg-transparent'
             }`}
           >

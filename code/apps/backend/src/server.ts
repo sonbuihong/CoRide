@@ -8,7 +8,7 @@ import { initSocket } from './socket/socket.server';
 import { connectRedis } from './shared/lib/redis';
 import { connectRabbitMQ } from './shared/lib/rabbitmq';
 
-const port = Number(process.env.PORT ?? '5002');
+const port = Number(process.env.PORT ?? '5101');
 
 // Chỉ listen khi không ở môi trường test — Jest sẽ import app trực tiếp từ app.ts
 if (process.env.NODE_ENV !== 'test') {

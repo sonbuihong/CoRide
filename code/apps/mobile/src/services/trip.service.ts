@@ -1,17 +1,8 @@
 import { apiClient } from '../api/client';
-
-export interface TripRequestPayload {
-  originAddress: string;
-  originLat: number;
-  originLng: number;
-  destAddress: string;
-  destLat: number;
-  destLng: number;
-  vehicleType: 'BIKE' | 'CAR';
-}
+import type { CreateTripRequestInput, TripStatus } from '@repo/shared';
 
 export const tripService = {
-  createTrip: async (data: TripRequestPayload) => {
+  createTrip: async (data: CreateTripRequestInput) => {
     const response = await apiClient.post('/trips', data);
     return response.data;
   },
@@ -36,7 +27,7 @@ export const tripService = {
     return response.data;
   },
 
-  updateTripStatus: async (id: string, status: string) => {
+  updateTripStatus: async (id: string, status: TripStatus) => {
     const response = await apiClient.patch(`/trips/${id}/status`, { status });
     return response.data;
   },

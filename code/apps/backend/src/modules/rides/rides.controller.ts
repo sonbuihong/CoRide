@@ -30,6 +30,19 @@ export const searchRides = async (
   }
 };
 
+export const getMyRides = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const rides = await RidesService.searchRides({ driverId: req.user!.id });
+    res.json({ rides, total: rides.length });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getRideById = async (
   req: Request,
   res: Response,

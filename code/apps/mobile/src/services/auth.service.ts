@@ -29,7 +29,7 @@ export interface User {
 }
 
 export const authService = {
-  login: async (data: LoginInput): Promise<{ message: string; user: User; accessToken: string }> => {
+  login: async (data: LoginInput): Promise<{ message: string; user: User; accessToken: string; refreshToken: string }> => {
     const response = await apiClient.post('/auth/login', data);
     return response.data;
   },
@@ -39,8 +39,8 @@ export const authService = {
     return response.data;
   },
 
-  logout: async (): Promise<{ message: string }> => {
-    const response = await apiClient.post('/auth/logout');
+  logout: async (refreshToken?: string | null): Promise<{ message: string }> => {
+    const response = await apiClient.post('/auth/logout', { refreshToken });
     return response.data;
   },
 

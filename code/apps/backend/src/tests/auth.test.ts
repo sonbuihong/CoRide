@@ -5,9 +5,8 @@ import bcrypt from 'bcrypt';
 import * as jose from 'jose';
 
 // Mocking prisma
-jest.mock('@repo/database', () => ({
-  __esModule: true,
-  default: {
+jest.mock('@repo/database', () => {
+  const mockPrisma = {
     user: {
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -17,10 +16,12 @@ jest.mock('@repo/database', () => ({
       findUnique: jest.fn(),
       update: jest.fn(),
     },
-  },
-}));
+  };
+  return { __esModule: true, default: mockPrisma, extendedPrisma: mockPrisma };
+});
 
-const JWT_SECRET = 'super-secret-key';
+const JWT_SECRET = 'coride-test-secret';
+process.env.JWT_SECRET = JWT_SECRET;
 const secret = new TextEncoder().encode(JWT_SECRET);
 
 describe('Auth API', () => {
@@ -32,6 +33,7 @@ describe('Auth API', () => {
     const registerData = {
       email: 'test@example.com',
       password: 'password123',
+      confirmPassword: 'password123',
       firstName: 'Test',
       lastName: 'User',
       phone: '0912345678'
@@ -62,7 +64,7 @@ describe('Auth API', () => {
         .post('/api/auth/register')
         .send(registerData);
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(409);
       expect(response.body.message).toContain('đã tồn tại');
     });
   });
@@ -91,6 +93,24 @@ describe('Auth API', () => {
       expect(response.status).toBe(200);
       expect(response.body.accessToken).toBeDefined();
       expect(response.header['set-cookie']).toBeDefined();
+    });
+
+    it('returns a refresh token in the body for a mobile client', async () => {
+      const hashedPassword = await bcrypt.hash(loginData.password, 10);
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-id', email: loginData.email, password: hashedPassword,
+        firstName: 'Test', lastName: 'User',
+      });
+      (prisma.refreshToken.create as jest.Mock).mockResolvedValue({});
+
+      const response = await request(app)
+        .post('/api/auth/login')
+        .set('X-Client-Type', 'mobile')
+        .send(loginData);
+
+      expect(response.status).toBe(200);
+      expect(response.body.accessToken).toBeDefined();
+      expect(response.body.refreshToken).toBeDefined();
     });
 
     it('should return 401 for incorrect password', async () => {
@@ -135,6 +155,27 @@ describe('Auth API', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.accessToken).toBeDefined();
+    });
+
+    it('rotates a refresh token supplied in the mobile request body', async () => {
+      const userId = 'user-id';
+      const refreshToken = await new jose.SignJWT({ userId })
+        .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('7d').sign(secret);
+      (prisma.refreshToken.findUnique as jest.Mock).mockResolvedValue({
+        id: 'token-id', token: refreshToken, userId, revoked: false,
+        expiresAt: new Date(Date.now() + 1000000),
+      });
+      (prisma.refreshToken.update as jest.Mock).mockResolvedValue({});
+      (prisma.refreshToken.create as jest.Mock).mockResolvedValue({});
+
+      const response = await request(app)
+        .post('/api/auth/refresh')
+        .set('X-Client-Type', 'mobile')
+        .send({ refreshToken });
+
+      expect(response.status).toBe(200);
+      expect(response.body.accessToken).toBeDefined();
+      expect(response.body.refreshToken).toBeDefined();
     });
   });
 

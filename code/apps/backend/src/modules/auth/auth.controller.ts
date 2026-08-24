@@ -8,6 +8,8 @@ const REFRESH_COOKIE_OPTIONS = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày (ms)
 };
 
+const isMobileClient = (req: Request) => req.get('X-Client-Type') === 'mobile';
+
 export const register = async (
   req: Request,
   res: Response,
@@ -30,7 +32,12 @@ export const login = async (
   try {
     const { user, accessToken, refreshToken } = await AuthService.loginUser(req.body);
     res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
-    res.json({ message: 'Đăng nhập thành công', user, accessToken });
+    res.json({
+      message: 'Đăng nhập thành công',
+      user,
+      accessToken,
+      ...(isMobileClient(req) && { refreshToken }),
+    });
   } catch (error) {
     next(error);
   }
@@ -42,7 +49,7 @@ export const refresh = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const refreshToken = req.cookies.refreshToken as string | undefined;
+    const refreshToken = (req.body?.refreshToken ?? req.cookies.refreshToken) as string | undefined;
     if (!refreshToken) {
       res.clearCookie('refreshToken');
       res.status(401).json({ message: 'Không tìm thấy refresh token' });
@@ -54,7 +61,11 @@ export const refresh = async (
         await AuthService.refreshTokens(refreshToken);
 
       res.cookie('refreshToken', newRefreshToken, REFRESH_COOKIE_OPTIONS);
-      res.json({ message: 'Làm mới token thành công', accessToken });
+      res.json({
+        message: 'Làm mới token thành công',
+        accessToken,
+        ...(isMobileClient(req) && { refreshToken: newRefreshToken }),
+      });
     } catch (refreshError) {
       // Tự động clear cookie lỗi để dev/user không bị kẹt
       res.clearCookie('refreshToken');
@@ -71,7 +82,7 @@ export const logout = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const refreshToken = req.cookies.refreshToken as string | undefined;
+    const refreshToken = (req.body?.refreshToken ?? req.cookies.refreshToken) as string | undefined;
     if (refreshToken) {
       await AuthService.logout(refreshToken);
     }

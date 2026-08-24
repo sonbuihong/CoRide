@@ -11,8 +11,8 @@ import morgan from 'morgan';
 const app = express();
 
 const PORT = process.env.PORT || 5001;
-const MONOLITH_URL = process.env.MONOLITH_URL || 'http://127.0.0.1:5002';
-const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://127.0.0.1:5003';
+const MONOLITH_URL = process.env.MONOLITH_URL || 'http://127.0.0.1:5101';
+const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://127.0.0.1:5201';
 
 // Middleware
 app.use(

@@ -55,20 +55,20 @@ services:
       dockerfile: apps/backend/Dockerfile
     container_name: coride_backend
     ports:
-      - "5002:5002"
+      - "5101:5101"
     environment:
       - DATABASE_URL=postgresql://root:rootpassword@postgres_db:5432/coride_db?schema=public
       - REDIS_URL=redis://redis_cache:6379
       - JWT_SECRET=your_jwt_secret_key_here
       - CLOUDINARY_URL=cloudinary://your_key
-      - PORT=5002
+      - PORT=5101
     depends_on:
       postgres_db:
         condition: service_healthy
       redis_cache:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5101/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -81,12 +81,12 @@ services:
       dockerfile: apps/notification-service/Dockerfile
     container_name: coride_notification_service
     ports:
-      - "5003:5003"
+      - "5201:5201"
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
       - DATABASE_URL=postgresql://root:rootpassword@postgres_db:5432/coride_db?schema=public
       - REDIS_URL=redis://redis_cache:6379
-      - PORT=5003
+      - PORT=5201
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -106,8 +106,8 @@ services:
       - "5001:5001"
     environment:
       - PORT=5001
-      - BACKEND_URL=http://backend:5002
-      - NOTIFICATION_SERVICE_URL=http://notification-service:5003
+      - MONOLITH_URL=http://backend:5101
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5201
     depends_on:
       - backend
       - notification-service

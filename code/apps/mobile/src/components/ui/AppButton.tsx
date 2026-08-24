@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, TouchableOpacityProps, ActivityIndicator } from 'react-native';
 import { AppText } from './AppText';
+import { colors } from '../../theme/tokens';
 
 export interface AppButtonProps extends TouchableOpacityProps {
   title: string;
@@ -22,7 +23,7 @@ export const AppButton: React.FC<AppButtonProps> = ({
   leftIcon,
   ...props
 }) => {
-  const baseStyle = 'rounded-xl flex-row justify-center items-center py-4 px-6 active:opacity-85 min-h-[56px]';
+  const baseStyle = 'rounded-2xl flex-row justify-center items-center py-3 px-6 active:opacity-85 min-h-[52px]';
   
   const variantStyles = {
     primary: 'bg-passenger active:bg-passenger-pressed',
@@ -49,7 +50,7 @@ export const AppButton: React.FC<AppButtonProps> = ({
 
   const getIndicatorColor = () => {
     if (variant === 'outline' || variant === 'ghost' || variant === 'secondary') {
-      return '#3B82F6';
+      return colors.primary;
     }
     return '#ffffff';
   };

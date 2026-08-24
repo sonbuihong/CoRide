@@ -17,11 +17,11 @@ export const AppText: React.FC<AppTextProps> = ({
   const baseStyle = 'text-text-primary';
   
   const variantStyles = {
-    display: 'text-4xl leading-tight',
-    h1: 'text-3xl leading-snug',
-    h2: 'text-2xl leading-snug',
+    display: 'text-3xl leading-tight',
+    h1: 'text-2xl leading-snug',
+    h2: 'text-xl leading-snug',
     h3: 'text-lg leading-snug',
-    title: 'text-xl leading-normal',
+    title: 'text-lg leading-normal',
     body: 'text-base leading-normal',
     bodySmall: 'text-sm leading-normal',
     caption: 'text-xs text-text-secondary leading-normal',

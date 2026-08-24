@@ -8,6 +8,7 @@ const router = Router();
 
 // Public routes — không cần đăng nhập để tìm và xem chuyến đi
 router.get('/', validate(searchRideSchema, 'query'), ridesController.searchRides);
+router.get('/mine', authenticate, ridesController.getMyRides);
 router.get('/:id', ridesController.getRideById);
 
 // Protected routes — cần đăng nhập

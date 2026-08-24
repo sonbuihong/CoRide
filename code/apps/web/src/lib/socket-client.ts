@@ -29,13 +29,11 @@ function getToken(): string {
 }
 
 function createSocket(): Socket {
-  // NEXT_PUBLIC_SOCKET_URL: connect thẳng vào backend (bypass api-gateway)
-  // Lý do: api-gateway dùng http-proxy-middleware không forward đúng
-  // Socket.IO WebSocket upgrade → socket bị disconnect ngay sau khi connect
+  // REST API và Socket.IO cùng kết nối qua cổng public của API Gateway.
   const SOCKET_URL =
     process.env.NEXT_PUBLIC_SOCKET_URL ||
     process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ||
-    'http://localhost:5002';
+    'http://localhost:5001';
 
   const socket = io(SOCKET_URL, {
     auth: (cb) => {

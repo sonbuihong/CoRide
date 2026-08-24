@@ -12,7 +12,7 @@ export const getAccessToken = async (): Promise<string | null> => {
       return typeof window !== 'undefined' ? localStorage.getItem(SECURE_STORAGE_KEYS.accessToken) : null;
     }
     return await SecureStore.getItemAsync(SECURE_STORAGE_KEYS.accessToken);
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -39,7 +39,7 @@ export const getRefreshToken = async (): Promise<string | null> => {
       return typeof window !== 'undefined' ? localStorage.getItem(SECURE_STORAGE_KEYS.refreshToken) : null;
     }
     return await SecureStore.getItemAsync(SECURE_STORAGE_KEYS.refreshToken);
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -85,7 +85,7 @@ export const getAppMode = async (userId: string): Promise<AppMode> => {
     
     if (value === 'driver') return 'driver';
     return 'passenger'; // passenger is always default
-  } catch (error) {
+  } catch {
     return 'passenger';
   }
 };

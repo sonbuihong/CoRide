@@ -93,7 +93,10 @@ export class PaymentsController {
 
       const trip = await prisma.tripRequest.findUnique({ where: { id } });
       if (trip) {
-        isAllowed = trip.passengerId === userId || trip.driverId === userId;
+        isAllowed = trip.passengerId === userId;
+        if (trip.status !== TripStatus.WAITING_PAYMENT) {
+          throw new AppError('Chuyến đi chưa sẵn sàng để thanh toán', 400);
+        }
         amount = trip.finalPrice ?? trip.estimatedPrice;
         description = `Thanh toan chuyen di ${trip.id.substring(0, 8)}`;
       } else {
@@ -149,6 +152,7 @@ export class PaymentsController {
 
       if (trip) {
         if (trip.passengerId !== userId) throw new AppError('Chỉ hành khách mới có thể xác nhận thanh toán', 403);
+        if (trip.status !== TripStatus.WAITING_PAYMENT) throw new AppError('Chuyến đi chưa sẵn sàng để thanh toán', 400);
         if (trip.paymentStatus === PaymentStatus.PAID) throw new AppError('Chuyến đi này đã được thanh toán', 400);
         amount = trip.finalPrice ?? trip.estimatedPrice;
         isTrip = true;

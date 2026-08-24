@@ -1,276 +1,167 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Image, TextInput } from 'react-native';
+import React, { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Bell, Search, PlusCircle, ArrowUpDown, MapPin, Calendar, Users, CarFront } from 'lucide-react-native';
+import { ArrowRight, RefreshCw, Search } from 'lucide-react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
+import { RideCard } from '../../src/components/RideCard';
+import { AppText } from '../../src/components/ui/AppText';
+import { EmptyState } from '../../src/components/ui/EmptyState';
+import { SkeletonLoader } from '../../src/components/ui/SkeletonLoader';
 import { rideService } from '../../src/services/ride.service';
 import { socketService } from '../../src/services/socket.service';
-import { useAuth } from '../../src/hooks/useAuth';
-import { RideCard } from '../../src/components/RideCard';
-import { RideMap } from '../../src/components/RideMap';
-import { AppText } from '../../src/components/ui/AppText';
-import { AppButton } from '../../src/components/ui/AppButton';
+import { colors, layout, radius, spacing } from '../../src/theme/tokens';
+
+const QUERY_KEY = ['rides'];
 
 export default function PassengerHomeScreen() {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // State quản lý việc nhập liệu tìm kiếm
-  const [pickup, setPickup] = useState('Hà Đông, Hà Nội');
-  const [destination, setDestination] = useState('Cầu Giấy, Hà Nội');
-  const [seats, setSeats] = useState(1);
-  
-  // State truyền vào React Query để trigger fetch động
-  const [searchFilter, setSearchFilter] = useState({
-    origin: '',
-    destination: '',
-    seats: 1
-  });
-  
-  const { data: rides, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ['rides', searchFilter.origin, searchFilter.destination, searchFilter.seats],
-    queryFn: () => rideService.getRides({
-      origin: searchFilter.origin || undefined,
-      destination: searchFilter.destination || undefined,
-      seats: searchFilter.seats || undefined,
-    }),
+  const { data: rides = [], isLoading, isError, refetch, isRefetching } = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: () => rideService.getRides({}),
   });
 
   useEffect(() => {
-    let isActive = true;
-
-    const handleRideEvent = () => {
-      if (isActive) refetch();
+    let active = true;
+    const refresh = () => { if (active) refetch(); };
+    const remove = ({ id }: { id: string }) => {
+      if (active) queryClient.setQueryData(QUERY_KEY, (current: any[] | undefined) => current?.filter((ride) => ride.id !== id));
+    };
+    const updateStatus = ({ rideId, status }: { rideId: string; status: string }) => {
+      if (status === 'CANCELLED' || status === 'COMPLETED') remove({ id: rideId });
+      else refresh();
     };
 
-    const handleRideDeleted = (data: { id: string }) => {
-      if (!isActive) return;
-      queryClient.setQueryData(['rides', searchFilter.origin, searchFilter.destination, searchFilter.seats], (oldRides: any) => {
-        if (!oldRides) return oldRides;
-        return oldRides.filter((ride: any) => ride.id !== data.id);
-      });
-    };
-
-    const handleRideStatus = (data: { rideId: string; status: string }) => {
-      if (!isActive) return;
-      if (data.status === 'CANCELLED' || data.status === 'COMPLETED') {
-        queryClient.setQueryData(['rides', searchFilter.origin, searchFilter.destination, searchFilter.seats], (oldRides: any) => {
-          if (!oldRides) return oldRides;
-          return oldRides.filter((ride: any) => ride.id !== data.rideId);
-        });
-      } else {
-        refetch();
-      }
-    };
-
-    const setupSocket = async () => {
-      await socketService.connect();
-      if (!isActive) return;
-
-      socketService.on('ride:created', handleRideEvent);
-      socketService.on('ride:updated', handleRideEvent);
-      socketService.on('ride:deleted', handleRideDeleted);
-      socketService.on('ride:status', handleRideStatus);
-    };
-
-    setupSocket();
-
-    return () => {
-      isActive = false;
-      socketService.off('ride:created');
-      socketService.off('ride:updated');
-      socketService.off('ride:deleted');
-      socketService.off('ride:status');
-    };
-  }, [refetch, queryClient, searchFilter]);
-
-  // Hàm hoán đổi điểm đón và điểm đến
-  const handleSwapLocations = () => {
-    const temp = pickup;
-    setPickup(destination);
-    setDestination(temp);
-  };
-
-  // Hàm kích hoạt tìm kiếm
-  const handleSearch = () => {
-    setSearchFilter({
-      origin: pickup,
-      destination: destination,
-      seats: seats
+    socketService.connect().then(() => {
+      if (!active) return;
+      socketService.on('ride:created', refresh);
+      socketService.on('ride:updated', refresh);
+      socketService.on('ride:deleted', remove);
+      socketService.on('ride:status', updateStatus);
     });
-  };
+    return () => {
+      active = false;
+      socketService.off('ride:created', refresh);
+      socketService.off('ride:updated', refresh);
+      socketService.off('ride:deleted', remove);
+      socketService.off('ride:status', updateStatus);
+    };
+  }, [queryClient, refetch]);
 
-  const displayAvatar = user?.avatarUrl || user?.avatar;
+  const resultTitle = isLoading
+    ? 'Đang tải...'
+    : rides.length
+      ? `Khám phá ${rides.length} chuyến đi`
+      : 'Chưa có chuyến đi nào';
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      {/* Header cá nhân hóa */}
-      <View className="flex-row items-center justify-between px-6 py-4 bg-background">
-        <View className="flex-row items-center">
-          {displayAvatar ? (
-            <Image source={{ uri: displayAvatar }} className="w-12 h-12 rounded-full mr-3 bg-slate-100" />
-          ) : (
-            <View className="w-12 h-12 rounded-full mr-3 bg-passenger-soft items-center justify-center border border-passenger/10">
-              <AppText variant="h2" weight="bold" className="text-passenger">
-                {user?.firstName?.charAt(0) || 'U'}
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
+      contentContainerStyle={styles.scrollContent}
+    >
+      {/* Hero section */}
+      <View style={styles.hero}>
+        <View pointerEvents="none" style={styles.heroGlow} />
+        <View style={styles.heroContent}>
+          <AppText accessibilityRole="header" style={styles.heroTitle}>Khởi hành cùng nhau.</AppText>
+          <AppText style={styles.heroSubtitle}>
+            Chia sẻ hành trình, tiết kiệm chi phí và bảo vệ môi trường.
+          </AppText>
+
+          {/* Search entry pill – navigates to Search screen */}
+          <View style={styles.heroSearchShell}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Tìm chuyến đi"
+              accessibilityHint="Chuyển sang trang tìm kiếm chuyến đi"
+              onPress={() => router.push('/search' as any)}
+              style={({ pressed }) => [styles.heroSearch, pressed && styles.heroSearchPressed]}
+            >
+              <View style={styles.heroSearchIcon}>
+                <Search size={20} color="#FFFFFF" strokeWidth={2.2} />
+              </View>
+              <AppText
+                style={styles.heroSearchText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                Bạn muốn đi đâu?
               </AppText>
-            </View>
-          )}
-          <View>
-            <AppText variant="caption" className="text-text-secondary">Chào buổi sáng,</AppText>
-            <AppText variant="body" weight="bold" className="text-text-primary">
-              {user?.firstName} {user?.lastName}
-            </AppText>
+              <View style={styles.heroSearchAction}>
+                <ArrowRight size={18} color="#FFFFFF" strokeWidth={2.2} />
+              </View>
+            </Pressable>
           </View>
         </View>
-        <TouchableOpacity 
-          className="w-10 h-10 rounded-full bg-surface border border-border items-center justify-center shadow-sm active:bg-slate-50"
-          accessibilityRole="button"
-          accessibilityLabel="Xem thông báo"
-        >
-          <Bell size={20} color="#64748B" />
-        </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#3B82F6" />
-        }
-      >
-        {/* Bản đồ làm nền / Khung nhìn bản đồ */}
-        <View className="px-6 mb-6">
-          <RideMap />
-        </View>
-
-        {/* Hộp tìm kiếm chuyến đi (SearchRideCard) */}
-        <View className="px-6 mb-6">
-          <View className="bg-surface p-5 rounded-3xl shadow-sm border border-border/40">
-            <View className="flex-row relative">
-              {/* Cột mốc Timeline bên trái */}
-              <View className="items-center mr-4 mt-3">
-                <View className="w-3.5 h-3.5 rounded-full border-[3px] border-passenger bg-surface z-10" />
-                <View className="w-0.5 h-16 bg-slate-200 my-1" />
-                <View className="w-3.5 h-3.5 rounded-full border-[3px] border-status-danger bg-surface z-10" />
-              </View>
-              
-              {/* Form nhập liệu Điểm đi / Điểm đến */}
-              <View className="flex-1 justify-between py-1">
-                <View className="pb-2 border-b border-slate-100 mb-2">
-                  <AppText variant="caption" weight="medium" className="text-text-secondary">Điểm đón</AppText>
-                  <TextInput
-                    className="text-text-primary text-base font-semibold h-9 p-0"
-                    value={pickup}
-                    onChangeText={setPickup}
-                    placeholder="Nhập vị trí đón khách"
-                    placeholderTextColor="#94A3B8"
-                    accessibilityLabel="Điểm đón"
-                  />
-                </View>
-                <View className="pt-2">
-                  <AppText variant="caption" weight="medium" className="text-text-secondary">Điểm đến</AppText>
-                  <TextInput
-                    className="text-text-primary text-base font-semibold h-9 p-0"
-                    value={destination}
-                    onChangeText={setDestination}
-                    placeholder="Bạn muốn đi đâu?"
-                    placeholderTextColor="#94A3B8"
-                    accessibilityLabel="Điểm đến"
-                  />
-                </View>
-              </View>
-              
-              {/* Nút đổi chiều nổi ở bên phải */}
-              <View className="absolute right-0 top-[30%] z-20">
-                <TouchableOpacity 
-                  onPress={handleSwapLocations}
-                  className="w-10 h-10 rounded-full bg-surface border border-border shadow-md items-center justify-center active:bg-slate-50"
-                  accessibilityRole="button"
-                  accessibilityLabel="Đổi chiều điểm đi và điểm đến"
-                >
-                  <ArrowUpDown size={18} color="#3B82F6" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Selector phụ: Ngày đi & Số ghế */}
-            <View className="flex-row mt-6 mb-5 space-x-3">
-              <View className="flex-1 flex-row items-center justify-center bg-slate-50 py-3 rounded-xl border border-border/40 mr-2">
-                <Calendar size={18} color="#64748B" className="mr-2" />
-                <AppText variant="bodySmall" weight="semibold" className="text-text-primary">Hôm nay</AppText>
-              </View>
-              <TouchableOpacity 
-                onPress={() => setSeats(prev => (prev % 4) + 1)}
-                className="flex-1 flex-row items-center justify-center bg-slate-50 py-3 rounded-xl border border-border/40 ml-2"
-                accessibilityRole="button"
-                accessibilityLabel={`Số ghế đặt: ${seats} ghế`}
-              >
-                <Users size={18} color="#64748B" className="mr-2" />
-                <AppText variant="bodySmall" weight="semibold" className="text-text-primary">{seats} ghế</AppText>
-              </TouchableOpacity>
-            </View>
-
-            <AppButton 
-              title="Tìm chuyến đi" 
-              variant="passenger"
-              onPress={handleSearch} 
-              className="w-full" 
-            />
-          </View>
-        </View>
-
-        {/* Hành động nhanh (Quick Actions) */}
-        <View className="px-6 mb-8 flex-row justify-between">
-          <TouchableOpacity 
-            className="flex-1 bg-passenger-soft p-4 rounded-2xl border border-passenger/10 mr-2"
-            activeOpacity={0.7}
-            onPress={handleSearch}
+      {/* Ride list section */}
+      <View style={styles.content}>
+        <View style={styles.resultsHeader}>
+          <AppText accessibilityRole="header" style={styles.resultsTitle}>{resultTitle}</AppText>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Làm mới danh sách chuyến đi"
+            disabled={isRefetching}
+            onPress={() => refetch()}
+            style={({ pressed }) => [styles.refreshButton, pressed && styles.refreshPressed, isRefetching && styles.disabled]}
           >
-            <Search size={24} color="#3B82F6" className="mb-2" />
-            <AppText variant="body" weight="bold" className="text-text-primary">Tìm chuyến</AppText>
-            <AppText variant="caption" className="text-text-secondary mt-1">Hàng ngàn chuyến đi mỗi ngày</AppText>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            className="flex-1 bg-surface p-4 rounded-2xl border border-border/40 ml-2 shadow-sm"
-            activeOpacity={0.7}
-            onPress={() => router.push('/ride/create' as any)}
-          >
-            <PlusCircle size={24} color="#3B82F6" className="mb-2" />
-            <AppText variant="body" weight="bold" className="text-text-primary">Đăng chuyến</AppText>
-            <AppText variant="caption" className="text-text-secondary mt-1">Tiết kiệm chi phí đi lại</AppText>
-          </TouchableOpacity>
+            {isRefetching
+              ? <ActivityIndicator size="small" color={colors.textPrimary} />
+              : <RefreshCw size={16} color={colors.textPrimary} />}
+            <AppText variant="bodySmall" weight="medium">Làm mới</AppText>
+          </Pressable>
         </View>
 
-        {/* Chuyến đi đề xuất (Recommended Rides) */}
-        <View className="px-6 pb-10">
-          <View className="flex-row justify-between items-center mb-4">
-            <AppText variant="h2" weight="bold" className="text-text-primary">
-              {searchFilter.origin || searchFilter.destination ? 'Kết quả tìm kiếm' : 'Đề xuất cho bạn'}
-            </AppText>
+        {isLoading ? (
+          <View style={styles.skeletonCard}>
+            <SkeletonLoader height={20} width="45%" />
+            <SkeletonLoader height={48} width="100%" borderRadius={14} />
+            <SkeletonLoader height={76} width="100%" borderRadius={14} />
           </View>
-
-          {isLoading ? (
-            <View className="py-10 items-center">
-              <ActivityIndicator size="large" color="#3B82F6" />
-            </View>
-          ) : rides && rides.length > 0 ? (
-            rides.map((ride: any) => (
-              <RideCard key={ride.id} ride={ride} />
-            ))
-          ) : (
-            <View className="py-12 items-center bg-surface rounded-3xl border border-border/40 shadow-sm">
-              <CarFront size={48} color="#94A3B8" className="mb-4" />
-              <AppText variant="body" weight="bold" className="text-text-primary">Chưa có chuyến đi phù hợp</AppText>
-              <AppText variant="bodySmall" className="text-text-secondary mt-1">Thử tìm kiếm với lộ trình khác nhé</AppText>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-    </View>
+        ) : isError ? (
+          <EmptyState
+            title="Không thể tải danh sách chuyến đi"
+            description="Vui lòng kiểm tra kết nối mạng và thử lại."
+            actionTitle="Thử lại"
+            onAction={() => refetch()}
+          />
+        ) : rides.length ? (
+          rides.map((ride) => <RideCard key={ride.id} ride={ride} showMatch={false} />)
+        ) : (
+          <EmptyState
+            title="Chưa có chuyến đi nào"
+            description="Hãy quay lại sau hoặc kéo xuống để làm mới danh sách."
+            actionTitle="Làm mới"
+            onAction={() => refetch()}
+          />
+        )}
+      </View>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: { backgroundColor: colors.background, paddingBottom: spacing.xxl },
+  hero: { backgroundColor: '#080808', overflow: 'hidden', paddingBottom: 64, paddingHorizontal: spacing.md, paddingTop: 54, position: 'relative' },
+  heroGlow: { alignSelf: 'center', backgroundColor: 'rgba(0,113,227,0.30)', borderRadius: 260, height: 260, position: 'absolute', top: -130, width: 400 },
+  heroContent: { alignSelf: 'center', maxWidth: layout.maxContentWidth, width: '100%' },
+  heroTitle: { color: '#FFFFFF', fontSize: 38, fontWeight: '700', letterSpacing: -0.8, lineHeight: 42, textAlign: 'center' },
+  heroSubtitle: { color: 'rgba(255,255,255,0.50)', fontSize: 14, letterSpacing: -0.15, lineHeight: 22, marginHorizontal: spacing.sm, marginTop: spacing.sm, textAlign: 'center' },
+  heroSearchShell: { alignSelf: 'stretch', elevation: 20, marginHorizontal: -4, marginTop: spacing.xxxl, shadowColor: '#000', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.50, shadowRadius: 28 },
+  heroSearch: { alignItems: 'center', alignSelf: 'stretch', backgroundColor: '#1C1C1E', borderColor: 'rgba(255,255,255,0.12)', borderRadius: radius.pill, borderWidth: 1, flexDirection: 'row', flexWrap: 'nowrap', gap: spacing.sm, height: 64, paddingHorizontal: 9, width: '100%' },
+  heroSearchPressed: { backgroundColor: '#242426', borderColor: 'rgba(255,255,255,0.22)', opacity: 0.95 },
+  heroSearchIcon: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius.pill, flexShrink: 0, height: 44, justifyContent: 'center', shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.55, shadowRadius: 14, width: 44 },
+  heroSearchText: { color: 'rgba(255,255,255,0.82)', flex: 1, flexShrink: 1, fontSize: 16, fontWeight: '500', letterSpacing: -0.2, lineHeight: 20, minWidth: 0, paddingHorizontal: spacing.xxs, textAlignVertical: 'center' },
+  heroSearchAction: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius.pill, flexShrink: 0, height: 44, justifyContent: 'center', shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.45, shadowRadius: 8, width: 44 },
+  content: { alignSelf: 'center', maxWidth: layout.maxContentWidth, paddingHorizontal: spacing.md, paddingTop: spacing.xxxl, width: '100%' },
+  resultsHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between', marginBottom: spacing.xl },
+  resultsTitle: { color: colors.textPrimary, flex: 1, fontSize: 28, fontWeight: '600', letterSpacing: -0.42, lineHeight: 32 },
+  refreshButton: { alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: radius.pill, flexDirection: 'row', gap: spacing.xs, minHeight: 44, paddingHorizontal: spacing.md },
+  refreshPressed: { backgroundColor: 'rgba(0,0,0,0.09)' },
+  disabled: { opacity: 0.5 },
+  skeletonCard: { backgroundColor: colors.surface, borderRadius: 24, gap: spacing.md, padding: spacing.lg },
+});

@@ -22,12 +22,24 @@ export class ReviewsService {
 
     // 3. Kiểm tra người đánh giá có tham gia chuyến đi không
     const isDriver = ride.driverId === reviewerId;
-    const isConfirmedPassenger = await prisma.booking.findFirst({
-      where: { rideId, passengerId: reviewerId, status: 'CONFIRMED' },
+    const passengerBooking = await prisma.booking.findFirst({
+      where: { rideId, passengerId: reviewerId, status: { in: ['CONFIRMED', 'COMPLETED'] } },
     });
 
-    if (!isDriver && !isConfirmedPassenger) {
+    if (!isDriver && !passengerBooking) {
       throw new AppError('Bạn không có quyền đánh giá chuyến đi này', 403);
+    }
+
+    if (!isDriver && revieweeId !== ride.driverId) {
+      throw new AppError('Hành khách chỉ có thể đánh giá tài xế của chuyến đi', 403);
+    }
+    if (isDriver) {
+      const reviewedPassenger = await prisma.booking.findFirst({
+        where: { rideId, passengerId: revieweeId, status: { in: ['CONFIRMED', 'COMPLETED'] } },
+      });
+      if (!reviewedPassenger) {
+        throw new AppError('Tài xế chỉ có thể đánh giá hành khách của chuyến đi', 403);
+      }
     }
 
     // 4. Kiểm tra chưa đánh giá người này trong chuyến đi này

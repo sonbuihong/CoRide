@@ -54,13 +54,14 @@ export const useAuth = () => {
       setStatus('UNAUTHENTICATED');
       socketService.disconnect();
     }
-  }, [setStatus, queryClient]);
+  }, [setStatus, queryClient, setAppMode]);
 
   const login = async (data: Parameters<typeof authService.login>[0]) => {
     try {
       const response = await authService.login(data);
       
       await SecureStore.setAccessToken(response.accessToken);
+      await SecureStore.setRefreshToken(response.refreshToken);
       // Refresh token được xử lý qua Cookie (hoặc set tay nếu backend trả qua body, 
       // nhưng backend hiện tại set Cookie nên SecureStore có thể bỏ qua việc setRefreshToken)
       
@@ -95,7 +96,7 @@ export const useAuth = () => {
       setLoggingOut(true);
       
       try {
-        await authService.logout();
+        await authService.logout(await SecureStore.getRefreshToken());
       } catch (e) {
         console.warn('[Auth] Logout API failed, continuing local logout...', e);
       }
@@ -122,7 +123,7 @@ export const useAuth = () => {
     } finally {
       setLoggingOut(false);
     }
-  }, [setLoggingOut, setStatus, queryClient]);
+  }, [setLoggingOut, setStatus, queryClient, resetAppMode, user?.id]);
 
   return {
     user,

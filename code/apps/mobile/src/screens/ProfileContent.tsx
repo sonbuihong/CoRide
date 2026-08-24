@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Image, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
 import { authKeys } from '../../src/hooks/useAuth';
-import { authService } from '../../src/services/auth.service';
+import { authService, type User } from '../../src/services/auth.service';
 import { useRouter } from 'expo-router';
-import { LogOut, Settings, ChevronRight, Car, User as UserIcon, Camera, ShieldCheck, Bell, HelpCircle, FileText, Briefcase, Navigation, MapPin } from 'lucide-react-native';
+import { LogOut, Settings, ChevronRight, Car, User as UserIcon, Camera, ShieldCheck, Bell, HelpCircle, FileText, Navigation, WalletCards } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppText } from '../../src/components/ui/AppText';
@@ -11,7 +11,6 @@ import { KYCStatusCard } from '../../src/components/ui/KYCStatusCard';
 import { useAppStore } from '../stores/useAppStore';
 import { getDriverEligibility, getKycStatusMapper } from '../utils/mode-checker';
 import * as SecureStore from '../services/secure-store';
-import { User } from '../services/auth.service';
 
 export interface ProfileContentProps {
   user: User | null;
@@ -234,6 +233,13 @@ export default function ProfileContent({ user, isPrototype = false, onLogout }: 
         {/* 4. Settings Group */}
         <AppText variant="h3" weight="bold" className="text-text-primary mb-3 ml-1 mt-2">Cài đặt</AppText>
         <View className="bg-surface rounded-2xl overflow-hidden shadow-sm border border-border mb-6">
+          <TouchableOpacity className="flex-row items-center p-4 border-b border-border" onPress={() => router.push('/profile/wallet' as any)}>
+            <View className="w-10 h-10 bg-blue-50 rounded-full items-center justify-center mr-4 border border-border">
+              <WalletCards size={20} color="#2563EB" />
+            </View>
+            <AppText variant="body" weight="medium" className="flex-1 text-text-primary">Ví và giao dịch</AppText>
+            <ChevronRight size={20} color="#94A3B8" />
+          </TouchableOpacity>
           <TouchableOpacity className="flex-row items-center p-4 border-b border-border">
             <View className="w-10 h-10 bg-gray-50 rounded-full items-center justify-center mr-4 border border-border">
               <Bell size={20} color="#64748B" />

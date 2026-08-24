@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import { MapPin, Search } from 'lucide-react-native';
+import type { GoongAutocompletePrediction } from '@repo/shared';
+import { getAutocompletePredictionsMobile, getPlaceDetailMobile } from '../services/goong.service';
 
 interface LocationPickerProps {
   label: string;
@@ -11,36 +13,71 @@ interface LocationPickerProps {
   error?: string;
 }
 
-export const LocationPicker: React.FC<LocationPickerProps> = ({ 
-  label, 
-  placeholder, 
-  value, 
-  onChangeText, 
-  onSelectCoords,
-  error 
-}) => {
+export const LocationPicker = ({ label, placeholder, value, onChangeText, onSelectCoords, error }: LocationPickerProps) => {
+  const [predictions, setPredictions] = useState<GoongAutocompletePrediction[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectionLocked, setSelectionLocked] = useState(false);
+
+  useEffect(() => {
+    if (selectionLocked || value.trim().length < 2) {
+      setPredictions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      setPredictions(await getAutocompletePredictionsMobile(value));
+      setLoading(false);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [selectionLocked, value]);
+
+  const selectPrediction = async (prediction: GoongAutocompletePrediction) => {
+    setSelectionLocked(true);
+    setPredictions([]);
+    onChangeText(prediction.description);
+    const detail = await getPlaceDetailMobile(prediction.place_id);
+    if (detail?.geometry?.location) {
+      onSelectCoords?.(detail.geometry.location.lat, detail.geometry.location.lng);
+    }
+  };
+
   return (
     <View className="mb-4">
-      <Text className="text-gray-700 font-medium mb-2">{label}</Text>
-      <View className={`flex-row items-center bg-gray-50 border ${error ? 'border-red-500' : 'border-gray-200'} p-3 rounded-xl`}>
-        <MapPin size={20} color={error ? '#EF4444' : '#6B7280'} className="mr-2" />
+      <Text className="text-slate-700 font-medium mb-2">{label}</Text>
+      <View className={`min-h-12 flex-row items-center bg-white border ${error ? 'border-red-600' : 'border-slate-200'} px-3 rounded-xl`}>
+        <MapPin size={20} color={error ? '#DC2626' : '#64748B'} />
         <TextInput
-          className="flex-1 text-gray-800 h-10"
+          className="flex-1 text-slate-950 min-h-12 px-3"
           placeholder={placeholder}
+          placeholderTextColor="#64748B"
           value={value}
           onChangeText={(text) => {
+            setSelectionLocked(false);
             onChangeText(text);
-            // Giả lập lấy tọa độ ngẫu nhiên khi nhập liệu (vì không có Google Places API Key)
-            if (onSelectCoords && text.length > 5) {
-              onSelectCoords(21.0 + Math.random() * 0.1, 105.8 + Math.random() * 0.1);
-            }
           }}
+          accessibilityLabel={label}
         />
-        <TouchableOpacity>
-          <Search size={20} color="#3B82F6" />
-        </TouchableOpacity>
+        {loading ? <ActivityIndicator color="#2563EB" /> : <Search size={20} color="#2563EB" />}
       </View>
-      {error && <Text className="text-red-500 text-xs mt-1 ml-1">{error}</Text>}
+      {predictions.length > 0 && (
+        <FlatList
+          data={predictions}
+          keyExtractor={(item) => item.place_id}
+          keyboardShouldPersistTaps="handled"
+          className="max-h-56 mt-1 rounded-xl border border-slate-200 bg-white"
+          renderItem={({ item }) => (
+            <Pressable
+              className="min-h-12 justify-center border-b border-slate-100 px-4 active:bg-blue-50"
+              onPress={() => selectPrediction(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`Chọn ${item.description}`}
+            >
+              <Text className="text-slate-900">{item.description}</Text>
+            </Pressable>
+          )}
+        />
+      )}
+      {error && <Text className="text-red-600 text-xs mt-1 ml-1">{error}</Text>}
     </View>
   );
 };

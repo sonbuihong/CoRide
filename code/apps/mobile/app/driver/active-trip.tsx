@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MapPin, Navigation, User, Phone } from 'lucide-react-native';
+import { MapPin, Navigation } from 'lucide-react-native';
+import { SocketEvents, type TripStatus } from '@repo/shared';
 
 import { tripService } from '../../src/services/trip.service';
 import { socketService } from '../../src/services/socket.service';
 import { AppText } from '../../src/components/ui/AppText';
 import { AppButton } from '../../src/components/ui/AppButton';
+import { useDriverTracking } from '../../src/hooks/useDriverLocation';
 
 export default function DriverActiveTripScreen() {
   const insets = useSafeAreaInsets();
@@ -15,32 +17,9 @@ export default function DriverActiveTripScreen() {
 
   const [activeTrip, setActiveTrip] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  useDriverTracking(activeTrip?.id ?? null);
 
-  useEffect(() => {
-    fetchActiveTrip();
-
-    const handleStatusUpdate = (data: any) => {
-      if (data.status === 'COMPLETED' || data.status === 'CANCELLED') {
-        Alert.alert('Thông báo', 'Chuyến đi đã kết thúc');
-        router.back();
-      } else {
-        setActiveTrip((prev: any) => ({ ...prev, status: data.status }));
-      }
-    };
-
-    socketService.on('trip:status_update', handleStatusUpdate);
-    socketService.on('trip:cancelled', () => {
-      Alert.alert('Thông báo', 'Khách hàng đã hủy chuyến đi');
-      router.back();
-    });
-
-    return () => {
-      socketService.off('trip:status_update', handleStatusUpdate);
-      socketService.off('trip:cancelled');
-    };
-  }, []);
-
-  const fetchActiveTrip = async () => {
+  const fetchActiveTrip = useCallback(async () => {
     try {
       const res = await tripService.getActiveDriverTrip();
       if (res.data) {
@@ -55,18 +34,45 @@ export default function DriverActiveTripScreen() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
 
-  const handleUpdateStatus = async (newStatus: string) => {
+  useEffect(() => {
+    fetchActiveTrip();
+
+    const handleStatusUpdate = (data: any) => {
+      if (data.status === 'COMPLETED' || data.status === 'CANCELLED') {
+        Alert.alert('Thông báo', 'Chuyến đi đã kết thúc');
+        router.back();
+      } else {
+        setActiveTrip((prev: any) => ({ ...prev, status: data.status }));
+      }
+    };
+
+    const handleCancelled = () => {
+      Alert.alert('Thông báo', 'Khách hàng đã hủy chuyến đi');
+      router.back();
+    };
+    socketService.on(SocketEvents.TRIP_STATUS_UPDATE, handleStatusUpdate);
+    socketService.on(SocketEvents.TRIP_UPDATED, handleStatusUpdate);
+    socketService.on(SocketEvents.TRIP_CANCELLED, handleCancelled);
+
+    return () => {
+      socketService.off(SocketEvents.TRIP_STATUS_UPDATE, handleStatusUpdate);
+      socketService.off(SocketEvents.TRIP_UPDATED, handleStatusUpdate);
+      socketService.off(SocketEvents.TRIP_CANCELLED, handleCancelled);
+    };
+  }, [fetchActiveTrip, router]);
+
+  const handleUpdateStatus = async (newStatus: TripStatus) => {
     if (!activeTrip) return;
     try {
       await tripService.updateTripStatus(activeTrip.id, newStatus);
       setActiveTrip((prev: any) => ({ ...prev, status: newStatus }));
-      if (newStatus === 'COMPLETED') {
-        Alert.alert('Thành công', 'Đã hoàn thành chuyến đi');
+      if (newStatus === 'WAITING_PAYMENT') {
+        Alert.alert('Đã kết thúc hành trình', 'Đang chờ hành khách thanh toán.');
         router.back();
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Lỗi', 'Không thể cập nhật trạng thái');
     }
   };
@@ -116,13 +122,13 @@ export default function DriverActiveTripScreen() {
 
         <View style={{ marginTop: 10 }}>
           {activeTrip.status === 'ACCEPTED' && (
-            <AppButton title="Đã đến điểm đón" onPress={() => handleUpdateStatus('ARRIVED')} />
+            <AppButton title="Đang đến điểm đón" onPress={() => handleUpdateStatus('ARRIVING')} />
           )}
-          {activeTrip.status === 'ARRIVED' && (
+          {activeTrip.status === 'ARRIVING' && (
             <AppButton title="Bắt đầu chuyến" onPress={() => handleUpdateStatus('IN_PROGRESS')} />
           )}
           {activeTrip.status === 'IN_PROGRESS' && (
-            <AppButton title="Hoàn thành chuyến" onPress={() => handleUpdateStatus('COMPLETED')} />
+            <AppButton title="Kết thúc và chờ thanh toán" onPress={() => handleUpdateStatus('WAITING_PAYMENT')} />
           )}
         </View>
       </ScrollView>

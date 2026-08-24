@@ -39,6 +39,6 @@ COPY --from=builder /app/apps/backend/package.json ./apps/backend/package.json
 COPY --from=builder /app/packages/database ./packages/database
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
-EXPOSE 5001
+EXPOSE 5101
 CMD ["node", "apps/backend/dist/server.js"]
 

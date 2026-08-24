@@ -1,24 +1,16 @@
-import axios from 'axios';
+import axios, { create } from 'axios';
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import * as SecureStore from '../services/secure-store';
 
-import { Platform } from 'react-native';
+import { useAppStore } from '../stores/useAppStore';
+import { API_URL } from '../config/network';
 
-let API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:5001/api';
-
-if (Platform.OS !== 'android') {
-  API_URL = API_URL.replace('10.0.2.2', 'localhost');
-}
-
-if (!API_URL) {
-  console.warn('Cảnh báo: EXPO_PUBLIC_API_URL chưa được định nghĩa trong file .env');
-}
-
-export const apiClient: AxiosInstance = axios.create({
+export const apiClient: AxiosInstance = create({
   baseURL: API_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
+    'X-Client-Type': 'mobile',
   },
 });
 
@@ -45,12 +37,12 @@ apiClient.interceptors.request.use(
 
 // Trạng thái cho luồng refresh token
 let isRefreshing = false;
-let failedQueue: Array<{
+let failedQueue: {
   resolve: (value?: unknown) => void;
-  reject: (reason?: any) => void;
-}> = [];
+  reject: (reason?: unknown) => void;
+}[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);
@@ -67,9 +59,16 @@ interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
 }
 
 apiClient.interceptors.response.use(
-  (response: AxiosResponse) => response,
+  (response: AxiosResponse) => {
+    useAppStore.getState().setOffline(false);
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
+
+    if (!error.response) {
+      useAppStore.getState().setOffline(true);
+    }
     
     // Nếu request bị hủy hoặc không có response
     if (!originalRequest || !error.response) {
@@ -104,15 +103,22 @@ apiClient.interceptors.response.use(
         // Trên Mobile, Axios sẽ tự động gửi cookie nếu nó cùng domain và OS hỗ trợ.
         // Hoặc chúng ta gửi kèm thông qua Header nếu backend hỗ trợ custom extraction.
         // Ở đây chúng ta chỉ gọi API refresh. Cookie xử lý bởi OS native network layer.
-        const response = await axios.post(`${apiClient.defaults.baseURL}/auth/refresh`, {}, {
-          // withCredentials: true, // Chỉ ý nghĩa với browser, nhưng giữ để tương thích nếu cần
-        });
+        const refreshToken = await SecureStore.getRefreshToken();
+        if (!refreshToken) throw new Error('Phiên đăng nhập đã hết hạn');
+        const response = await axios.post(
+          `${apiClient.defaults.baseURL}/auth/refresh`,
+          { refreshToken },
+          { headers: { 'X-Client-Type': 'mobile' } },
+        );
 
         const newAccessToken = response.data.accessToken;
         
         // Lưu lại token mới
         if (newAccessToken) {
           await SecureStore.setAccessToken(newAccessToken);
+          if (response.data.refreshToken) {
+            await SecureStore.setRefreshToken(response.data.refreshToken);
+          }
           
           apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;

@@ -1,11 +1,11 @@
-import React from 'react';
+import type { ComponentProps } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, ViewProps } from 'react-native';
 
 export interface AppScreenProps extends ViewProps {
   safeArea?: boolean;
   className?: string;
-  children: React.ReactNode;
+  children: ComponentProps<typeof SafeAreaView>['children'];
 }
 
 export const AppScreen: React.FC<AppScreenProps> = ({
@@ -14,7 +14,7 @@ export const AppScreen: React.FC<AppScreenProps> = ({
   children,
   ...props
 }) => {
-  const baseStyle = 'flex-1 bg-white dark:bg-slate-900';
+  const baseStyle = 'flex-1 bg-background';
 
   if (safeArea) {
     return (
@@ -24,8 +24,5 @@ export const AppScreen: React.FC<AppScreenProps> = ({
     );
   }
 
-  return (
-    // @ts-ignore
-    <View style={[{ flex: 1, backgroundColor: '#FFFFFF' }, style]}>{children}</View>
-  );
+  return <View className={`${baseStyle} ${className}`} {...props}>{children}</View>;
 };

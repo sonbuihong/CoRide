@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Navigation, Wifi, WifiOff } from 'lucide-react-native';
-import { useAuth } from '../../src/hooks/useAuth';
+import { ArrowLeft } from 'lucide-react-native';
 import { useAppStore } from '../../src/stores/useAppStore';
 
 import { ActiveRideMap } from '../../src/components/ActiveRideMap';
@@ -26,9 +25,7 @@ interface LatLng {
 export default function ActiveRideScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
   const { appMode } = useAppStore();
-  const queryClient = useQueryClient();
 
   // State cho route directions
   const [routeCoords, setRouteCoords] = useState<LatLng[]>([]);
@@ -52,13 +49,13 @@ export default function ActiveRideScreen() {
   const rideId = ride?.id;
 
   // Tọa độ điểm đi và điểm đến từ ride data
-  const originCoords: LatLng | null = ride?.originLat && ride?.originLng
+  const originCoords: LatLng | null = useMemo(() => ride?.originLat && ride?.originLng
     ? { latitude: ride.originLat, longitude: ride.originLng }
-    : null;
+    : null, [ride?.originLat, ride?.originLng]);
 
-  const destinationCoords: LatLng | null = ride?.destinationLat && ride?.destinationLng
+  const destinationCoords: LatLng | null = useMemo(() => ride?.destinationLat && ride?.destinationLng
     ? { latitude: ride.destinationLat, longitude: ride.destinationLng }
-    : null;
+    : null, [ride?.destinationLat, ride?.destinationLng]);
 
   // Driver GPS tracking
   const { currentLocation: driverOwnLocation } = useDriverTracking(
@@ -155,15 +152,12 @@ export default function ActiveRideScreen() {
       console.error('[ActiveRide] Không thể lấy directions:', error);
     }
   }, [
-    originCoords?.latitude,
-    originCoords?.longitude,
-    destinationCoords?.latitude,
-    destinationCoords?.longitude,
+    originCoords,
+    destinationCoords,
     userRole,
     ride?.status,
     currentTargetType,
-    currentTarget?.latitude,
-    currentTarget?.longitude,
+    currentTarget,
   ]);
 
   useEffect(() => {

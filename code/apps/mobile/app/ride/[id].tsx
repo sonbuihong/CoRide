@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { rideService } from '../../src/services/ride.service';
 import { bookingService } from '../../src/services/booking.service';
 import { RideMap } from '../../src/components/RideMap';
+import { MatchExplanation } from '../../src/components/MatchExplanation';
 import { AppText } from '../../src/components/ui/AppText';
 import { AppButton } from '../../src/components/ui/AppButton';
 import { Clock, Users, Star, ShieldCheck, MessageCircle, ArrowLeft, Heart } from 'lucide-react-native';
@@ -13,7 +14,14 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 export default function RideDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, matchType, matchScore, pickupDistanceKm, detourKm, routeOverlap } = useLocalSearchParams<{
+    id: string;
+    matchType?: 'DIRECT' | 'NEARBY' | 'ON_ROUTE';
+    matchScore?: string;
+    pickupDistanceKm?: string;
+    detourKm?: string;
+    routeOverlap?: string;
+  }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [seats, setSeats] = useState(1);
@@ -59,6 +67,14 @@ export default function RideDetailScreen() {
   }
 
   const departureDateFormatted = format(new Date(ride.departureTime), 'eeee, dd MMMM yyyy', { locale: vi });
+  const matchingRide = {
+    ...ride,
+    matchType: matchType || ride.matchType,
+    matchScore: matchScore ? Number(matchScore) : ride.matchScore,
+    pickupDistanceKm: pickupDistanceKm ? Number(pickupDistanceKm) : ride.pickupDistanceKm,
+    detourKm: detourKm ? Number(detourKm) : ride.detourKm,
+    routeOverlap: routeOverlap ? Number(routeOverlap) : ride.routeOverlap,
+  };
 
   return (
     <View className="flex-1 bg-background">
@@ -116,6 +132,15 @@ export default function RideDetailScreen() {
               Thời gian khởi hành: {departureDateFormatted}
             </AppText>
           </View>
+
+          {matchingRide.matchScore != null && (
+            <View className="mb-6">
+              <AppText variant="body" weight="semibold" className="text-text-primary mb-3">
+                Vì sao chuyến này phù hợp?
+              </AppText>
+              <MatchExplanation ride={matchingRide} />
+            </View>
+          )}
 
           {/* Grid thông tin nhanh */}
           <View className="flex-row bg-surface p-4 rounded-3xl mb-6 justify-between border border-border/40 shadow-sm">
@@ -214,7 +239,7 @@ export default function RideDetailScreen() {
         </View>
 
         <AppButton 
-          title={ride.availableSeats === 0 ? 'Chuyến đi đã hết chỗ' : 'Gửi yêu cầu đặt chỗ'}
+          title={ride.availableSeats === 0 ? 'Chuyến đi đã hết chỗ' : 'Đặt chỗ'}
           variant="passenger"
           onPress={() => bookingMutation.mutate()}
           isLoading={bookingMutation.isPending}

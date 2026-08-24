@@ -106,7 +106,7 @@ export default function Home() {
       <footer className="w-full bg-[#f5f5f7] border-t border-[rgba(0,0,0,0.1)] py-8 mt-auto">
         <div className="container px-4 md:px-6 mx-auto flex flex-col md:flex-row items-center justify-between">
           <p className="text-[12px] text-[rgba(0,0,0,0.56)] mb-4 md:mb-0">
-            Bản quyền © 2024 CoRide Inc. Bảo lưu mọi quyền.
+            CoRide © 2026
           </p>
           <div className="flex space-x-6">
             <Link href="#" className="text-[12px] text-[#1d1d1f] hover:underline">

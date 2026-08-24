@@ -11,6 +11,11 @@ export const bookingService = {
     return response.data;
   },
 
+  async getDriverBookings() {
+    const response = await api.get('/bookings/driver');
+    return response.data;
+  },
+
   async getBookingById(id: string) {
     const response = await api.get(`/bookings/${id}`);
     return response.data.booking;
@@ -22,7 +27,7 @@ export const bookingService = {
   },
 
   async cancelBooking(id: string) {
-    const response = await api.post(`/bookings/${id}/cancel`);
+    const response = await api.patch(`/bookings/${id}/cancel`);
     return response.data;
   },
 

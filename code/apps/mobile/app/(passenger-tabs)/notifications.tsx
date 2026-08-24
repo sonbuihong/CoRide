@@ -2,28 +2,19 @@ import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationService, Notification } from '../../src/services/notification.service';
-import { useSSE } from '../../src/hooks/useSSE';
-import { useNotifications } from '../../src/hooks/useNotifications';
+import { useNotificationRealtime } from '../../src/hooks/useNotificationRealtime';
 import { Bell, Calendar, Info, CheckCircle, XCircle, Star } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 export default function NotificationsScreen() {
   const queryClient = useQueryClient();
-  const lastEvent = useSSE();
-  useNotifications(); // Khởi tạo push notifications
+  useNotificationRealtime();
 
   const { data: notifications, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => notificationService.getNotifications(),
   });
-
-  // Tự động làm mới khi có SSE event mới
-  React.useEffect(() => {
-    if (lastEvent) {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    }
-  }, [lastEvent, queryClient]);
 
   const markReadMutation = useMutation({
     mutationFn: (id: string) => notificationService.markAsRead(id),

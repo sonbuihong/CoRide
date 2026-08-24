@@ -6,12 +6,11 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import '../global.css';
 
-import { useColorScheme } from '@/components/useColorScheme';
 import { useAuth } from '../src/hooks/useAuth';
 import { useAppStore } from '../src/stores/useAppStore';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
-const queryClient = new QueryClient();
+import { QueryProvider } from '../src/providers/query-provider';
+import { OfflineBanner } from '../src/components/ui/OfflineBanner';
+import { View } from 'react-native';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -28,9 +27,9 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayoutWrapper() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryProvider>
       <RootLayout />
-    </QueryClientProvider>
+    </QueryProvider>
   );
 }
 
@@ -65,7 +64,6 @@ function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
   const { isAuthenticated } = useAuth();
   const { appMode } = useAppStore();
   const segments = useSegments();
@@ -84,7 +82,9 @@ function RootLayoutNav() {
   }, [isAuthenticated, segments, router, appMode]);
 
   return (
-    <Stack>
+    <View style={{ flex: 1 }}>
+      <OfflineBanner />
+      <Stack>
       <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)/register" options={{ headerShown: false, title: 'Đăng ký' }} />
       <Stack.Screen name="(passenger-tabs)" options={{ headerShown: false }} />
@@ -93,10 +93,13 @@ function RootLayoutNav() {
       <Stack.Screen name="ride/[id]" options={{ title: 'Chi tiết chuyến đi' }} />
       <Stack.Screen name="ride/active-ride" options={{ headerShown: false, title: 'Chuyến đi' }} />
       <Stack.Screen name="booking/[id]" options={{ title: 'Chi tiết đặt chỗ' }} />
+      <Stack.Screen name="search" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       <Stack.Screen name="report-modal" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="review-modal" options={{ presentation: 'transparentModal', headerShown: false }} />
       <Stack.Screen name="cancel-modal" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="chat/[rideId]" options={{ headerShown: false }} />
-    </Stack>
+      </Stack>
+    </View>
   );
 }

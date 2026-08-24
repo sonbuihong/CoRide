@@ -8,7 +8,8 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { AppInput } from '../../src/components/ui/AppInput';
 import { AppButton } from '../../src/components/ui/AppButton';
 import { AppText } from '../../src/components/ui/AppText';
-import { Mail, Lock, Eye, EyeOff, User, Phone } from 'lucide-react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
+import { colors } from '../../src/theme/tokens';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -42,14 +43,16 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView 
-        contentContainerStyle={{ flexGrow: 1 }} 
-        className="bg-background px-6 pt-12 pb-10" 
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingVertical: 40 }}
+        className="bg-background"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="mb-6">
-          <AppText variant="h1" weight="bold" className="text-passenger tracking-tight mb-1">Tạo tài khoản mới</AppText>
-          <AppText variant="bodySmall" className="text-text-secondary">Tham gia CoRide để bắt đầu chia sẻ hành trình di chuyển của bạn.</AppText>
+        <View className="items-center mb-10">
+          <AppText weight="semibold" className="text-center" style={{ color: colors.textPrimary, fontSize: 40, letterSpacing: -0.28, lineHeight: 43 }}>Đăng ký tài khoản</AppText>
+          <AppText className="text-text-secondary text-center mt-3" style={{ fontSize: 17, letterSpacing: -0.37 }}>
+            Dùng một tài khoản cho tất cả chuyến đi của bạn.
+          </AppText>
         </View>
 
         {errorMsg && (
@@ -58,7 +61,7 @@ export default function RegisterScreen() {
           </View>
         )}
 
-        <View className="bg-surface p-6 rounded-3xl shadow-sm mb-6 border border-border/40">
+        <View>
           <View className="flex-row mb-1">
             <View className="flex-1 mr-2">
               <Controller
@@ -72,7 +75,6 @@ export default function RegisterScreen() {
                     onChangeText={onChange}
                     onBlur={onBlur}
                     error={errors.lastName?.message}
-                    leftIcon={<User size={20} color={errors.lastName ? '#DC2626' : '#64748B'} />}
                   />
                 )}
               />
@@ -89,7 +91,6 @@ export default function RegisterScreen() {
                     onChangeText={onChange}
                     onBlur={onBlur}
                     error={errors.firstName?.message}
-                    leftIcon={<User size={20} color={errors.firstName ? '#DC2626' : '#64748B'} />}
                   />
                 )}
               />
@@ -110,7 +111,6 @@ export default function RegisterScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.email?.message}
-                leftIcon={<Mail size={20} color={errors.email ? '#DC2626' : '#64748B'} />}
               />
             )}
           />
@@ -127,7 +127,6 @@ export default function RegisterScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.phone?.message}
-                leftIcon={<Phone size={20} color={errors.phone ? '#DC2626' : '#64748B'} />}
               />
             )}
           />
@@ -145,7 +144,6 @@ export default function RegisterScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.password?.message}
-                leftIcon={<Lock size={20} color={errors.password ? '#DC2626' : '#64748B'} />}
                 rightIcon={
                   <TouchableOpacity 
                     onPress={() => setShowPassword(!showPassword)} 
@@ -153,7 +151,7 @@ export default function RegisterScreen() {
                     accessibilityLabel={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
                     className="p-1"
                   >
-                    {showPassword ? <EyeOff size={20} color="#64748B" /> : <Eye size={20} color="#64748B" />}
+                    {showPassword ? <EyeOff size={20} color={colors.textTertiary} /> : <Eye size={20} color={colors.textTertiary} />}
                   </TouchableOpacity>
                 }
               />
@@ -173,7 +171,6 @@ export default function RegisterScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.confirmPassword?.message}
-                leftIcon={<Lock size={20} color={errors.confirmPassword ? '#DC2626' : '#64748B'} />}
                 rightIcon={
                   <TouchableOpacity 
                     onPress={() => setShowConfirmPassword(!showConfirmPassword)} 
@@ -181,7 +178,7 @@ export default function RegisterScreen() {
                     accessibilityLabel={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
                     className="p-1"
                   >
-                    {showConfirmPassword ? <EyeOff size={20} color="#64748B" /> : <Eye size={20} color="#64748B" />}
+                    {showConfirmPassword ? <EyeOff size={20} color={colors.textTertiary} /> : <Eye size={20} color={colors.textTertiary} />}
                   </TouchableOpacity>
                 }
               />

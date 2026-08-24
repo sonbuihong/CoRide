@@ -1,11 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
 import { TripsService } from './trips.service';
 import { MatchingService } from '../matching/matching.service';
-import { createTripRequestSchema } from './trips.validation';
+import { createTripRequestSchema, driverTripStatusSchema } from '@repo/shared';
 import { SocketEventService } from '../../socket/socket.events';
 import { SocketEvents } from '@repo/shared';
 
 export class TripsController {
+  static async acceptTrip(req: Request, res: Response, next: NextFunction) {
+    try {
+      const trip = await MatchingService.handleDriverAccept(req.params.id as string, req.user!.id);
+      res.json({ success: true, data: trip });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async rejectTrip(req: Request, res: Response, next: NextFunction) {
+    try {
+      await MatchingService.handleDriverReject(req.params.id as string, req.user!.id);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  }
+
   /**
    * POST /api/trips — Tạo yêu cầu đặt xe mới.
    * Sau khi tạo xong, tự động trigger MatchingService (Waterfall).
@@ -40,7 +58,7 @@ export class TripsController {
     try {
       const userId = req.user!.id;
       const { id } = req.params;
-      const { reason } = req.body;
+      const reason = req.body?.cancelReason ?? req.body?.reason;
 
       const trip = await TripsService.cancelTrip(id as string, userId, reason as string);
 
@@ -91,9 +109,9 @@ export class TripsController {
     try {
       const userId = req.user!.id;
       const { id } = req.params;
-      const { status } = req.body;
+      const status = driverTripStatusSchema.parse(req.body?.status);
 
-      const trip = await TripsService.updateTripStatus(id as string, userId, status as any);
+      const trip = await TripsService.updateTripStatus(id as string, userId, status);
 
       SocketEventService.emitToUser(userId, SocketEvents.TRIP_UPDATED, trip);
       if (trip.passengerId && trip.passengerId !== userId) {

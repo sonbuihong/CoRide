@@ -5,6 +5,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import * as Location from 'expo-location';
 import { socketService } from '../services/socket.service';
+import { SocketEvents, TripLocationUpdatedPayload } from '@repo/shared';
 
 interface DriverLocationState {
   latitude: number;
@@ -38,7 +39,7 @@ export const useDriverTracking = (rideId: string | null) => {
     await socketService.connect();
     // Assuming socketService.socket is not exposed, if we connected without throwing, it's fine
     
-    socketService.emit('join:ride_room', { rideId });
+    socketService.emit(SocketEvents.TRIP_JOIN_ROOM, rideId);
 
     // Bắt đầu watch vị trí GPS
     // distanceInterval: cập nhật mỗi 10m di chuyển
@@ -59,7 +60,7 @@ export const useDriverTracking = (rideId: string | null) => {
 
         setCurrentLocation(locationData);
         // Gửi vị trí tới passengers qua socket
-        socketService.emit('driver:location_update', { rideId, location: { latitude, longitude } });
+        socketService.emit(SocketEvents.DRIVER_UPDATE_LOCATION, { tripId: rideId, latitude, longitude });
       }
     );
   }, [rideId]);
@@ -70,7 +71,7 @@ export const useDriverTracking = (rideId: string | null) => {
       watchSubscription.current = null;
     }
     if (rideId) {
-      socketService.emit('leave:ride_room', { rideId });
+      socketService.emit(SocketEvents.TRIP_LEAVE_ROOM, rideId);
     }
   }, [rideId]);
 
@@ -93,24 +94,24 @@ export const usePassengerTrackDriver = (rideId: string | null) => {
     if (!rideId) return;
 
     let mounted = true;
+    const handleLocationUpdate = (data: TripLocationUpdatedPayload) => {
+      if (mounted) {
+        setDriverLocation({ latitude: data.latitude, longitude: data.longitude, timestamp: Date.parse(data.updatedAt) });
+      }
+    };
 
     const setupListener = async () => {
       await socketService.connect();
-      socketService.emit('join:ride_room', { rideId });
-
-      socketService.on('driver:location', (data: DriverLocationState) => {
-        if (mounted) {
-          setDriverLocation(data);
-        }
-      });
+      socketService.emit(SocketEvents.TRIP_JOIN_ROOM, rideId);
+      socketService.on(SocketEvents.TRIP_LOCATION_UPDATED, handleLocationUpdate);
     };
 
     setupListener();
 
     return () => {
       mounted = false;
-      socketService.emit('leave:ride_room', { rideId });
-      socketService.off('driver:location');
+      socketService.emit(SocketEvents.TRIP_LEAVE_ROOM, rideId);
+      socketService.off(SocketEvents.TRIP_LOCATION_UPDATED, handleLocationUpdate);
     };
   }, [rideId]);
 

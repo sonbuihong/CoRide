@@ -5,6 +5,7 @@ export * from './booking.schema';
 export * from './notification.schema';
 export * from './review.schema';
 export * from './payment.schema';
+export * from './trip.schema';
 
 // Goong API types — dùng chung cho backend, web, mobile
 export type {

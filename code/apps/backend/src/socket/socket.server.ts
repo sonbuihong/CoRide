@@ -12,11 +12,17 @@ let io: SocketIOServer;
 
 export const initSocket = (server: http.Server): SocketIOServer => {
   const pubClient = createClient({ url: SOCKET_CONFIG.REDIS_URL });
+  pubClient.on('error', (err) => {
+    // Tránh unhandled error spam khi Redis chưa sẵn sàng
+  });
   const subClient = pubClient.duplicate();
+  subClient.on('error', (err) => {
+    // Tránh unhandled error spam khi Redis chưa sẵn sàng
+  });
 
   // Connect clients asynchronously for Redis Pub/Sub
-  pubClient.connect().catch((err) => console.error('[Socket Redis Pub] Error:', err));
-  subClient.connect().catch((err) => console.error('[Socket Redis Sub] Error:', err));
+  pubClient.connect().catch((err) => console.error('[Socket Redis Pub] Error:', err.message));
+  subClient.connect().catch((err) => console.error('[Socket Redis Sub] Error:', err.message));
 
   io = new SocketIOServer(server, {
     cors: {

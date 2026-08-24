@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, LoginInput } from '@repo/shared';
@@ -8,7 +8,8 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { AppInput } from '../../src/components/ui/AppInput';
 import { AppButton } from '../../src/components/ui/AppButton';
 import { AppText } from '../../src/components/ui/AppText';
-import { Mail, Lock, Eye, EyeOff, CarFront } from 'lucide-react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
+import { colors } from '../../src/theme/tokens';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -36,27 +37,19 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView 
-        contentContainerStyle={{ flexGrow: 1 }} 
-        className="bg-background px-6 pt-16 pb-10" 
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 40 }}
+        className="bg-background"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View className="items-center mb-6">
-          <AppText variant="h1" weight="bold" className="text-passenger tracking-tight">CoRide</AppText>
+        <View className="items-center mb-10">
+          <AppText weight="semibold" style={{ color: colors.textPrimary, fontSize: 40, letterSpacing: -0.28, lineHeight: 43 }}>CoRide</AppText>
+          <AppText className="text-text-secondary text-center mt-3" style={{ fontSize: 17, letterSpacing: -0.37 }}>
+            Giải pháp đi chung xe thông minh cho cộng đồng
+          </AppText>
         </View>
 
-        <View className="items-center justify-center mb-6">
-          <View className="w-24 h-24 bg-passenger-soft rounded-full items-center justify-center">
-            <CarFront size={48} color="#3B82F6" strokeWidth={1.5} />
-          </View>
-        </View>
-
-        <View className="bg-surface p-6 rounded-3xl shadow-sm mb-6 border border-border/40">
-          <View className="mb-6">
-            <AppText variant="h2" weight="bold" className="text-text-primary mb-1">Chào mừng trở lại</AppText>
-            <AppText variant="bodySmall" className="text-text-secondary">Đăng nhập để tiếp tục hành trình của bạn cùng CoRide.</AppText>
-          </View>
-
+        <View>
           {errorMsg && (
             <View className="bg-status-danger/10 p-4 rounded-xl mb-6 border border-status-danger/20">
               <AppText variant="bodySmall" className="text-status-danger font-medium text-center">{errorMsg}</AppText>
@@ -69,7 +62,8 @@ export default function LoginScreen() {
               name="email"
               render={({ field: { onChange, onBlur, value } }) => (
                 <AppInput
-                  placeholder="Nhập địa chỉ email"
+                  label="Email"
+                  placeholder="name@example.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
@@ -77,7 +71,6 @@ export default function LoginScreen() {
                   onChangeText={onChange}
                   onBlur={onBlur}
                   error={errors.email?.message}
-                  leftIcon={<Mail size={20} color={errors.email ? '#DC2626' : '#64748B'} />}
                 />
               )}
             />
@@ -89,6 +82,7 @@ export default function LoginScreen() {
               name="password"
               render={({ field: { onChange, onBlur, value } }) => (
                 <AppInput
+                  label="Mật khẩu"
                   placeholder="Nhập mật khẩu"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
@@ -96,7 +90,6 @@ export default function LoginScreen() {
                   onChangeText={onChange}
                   onBlur={onBlur}
                   error={errors.password?.message}
-                  leftIcon={<Lock size={20} color={errors.password ? '#DC2626' : '#64748B'} />}
                   rightIcon={
                     <TouchableOpacity 
                       onPress={() => setShowPassword(!showPassword)}
@@ -105,9 +98,9 @@ export default function LoginScreen() {
                       accessibilityLabel={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
                     >
                       {showPassword ? (
-                        <EyeOff size={20} color="#64748B" />
+                        <EyeOff size={20} color={colors.textTertiary} />
                       ) : (
-                        <Eye size={20} color="#64748B" />
+                        <Eye size={20} color={colors.textTertiary} />
                       )}
                     </TouchableOpacity>
                   }
@@ -132,7 +125,7 @@ export default function LoginScreen() {
           />
         </View>
 
-        <View className="flex-row justify-center items-center mt-auto pt-6">
+        <View className="flex-row justify-center items-center mt-8">
           <AppText variant="bodySmall" className="text-text-secondary">Chưa có tài khoản? </AppText>
           <TouchableOpacity onPress={() => router.push('/(auth)/register' as any)}>
             <AppText variant="bodySmall" weight="bold" className="text-passenger">Đăng ký ngay</AppText>

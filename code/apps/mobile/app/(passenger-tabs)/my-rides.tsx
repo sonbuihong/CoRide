@@ -2,7 +2,7 @@
 // Nếu có active booking → Banner nổi bật dẫn đến active-ride screen
 // Nếu không → Danh sách booking + ride đã tạo
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -12,9 +12,11 @@ import { vi } from 'date-fns/locale';
 
 import { useActiveRide } from '../../src/hooks/useActiveRide';
 import { bookingService } from '../../src/services/booking.service';
+import { SegmentedControl } from '../../src/components/ui/SegmentedControl';
 
 export default function MyRidesScreen() {
   const router = useRouter();
+  const [selectedSegment, setSelectedSegment] = useState(0);
   const { activeBooking, isLoading: isActiveLoading } = useActiveRide();
 
   // Lấy lịch sử booking (passenger)
@@ -28,7 +30,14 @@ export default function MyRidesScreen() {
     queryFn: () => bookingService.getMyBookings(),
   });
 
-  const bookings = bookingsData?.bookings || bookingsData || [];
+  const bookings = useMemo(() => bookingsData?.bookings || bookingsData || [], [bookingsData]);
+  const filteredBookings = useMemo(() => (bookings || []).filter((item: any) => {
+    const rideStatus = item.ride?.status;
+    if (selectedSegment === 0) return ['PENDING', 'CONFIRMED'].includes(item.status) && rideStatus !== 'ONGOING';
+    if (selectedSegment === 1) return rideStatus === 'ONGOING' || item.isPickedUp === true;
+    if (selectedSegment === 2) return item.status === 'COMPLETED' || rideStatus === 'COMPLETED';
+    return ['CANCELLED', 'REJECTED'].includes(item.status);
+  }), [bookings, selectedSegment]);
   const isLoading = isActiveLoading || isBookingsLoading;
 
   const getStatusText = (status: string) => {
@@ -108,12 +117,16 @@ export default function MyRidesScreen() {
         )}
 
         {/* Tiêu đề lịch sử */}
-        <Text className="text-xl font-bold text-gray-800 mb-4">
-          Lịch sử chuyến đi
-        </Text>
+        <Text className="text-2xl font-semibold text-gray-900 mb-4">Chuyến đi của bạn</Text>
+        <SegmentedControl
+          segments={['Sắp tới', 'Đang đi', 'Đã xong', 'Đã hủy']}
+          selectedIndex={selectedSegment}
+          onChange={setSelectedSegment}
+          className="mb-5"
+        />
 
         {/* Danh sách bookings */}
-        {!bookings || bookings.length === 0 ? (
+        {filteredBookings.length === 0 ? (
           <View className="py-16 items-center bg-white rounded-3xl border border-dashed border-gray-200 px-6">
             <Car size={56} color="#D1D5DB" />
             <Text className="text-gray-500 mt-4 font-medium text-center">
@@ -124,7 +137,7 @@ export default function MyRidesScreen() {
             </Text>
           </View>
         ) : (
-          bookings.map((item: any) => (
+          filteredBookings.map((item: any) => (
             <TouchableOpacity
               key={item.id}
               className="bg-white p-4 rounded-2xl mb-3 shadow-sm border border-gray-100"

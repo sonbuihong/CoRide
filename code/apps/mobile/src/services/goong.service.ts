@@ -4,12 +4,11 @@
 // vì emulator/device không resolve localhost giống máy phát triển
 
 import type { GoongAutocompletePrediction, GoongPlaceDetailResult } from '../../../../packages/shared/src/goong';
+import { API_URL as API_BASE_URL } from '../config/network';
 
 // Expo hỗ trợ process.env qua app.config hoặc .env + expo-constants
 // Với emulator Android: 10.0.2.2 thay cho localhost
 // Với device thật: dùng IP LAN của máy phát triển
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:5001/api';
-
 interface AutocompleteOptions {
   location?: string;
   limit?: number;

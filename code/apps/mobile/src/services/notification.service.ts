@@ -14,7 +14,11 @@ export interface Notification {
 export const notificationService = {
   async getNotifications() {
     const response = await api.get('/notifications');
-    return response.data;
+    const items = response.data.data ?? response.data.notifications ?? [];
+    return items.map((item: Notification & { content?: string }) => ({
+      ...item,
+      message: item.message ?? item.content ?? '',
+    })) as Notification[];
   },
 
   async markAsRead(id: string) {

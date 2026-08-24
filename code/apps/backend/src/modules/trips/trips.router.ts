@@ -43,6 +43,9 @@ router.get('/active-driver', TripsController.getActiveDriverTrip);
  */
 router.get('/history', TripsController.getTripHistory);
 
+router.post('/:id/accept', TripsController.acceptTrip);
+router.post('/:id/reject', TripsController.rejectTrip);
+
 /**
  * @swagger
  * /api/trips/:id/cancel:
