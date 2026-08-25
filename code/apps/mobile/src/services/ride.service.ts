@@ -117,8 +117,8 @@ export const rideService = {
     return (response.data.rides ?? []).map(normalizeRide);
   },
 
-  async updateRideStatus(id: string, status: 'ONGOING' | 'COMPLETED' | 'CANCELLED') {
-    const response = await api.patch(`/rides/${id}/status`, { status });
+  async updateRideStatus(id: string, status: 'ONGOING' | 'COMPLETED' | 'CANCELLED', cancelReason?: string) {
+    const response = await api.patch(`/rides/${id}/status`, { status, cancelReason });
     return response.data;
   },
 };

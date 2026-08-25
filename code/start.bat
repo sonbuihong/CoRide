@@ -97,16 +97,34 @@ goto menu
 
 :ensure_infrastructure
 echo [INFO] Dang kiem tra Docker, Redis va RabbitMQ...
+powershell -NoProfile -Command "$r = (Test-NetConnection -ComputerName 127.0.0.1 -Port 6379 -InformationLevel Quiet); $q = (Test-NetConnection -ComputerName 127.0.0.1 -Port 5672 -InformationLevel Quiet); if ($r -and $q) { exit 0 } else { exit 1 }" > nul 2>&1
+if not errorlevel 1 (
+    echo [SUCCESS] Redis va RabbitMQ da san sang tren cong 6379 va 5672.
+    exit /b 0
+)
+
 docker info > nul 2>&1
 if not errorlevel 1 goto docker_ready
 
 set "DOCKER_DESKTOP=%ProgramFiles%\Docker\Docker\Docker Desktop.exe"
 if not exist "!DOCKER_DESKTOP!" set "DOCKER_DESKTOP=%LocalAppData%\Docker\Docker Desktop.exe"
-if not exist "!DOCKER_DESKTOP!" exit /b 1
+if not exist "!DOCKER_DESKTOP!" (
+    powershell -NoProfile -Command "$r = (Test-NetConnection -ComputerName 127.0.0.1 -Port 6379 -InformationLevel Quiet); $q = (Test-NetConnection -ComputerName 127.0.0.1 -Port 5672 -InformationLevel Quiet); if ($r -and $q) { exit 0 } else { exit 1 }" > nul 2>&1
+    if not errorlevel 1 (
+        echo [SUCCESS] Redis va RabbitMQ da san sang tren cong 6379 va 5672.
+        exit /b 0
+    )
+    exit /b 1
+)
 
 echo [INFO] Docker Desktop chua chay. Dang khoi dong Docker Desktop...
 start "" "!DOCKER_DESKTOP!"
 for /l %%i in (1,1,60) do (
+    powershell -NoProfile -Command "$r = (Test-NetConnection -ComputerName 127.0.0.1 -Port 6379 -InformationLevel Quiet); $q = (Test-NetConnection -ComputerName 127.0.0.1 -Port 5672 -InformationLevel Quiet); if ($r -and $q) { exit 0 } else { exit 1 }" > nul 2>&1
+    if not errorlevel 1 (
+        echo [SUCCESS] Redis va RabbitMQ da san sang.
+        exit /b 0
+    )
     docker info > nul 2>&1
     if not errorlevel 1 goto docker_ready
     timeout /t 2 /nobreak > nul 2>&1

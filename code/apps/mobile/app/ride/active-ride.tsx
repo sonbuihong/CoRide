@@ -295,32 +295,44 @@ export default function ActiveRideScreen() {
         </View>
       </View>
 
-      {/* Thông tin chuyến đi trượt chân trang */}
-      <RideInfoPanel
-        ride={ride}
-        booking={booking}
-        userRole={userRole}
-        distance={routeDistance}
-        duration={routeDuration}
-        currentTargetType={currentTargetType}
-        currentBooking={currentBooking}
-        pendingPickups={pendingPickups}
-        pickedUpBookings={pickedUpBookings}
-      />
-
-      {/* Nút thao tác nhanh của Tài xế */}
-      {userRole === 'DRIVER' && (
-        <DriverActionBar
-          rideId={ride.id}
-          rideStatus={ride.status}
-          onStatusChange={handleStatusChange}
+      {/* Container chung cho Panel và Action Bar với shadow tinh tế */}
+      <View 
+        className="bg-white rounded-t-3xl border-t border-gray-100" 
+        style={{
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 10,
+        }}
+      >
+        {/* Thông tin chuyến đi trượt chân trang */}
+        <RideInfoPanel
+          ride={ride}
+          booking={booking}
+          userRole={userRole}
+          distance={routeDistance}
+          duration={routeDuration}
           currentTargetType={currentTargetType}
           currentBooking={currentBooking}
-          onPickedUp={handlePickedUp}
-          isPickingUp={isPickingUp}
-          pendingPickupsCount={pendingPickups.length}
+          pendingPickups={pendingPickups}
+          pickedUpBookings={pickedUpBookings}
         />
-      )}
+
+        {/* Nút thao tác nhanh của Tài xế */}
+        {userRole === 'DRIVER' && (
+          <DriverActionBar
+            rideId={ride.id}
+            rideStatus={ride.status}
+            onStatusChange={handleStatusChange}
+            currentTargetType={currentTargetType}
+            currentBooking={currentBooking}
+            onPickedUp={handlePickedUp}
+            isPickingUp={isPickingUp}
+            pendingPickupsCount={pendingPickups.length}
+          />
+        )}
+      </View>
     </View>
   );
 }

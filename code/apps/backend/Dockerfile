@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package management files
-COPY package.json package-lock.json turbo.json ./
+COPY package.json turbo.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/database/package.json ./packages/database/
 COPY packages/shared/package.json ./packages/shared/

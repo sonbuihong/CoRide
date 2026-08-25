@@ -1,4 +1,4 @@
-import { Text, TextProps } from 'react-native';
+import { Text, TextProps, StyleSheet } from 'react-native';
 
 export interface AppTextProps extends TextProps {
   variant?: 'display' | 'h1' | 'h2' | 'h3' | 'title' | 'body' | 'bodySmall' | 'caption' | 'button';
@@ -11,10 +11,13 @@ export const AppText: React.FC<AppTextProps> = ({
   variant = 'body',
   weight = 'normal',
   className = '',
+  style,
   children,
   ...props
 }) => {
-  const baseStyle = 'text-text-primary';
+  const flatStyle = StyleSheet.flatten(style) || {};
+  const hasColor = flatStyle.color || /\btext-/.test(className);
+  const baseStyle = hasColor ? '' : 'text-text-primary';
   
   const variantStyles = {
     display: 'text-3xl leading-tight',
@@ -38,7 +41,7 @@ export const AppText: React.FC<AppTextProps> = ({
   const combinedStyles = `${baseStyle} ${variantStyles[variant]} ${weightStyles[weight]} ${className}`;
 
   return (
-    <Text className={combinedStyles} {...props}>
+    <Text className={combinedStyles} {...props} style={style}>
       {children}
     </Text>
   );

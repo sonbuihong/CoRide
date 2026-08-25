@@ -1,5 +1,5 @@
-import { useCallback, useRef } from "react";
-import { StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Animated, StyleSheet, View } from "react-native";
 import MapView, { type Region, PROVIDER_GOOGLE } from "react-native-maps";
 import { MapPin } from "lucide-react-native";
 
@@ -13,12 +13,21 @@ export interface MapCoordinates {
 interface StartLocationMapProps {
   origin: MapCoordinates;
   onCenterChange: (coordinates: MapCoordinates) => void;
+  cameraTarget?: MapCoordinates;
+  onMovingChange?: (moving: boolean) => void;
 }
 
 export function StartLocationMap({
   origin,
   onCenterChange,
+  cameraTarget,
+  onMovingChange,
 }: StartLocationMapProps) {
+  const mapRef = useRef<MapView>(null);
+  const programmaticMove = useRef(false);
+  const movingRef = useRef(false);
+  const pinLift = useRef(new Animated.Value(0)).current;
+  const [moving, setMoving] = useState(false);
   // Keep the map uncontrolled after mounting. Recreating the initial region when
   // the selected center changes can make Google Maps snap back to the origin.
   const initialRegion = useRef<Region>({
@@ -27,13 +36,44 @@ export function StartLocationMap({
     longitudeDelta: 0.006,
   }).current;
   const updateCenter = useCallback(
-    (region: Region) =>
+    (region: Region) => {
+      if (programmaticMove.current) {
+        programmaticMove.current = false;
+        return;
+      }
       onCenterChange({
         latitude: region.latitude,
         longitude: region.longitude,
-      }),
+      });
+    },
     [onCenterChange],
   );
+
+  const updateMoving = useCallback((next: boolean) => {
+    if (movingRef.current === next) return;
+    movingRef.current = next;
+    setMoving(next);
+    onMovingChange?.(next);
+  }, [onMovingChange]);
+
+  useEffect(() => {
+    Animated.timing(pinLift, {
+      toValue: moving ? -8 : 0,
+      duration: moving ? 120 : 180,
+      useNativeDriver: true,
+    }).start();
+  }, [moving, pinLift]);
+
+  useEffect(() => {
+    if (!cameraTarget) return;
+    programmaticMove.current = true;
+    updateMoving(true);
+    mapRef.current?.animateToRegion({
+      ...cameraTarget,
+      latitudeDelta: 0.006,
+      longitudeDelta: 0.006,
+    }, 200);
+  }, [cameraTarget, updateMoving]);
 
   return (
     <View
@@ -42,10 +82,15 @@ export function StartLocationMap({
       accessibilityLabel="Bản đồ xác nhận điểm bắt đầu"
     >
       <MapView
+        ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={StyleSheet.absoluteFillObject}
         initialRegion={initialRegion}
-        onRegionChangeComplete={updateCenter}
+        onRegionChange={() => updateMoving(true)}
+        onRegionChangeComplete={(region) => {
+          updateMoving(false);
+          updateCenter(region);
+        }}
         followsUserLocation={false}
         moveOnMarkerPress={false}
         scrollEnabled
@@ -56,12 +101,12 @@ export function StartLocationMap({
         showsMyLocationButton={false}
         showsUserLocation
       />
-      <View pointerEvents="none" style={styles.pinWrap}>
+      <Animated.View pointerEvents="none" style={[styles.pinWrap, { transform: [{ translateX: -24 }, { translateY: -56 }, { translateY: pinLift }] }]}>
         <View style={styles.pinBadge}>
           <MapPin size={27} color={colors.surface} fill={colors.driverAccent} />
         </View>
         <View style={styles.pinTip} />
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -79,7 +124,6 @@ const styles = StyleSheet.create({
     left: "50%",
     position: "absolute",
     top: "50%",
-    transform: [{ translateX: -24 }, { translateY: -56 }],
     width: 48,
   },
   pinBadge: {

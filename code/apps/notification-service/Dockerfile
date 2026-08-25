@@ -1,0 +1,43 @@
+# Build Stage
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Copy package management files
+COPY package.json turbo.json ./
+COPY apps/notification-service/package.json ./apps/notification-service/
+COPY packages/database/package.json ./packages/database/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY apps/notification-service ./apps/notification-service
+COPY packages/database ./packages/database
+COPY packages/shared ./packages/shared
+
+# Generate Prisma client
+RUN cd packages/database && npx prisma generate
+
+# Build shared packages
+RUN cd packages/shared && npm run build
+
+# Build notification-service
+RUN cd apps/notification-service && npm run build
+
+# Runtime Stage
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
+# Copy built app and dependencies
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/notification-service/dist ./apps/notification-service/dist
+COPY --from=builder /app/apps/notification-service/package.json ./apps/notification-service/package.json
+COPY --from=builder /app/packages/database ./packages/database
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+
+EXPOSE 5201
+CMD ["node", "apps/notification-service/dist/server.js"]

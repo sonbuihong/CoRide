@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useQuery } from '@tanstack/react-query';
-import type { GoongAutocompletePrediction } from '@repo/shared';
+import type { PlaceSearchResult } from '@repo/shared';
 import { format } from 'date-fns';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
@@ -18,8 +18,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '../src/components/ui/AppButton';
 import { AppText } from '../src/components/ui/AppText';
+import { PlaceSelectionMapModal } from '../src/components/PlaceSelectionMapModal';
 import { useAuth } from '../src/hooks/useAuth';
-import { createGoongSessionToken, getAutocompletePredictionsMobile, getPlaceDetailMobile, getReverseGeocodeMobile, type GoongApiVersion } from '../src/services/goong.service';
+import { createGoongSessionToken, getPlaceDetailMobile, getReverseGeocodeMobile, searchPlacesMobile, type GoongApiVersion } from '../src/services/goong.service';
 import { tripService } from '../src/services/trip.service';
 import { colors, layout, radius, spacing } from '../src/theme/tokens';
 
@@ -46,9 +47,9 @@ const distanceLabel = (meters?: number) => {
   return meters < 1000 ? `${Math.max(1, Math.round(meters))} m` : `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
 };
 
-const getPlaceKind = (prediction: GoongAutocompletePrediction) => {
-  const types = new Set((prediction.types || []).map((type: string) => type.toLowerCase()));
-  const value = `${prediction.structured_formatting.main_text} ${prediction.description}`.toLowerCase();
+const getPlaceKind = (prediction: PlaceSearchResult) => {
+  const types = new Set(prediction.type ? [prediction.type.toLowerCase()] : []);
+  const value = `${prediction.name} ${prediction.address}`.toLowerCase();
   if (types.has('bus_station')) return { label: 'Bến xe', Icon: BusFront };
   if (types.has('train_station') || types.has('railway_station') || types.has('transit_station')) return { label: 'Nhà ga', Icon: TrainFront };
   if (types.has('airport')) return { label: 'Sân bay', Icon: Plane };
@@ -83,7 +84,7 @@ export default function SearchScreen() {
   const [locationAttempt, setLocationAttempt] = useState(0);
   const [openSettingsForLocation, setOpenSettingsForLocation] = useState(false);
   const [query, setQuery] = useState('');
-  const [predictions, setPredictions] = useState<GoongAutocompletePrediction[]>([]);
+  const [predictions, setPredictions] = useState<PlaceSearchResult[]>([]);
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [suggestionError, setSuggestionError] = useState<string>();
   const [destination, setDestination] = useState<SelectedPlace>();
@@ -95,6 +96,9 @@ export default function SearchScreen() {
   const [activeTab, setActiveTab] = useState<'suggested' | 'recent'>('suggested');
   const [showMergedAddress, setShowMergedAddress] = useState(true);
   const [originUtilityNotice, setOriginUtilityNotice] = useState<string>();
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
+  const [mapPickerMode, setMapPickerMode] = useState<'origin' | 'destination'>('destination');
+  const [mapPickerInitial, setMapPickerInitial] = useState<Coordinates>();
   const addressVersion: GoongApiVersion = showMergedAddress ? 'v2' : 'v1';
   addressVersionRef.current = addressVersion;
 
@@ -112,12 +116,12 @@ export default function SearchScreen() {
       if (!origin) return [];
       const location = `${origin.coords.latitude},${origin.coords.longitude}`;
       const groups = await Promise.all(['Bến xe', 'Nhà ga', 'Trung tâm thương mại', 'Nhà hàng'].map((term) =>
-        getAutocompletePredictionsMobile(term, { limit: 3, location, more_compound: true, version: addressVersion, sessionToken: sessionTokenRef.current }),
+        searchPlacesMobile(term, { limit: 3, location, version: addressVersion, sessionToken: sessionTokenRef.current }),
       ));
       const seen = new Set<string>();
       return groups.flat().filter((place) => {
-        if (seen.has(place.place_id)) return false;
-        seen.add(place.place_id);
+        if (seen.has(place.id)) return false;
+        seen.add(place.id);
         return true;
       }).slice(0, 8);
     },
@@ -192,10 +196,9 @@ export default function SearchScreen() {
       setSuggestionLoading(true);
       setSuggestionError(undefined);
       try {
-        const results = await getAutocompletePredictionsMobile(query, {
+        const results = await searchPlacesMobile(query, {
           limit: 10,
           location: origin ? `${origin.coords.latitude},${origin.coords.longitude}` : undefined,
-          more_compound: true,
           version: addressVersion,
           sessionToken: sessionTokenRef.current,
         });
@@ -212,30 +215,27 @@ export default function SearchScreen() {
     return () => { clearTimeout(timer); autocompleteRequest.current += 1; };
   }, [addressVersion, destination, editingOrigin, origin, query]);
 
-  const selectPrediction = async (prediction: GoongAutocompletePrediction) => {
+  const selectPrediction = async (prediction: PlaceSearchResult) => {
     const requestId = ++detailRequest.current;
     setSuggestionLoading(true);
     setSuggestionError(undefined);
     try {
-      const detail = await getPlaceDetailMobile(prediction.place_id, addressVersion, sessionTokenRef.current);
+      const detail = prediction.latitude != null && prediction.longitude != null
+        ? null
+        : await getPlaceDetailMobile(prediction.placeId || '', addressVersion, sessionTokenRef.current);
       if (requestId !== detailRequest.current) return;
-      const point = detail?.geometry?.location;
-      if (!detail || !point) throw new Error('missing coordinates');
+      const point = prediction.latitude != null && prediction.longitude != null
+        ? { lat: prediction.latitude, lng: prediction.longitude }
+        : detail?.geometry?.location;
+      if (!point) throw new Error('missing coordinates');
       const selected = {
-        name: detail.name || prediction.structured_formatting.main_text,
-        address: detail.formatted_address || prediction.description,
+        name: detail?.name || prediction.name,
+        address: detail?.formatted_address || prediction.address,
         coords: { latitude: point.lat, longitude: point.lng },
       };
-      if (editingOrigin) {
-        setOrigin(selected);
-        setOriginFromGps(false);
-        setOriginError(undefined);
-        setEditingOrigin(false);
-        setQuery(destination?.name || '');
-      } else {
-        setDestination(selected);
-        setQuery(selected.name);
-      }
+      setMapPickerMode(editingOrigin ? 'origin' : 'destination');
+      setMapPickerInitial(selected.coords);
+      setMapPickerOpen(true);
       setPredictions([]);
       sessionTokenRef.current = createGoongSessionToken();
     } catch {
@@ -419,7 +419,7 @@ export default function SearchScreen() {
           {displayRows ? (
             <View style={styles.listSection}>
               <AppText variant="h3" weight="semibold" style={styles.sectionTitle}>{editingOrigin ? 'Chọn điểm đi' : 'Địa điểm'}</AppText>
-              {predictions.map((prediction) => <PredictionRow key={prediction.place_id} prediction={prediction} onPress={() => selectPrediction(prediction)} />)}
+              {predictions.map((prediction) => <PredictionRow key={prediction.id} prediction={prediction} onPress={() => selectPrediction(prediction)} />)}
               {!suggestionLoading && !suggestionError && predictions.length === 0 && <AppText variant="bodySmall" style={styles.emptyCopy}>Không tìm thấy địa điểm phù hợp.</AppText>}
             </View>
           ) : editingOrigin ? (
@@ -454,7 +454,7 @@ export default function SearchScreen() {
               {activeTab === 'suggested' ? (
                 suggestedPlacesQuery.isLoading ? <ActivityIndicator color={colors.primary} style={styles.historyLoader} /> : suggestedPlacesQuery.isError ? (
                   <AppText accessibilityRole="alert" variant="bodySmall" style={styles.errorMessage}>Không thể tải địa điểm gợi ý. Hãy kiểm tra kết nối.</AppText>
-                ) : suggestedPlacesQuery.data?.map((place) => <PredictionRow key={place.place_id} prediction={place} onPress={() => selectPrediction(place)} />)
+                ) : suggestedPlacesQuery.data?.map((place) => <PredictionRow key={place.id} prediction={place} onPress={() => selectPrediction(place)} />)
               ) : historyQuery.isLoading ? <ActivityIndicator color={colors.primary} style={styles.historyLoader} /> : historyQuery.isError ? (
                 <AppText accessibilityRole="alert" variant="bodySmall" style={styles.errorMessage}>Không thể tải các điểm đến đã đi. Hãy kiểm tra kết nối.</AppText>
               ) : recentPlaces.length > 0 ? (
@@ -470,21 +470,54 @@ export default function SearchScreen() {
               onToggleMergedAddress={changeAddressVersion}
               notice={originUtilityNotice}
               onSavedAddresses={() => setOriginUtilityNotice('Bạn chưa có địa chỉ đã lưu. Các địa điểm đã đi gần đây vẫn hiển thị ở phía trên.')}
-              onMap={() => setOriginUtilityNotice(`Tính năng chọn chính xác ${editingOrigin ? 'điểm đi' : 'điểm đến'} trên bản đồ đang được hoàn thiện.`)}
+              onMap={() => {
+                setMapPickerMode(editingOrigin ? 'origin' : 'destination');
+                setMapPickerInitial((editingOrigin ? origin : destination)?.coords || origin?.coords);
+                setMapPickerOpen(true);
+              }}
               onAddPlace={focusNewPlace}
             />
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      <PlaceSelectionMapModal
+        visible={mapPickerOpen}
+        title={`Chọn ${mapPickerMode === 'origin' ? 'điểm đi' : 'điểm đến'}`}
+        initialCoordinates={mapPickerInitial}
+        onClose={() => {
+          setMapPickerOpen(false);
+          setMapPickerInitial(undefined);
+        }}
+        onConfirm={(place) => {
+          if (place.latitude == null || place.longitude == null) return;
+          const selectedPlace: SelectedPlace = {
+            name: place.name,
+            address: place.address,
+            coords: { latitude: place.latitude, longitude: place.longitude },
+          };
+          if (mapPickerMode === 'origin') {
+            setOrigin(selectedPlace);
+            setOriginFromGps(false);
+            setOriginError(undefined);
+            setEditingOrigin(false);
+            setQuery(destination?.name || '');
+          } else {
+            setDestination(selectedPlace);
+            setQuery(selectedPlace.name);
+          }
+          setMapPickerOpen(false);
+          setMapPickerInitial(undefined);
+        }}
+      />
     </SafeAreaView>
   );
 }
 
-function PredictionRow({ prediction, onPress }: { prediction: GoongAutocompletePrediction; onPress: () => void }) {
+function PredictionRow({ prediction, onPress }: { prediction: PlaceSearchResult; onPress: () => void }) {
   const { Icon, label } = getPlaceKind(prediction);
-  const distance = distanceLabel(prediction.distance_meters);
+  const distance = distanceLabel(prediction.distance);
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`Chọn ${prediction.description}`} onPress={onPress} style={({ pressed }) => [styles.suggestionRow, pressed && styles.placeRowPressed]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Chọn ${prediction.address}`} onPress={onPress} style={({ pressed }) => [styles.suggestionRow, pressed && styles.placeRowPressed]}>
       {({ pressed }) => <>
         <View style={styles.suggestionIconColumn}>
           <View style={[styles.suggestionIconBadge, pressed && styles.suggestionIconBadgePressed]}>
@@ -493,9 +526,9 @@ function PredictionRow({ prediction, onPress }: { prediction: GoongAutocompleteP
           {distance && <AppText variant="caption" style={[styles.suggestionDistance, pressed && styles.primaryText]}>{distance}</AppText>}
         </View>
         <View style={styles.suggestionCopy}>
-          <AppText variant="bodySmall" weight="semibold" numberOfLines={1} style={pressed && styles.primaryText}>{prediction.structured_formatting.main_text}</AppText>
-          <AppText variant="caption" style={[styles.suggestionAddress, pressed && styles.selectedSecondaryText]} numberOfLines={2}>{prediction.structured_formatting.secondary_text}</AppText>
-          <View style={[styles.suggestionTag, pressed && styles.kindTagPressed]}><AppText variant="caption" style={styles.suggestionTagText}>{label}</AppText></View>
+          <AppText variant="bodySmall" weight="semibold" numberOfLines={1} style={pressed && styles.primaryText}>{prediction.name}</AppText>
+          <AppText variant="caption" style={[styles.suggestionAddress, pressed && styles.selectedSecondaryText]} numberOfLines={2}>{prediction.address}</AppText>
+          <View style={[styles.suggestionTag, pressed && styles.kindTagPressed]}><AppText variant="caption" style={styles.suggestionTagText}>{prediction.confidence === 'APPROXIMATE' ? 'Vị trí gần đúng' : prediction.confidence === 'MEDIUM' ? 'Kết quả liên quan' : label}</AppText></View>
         </View>
       </>}
     </Pressable>

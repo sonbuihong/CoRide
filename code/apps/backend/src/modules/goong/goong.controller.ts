@@ -1,7 +1,45 @@
 import { Request, Response } from 'express';
 import goongService from './goong.service';
+import { reversePlaces, searchPlaces } from './place-search.service';
 
 class GoongController {
+  async searchPlaces(req: Request, res: Response) {
+    try {
+      const { q, limit, location, version, session_token } = res.locals.validatedQuery as {
+        q: string;
+        limit: number;
+        location?: string;
+        version: 'v1' | 'v2';
+        session_token?: string;
+      };
+      const results = await searchPlaces(q, {
+        limit,
+        location,
+        version,
+        sessionToken: session_token,
+      });
+      res.json(results);
+    } catch (error) {
+      console.error('[PlaceSearch] search failed:', error);
+      res.status(502).json({ message: 'Không thể tìm kiếm địa điểm lúc này' });
+    }
+  }
+
+  async reversePlaces(req: Request, res: Response) {
+    try {
+      const { lat, lng, limit, version } = res.locals.validatedQuery as {
+        lat: number;
+        lng: number;
+        limit: number;
+        version: 'v1' | 'v2';
+      };
+      res.json(await reversePlaces(lat, lng, limit, version));
+    } catch (error) {
+      console.error('[PickupMap] reverse failed:', error);
+      res.status(502).json({ message: 'Không thể xác định địa điểm tại vị trí này' });
+    }
+  }
+
   /**
    * GET /api/goong/autocomplete
    * Autocomplete V1/V2 — version=v2 trả địa chỉ theo địa giới sau sáp nhập

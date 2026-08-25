@@ -78,15 +78,15 @@ function ActiveTripCard({ item, onPress }: { item: DriverHomeActiveItem; onPress
       <View style={styles.activeTopRow}>
         <View style={styles.liveBadge}>
           <View style={styles.liveDot} />
-          <AppText variant="caption" weight="semibold" style={styles.liveBadgeText}>{item.statusLabel}</AppText>
+          <AppText variant="caption" weight="semibold" className="text-white" style={styles.liveBadgeText}>{item.statusLabel}</AppText>
         </View>
         <Navigation size={22} color={colors.surface} strokeWidth={2} />
       </View>
-      <AppText accessibilityRole="header" style={styles.activeTitle}>Chuyến đang hoạt động</AppText>
+      <AppText accessibilityRole="header" className="text-white" style={styles.activeTitle}>Chuyến đang hoạt động</AppText>
       {item.passengerLabel ? (
         <View style={styles.passengerLine}>
           <Users size={16} color="rgba(255,255,255,0.72)" />
-          <AppText variant="bodySmall" style={styles.activeSecondary}>{item.passengerLabel}</AppText>
+          <AppText variant="bodySmall" className="text-white/75" style={styles.activeSecondary}>{item.passengerLabel}</AppText>
         </View>
       ) : null}
       <View style={styles.activeRoute}>
@@ -94,8 +94,8 @@ function ActiveTripCard({ item, onPress }: { item: DriverHomeActiveItem; onPress
           <View style={styles.originDot} /><View style={styles.routeLineDark} /><View style={styles.destinationDot} />
         </View>
         <View style={styles.routeCopy}>
-          <AppText numberOfLines={1} style={styles.activeRouteText}>{item.origin}</AppText>
-          <AppText numberOfLines={1} style={styles.activeRouteText}>{item.destination}</AppText>
+          <AppText numberOfLines={1} className="text-white" style={styles.activeRouteText}>{item.origin}</AppText>
+          <AppText numberOfLines={1} className="text-white" style={styles.activeRouteText}>{item.destination}</AppText>
         </View>
       </View>
       <Pressable
@@ -150,8 +150,8 @@ function PublishHero({ firstName, onPress }: { firstName?: string; onPress: () =
       >
         <View style={styles.publishIcon}><Plus size={23} color={colors.surface} strokeWidth={2.5} /></View>
         <View style={styles.publishCopy}>
-          <AppText weight="semibold" style={styles.publishTitle}>Đăng chuyến đi</AppText>
-          <AppText variant="bodySmall" style={styles.publishSubtitle}>Chia sẻ ghế trống trên hành trình sắp tới</AppText>
+          <AppText weight="semibold" className="text-white" style={styles.publishTitle}>Đăng chuyến đi</AppText>
+          <AppText variant="bodySmall" className="text-white/75" style={styles.publishSubtitle}>Chia sẻ ghế trống trên hành trình sắp tới</AppText>
         </View>
         <ChevronRight size={22} color={colors.surface} strokeWidth={2.2} />
       </Pressable>

@@ -15,7 +15,7 @@ type GoongApiVersion = 'v1' | 'v2';
 // Interface theo Goong Autocomplete V1 response
 // Khi truyền more_compound=true → trả thêm compound (quận/xã/tỉnh)
 // Ref: https://docs.goong.io/rest/place/autocomplete/
-interface AutocompleteResult {
+export interface AutocompleteResult {
   description: string;
   place_id: string;
   reference: string;
@@ -339,6 +339,14 @@ class GoongService {
       console.error('Goong Reverse Geocode error:', error);
       throw new Error('Không thể tìm thấy địa chỉ cho tọa độ này');
     }
+  }
+
+  async reverseGeocodeCandidates(lat: number, lng: number, version: GoongApiVersion = 'v2'): Promise<GeocodeV2Result[]> {
+    const endpoint = version === 'v2' ? '/v2/geocode' : '/geocode';
+    const response = await this.getFromGoong<{ results?: GeocodeV2Result[] }>(endpoint, {
+      latlng: `${lat},${lng}`,
+    });
+    return response.results ?? [];
   }
 
   /**

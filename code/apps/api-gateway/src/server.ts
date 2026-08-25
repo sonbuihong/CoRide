@@ -47,7 +47,7 @@ app.use(
     on: {
       error: (err, req, res) => {
         console.error(`[API Gateway Error] Proxy to Notification Service failed (${req.method} ${req.url}):`, err.message);
-        if (!res.headersSent) {
+        if (res && 'headersSent' in res && !res.headersSent) {
           (res as any).status(502).json({ message: 'Bad Gateway: Notification Service không phản hồi' });
         }
       },
@@ -77,7 +77,7 @@ app.use(
     on: {
       error: (err, req, res) => {
         console.error(`[API Gateway Error] Proxy to Monolith failed (${req.method} ${req.url}):`, err.message);
-        if (!res.headersSent) {
+        if (res && 'headersSent' in res && !res.headersSent) {
           (res as any).status(502).json({ message: 'Bad Gateway: Backend Monolith không phản hồi', error: err.message });
         }
       },

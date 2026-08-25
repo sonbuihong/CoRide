@@ -8,6 +8,7 @@ import type {
   GoongRoute,
   GoongRouteLeg,
   RideStopInput,
+  PlaceSearchResult,
 } from "@repo/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addMonths, format, getDaysInMonth, startOfMonth } from "date-fns";
@@ -29,6 +30,7 @@ import {
   GripVertical,
   Info,
   Luggage,
+  LocateFixed,
   MapPin,
   MapPinned,
   Minus,
@@ -56,6 +58,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { LocationPicker } from "../../src/components/LocationPicker";
+import { PlaceSelectionMapModal } from "../../src/components/PlaceSelectionMapModal";
 import { RoutePreviewMap } from "../../src/components/RoutePreviewMap";
 import {
   StartLocationMap,
@@ -67,6 +70,7 @@ import { IconButton } from "../../src/components/ui/IconButton";
 import {
   getDirectionsMobile,
   getReverseGeocodeMobile,
+  reversePlacesMobile,
 } from "../../src/services/goong.service";
 import { pricingService } from "../../src/services/pricing.service";
 import {
@@ -79,6 +83,7 @@ import {
   type DriverVehicle,
 } from "../../src/services/vehicle.service";
 import { colors, layout, radius, spacing } from "../../src/theme/tokens";
+import { resolveMapCandidate } from "../../src/utils/place-selection";
 
 const STEPS = [
   "Hành trình",
@@ -154,6 +159,7 @@ export default function CreateRideScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const routeRequest = useRef(0);
+  const mapResolveRequest = useRef(0);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<CreateRideInput>(createDefaults);
   const [selectedDates, setSelectedDates] = useState<string[]>([
@@ -170,6 +176,10 @@ export default function CreateRideScreen() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState<string>();
   const [mapCenter, setMapCenter] = useState<MapCoordinates>();
+  const [mapPlace, setMapPlace] = useState<PlaceSearchResult>();
+  const [mapResolving, setMapResolving] = useState(false);
+  const [mapMoving, setMapMoving] = useState(false);
+  const [mapCameraTarget, setMapCameraTarget] = useState<MapCoordinates>();
   const [confirmingStart, setConfirmingStart] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState(false);
   const [screenError, setScreenError] = useState<string>();
@@ -481,34 +491,58 @@ export default function CreateRideScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step]);
 
+  useEffect(() => {
+    if (step !== 1 || !mapCenter || mapMoving) return;
+    const timer = setTimeout(() => {
+      const requestId = ++mapResolveRequest.current;
+      setMapResolving(true);
+      setMapPlace(undefined);
+      void reversePlacesMobile(mapCenter.latitude, mapCenter.longitude, 5, "v2")
+        .then((results) => {
+          if (requestId !== mapResolveRequest.current) return;
+          const resolution = resolveMapCandidate(mapCenter, results, undefined, false);
+          if (!resolution.selected) throw new Error("missing map candidate");
+          setMapPlace(resolution.selected);
+        })
+        .catch(() => {
+          if (requestId === mapResolveRequest.current) setScreenError("Không đọc được địa chỉ tại vị trí này. Hãy di chuyển bản đồ và thử lại.");
+        })
+        .finally(() => {
+          if (requestId === mapResolveRequest.current) setMapResolving(false);
+        });
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [mapCenter, mapMoving, step]);
+
+  const handleMapCenterChange = (next: MapCoordinates) => {
+    setMapCameraTarget(undefined);
+    setMapCenter(next);
+  };
+
+  const handleMapMovingChange = (moving: boolean) => {
+    setMapMoving(moving);
+    if (moving) {
+      mapResolveRequest.current += 1;
+      setMapPlace(undefined);
+      setScreenError(undefined);
+    }
+  };
+
   const confirmStart = async () => {
-    if (!mapCenter || Platform.OS === "web") {
-      setStep(2);
+    if (!mapCenter || !mapPlace || mapPlace.latitude == null || mapPlace.longitude == null || mapResolving || mapMoving) {
+      setScreenError("Hãy chờ hệ thống xác định xong địa chỉ tại điểm ghim.");
       return;
     }
     setConfirmingStart(true);
     setScreenError(undefined);
     try {
-      const place = await getReverseGeocodeMobile(
-        mapCenter.latitude,
-        mapCenter.longitude,
-        "v2",
-      );
-      const address = place?.address || form.origin;
+      const address = mapPlace.address;
       setForm((value) => ({
         ...value,
         origin: address,
         originProvince: provinceFromAddress(address || ""),
-        originLat: mapCenter.latitude,
-        originLng: mapCenter.longitude,
-      }));
-      invalidateRoute();
-      setStep(2);
-    } catch {
-      setForm((value) => ({
-        ...value,
-        originLat: mapCenter.latitude,
-        originLng: mapCenter.longitude,
+        originLat: mapPlace.latitude,
+        originLng: mapPlace.longitude,
       }));
       invalidateRoute();
       setStep(2);
@@ -541,7 +575,10 @@ export default function CreateRideScreen() {
         );
         return;
       }
-      setMapCenter({ latitude: form.originLat, longitude: form.originLng });
+      const initialMapCenter = { latitude: form.originLat, longitude: form.originLng };
+      setMapCenter(initialMapCenter);
+      setMapCameraTarget(initialMapCenter);
+      setMapPlace(undefined);
       setStep(1);
       return;
     }
@@ -679,9 +716,17 @@ export default function CreateRideScreen() {
           <View style={styles.mapFlowContent}>
             <StartConfirmStep
               origin={originCoordinates}
-              address={form.origin || ""}
               center={mapCenter || originCoordinates}
-              onCenterChange={setMapCenter}
+              place={mapPlace}
+              resolving={mapResolving}
+              cameraTarget={mapCameraTarget}
+              onCenterChange={handleMapCenterChange}
+              onMovingChange={handleMapMovingChange}
+              onLocate={(coordinates) => {
+                setMapCenter(coordinates);
+                setMapCameraTarget(coordinates);
+              }}
+              onLocateError={setScreenError}
             />
           </View>
         ) : step === 2 && originCoordinates && destinationCoordinates ? (
@@ -817,7 +862,7 @@ export default function CreateRideScreen() {
             variant="driver"
             onPress={step === 9 ? submit : continueFlow}
             isLoading={mutation.isPending || routeLoading || confirmingStart}
-            disabled={step === 8 && pricingQuery.isFetching}
+            disabled={(step === 8 && pricingQuery.isFetching) || (step === 1 && (!mapPlace || mapResolving || mapMoving))}
             style={styles.nextButton}
           />
         </View>
@@ -843,6 +888,30 @@ function JourneyStep({
   locationError?: string;
   retryLocation: () => void;
 }) {
+  const [activeLocationKind, setActiveLocationKind] = useState<"origin" | "destination">("origin");
+  const [mapSelectionOpen, setMapSelectionOpen] = useState(false);
+
+  const biasCoordinates = useMemo(() => {
+    if (!locationBias) return undefined;
+    const [latitude, longitude] = locationBias.split(",").map(Number);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return undefined;
+    return { latitude, longitude };
+  }, [locationBias]);
+
+  const mapInitialCoordinates = useMemo(() => {
+    if (activeLocationKind === "origin") {
+      return form.originLat != null && form.originLng != null
+        ? { latitude: form.originLat, longitude: form.originLng }
+        : biasCoordinates;
+    }
+    if (form.destinationLat != null && form.destinationLng != null) {
+      return { latitude: form.destinationLat, longitude: form.destinationLng };
+    }
+    return form.originLat != null && form.originLng != null
+      ? { latitude: form.originLat, longitude: form.originLng }
+      : biasCoordinates;
+  }, [activeLocationKind, biasCoordinates, form.destinationLat, form.destinationLng, form.originLat, form.originLng]);
+
   const updateLocation = (kind: "origin" | "destination", text: string) => {
     setForm((value) => ({
       ...value,
@@ -871,6 +940,8 @@ function JourneyStep({
         value={form.origin || ""}
         selected={form.originLat != null && form.originLng != null}
         locationBias={locationBias}
+        showMapAction={false}
+        onInputFocus={() => setActiveLocationKind("origin")}
         onChangeText={(text) => updateLocation("origin", text)}
         onSelectCoords={(lat, lng, description) =>
           setForm((value) => ({
@@ -894,6 +965,8 @@ function JourneyStep({
             ? `${form.originLat},${form.originLng}`
             : locationBias
         }
+        showMapAction={false}
+        onInputFocus={() => setActiveLocationKind("destination")}
         onChangeText={(text) => updateLocation("destination", text)}
         onSelectCoords={(lat, lng, description) =>
           setForm((value) => ({
@@ -905,6 +978,27 @@ function JourneyStep({
           }))
         }
       />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Chọn ${activeLocationKind === "origin" ? "điểm đi" : "điểm đến"} trên bản đồ`}
+        onPress={() => setMapSelectionOpen(true)}
+        style={({ pressed }) => [
+          styles.sharedMapAction,
+          pressed && styles.sharedMapActionPressed,
+        ]}
+      >
+        <View style={styles.sharedMapActionIcon}>
+          <MapPinned size={21} color={colors.driverAccent} />
+        </View>
+        <View style={styles.sharedMapActionCopy}>
+          <AppText variant="bodySmall" weight="semibold" style={styles.sharedMapActionTitle}>
+            Chọn vị trí trên bản đồ
+          </AppText>
+          <AppText variant="caption" style={styles.sharedMapActionHint}>
+            Áp dụng cho {activeLocationKind === "origin" ? "điểm đi" : "điểm đến"}
+          </AppText>
+        </View>
+      </Pressable>
       {locationError && (
         <Pressable
           accessibilityRole="button"
@@ -921,30 +1015,109 @@ function JourneyStep({
           </AppText>
         </Pressable>
       )}
+      <PlaceSelectionMapModal
+        visible={mapSelectionOpen}
+        title={`Chọn ${activeLocationKind === "origin" ? "điểm đi" : "điểm đến"}`}
+        initialCoordinates={mapInitialCoordinates}
+        onClose={() => setMapSelectionOpen(false)}
+        onConfirm={(place) => {
+          if (place.latitude == null || place.longitude == null) return;
+          const address = place.address || place.name;
+          setForm((value) =>
+            activeLocationKind === "origin"
+              ? {
+                  ...value,
+                  origin: address,
+                  originLat: place.latitude,
+                  originLng: place.longitude,
+                  originProvince: provinceFromAddress(address),
+                }
+              : {
+                  ...value,
+                  destination: address,
+                  destinationLat: place.latitude,
+                  destinationLng: place.longitude,
+                  destProvince: provinceFromAddress(address),
+                },
+          );
+          invalidateRoute();
+          setMapSelectionOpen(false);
+        }}
+      />
     </View>
   );
 }
 
 function StartConfirmStep({
   origin,
-  address,
   center,
+  place,
+  resolving,
+  cameraTarget,
   onCenterChange,
+  onMovingChange,
+  onLocate,
+  onLocateError,
 }: {
   origin: MapCoordinates;
-  address: string;
   center: MapCoordinates;
+  place?: PlaceSearchResult;
+  resolving: boolean;
+  cameraTarget?: MapCoordinates;
   onCenterChange: (value: MapCoordinates) => void;
+  onMovingChange: (moving: boolean) => void;
+  onLocate: (value: MapCoordinates) => void;
+  onLocateError: (message: string) => void;
 }) {
+  const [locating, setLocating] = useState(false);
+
+  const locateUser = async () => {
+    setLocating(true);
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== "granted") {
+        onLocateError("Cần quyền vị trí để trở về vị trí hiện tại.");
+        return;
+      }
+      const current = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      onLocate({
+        latitude: current.coords.latitude,
+        longitude: current.coords.longitude,
+      });
+    } catch {
+      onLocateError("Không thể lấy vị trí hiện tại. Hãy kiểm tra GPS và thử lại.");
+    } finally {
+      setLocating(false);
+    }
+  };
+
   return (
     <View style={styles.mapStage}>
-      <StartLocationMap origin={origin} onCenterChange={onCenterChange} />
+      <StartLocationMap origin={origin} cameraTarget={cameraTarget} onCenterChange={onCenterChange} onMovingChange={onMovingChange} />
+      <Pressable
+        accessibilityLabel="Trở về vị trí hiện tại"
+        accessibilityRole="button"
+        disabled={locating}
+        onPress={() => void locateUser()}
+        style={({ pressed }) => [
+          styles.mapLocateButton,
+          pressed && styles.mapLocateButtonPressed,
+        ]}
+      >
+        {locating ? (
+          <ActivityIndicator size="small" color={colors.driverAccent} />
+        ) : (
+          <LocateFixed size={22} color={colors.driverAccent} />
+        )}
+      </Pressable>
       <MapBottomSheet
         title="Xác nhận điểm bắt đầu"
         copy="Di chuyển bản đồ để ghim nằm đúng nơi bạn có thể đón khách."
         summary={
           <AppText numberOfLines={1} weight="semibold" style={styles.sheetSummaryText}>
-            {shortPlaceName(address)}
+            {resolving ? "Đang xác định địa chỉ…" : shortPlaceName(place?.address)}
           </AppText>
         }
       >
@@ -954,7 +1127,10 @@ function StartConfirmStep({
           </View>
           <View style={styles.flex}>
             <AppText variant="caption" style={styles.secondary}>Điểm đang xác nhận</AppText>
-            <AppText weight="semibold" numberOfLines={2}>{shortPlaceName(address)}</AppText>
+            <AppText weight="semibold" numberOfLines={2}>
+              {resolving ? "Đang xác định địa chỉ…" : place?.name || "Thả bản đồ để chọn vị trí"}
+            </AppText>
+            {place?.address && <AppText variant="caption" numberOfLines={2} style={styles.secondary}>{place.address}</AppText>}
             <AppText variant="caption" style={styles.secondary}>
               {center.latitude.toFixed(5)}, {center.longitude.toFixed(5)}
             </AppText>
@@ -2058,6 +2234,29 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   mapStage: { flex: 1, overflow: "hidden" },
+  mapLocateButton: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    elevation: 4,
+    height: 46,
+    justifyContent: "center",
+    position: "absolute",
+    right: spacing.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 5,
+    top: spacing.md,
+    width: 46,
+    zIndex: 3,
+  },
+  mapLocateButtonPressed: {
+    backgroundColor: colors.navigationDriverSoft,
+    transform: [{ scale: 0.96 }],
+  },
   mapSheet: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.card,
@@ -2109,6 +2308,34 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     minHeight: layout.minTouchTarget,
   },
+  sharedMapAction: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.input,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+    minHeight: 62,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  sharedMapActionPressed: {
+    backgroundColor: colors.navigationDriverSoft,
+    borderColor: colors.driverAccent,
+  },
+  sharedMapActionIcon: {
+    alignItems: "center",
+    backgroundColor: colors.navigationDriverSoft,
+    borderRadius: radius.pill,
+    height: 38,
+    justifyContent: "center",
+    width: 38,
+  },
+  sharedMapActionCopy: { flex: 1 },
+  sharedMapActionTitle: { color: colors.driverAccent },
+  sharedMapActionHint: { color: colors.textSecondary, marginTop: 2 },
   routeOption: {
     alignItems: "center",
     backgroundColor: colors.surface,

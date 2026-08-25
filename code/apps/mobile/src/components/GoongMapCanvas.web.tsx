@@ -23,6 +23,7 @@ interface GoongMapInstance {
   getCenter: () => { lat: number; lng: number };
   getSource: (id: string) => MapSource | undefined;
   jumpTo: (options: Record<string, unknown>) => void;
+  easeTo?: (options: Record<string, unknown>) => void;
   on: (event: string, listener: () => void) => void;
   remove: () => void;
   touchZoomRotate?: { disableRotation: () => void };
@@ -68,19 +69,39 @@ interface GoongMapCanvasProps {
   routeLines?: Coordinates[][];
   selectedRouteIndex?: number;
   onCenterChange?: (coordinates: Coordinates) => void;
+  cameraTarget?: Coordinates;
+  onMovingChange?: (moving: boolean) => void;
   zoom?: number;
 }
 
-export function GoongMapCanvas({ center, origin, destination, routeLines = EMPTY_ROUTE_LINES, selectedRouteIndex = 0, onCenterChange, zoom = 16 }: GoongMapCanvasProps) {
+export function GoongMapCanvas({ center, origin, destination, routeLines = EMPTY_ROUTE_LINES, selectedRouteIndex = 0, onCenterChange, cameraTarget, onMovingChange, zoom = 16 }: GoongMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoongMapInstance | null>(null);
   const centerChangeRef = useRef(onCenterChange);
+  const movingChangeRef = useRef(onMovingChange);
+  const programmaticMove = useRef(false);
   const initialCenter = useRef(center).current;
   const initialZoom = useRef(zoom).current;
   const [ready, setReady] = useState(0);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [userLocation, setUserLocation] = useState<Coordinates>();
   centerChangeRef.current = onCenterChange;
+  movingChangeRef.current = onMovingChange;
+
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+    const watchId = navigator.geolocation.watchPosition(
+      ({ coords }) =>
+        setUserLocation({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        }),
+      () => setUserLocation(undefined),
+      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 15_000 },
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   useEffect(() => {
     let disposed = false;
@@ -92,7 +113,13 @@ export function GoongMapCanvas({ center, origin, destination, routeLines = EMPTY
       mapRef.current = map;
       map.touchZoomRotate?.disableRotation();
       map.on("load", () => { if (!disposed) setReady((value) => value + 1); });
+      map.on("movestart", () => movingChangeRef.current?.(true));
       map.on("moveend", () => {
+        movingChangeRef.current?.(false);
+        if (programmaticMove.current) {
+          programmaticMove.current = false;
+          return;
+        }
         const next = map.getCenter();
         centerChangeRef.current?.({ latitude: next.lat, longitude: next.lng });
       });
@@ -100,13 +127,23 @@ export function GoongMapCanvas({ center, origin, destination, routeLines = EMPTY
     return () => { disposed = true; mapRef.current?.remove(); mapRef.current = null; };
   }, [attempt, initialCenter.latitude, initialCenter.longitude, initialZoom]);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !cameraTarget) return;
+    programmaticMove.current = true;
+    const options = { center: [cameraTarget.longitude, cameraTarget.latitude], duration: 200 };
+    if (map.easeTo) map.easeTo(options);
+    else map.jumpTo(options);
+  }, [cameraTarget, ready]);
+
   const pointData = useMemo<GeoJsonFeatureCollection>(() => ({
     type: "FeatureCollection",
     features: [
       ...(origin ? [{ type: "Feature" as const, properties: { role: "origin" }, geometry: { type: "Point" as const, coordinates: [origin.longitude, origin.latitude] } }] : []),
       ...(destination ? [{ type: "Feature" as const, properties: { role: "destination" }, geometry: { type: "Point" as const, coordinates: [destination.longitude, destination.latitude] } }] : []),
+      ...(userLocation ? [{ type: "Feature" as const, properties: { role: "user" }, geometry: { type: "Point" as const, coordinates: [userLocation.longitude, userLocation.latitude] } }] : []),
     ],
-  }), [destination, origin]);
+  }), [destination, origin, userLocation]);
   const routeData = useMemo<GeoJsonFeatureCollection>(() => ({
     type: "FeatureCollection",
     features: routeLines.map((line, index) => ({ line, index }))
@@ -119,7 +156,8 @@ export function GoongMapCanvas({ center, origin, destination, routeLines = EMPTY
     if (!map) return;
     if (!map.getSource("coride-points")) {
       map.addSource("coride-points", { type: "geojson", data: pointData });
-      map.addLayer({ id: "coride-points", type: "circle", source: "coride-points", paint: { "circle-color": ["match", ["get", "role"], "destination", colors.mapDestination, colors.mapPickup], "circle-radius": 7, "circle-stroke-color": colors.surface, "circle-stroke-width": 3 } });
+      map.addLayer({ id: "coride-user-location-halo", type: "circle", source: "coride-points", filter: ["==", ["get", "role"], "user"], paint: { "circle-color": "rgba(0,113,227,0.18)", "circle-radius": 18 } });
+      map.addLayer({ id: "coride-points", type: "circle", source: "coride-points", paint: { "circle-color": ["match", ["get", "role"], "destination", colors.mapDestination, "user", colors.primary, colors.mapPickup], "circle-radius": ["case", ["==", ["get", "role"], "user"], 8, 7], "circle-stroke-color": colors.surface, "circle-stroke-width": 3 } });
     } else map.getSource("coride-points")?.setData(pointData);
     if (!map.getSource("coride-routes")) {
       map.addSource("coride-routes", { type: "geojson", data: routeData });

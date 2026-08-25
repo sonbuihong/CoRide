@@ -5,6 +5,8 @@ import {
   geolocationBodySchema,
   staticMapQuerySchema,
   tripBodySchema,
+  placeSearchQuerySchema,
+  reversePlacesQuerySchema,
 } from './goong.validation';
 
 describe('Goong proxy validation', () => {
@@ -40,5 +42,11 @@ describe('Goong proxy validation', () => {
     const base = { origin: '21,105', destination: '22,106' };
     expect(directionsBodySchema.safeParse({ ...base, waypoints: ['21.1,105.1', '21.2,105.2', '21.3,105.3'] }).success).toBe(true);
     expect(directionsBodySchema.safeParse({ ...base, waypoints: ['21.1,105.1', '21.2,105.2', '21.3,105.3', '21.4,105.4'] }).success).toBe(false);
+  });
+
+  it('validates normalized place search and reverse candidate limits', () => {
+    expect(placeSearchQuerySchema.parse({ q: 'LK645 DV-26 Khu C Yên Nghĩa' }).version).toBe('v2');
+    expect(reversePlacesQuerySchema.safeParse({ lat: 21.02, lng: 105.85, limit: 5 }).success).toBe(true);
+    expect(reversePlacesQuerySchema.safeParse({ lat: 21.02, lng: 105.85, limit: 20 }).success).toBe(false);
   });
 });

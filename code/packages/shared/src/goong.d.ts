@@ -149,3 +149,20 @@ export interface GoongPlaceDetailResponse {
   result: GoongPlaceDetailResult;
   status: string;
 }
+
+export type PlaceSearchSource = 'GOONG_AUTOCOMPLETE' | 'GOONG_GEOCODE' | 'CORIDE';
+export type PlaceSearchConfidence = 'HIGH' | 'MEDIUM' | 'APPROXIMATE';
+
+/** Stable place contract consumed by CoRide UIs instead of raw Goong payloads. */
+export interface PlaceSearchResult {
+  id: string;
+  placeId?: string;
+  name: string;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+  distance?: number;
+  source: PlaceSearchSource;
+  type?: string;
+  confidence: PlaceSearchConfidence;
+}

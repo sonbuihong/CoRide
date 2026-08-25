@@ -70,6 +70,7 @@ export function RoutePreviewMap({
         rotateEnabled={false}
         pitchEnabled={false}
         toolbarEnabled={false}
+        showsUserLocation
         showsMyLocationButton={false}
       >
         {routeLines.length > 0

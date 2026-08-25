@@ -7,6 +7,7 @@ import type {
   GoongAutocompletePrediction, GoongDirectionsResult, GoongGeolocationRequest,
   GoongGeolocationResult, GoongMatrixResult, GoongOptimizedTripResult, GoongPlaceDetailResult,
   GoongStaticMapOptions,
+  PlaceSearchResult,
 } from '../../../../packages/shared/src/goong';
 import { API_URL as API_BASE_URL } from '../config/network';
 
@@ -82,6 +83,20 @@ export const getAutocompletePredictionsMobile = async (
   }
 };
 
+export const searchPlacesMobile = async (
+  query: string,
+  options?: Omit<AutocompleteOptions, 'radius' | 'more_compound'>,
+): Promise<PlaceSearchResult[]> => {
+  if (query.trim().length < 2) return [];
+  const { limit = 10, location, version = 'v2', sessionToken } = options || {};
+  const params = new URLSearchParams({ q: query, limit: String(limit), version });
+  if (location) params.set('location', location);
+  if (sessionToken) params.set('session_token', sessionToken);
+  const response = await fetch(`${API_BASE_URL}/goong/places/search?${params.toString()}`);
+  if (!response.ok) throw new Error(`HTTP ${response.status}: Không thể tìm kiếm địa điểm`);
+  return await response.json() as PlaceSearchResult[];
+};
+
 /**
  * Lấy chi tiết địa điểm từ place_id (proxy qua backend)
  * Trả null khi lỗi — caller cần handle trường hợp null
@@ -133,6 +148,23 @@ export const getReverseGeocodeMobile = async (
     console.error('[Mobile] Goong Reverse Geocode error:', error);
     return null;
   }
+};
+
+export const reversePlacesMobile = async (
+  latitude: number,
+  longitude: number,
+  limit = 5,
+  version: GoongApiVersion = 'v2',
+): Promise<PlaceSearchResult[]> => {
+  const params = new URLSearchParams({
+    lat: String(latitude),
+    lng: String(longitude),
+    limit: String(limit),
+    version,
+  });
+  const response = await fetch(`${API_BASE_URL}/goong/places/reverse?${params.toString()}`);
+  if (!response.ok) throw new Error(`HTTP ${response.status}: Không thể xác định địa điểm`);
+  return await response.json() as PlaceSearchResult[];
 };
 
 export const forwardGeocodeMobile = async (address: string, version: GoongApiVersion = 'v2'): Promise<GoongPlaceDetailResult | null> => {

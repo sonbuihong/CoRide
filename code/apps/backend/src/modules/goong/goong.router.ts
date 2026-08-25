@@ -5,7 +5,7 @@ import { validate } from '../../shared/middlewares/validate.middleware';
 import {
   autocompleteQuerySchema, directionsBodySchema, distanceMatrixBodySchema, geocodeQuerySchema,
   geolocationBodySchema, placeDetailQuerySchema, reverseGeocodeQuerySchema, staticMapQuerySchema,
-  tripBodySchema,
+  tripBodySchema, placeSearchQuerySchema, reversePlacesQuerySchema,
 } from './goong.validation';
 
 const router = Router();
@@ -40,6 +40,9 @@ function cacheFor(maxAgeSeconds: number) {
  * @cache   60s — kết quả gợi ý thay đổi khi dữ liệu Goong cập nhật
  */
 router.get('/autocomplete', autocompleteLimiter, validate(autocompleteQuerySchema, 'query'), cacheFor(60), goongController.autocomplete);
+
+router.get('/places/search', autocompleteLimiter, validate(placeSearchQuerySchema, 'query'), cacheFor(60), goongController.searchPlaces);
+router.get('/places/reverse', autocompleteLimiter, validate(reversePlacesQuerySchema, 'query'), cacheFor(300), goongController.reversePlaces);
 
 /**
  * @route   GET /api/goong/geocode-v2

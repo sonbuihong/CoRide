@@ -24,6 +24,14 @@ export const autocompleteQuerySchema = z.object({
   session_token: z.string().uuid().optional(),
 });
 
+export const placeSearchQuerySchema = z.object({
+  q: z.string().trim().min(2).max(200),
+  limit: z.coerce.number().int().min(1).max(20).default(10),
+  location: coordinate.optional(),
+  version,
+  session_token: z.string().uuid().optional(),
+});
+
 export const placeDetailQuerySchema = z.object({
   place_id: z.string().trim().min(1).max(2048),
   version,
@@ -39,6 +47,10 @@ export const reverseGeocodeQuerySchema = z.object({
   lat: z.coerce.number().min(-90).max(90),
   lng: z.coerce.number().min(-180).max(180),
   version,
+});
+
+export const reversePlacesQuerySchema = reverseGeocodeQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(10).default(5),
 });
 
 export const directionsBodySchema = z.object({

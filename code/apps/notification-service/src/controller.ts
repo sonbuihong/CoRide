@@ -46,10 +46,14 @@ export const markAllAsRead = async (req: AuthRequest, res: Response) => {
 export const markAsRead = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { id } = req.params;
+    const id = req.params.id as string;
     
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ message: 'ID thông báo không hợp lệ' });
     }
 
     const notification = await prisma.notification.findUnique({

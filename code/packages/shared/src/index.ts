@@ -28,6 +28,9 @@ export type {
   GoongAutocompleteResponse,
   GoongPlaceDetailResult,
   GoongPlaceDetailResponse,
+  PlaceSearchResult,
+  PlaceSearchSource,
+  PlaceSearchConfidence,
 } from './goong';
 
 export * from './socket.events';
