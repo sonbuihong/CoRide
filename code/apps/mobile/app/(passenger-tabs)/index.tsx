@@ -66,22 +66,34 @@ export default function PassengerHomeScreen() {
       <View style={styles.hero}>
         <View pointerEvents="none" style={styles.heroGlow} />
         <View style={styles.heroContent}>
-          <AppText accessibilityRole="header" style={styles.heroTitle}>Khởi hành cùng nhau.</AppText>
-          <AppText style={styles.heroSubtitle}>
+          <AppText
+            accessibilityRole="header"
+            variant="display"
+            weight="semibold"
+            className="text-center text-white"
+            style={styles.heroTitle}
+          >
+            Khởi hành cùng nhau.
+          </AppText>
+          <AppText
+            variant="bodySmall"
+            className="text-center text-white"
+            style={styles.heroSubtitle}
+          >
             Chia sẻ hành trình, tiết kiệm chi phí và bảo vệ môi trường.
           </AppText>
 
-          {/* Search entry pill – navigates to Search screen */}
+          {/* Search entry bar – navigates to Search screen */}
           <View style={styles.heroSearchShell}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Tìm chuyến đi"
+              accessibilityLabel="Bạn muốn đi đâu?"
               accessibilityHint="Chuyển sang trang tìm kiếm chuyến đi"
               onPress={() => router.push('/search' as any)}
               style={({ pressed }) => [styles.heroSearch, pressed && styles.heroSearchPressed]}
             >
               <View style={styles.heroSearchIcon}>
-                <Search size={20} color="#FFFFFF" strokeWidth={2.2} />
+                <Search size={22} color={colors.textSecondary} strokeWidth={2.2} />
               </View>
               <AppText
                 style={styles.heroSearchText}
@@ -148,15 +160,15 @@ const styles = StyleSheet.create({
   scrollContent: { backgroundColor: colors.background, paddingBottom: spacing.xxl },
   hero: { backgroundColor: '#080808', overflow: 'hidden', paddingBottom: 64, paddingHorizontal: spacing.md, paddingTop: 54, position: 'relative' },
   heroGlow: { alignSelf: 'center', backgroundColor: 'rgba(0,113,227,0.30)', borderRadius: 260, height: 260, position: 'absolute', top: -130, width: 400 },
-  heroContent: { alignSelf: 'center', maxWidth: layout.maxContentWidth, width: '100%' },
-  heroTitle: { color: '#FFFFFF', fontSize: 38, fontWeight: '700', letterSpacing: -0.8, lineHeight: 42, textAlign: 'center' },
-  heroSubtitle: { color: 'rgba(255,255,255,0.50)', fontSize: 14, letterSpacing: -0.15, lineHeight: 22, marginHorizontal: spacing.sm, marginTop: spacing.sm, textAlign: 'center' },
-  heroSearchShell: { alignSelf: 'stretch', elevation: 20, marginHorizontal: -4, marginTop: spacing.xxxl, shadowColor: '#000', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.50, shadowRadius: 28 },
-  heroSearch: { alignItems: 'center', alignSelf: 'stretch', backgroundColor: '#1C1C1E', borderColor: 'rgba(255,255,255,0.12)', borderRadius: radius.pill, borderWidth: 1, flexDirection: 'row', flexWrap: 'nowrap', gap: spacing.sm, height: 64, paddingHorizontal: 9, width: '100%' },
-  heroSearchPressed: { backgroundColor: '#242426', borderColor: 'rgba(255,255,255,0.22)', opacity: 0.95 },
-  heroSearchIcon: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius.pill, flexShrink: 0, height: 44, justifyContent: 'center', shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.55, shadowRadius: 14, width: 44 },
-  heroSearchText: { color: 'rgba(255,255,255,0.82)', flex: 1, flexShrink: 1, fontSize: 16, fontWeight: '500', letterSpacing: -0.2, lineHeight: 20, minWidth: 0, paddingHorizontal: spacing.xxs, textAlignVertical: 'center' },
-  heroSearchAction: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius.pill, flexShrink: 0, height: 44, justifyContent: 'center', shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.45, shadowRadius: 8, width: 44 },
+  heroContent: { alignSelf: 'center', maxWidth: layout.maxContentWidth, width: '100%', zIndex: 1 },
+  heroTitle: { alignSelf: 'center', letterSpacing: -0.6, maxWidth: 360 },
+  heroSubtitle: { alignSelf: 'center', letterSpacing: -0.15, marginHorizontal: spacing.sm, marginTop: spacing.sm, maxWidth: 360, opacity: 0.68 },
+  heroSearchShell: { alignSelf: 'stretch', elevation: 12, marginTop: spacing.xxxl, shadowColor: '#000000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.28, shadowRadius: 24 },
+  heroSearch: { alignItems: 'center', alignSelf: 'stretch', backgroundColor: colors.surface, borderRadius: radius.card, flexDirection: 'row', gap: spacing.sm, height: 60, paddingLeft: spacing.md, paddingRight: spacing.xs, width: '100%' },
+  heroSearchPressed: { backgroundColor: colors.surfaceMuted, opacity: 0.94 },
+  heroSearchIcon: { alignItems: 'center', flexShrink: 0, height: 24, justifyContent: 'center', width: 24 },
+  heroSearchText: { color: colors.textSecondary, flex: 1, flexShrink: 1, fontSize: 16, fontWeight: '400', letterSpacing: -0.2, lineHeight: 22, minWidth: 0, textAlignVertical: 'center' },
+  heroSearchAction: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius.input, flexShrink: 0, height: 44, justifyContent: 'center', width: 44 },
   content: { alignSelf: 'center', maxWidth: layout.maxContentWidth, paddingHorizontal: spacing.md, paddingTop: spacing.xxxl, width: '100%' },
   resultsHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between', marginBottom: spacing.xl },
   resultsTitle: { color: colors.textPrimary, flex: 1, fontSize: 28, fontWeight: '600', letterSpacing: -0.42, lineHeight: 32 },

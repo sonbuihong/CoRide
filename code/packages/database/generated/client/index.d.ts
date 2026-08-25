@@ -49,6 +49,16 @@ export type Notification = $Result.DefaultSelection<Prisma.$NotificationPayload>
  */
 export type Ride = $Result.DefaultSelection<Prisma.$RidePayload>
 /**
+ * Model RideSchedule
+ * 
+ */
+export type RideSchedule = $Result.DefaultSelection<Prisma.$RideSchedulePayload>
+/**
+ * Model RideStop
+ * 
+ */
+export type RideStop = $Result.DefaultSelection<Prisma.$RideStopPayload>
+/**
  * Model Booking
  * 
  */
@@ -131,6 +141,14 @@ export const TransactionStatus: {
 export type TransactionStatus = (typeof TransactionStatus)[keyof typeof TransactionStatus]
 
 
+export const BookingPolicy: {
+  INSTANT: 'INSTANT',
+  DRIVER_APPROVAL: 'DRIVER_APPROVAL'
+};
+
+export type BookingPolicy = (typeof BookingPolicy)[keyof typeof BookingPolicy]
+
+
 export const RideStatus: {
   FULL: 'FULL',
   SCHEDULED: 'SCHEDULED',
@@ -147,7 +165,8 @@ export const BookingStatus: {
   CONFIRMED: 'CONFIRMED',
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
-  REJECTED: 'REJECTED'
+  REJECTED: 'REJECTED',
+  EXPIRED: 'EXPIRED'
 };
 
 export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus]
@@ -241,6 +260,10 @@ export const TransactionType: typeof $Enums.TransactionType
 export type TransactionStatus = $Enums.TransactionStatus
 
 export const TransactionStatus: typeof $Enums.TransactionStatus
+
+export type BookingPolicy = $Enums.BookingPolicy
+
+export const BookingPolicy: typeof $Enums.BookingPolicy
 
 export type RideStatus = $Enums.RideStatus
 
@@ -474,6 +497,26 @@ export class PrismaClient<
     * ```
     */
   get ride(): Prisma.RideDelegate<ExtArgs>;
+
+  /**
+   * `prisma.rideSchedule`: Exposes CRUD operations for the **RideSchedule** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RideSchedules
+    * const rideSchedules = await prisma.rideSchedule.findMany()
+    * ```
+    */
+  get rideSchedule(): Prisma.RideScheduleDelegate<ExtArgs>;
+
+  /**
+   * `prisma.rideStop`: Exposes CRUD operations for the **RideStop** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RideStops
+    * const rideStops = await prisma.rideStop.findMany()
+    * ```
+    */
+  get rideStop(): Prisma.RideStopDelegate<ExtArgs>;
 
   /**
    * `prisma.booking`: Exposes CRUD operations for the **Booking** model.
@@ -1022,6 +1065,8 @@ export namespace Prisma {
     RefreshToken: 'RefreshToken',
     Notification: 'Notification',
     Ride: 'Ride',
+    RideSchedule: 'RideSchedule',
+    RideStop: 'RideStop',
     Booking: 'Booking',
     Review: 'Review',
     DriverVerification: 'DriverVerification',
@@ -1047,7 +1092,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "wallet" | "transaction" | "message" | "refreshToken" | "notification" | "ride" | "booking" | "review" | "driverVerification" | "provinceMapping" | "location" | "tripRequest" | "pricingConfig" | "vehicle" | "oTP" | "report"
+      modelProps: "user" | "wallet" | "transaction" | "message" | "refreshToken" | "notification" | "ride" | "rideSchedule" | "rideStop" | "booking" | "review" | "driverVerification" | "provinceMapping" | "location" | "tripRequest" | "pricingConfig" | "vehicle" | "oTP" | "report"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1538,6 +1583,146 @@ export namespace Prisma {
           count: {
             args: Prisma.RideCountArgs<ExtArgs>
             result: $Utils.Optional<RideCountAggregateOutputType> | number
+          }
+        }
+      }
+      RideSchedule: {
+        payload: Prisma.$RideSchedulePayload<ExtArgs>
+        fields: Prisma.RideScheduleFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RideScheduleFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideSchedulePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RideScheduleFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideSchedulePayload>
+          }
+          findFirst: {
+            args: Prisma.RideScheduleFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideSchedulePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RideScheduleFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideSchedulePayload>
+          }
+          findMany: {
+            args: Prisma.RideScheduleFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideSchedulePayload>[]
+          }
+          create: {
+            args: Prisma.RideScheduleCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideSchedulePayload>
+          }
+          createMany: {
+            args: Prisma.RideScheduleCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RideScheduleCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideSchedulePayload>[]
+          }
+          delete: {
+            args: Prisma.RideScheduleDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideSchedulePayload>
+          }
+          update: {
+            args: Prisma.RideScheduleUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideSchedulePayload>
+          }
+          deleteMany: {
+            args: Prisma.RideScheduleDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RideScheduleUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RideScheduleUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideSchedulePayload>
+          }
+          aggregate: {
+            args: Prisma.RideScheduleAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRideSchedule>
+          }
+          groupBy: {
+            args: Prisma.RideScheduleGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RideScheduleGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RideScheduleCountArgs<ExtArgs>
+            result: $Utils.Optional<RideScheduleCountAggregateOutputType> | number
+          }
+        }
+      }
+      RideStop: {
+        payload: Prisma.$RideStopPayload<ExtArgs>
+        fields: Prisma.RideStopFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RideStopFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideStopPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RideStopFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideStopPayload>
+          }
+          findFirst: {
+            args: Prisma.RideStopFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideStopPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RideStopFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideStopPayload>
+          }
+          findMany: {
+            args: Prisma.RideStopFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideStopPayload>[]
+          }
+          create: {
+            args: Prisma.RideStopCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideStopPayload>
+          }
+          createMany: {
+            args: Prisma.RideStopCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RideStopCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideStopPayload>[]
+          }
+          delete: {
+            args: Prisma.RideStopDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideStopPayload>
+          }
+          update: {
+            args: Prisma.RideStopUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideStopPayload>
+          }
+          deleteMany: {
+            args: Prisma.RideStopDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RideStopUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.RideStopUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RideStopPayload>
+          }
+          aggregate: {
+            args: Prisma.RideStopAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRideStop>
+          }
+          groupBy: {
+            args: Prisma.RideStopGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RideStopGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RideStopCountArgs<ExtArgs>
+            result: $Utils.Optional<RideStopCountAggregateOutputType> | number
           }
         }
       }
@@ -2403,6 +2588,7 @@ export namespace Prisma {
 
   export type UserCountOutputType = {
     ridesAsDriver: number
+    rideSchedules: number
     bookings: number
     tripsAsPassenger: number
     tripsAsDriver: number
@@ -2419,6 +2605,7 @@ export namespace Prisma {
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ridesAsDriver?: boolean | UserCountOutputTypeCountRidesAsDriverArgs
+    rideSchedules?: boolean | UserCountOutputTypeCountRideSchedulesArgs
     bookings?: boolean | UserCountOutputTypeCountBookingsArgs
     tripsAsPassenger?: boolean | UserCountOutputTypeCountTripsAsPassengerArgs
     tripsAsDriver?: boolean | UserCountOutputTypeCountTripsAsDriverArgs
@@ -2449,6 +2636,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountRidesAsDriverArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: RideWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountRideSchedulesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RideScheduleWhereInput
   }
 
   /**
@@ -2573,6 +2767,7 @@ export namespace Prisma {
 
   export type RideCountOutputType = {
     bookings: number
+    stops: number
     reviews: number
     messages: number
     reports: number
@@ -2580,6 +2775,7 @@ export namespace Prisma {
 
   export type RideCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     bookings?: boolean | RideCountOutputTypeCountBookingsArgs
+    stops?: boolean | RideCountOutputTypeCountStopsArgs
     reviews?: boolean | RideCountOutputTypeCountReviewsArgs
     messages?: boolean | RideCountOutputTypeCountMessagesArgs
     reports?: boolean | RideCountOutputTypeCountReportsArgs
@@ -2606,6 +2802,13 @@ export namespace Prisma {
   /**
    * RideCountOutputType without action
    */
+  export type RideCountOutputTypeCountStopsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RideStopWhereInput
+  }
+
+  /**
+   * RideCountOutputType without action
+   */
   export type RideCountOutputTypeCountReviewsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ReviewWhereInput
   }
@@ -2622,6 +2825,68 @@ export namespace Prisma {
    */
   export type RideCountOutputTypeCountReportsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ReportWhereInput
+  }
+
+
+  /**
+   * Count Type RideScheduleCountOutputType
+   */
+
+  export type RideScheduleCountOutputType = {
+    rides: number
+  }
+
+  export type RideScheduleCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    rides?: boolean | RideScheduleCountOutputTypeCountRidesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * RideScheduleCountOutputType without action
+   */
+  export type RideScheduleCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideScheduleCountOutputType
+     */
+    select?: RideScheduleCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * RideScheduleCountOutputType without action
+   */
+  export type RideScheduleCountOutputTypeCountRidesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RideWhereInput
+  }
+
+
+  /**
+   * Count Type RideStopCountOutputType
+   */
+
+  export type RideStopCountOutputType = {
+    selectedByBookings: number
+  }
+
+  export type RideStopCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    selectedByBookings?: boolean | RideStopCountOutputTypeCountSelectedByBookingsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * RideStopCountOutputType without action
+   */
+  export type RideStopCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStopCountOutputType
+     */
+    select?: RideStopCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * RideStopCountOutputType without action
+   */
+  export type RideStopCountOutputTypeCountSelectedByBookingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BookingWhereInput
   }
 
 
@@ -3030,6 +3295,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     ridesAsDriver?: boolean | User$ridesAsDriverArgs<ExtArgs>
+    rideSchedules?: boolean | User$rideSchedulesArgs<ExtArgs>
     bookings?: boolean | User$bookingsArgs<ExtArgs>
     tripsAsPassenger?: boolean | User$tripsAsPassengerArgs<ExtArgs>
     tripsAsDriver?: boolean | User$tripsAsDriverArgs<ExtArgs>
@@ -3087,6 +3353,7 @@ export namespace Prisma {
 
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ridesAsDriver?: boolean | User$ridesAsDriverArgs<ExtArgs>
+    rideSchedules?: boolean | User$rideSchedulesArgs<ExtArgs>
     bookings?: boolean | User$bookingsArgs<ExtArgs>
     tripsAsPassenger?: boolean | User$tripsAsPassengerArgs<ExtArgs>
     tripsAsDriver?: boolean | User$tripsAsDriverArgs<ExtArgs>
@@ -3109,6 +3376,7 @@ export namespace Prisma {
     name: "User"
     objects: {
       ridesAsDriver: Prisma.$RidePayload<ExtArgs>[]
+      rideSchedules: Prisma.$RideSchedulePayload<ExtArgs>[]
       bookings: Prisma.$BookingPayload<ExtArgs>[]
       tripsAsPassenger: Prisma.$TripRequestPayload<ExtArgs>[]
       tripsAsDriver: Prisma.$TripRequestPayload<ExtArgs>[]
@@ -3506,6 +3774,7 @@ export namespace Prisma {
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     ridesAsDriver<T extends User$ridesAsDriverArgs<ExtArgs> = {}>(args?: Subset<T, User$ridesAsDriverArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RidePayload<ExtArgs>, T, "findMany"> | Null>
+    rideSchedules<T extends User$rideSchedulesArgs<ExtArgs> = {}>(args?: Subset<T, User$rideSchedulesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "findMany"> | Null>
     bookings<T extends User$bookingsArgs<ExtArgs> = {}>(args?: Subset<T, User$bookingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany"> | Null>
     tripsAsPassenger<T extends User$tripsAsPassengerArgs<ExtArgs> = {}>(args?: Subset<T, User$tripsAsPassengerArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "findMany"> | Null>
     tripsAsDriver<T extends User$tripsAsDriverArgs<ExtArgs> = {}>(args?: Subset<T, User$tripsAsDriverArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TripRequestPayload<ExtArgs>, T, "findMany"> | Null>
@@ -3896,6 +4165,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: RideScalarFieldEnum | RideScalarFieldEnum[]
+  }
+
+  /**
+   * User.rideSchedules
+   */
+  export type User$rideSchedulesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    where?: RideScheduleWhereInput
+    orderBy?: RideScheduleOrderByWithRelationInput | RideScheduleOrderByWithRelationInput[]
+    cursor?: RideScheduleWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RideScheduleScalarFieldEnum | RideScheduleScalarFieldEnum[]
   }
 
   /**
@@ -9199,6 +9488,7 @@ export namespace Prisma {
     offeredSeats: number | null
     pricePerSeat: number | null
     tollCost: number | null
+    bookingPolicy: $Enums.BookingPolicy | null
     status: $Enums.RideStatus | null
     description: string | null
     createdAt: Date | null
@@ -9218,6 +9508,7 @@ export namespace Prisma {
     addressDetailLevel: string | null
     cancelReason: string | null
     vehicleId: string | null
+    scheduleId: string | null
     allowRoutePickup: boolean | null
     allowSmoking: boolean | null
     allowPets: boolean | null
@@ -9241,6 +9532,7 @@ export namespace Prisma {
     offeredSeats: number | null
     pricePerSeat: number | null
     tollCost: number | null
+    bookingPolicy: $Enums.BookingPolicy | null
     status: $Enums.RideStatus | null
     description: string | null
     createdAt: Date | null
@@ -9260,6 +9552,7 @@ export namespace Prisma {
     addressDetailLevel: string | null
     cancelReason: string | null
     vehicleId: string | null
+    scheduleId: string | null
     allowRoutePickup: boolean | null
     allowSmoking: boolean | null
     allowPets: boolean | null
@@ -9283,6 +9576,7 @@ export namespace Prisma {
     offeredSeats: number
     pricePerSeat: number
     tollCost: number
+    bookingPolicy: number
     status: number
     description: number
     createdAt: number
@@ -9302,6 +9596,7 @@ export namespace Prisma {
     addressDetailLevel: number
     cancelReason: number
     vehicleId: number
+    scheduleId: number
     allowRoutePickup: number
     allowSmoking: number
     allowPets: number
@@ -9353,6 +9648,7 @@ export namespace Prisma {
     offeredSeats?: true
     pricePerSeat?: true
     tollCost?: true
+    bookingPolicy?: true
     status?: true
     description?: true
     createdAt?: true
@@ -9372,6 +9668,7 @@ export namespace Prisma {
     addressDetailLevel?: true
     cancelReason?: true
     vehicleId?: true
+    scheduleId?: true
     allowRoutePickup?: true
     allowSmoking?: true
     allowPets?: true
@@ -9395,6 +9692,7 @@ export namespace Prisma {
     offeredSeats?: true
     pricePerSeat?: true
     tollCost?: true
+    bookingPolicy?: true
     status?: true
     description?: true
     createdAt?: true
@@ -9414,6 +9712,7 @@ export namespace Prisma {
     addressDetailLevel?: true
     cancelReason?: true
     vehicleId?: true
+    scheduleId?: true
     allowRoutePickup?: true
     allowSmoking?: true
     allowPets?: true
@@ -9437,6 +9736,7 @@ export namespace Prisma {
     offeredSeats?: true
     pricePerSeat?: true
     tollCost?: true
+    bookingPolicy?: true
     status?: true
     description?: true
     createdAt?: true
@@ -9456,6 +9756,7 @@ export namespace Prisma {
     addressDetailLevel?: true
     cancelReason?: true
     vehicleId?: true
+    scheduleId?: true
     allowRoutePickup?: true
     allowSmoking?: true
     allowPets?: true
@@ -9566,6 +9867,7 @@ export namespace Prisma {
     offeredSeats: number
     pricePerSeat: number
     tollCost: number
+    bookingPolicy: $Enums.BookingPolicy
     status: $Enums.RideStatus
     description: string | null
     createdAt: Date
@@ -9585,6 +9887,7 @@ export namespace Prisma {
     addressDetailLevel: string | null
     cancelReason: string | null
     vehicleId: string | null
+    scheduleId: string | null
     allowRoutePickup: boolean
     allowSmoking: boolean
     allowPets: boolean
@@ -9627,6 +9930,7 @@ export namespace Prisma {
     offeredSeats?: boolean
     pricePerSeat?: boolean
     tollCost?: boolean
+    bookingPolicy?: boolean
     status?: boolean
     description?: boolean
     createdAt?: boolean
@@ -9646,13 +9950,16 @@ export namespace Prisma {
     addressDetailLevel?: boolean
     cancelReason?: boolean
     vehicleId?: boolean
+    scheduleId?: boolean
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
     driver?: boolean | UserDefaultArgs<ExtArgs>
     vehicle?: boolean | Ride$vehicleArgs<ExtArgs>
+    schedule?: boolean | Ride$scheduleArgs<ExtArgs>
     bookings?: boolean | Ride$bookingsArgs<ExtArgs>
+    stops?: boolean | Ride$stopsArgs<ExtArgs>
     reviews?: boolean | Ride$reviewsArgs<ExtArgs>
     messages?: boolean | Ride$messagesArgs<ExtArgs>
     reports?: boolean | Ride$reportsArgs<ExtArgs>
@@ -9676,6 +9983,7 @@ export namespace Prisma {
     offeredSeats?: boolean
     pricePerSeat?: boolean
     tollCost?: boolean
+    bookingPolicy?: boolean
     status?: boolean
     description?: boolean
     createdAt?: boolean
@@ -9695,12 +10003,14 @@ export namespace Prisma {
     addressDetailLevel?: boolean
     cancelReason?: boolean
     vehicleId?: boolean
+    scheduleId?: boolean
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
     driver?: boolean | UserDefaultArgs<ExtArgs>
     vehicle?: boolean | Ride$vehicleArgs<ExtArgs>
+    schedule?: boolean | Ride$scheduleArgs<ExtArgs>
   }, ExtArgs["result"]["ride"]>
 
   export type RideSelectScalar = {
@@ -9720,6 +10030,7 @@ export namespace Prisma {
     offeredSeats?: boolean
     pricePerSeat?: boolean
     tollCost?: boolean
+    bookingPolicy?: boolean
     status?: boolean
     description?: boolean
     createdAt?: boolean
@@ -9739,6 +10050,7 @@ export namespace Prisma {
     addressDetailLevel?: boolean
     cancelReason?: boolean
     vehicleId?: boolean
+    scheduleId?: boolean
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
@@ -9748,7 +10060,9 @@ export namespace Prisma {
   export type RideInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     driver?: boolean | UserDefaultArgs<ExtArgs>
     vehicle?: boolean | Ride$vehicleArgs<ExtArgs>
+    schedule?: boolean | Ride$scheduleArgs<ExtArgs>
     bookings?: boolean | Ride$bookingsArgs<ExtArgs>
+    stops?: boolean | Ride$stopsArgs<ExtArgs>
     reviews?: boolean | Ride$reviewsArgs<ExtArgs>
     messages?: boolean | Ride$messagesArgs<ExtArgs>
     reports?: boolean | Ride$reportsArgs<ExtArgs>
@@ -9757,6 +10071,7 @@ export namespace Prisma {
   export type RideIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     driver?: boolean | UserDefaultArgs<ExtArgs>
     vehicle?: boolean | Ride$vehicleArgs<ExtArgs>
+    schedule?: boolean | Ride$scheduleArgs<ExtArgs>
   }
 
   export type $RidePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9764,7 +10079,9 @@ export namespace Prisma {
     objects: {
       driver: Prisma.$UserPayload<ExtArgs>
       vehicle: Prisma.$VehiclePayload<ExtArgs> | null
+      schedule: Prisma.$RideSchedulePayload<ExtArgs> | null
       bookings: Prisma.$BookingPayload<ExtArgs>[]
+      stops: Prisma.$RideStopPayload<ExtArgs>[]
       reviews: Prisma.$ReviewPayload<ExtArgs>[]
       messages: Prisma.$MessagePayload<ExtArgs>[]
       reports: Prisma.$ReportPayload<ExtArgs>[]
@@ -9786,6 +10103,7 @@ export namespace Prisma {
       offeredSeats: number
       pricePerSeat: number
       tollCost: number
+      bookingPolicy: $Enums.BookingPolicy
       status: $Enums.RideStatus
       description: string | null
       createdAt: Date
@@ -9805,6 +10123,7 @@ export namespace Prisma {
       addressDetailLevel: string | null
       cancelReason: string | null
       vehicleId: string | null
+      scheduleId: string | null
       allowRoutePickup: boolean
       allowSmoking: boolean
       allowPets: boolean
@@ -10175,7 +10494,9 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     driver<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     vehicle<T extends Ride$vehicleArgs<ExtArgs> = {}>(args?: Subset<T, Ride$vehicleArgs<ExtArgs>>): Prisma__VehicleClient<$Result.GetResult<Prisma.$VehiclePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    schedule<T extends Ride$scheduleArgs<ExtArgs> = {}>(args?: Subset<T, Ride$scheduleArgs<ExtArgs>>): Prisma__RideScheduleClient<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     bookings<T extends Ride$bookingsArgs<ExtArgs> = {}>(args?: Subset<T, Ride$bookingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany"> | Null>
+    stops<T extends Ride$stopsArgs<ExtArgs> = {}>(args?: Subset<T, Ride$stopsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "findMany"> | Null>
     reviews<T extends Ride$reviewsArgs<ExtArgs> = {}>(args?: Subset<T, Ride$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany"> | Null>
     messages<T extends Ride$messagesArgs<ExtArgs> = {}>(args?: Subset<T, Ride$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany"> | Null>
     reports<T extends Ride$reportsArgs<ExtArgs> = {}>(args?: Subset<T, Ride$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReportPayload<ExtArgs>, T, "findMany"> | Null>
@@ -10224,6 +10545,7 @@ export namespace Prisma {
     readonly offeredSeats: FieldRef<"Ride", 'Int'>
     readonly pricePerSeat: FieldRef<"Ride", 'Float'>
     readonly tollCost: FieldRef<"Ride", 'Float'>
+    readonly bookingPolicy: FieldRef<"Ride", 'BookingPolicy'>
     readonly status: FieldRef<"Ride", 'RideStatus'>
     readonly description: FieldRef<"Ride", 'String'>
     readonly createdAt: FieldRef<"Ride", 'DateTime'>
@@ -10243,6 +10565,7 @@ export namespace Prisma {
     readonly addressDetailLevel: FieldRef<"Ride", 'String'>
     readonly cancelReason: FieldRef<"Ride", 'String'>
     readonly vehicleId: FieldRef<"Ride", 'String'>
+    readonly scheduleId: FieldRef<"Ride", 'String'>
     readonly allowRoutePickup: FieldRef<"Ride", 'Boolean'>
     readonly allowSmoking: FieldRef<"Ride", 'Boolean'>
     readonly allowPets: FieldRef<"Ride", 'Boolean'>
@@ -10580,6 +10903,21 @@ export namespace Prisma {
   }
 
   /**
+   * Ride.schedule
+   */
+  export type Ride$scheduleArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    where?: RideScheduleWhereInput
+  }
+
+  /**
    * Ride.bookings
    */
   export type Ride$bookingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10597,6 +10935,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: BookingScalarFieldEnum | BookingScalarFieldEnum[]
+  }
+
+  /**
+   * Ride.stops
+   */
+  export type Ride$stopsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    where?: RideStopWhereInput
+    orderBy?: RideStopOrderByWithRelationInput | RideStopOrderByWithRelationInput[]
+    cursor?: RideStopWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RideStopScalarFieldEnum | RideStopScalarFieldEnum[]
   }
 
   /**
@@ -10675,6 +11033,2002 @@ export namespace Prisma {
 
 
   /**
+   * Model RideSchedule
+   */
+
+  export type AggregateRideSchedule = {
+    _count: RideScheduleCountAggregateOutputType | null
+    _min: RideScheduleMinAggregateOutputType | null
+    _max: RideScheduleMaxAggregateOutputType | null
+  }
+
+  export type RideScheduleMinAggregateOutputType = {
+    id: string | null
+    driverId: string | null
+    timezone: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RideScheduleMaxAggregateOutputType = {
+    id: string | null
+    driverId: string | null
+    timezone: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RideScheduleCountAggregateOutputType = {
+    id: number
+    driverId: number
+    timezone: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type RideScheduleMinAggregateInputType = {
+    id?: true
+    driverId?: true
+    timezone?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type RideScheduleMaxAggregateInputType = {
+    id?: true
+    driverId?: true
+    timezone?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type RideScheduleCountAggregateInputType = {
+    id?: true
+    driverId?: true
+    timezone?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type RideScheduleAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RideSchedule to aggregate.
+     */
+    where?: RideScheduleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RideSchedules to fetch.
+     */
+    orderBy?: RideScheduleOrderByWithRelationInput | RideScheduleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RideScheduleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RideSchedules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RideSchedules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RideSchedules
+    **/
+    _count?: true | RideScheduleCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RideScheduleMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RideScheduleMaxAggregateInputType
+  }
+
+  export type GetRideScheduleAggregateType<T extends RideScheduleAggregateArgs> = {
+        [P in keyof T & keyof AggregateRideSchedule]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRideSchedule[P]>
+      : GetScalarType<T[P], AggregateRideSchedule[P]>
+  }
+
+
+
+
+  export type RideScheduleGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RideScheduleWhereInput
+    orderBy?: RideScheduleOrderByWithAggregationInput | RideScheduleOrderByWithAggregationInput[]
+    by: RideScheduleScalarFieldEnum[] | RideScheduleScalarFieldEnum
+    having?: RideScheduleScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RideScheduleCountAggregateInputType | true
+    _min?: RideScheduleMinAggregateInputType
+    _max?: RideScheduleMaxAggregateInputType
+  }
+
+  export type RideScheduleGroupByOutputType = {
+    id: string
+    driverId: string
+    timezone: string
+    createdAt: Date
+    updatedAt: Date
+    _count: RideScheduleCountAggregateOutputType | null
+    _min: RideScheduleMinAggregateOutputType | null
+    _max: RideScheduleMaxAggregateOutputType | null
+  }
+
+  type GetRideScheduleGroupByPayload<T extends RideScheduleGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RideScheduleGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RideScheduleGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RideScheduleGroupByOutputType[P]>
+            : GetScalarType<T[P], RideScheduleGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RideScheduleSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    driverId?: boolean
+    timezone?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    driver?: boolean | UserDefaultArgs<ExtArgs>
+    rides?: boolean | RideSchedule$ridesArgs<ExtArgs>
+    _count?: boolean | RideScheduleCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rideSchedule"]>
+
+  export type RideScheduleSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    driverId?: boolean
+    timezone?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    driver?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rideSchedule"]>
+
+  export type RideScheduleSelectScalar = {
+    id?: boolean
+    driverId?: boolean
+    timezone?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type RideScheduleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    driver?: boolean | UserDefaultArgs<ExtArgs>
+    rides?: boolean | RideSchedule$ridesArgs<ExtArgs>
+    _count?: boolean | RideScheduleCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type RideScheduleIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    driver?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $RideSchedulePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RideSchedule"
+    objects: {
+      driver: Prisma.$UserPayload<ExtArgs>
+      rides: Prisma.$RidePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      driverId: string
+      timezone: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["rideSchedule"]>
+    composites: {}
+  }
+
+  type RideScheduleGetPayload<S extends boolean | null | undefined | RideScheduleDefaultArgs> = $Result.GetResult<Prisma.$RideSchedulePayload, S>
+
+  type RideScheduleCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RideScheduleFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RideScheduleCountAggregateInputType | true
+    }
+
+  export interface RideScheduleDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RideSchedule'], meta: { name: 'RideSchedule' } }
+    /**
+     * Find zero or one RideSchedule that matches the filter.
+     * @param {RideScheduleFindUniqueArgs} args - Arguments to find a RideSchedule
+     * @example
+     * // Get one RideSchedule
+     * const rideSchedule = await prisma.rideSchedule.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RideScheduleFindUniqueArgs>(args: SelectSubset<T, RideScheduleFindUniqueArgs<ExtArgs>>): Prisma__RideScheduleClient<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RideSchedule that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RideScheduleFindUniqueOrThrowArgs} args - Arguments to find a RideSchedule
+     * @example
+     * // Get one RideSchedule
+     * const rideSchedule = await prisma.rideSchedule.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RideScheduleFindUniqueOrThrowArgs>(args: SelectSubset<T, RideScheduleFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RideScheduleClient<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RideSchedule that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideScheduleFindFirstArgs} args - Arguments to find a RideSchedule
+     * @example
+     * // Get one RideSchedule
+     * const rideSchedule = await prisma.rideSchedule.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RideScheduleFindFirstArgs>(args?: SelectSubset<T, RideScheduleFindFirstArgs<ExtArgs>>): Prisma__RideScheduleClient<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RideSchedule that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideScheduleFindFirstOrThrowArgs} args - Arguments to find a RideSchedule
+     * @example
+     * // Get one RideSchedule
+     * const rideSchedule = await prisma.rideSchedule.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RideScheduleFindFirstOrThrowArgs>(args?: SelectSubset<T, RideScheduleFindFirstOrThrowArgs<ExtArgs>>): Prisma__RideScheduleClient<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RideSchedules that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideScheduleFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RideSchedules
+     * const rideSchedules = await prisma.rideSchedule.findMany()
+     * 
+     * // Get first 10 RideSchedules
+     * const rideSchedules = await prisma.rideSchedule.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const rideScheduleWithIdOnly = await prisma.rideSchedule.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RideScheduleFindManyArgs>(args?: SelectSubset<T, RideScheduleFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RideSchedule.
+     * @param {RideScheduleCreateArgs} args - Arguments to create a RideSchedule.
+     * @example
+     * // Create one RideSchedule
+     * const RideSchedule = await prisma.rideSchedule.create({
+     *   data: {
+     *     // ... data to create a RideSchedule
+     *   }
+     * })
+     * 
+     */
+    create<T extends RideScheduleCreateArgs>(args: SelectSubset<T, RideScheduleCreateArgs<ExtArgs>>): Prisma__RideScheduleClient<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RideSchedules.
+     * @param {RideScheduleCreateManyArgs} args - Arguments to create many RideSchedules.
+     * @example
+     * // Create many RideSchedules
+     * const rideSchedule = await prisma.rideSchedule.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RideScheduleCreateManyArgs>(args?: SelectSubset<T, RideScheduleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RideSchedules and returns the data saved in the database.
+     * @param {RideScheduleCreateManyAndReturnArgs} args - Arguments to create many RideSchedules.
+     * @example
+     * // Create many RideSchedules
+     * const rideSchedule = await prisma.rideSchedule.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RideSchedules and only return the `id`
+     * const rideScheduleWithIdOnly = await prisma.rideSchedule.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RideScheduleCreateManyAndReturnArgs>(args?: SelectSubset<T, RideScheduleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RideSchedule.
+     * @param {RideScheduleDeleteArgs} args - Arguments to delete one RideSchedule.
+     * @example
+     * // Delete one RideSchedule
+     * const RideSchedule = await prisma.rideSchedule.delete({
+     *   where: {
+     *     // ... filter to delete one RideSchedule
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RideScheduleDeleteArgs>(args: SelectSubset<T, RideScheduleDeleteArgs<ExtArgs>>): Prisma__RideScheduleClient<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RideSchedule.
+     * @param {RideScheduleUpdateArgs} args - Arguments to update one RideSchedule.
+     * @example
+     * // Update one RideSchedule
+     * const rideSchedule = await prisma.rideSchedule.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RideScheduleUpdateArgs>(args: SelectSubset<T, RideScheduleUpdateArgs<ExtArgs>>): Prisma__RideScheduleClient<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RideSchedules.
+     * @param {RideScheduleDeleteManyArgs} args - Arguments to filter RideSchedules to delete.
+     * @example
+     * // Delete a few RideSchedules
+     * const { count } = await prisma.rideSchedule.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RideScheduleDeleteManyArgs>(args?: SelectSubset<T, RideScheduleDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RideSchedules.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideScheduleUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RideSchedules
+     * const rideSchedule = await prisma.rideSchedule.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RideScheduleUpdateManyArgs>(args: SelectSubset<T, RideScheduleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RideSchedule.
+     * @param {RideScheduleUpsertArgs} args - Arguments to update or create a RideSchedule.
+     * @example
+     * // Update or create a RideSchedule
+     * const rideSchedule = await prisma.rideSchedule.upsert({
+     *   create: {
+     *     // ... data to create a RideSchedule
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RideSchedule we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RideScheduleUpsertArgs>(args: SelectSubset<T, RideScheduleUpsertArgs<ExtArgs>>): Prisma__RideScheduleClient<$Result.GetResult<Prisma.$RideSchedulePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RideSchedules.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideScheduleCountArgs} args - Arguments to filter RideSchedules to count.
+     * @example
+     * // Count the number of RideSchedules
+     * const count = await prisma.rideSchedule.count({
+     *   where: {
+     *     // ... the filter for the RideSchedules we want to count
+     *   }
+     * })
+    **/
+    count<T extends RideScheduleCountArgs>(
+      args?: Subset<T, RideScheduleCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RideScheduleCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RideSchedule.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideScheduleAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RideScheduleAggregateArgs>(args: Subset<T, RideScheduleAggregateArgs>): Prisma.PrismaPromise<GetRideScheduleAggregateType<T>>
+
+    /**
+     * Group by RideSchedule.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideScheduleGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RideScheduleGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RideScheduleGroupByArgs['orderBy'] }
+        : { orderBy?: RideScheduleGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RideScheduleGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRideScheduleGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RideSchedule model
+   */
+  readonly fields: RideScheduleFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RideSchedule.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RideScheduleClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    driver<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    rides<T extends RideSchedule$ridesArgs<ExtArgs> = {}>(args?: Subset<T, RideSchedule$ridesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RidePayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RideSchedule model
+   */ 
+  interface RideScheduleFieldRefs {
+    readonly id: FieldRef<"RideSchedule", 'String'>
+    readonly driverId: FieldRef<"RideSchedule", 'String'>
+    readonly timezone: FieldRef<"RideSchedule", 'String'>
+    readonly createdAt: FieldRef<"RideSchedule", 'DateTime'>
+    readonly updatedAt: FieldRef<"RideSchedule", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RideSchedule findUnique
+   */
+  export type RideScheduleFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    /**
+     * Filter, which RideSchedule to fetch.
+     */
+    where: RideScheduleWhereUniqueInput
+  }
+
+  /**
+   * RideSchedule findUniqueOrThrow
+   */
+  export type RideScheduleFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    /**
+     * Filter, which RideSchedule to fetch.
+     */
+    where: RideScheduleWhereUniqueInput
+  }
+
+  /**
+   * RideSchedule findFirst
+   */
+  export type RideScheduleFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    /**
+     * Filter, which RideSchedule to fetch.
+     */
+    where?: RideScheduleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RideSchedules to fetch.
+     */
+    orderBy?: RideScheduleOrderByWithRelationInput | RideScheduleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RideSchedules.
+     */
+    cursor?: RideScheduleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RideSchedules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RideSchedules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RideSchedules.
+     */
+    distinct?: RideScheduleScalarFieldEnum | RideScheduleScalarFieldEnum[]
+  }
+
+  /**
+   * RideSchedule findFirstOrThrow
+   */
+  export type RideScheduleFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    /**
+     * Filter, which RideSchedule to fetch.
+     */
+    where?: RideScheduleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RideSchedules to fetch.
+     */
+    orderBy?: RideScheduleOrderByWithRelationInput | RideScheduleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RideSchedules.
+     */
+    cursor?: RideScheduleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RideSchedules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RideSchedules.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RideSchedules.
+     */
+    distinct?: RideScheduleScalarFieldEnum | RideScheduleScalarFieldEnum[]
+  }
+
+  /**
+   * RideSchedule findMany
+   */
+  export type RideScheduleFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    /**
+     * Filter, which RideSchedules to fetch.
+     */
+    where?: RideScheduleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RideSchedules to fetch.
+     */
+    orderBy?: RideScheduleOrderByWithRelationInput | RideScheduleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RideSchedules.
+     */
+    cursor?: RideScheduleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RideSchedules from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RideSchedules.
+     */
+    skip?: number
+    distinct?: RideScheduleScalarFieldEnum | RideScheduleScalarFieldEnum[]
+  }
+
+  /**
+   * RideSchedule create
+   */
+  export type RideScheduleCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RideSchedule.
+     */
+    data: XOR<RideScheduleCreateInput, RideScheduleUncheckedCreateInput>
+  }
+
+  /**
+   * RideSchedule createMany
+   */
+  export type RideScheduleCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RideSchedules.
+     */
+    data: RideScheduleCreateManyInput | RideScheduleCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RideSchedule createManyAndReturn
+   */
+  export type RideScheduleCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RideSchedules.
+     */
+    data: RideScheduleCreateManyInput | RideScheduleCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RideSchedule update
+   */
+  export type RideScheduleUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RideSchedule.
+     */
+    data: XOR<RideScheduleUpdateInput, RideScheduleUncheckedUpdateInput>
+    /**
+     * Choose, which RideSchedule to update.
+     */
+    where: RideScheduleWhereUniqueInput
+  }
+
+  /**
+   * RideSchedule updateMany
+   */
+  export type RideScheduleUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RideSchedules.
+     */
+    data: XOR<RideScheduleUpdateManyMutationInput, RideScheduleUncheckedUpdateManyInput>
+    /**
+     * Filter which RideSchedules to update
+     */
+    where?: RideScheduleWhereInput
+  }
+
+  /**
+   * RideSchedule upsert
+   */
+  export type RideScheduleUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RideSchedule to update in case it exists.
+     */
+    where: RideScheduleWhereUniqueInput
+    /**
+     * In case the RideSchedule found by the `where` argument doesn't exist, create a new RideSchedule with this data.
+     */
+    create: XOR<RideScheduleCreateInput, RideScheduleUncheckedCreateInput>
+    /**
+     * In case the RideSchedule was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RideScheduleUpdateInput, RideScheduleUncheckedUpdateInput>
+  }
+
+  /**
+   * RideSchedule delete
+   */
+  export type RideScheduleDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+    /**
+     * Filter which RideSchedule to delete.
+     */
+    where: RideScheduleWhereUniqueInput
+  }
+
+  /**
+   * RideSchedule deleteMany
+   */
+  export type RideScheduleDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RideSchedules to delete
+     */
+    where?: RideScheduleWhereInput
+  }
+
+  /**
+   * RideSchedule.rides
+   */
+  export type RideSchedule$ridesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Ride
+     */
+    select?: RideSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideInclude<ExtArgs> | null
+    where?: RideWhereInput
+    orderBy?: RideOrderByWithRelationInput | RideOrderByWithRelationInput[]
+    cursor?: RideWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RideScalarFieldEnum | RideScalarFieldEnum[]
+  }
+
+  /**
+   * RideSchedule without action
+   */
+  export type RideScheduleDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideSchedule
+     */
+    select?: RideScheduleSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideScheduleInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RideStop
+   */
+
+  export type AggregateRideStop = {
+    _count: RideStopCountAggregateOutputType | null
+    _avg: RideStopAvgAggregateOutputType | null
+    _sum: RideStopSumAggregateOutputType | null
+    _min: RideStopMinAggregateOutputType | null
+    _max: RideStopMaxAggregateOutputType | null
+  }
+
+  export type RideStopAvgAggregateOutputType = {
+    latitude: number | null
+    longitude: number | null
+    order: number | null
+  }
+
+  export type RideStopSumAggregateOutputType = {
+    latitude: number | null
+    longitude: number | null
+    order: number | null
+  }
+
+  export type RideStopMinAggregateOutputType = {
+    id: string | null
+    rideId: string | null
+    address: string | null
+    name: string | null
+    latitude: number | null
+    longitude: number | null
+    order: number | null
+    createdAt: Date | null
+  }
+
+  export type RideStopMaxAggregateOutputType = {
+    id: string | null
+    rideId: string | null
+    address: string | null
+    name: string | null
+    latitude: number | null
+    longitude: number | null
+    order: number | null
+    createdAt: Date | null
+  }
+
+  export type RideStopCountAggregateOutputType = {
+    id: number
+    rideId: number
+    address: number
+    name: number
+    latitude: number
+    longitude: number
+    order: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type RideStopAvgAggregateInputType = {
+    latitude?: true
+    longitude?: true
+    order?: true
+  }
+
+  export type RideStopSumAggregateInputType = {
+    latitude?: true
+    longitude?: true
+    order?: true
+  }
+
+  export type RideStopMinAggregateInputType = {
+    id?: true
+    rideId?: true
+    address?: true
+    name?: true
+    latitude?: true
+    longitude?: true
+    order?: true
+    createdAt?: true
+  }
+
+  export type RideStopMaxAggregateInputType = {
+    id?: true
+    rideId?: true
+    address?: true
+    name?: true
+    latitude?: true
+    longitude?: true
+    order?: true
+    createdAt?: true
+  }
+
+  export type RideStopCountAggregateInputType = {
+    id?: true
+    rideId?: true
+    address?: true
+    name?: true
+    latitude?: true
+    longitude?: true
+    order?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type RideStopAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RideStop to aggregate.
+     */
+    where?: RideStopWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RideStops to fetch.
+     */
+    orderBy?: RideStopOrderByWithRelationInput | RideStopOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RideStopWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RideStops from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RideStops.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RideStops
+    **/
+    _count?: true | RideStopCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RideStopAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RideStopSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RideStopMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RideStopMaxAggregateInputType
+  }
+
+  export type GetRideStopAggregateType<T extends RideStopAggregateArgs> = {
+        [P in keyof T & keyof AggregateRideStop]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRideStop[P]>
+      : GetScalarType<T[P], AggregateRideStop[P]>
+  }
+
+
+
+
+  export type RideStopGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RideStopWhereInput
+    orderBy?: RideStopOrderByWithAggregationInput | RideStopOrderByWithAggregationInput[]
+    by: RideStopScalarFieldEnum[] | RideStopScalarFieldEnum
+    having?: RideStopScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RideStopCountAggregateInputType | true
+    _avg?: RideStopAvgAggregateInputType
+    _sum?: RideStopSumAggregateInputType
+    _min?: RideStopMinAggregateInputType
+    _max?: RideStopMaxAggregateInputType
+  }
+
+  export type RideStopGroupByOutputType = {
+    id: string
+    rideId: string
+    address: string
+    name: string | null
+    latitude: number
+    longitude: number
+    order: number
+    createdAt: Date
+    _count: RideStopCountAggregateOutputType | null
+    _avg: RideStopAvgAggregateOutputType | null
+    _sum: RideStopSumAggregateOutputType | null
+    _min: RideStopMinAggregateOutputType | null
+    _max: RideStopMaxAggregateOutputType | null
+  }
+
+  type GetRideStopGroupByPayload<T extends RideStopGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RideStopGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RideStopGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RideStopGroupByOutputType[P]>
+            : GetScalarType<T[P], RideStopGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RideStopSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    rideId?: boolean
+    address?: boolean
+    name?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    order?: boolean
+    createdAt?: boolean
+    ride?: boolean | RideDefaultArgs<ExtArgs>
+    selectedByBookings?: boolean | RideStop$selectedByBookingsArgs<ExtArgs>
+    _count?: boolean | RideStopCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rideStop"]>
+
+  export type RideStopSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    rideId?: boolean
+    address?: boolean
+    name?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    order?: boolean
+    createdAt?: boolean
+    ride?: boolean | RideDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rideStop"]>
+
+  export type RideStopSelectScalar = {
+    id?: boolean
+    rideId?: boolean
+    address?: boolean
+    name?: boolean
+    latitude?: boolean
+    longitude?: boolean
+    order?: boolean
+    createdAt?: boolean
+  }
+
+  export type RideStopInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    ride?: boolean | RideDefaultArgs<ExtArgs>
+    selectedByBookings?: boolean | RideStop$selectedByBookingsArgs<ExtArgs>
+    _count?: boolean | RideStopCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type RideStopIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    ride?: boolean | RideDefaultArgs<ExtArgs>
+  }
+
+  export type $RideStopPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RideStop"
+    objects: {
+      ride: Prisma.$RidePayload<ExtArgs>
+      selectedByBookings: Prisma.$BookingPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      rideId: string
+      address: string
+      name: string | null
+      latitude: number
+      longitude: number
+      order: number
+      createdAt: Date
+    }, ExtArgs["result"]["rideStop"]>
+    composites: {}
+  }
+
+  type RideStopGetPayload<S extends boolean | null | undefined | RideStopDefaultArgs> = $Result.GetResult<Prisma.$RideStopPayload, S>
+
+  type RideStopCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<RideStopFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: RideStopCountAggregateInputType | true
+    }
+
+  export interface RideStopDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RideStop'], meta: { name: 'RideStop' } }
+    /**
+     * Find zero or one RideStop that matches the filter.
+     * @param {RideStopFindUniqueArgs} args - Arguments to find a RideStop
+     * @example
+     * // Get one RideStop
+     * const rideStop = await prisma.rideStop.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RideStopFindUniqueArgs>(args: SelectSubset<T, RideStopFindUniqueArgs<ExtArgs>>): Prisma__RideStopClient<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one RideStop that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {RideStopFindUniqueOrThrowArgs} args - Arguments to find a RideStop
+     * @example
+     * // Get one RideStop
+     * const rideStop = await prisma.rideStop.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RideStopFindUniqueOrThrowArgs>(args: SelectSubset<T, RideStopFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RideStopClient<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first RideStop that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideStopFindFirstArgs} args - Arguments to find a RideStop
+     * @example
+     * // Get one RideStop
+     * const rideStop = await prisma.rideStop.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RideStopFindFirstArgs>(args?: SelectSubset<T, RideStopFindFirstArgs<ExtArgs>>): Prisma__RideStopClient<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first RideStop that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideStopFindFirstOrThrowArgs} args - Arguments to find a RideStop
+     * @example
+     * // Get one RideStop
+     * const rideStop = await prisma.rideStop.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RideStopFindFirstOrThrowArgs>(args?: SelectSubset<T, RideStopFindFirstOrThrowArgs<ExtArgs>>): Prisma__RideStopClient<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more RideStops that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideStopFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RideStops
+     * const rideStops = await prisma.rideStop.findMany()
+     * 
+     * // Get first 10 RideStops
+     * const rideStops = await prisma.rideStop.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const rideStopWithIdOnly = await prisma.rideStop.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RideStopFindManyArgs>(args?: SelectSubset<T, RideStopFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a RideStop.
+     * @param {RideStopCreateArgs} args - Arguments to create a RideStop.
+     * @example
+     * // Create one RideStop
+     * const RideStop = await prisma.rideStop.create({
+     *   data: {
+     *     // ... data to create a RideStop
+     *   }
+     * })
+     * 
+     */
+    create<T extends RideStopCreateArgs>(args: SelectSubset<T, RideStopCreateArgs<ExtArgs>>): Prisma__RideStopClient<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many RideStops.
+     * @param {RideStopCreateManyArgs} args - Arguments to create many RideStops.
+     * @example
+     * // Create many RideStops
+     * const rideStop = await prisma.rideStop.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RideStopCreateManyArgs>(args?: SelectSubset<T, RideStopCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RideStops and returns the data saved in the database.
+     * @param {RideStopCreateManyAndReturnArgs} args - Arguments to create many RideStops.
+     * @example
+     * // Create many RideStops
+     * const rideStop = await prisma.rideStop.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RideStops and only return the `id`
+     * const rideStopWithIdOnly = await prisma.rideStop.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RideStopCreateManyAndReturnArgs>(args?: SelectSubset<T, RideStopCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a RideStop.
+     * @param {RideStopDeleteArgs} args - Arguments to delete one RideStop.
+     * @example
+     * // Delete one RideStop
+     * const RideStop = await prisma.rideStop.delete({
+     *   where: {
+     *     // ... filter to delete one RideStop
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RideStopDeleteArgs>(args: SelectSubset<T, RideStopDeleteArgs<ExtArgs>>): Prisma__RideStopClient<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one RideStop.
+     * @param {RideStopUpdateArgs} args - Arguments to update one RideStop.
+     * @example
+     * // Update one RideStop
+     * const rideStop = await prisma.rideStop.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RideStopUpdateArgs>(args: SelectSubset<T, RideStopUpdateArgs<ExtArgs>>): Prisma__RideStopClient<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more RideStops.
+     * @param {RideStopDeleteManyArgs} args - Arguments to filter RideStops to delete.
+     * @example
+     * // Delete a few RideStops
+     * const { count } = await prisma.rideStop.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RideStopDeleteManyArgs>(args?: SelectSubset<T, RideStopDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RideStops.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideStopUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RideStops
+     * const rideStop = await prisma.rideStop.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RideStopUpdateManyArgs>(args: SelectSubset<T, RideStopUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one RideStop.
+     * @param {RideStopUpsertArgs} args - Arguments to update or create a RideStop.
+     * @example
+     * // Update or create a RideStop
+     * const rideStop = await prisma.rideStop.upsert({
+     *   create: {
+     *     // ... data to create a RideStop
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RideStop we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RideStopUpsertArgs>(args: SelectSubset<T, RideStopUpsertArgs<ExtArgs>>): Prisma__RideStopClient<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of RideStops.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideStopCountArgs} args - Arguments to filter RideStops to count.
+     * @example
+     * // Count the number of RideStops
+     * const count = await prisma.rideStop.count({
+     *   where: {
+     *     // ... the filter for the RideStops we want to count
+     *   }
+     * })
+    **/
+    count<T extends RideStopCountArgs>(
+      args?: Subset<T, RideStopCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RideStopCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RideStop.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideStopAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RideStopAggregateArgs>(args: Subset<T, RideStopAggregateArgs>): Prisma.PrismaPromise<GetRideStopAggregateType<T>>
+
+    /**
+     * Group by RideStop.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RideStopGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RideStopGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RideStopGroupByArgs['orderBy'] }
+        : { orderBy?: RideStopGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RideStopGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRideStopGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RideStop model
+   */
+  readonly fields: RideStopFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RideStop.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RideStopClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    ride<T extends RideDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RideDefaultArgs<ExtArgs>>): Prisma__RideClient<$Result.GetResult<Prisma.$RidePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    selectedByBookings<T extends RideStop$selectedByBookingsArgs<ExtArgs> = {}>(args?: Subset<T, RideStop$selectedByBookingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RideStop model
+   */ 
+  interface RideStopFieldRefs {
+    readonly id: FieldRef<"RideStop", 'String'>
+    readonly rideId: FieldRef<"RideStop", 'String'>
+    readonly address: FieldRef<"RideStop", 'String'>
+    readonly name: FieldRef<"RideStop", 'String'>
+    readonly latitude: FieldRef<"RideStop", 'Float'>
+    readonly longitude: FieldRef<"RideStop", 'Float'>
+    readonly order: FieldRef<"RideStop", 'Int'>
+    readonly createdAt: FieldRef<"RideStop", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RideStop findUnique
+   */
+  export type RideStopFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    /**
+     * Filter, which RideStop to fetch.
+     */
+    where: RideStopWhereUniqueInput
+  }
+
+  /**
+   * RideStop findUniqueOrThrow
+   */
+  export type RideStopFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    /**
+     * Filter, which RideStop to fetch.
+     */
+    where: RideStopWhereUniqueInput
+  }
+
+  /**
+   * RideStop findFirst
+   */
+  export type RideStopFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    /**
+     * Filter, which RideStop to fetch.
+     */
+    where?: RideStopWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RideStops to fetch.
+     */
+    orderBy?: RideStopOrderByWithRelationInput | RideStopOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RideStops.
+     */
+    cursor?: RideStopWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RideStops from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RideStops.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RideStops.
+     */
+    distinct?: RideStopScalarFieldEnum | RideStopScalarFieldEnum[]
+  }
+
+  /**
+   * RideStop findFirstOrThrow
+   */
+  export type RideStopFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    /**
+     * Filter, which RideStop to fetch.
+     */
+    where?: RideStopWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RideStops to fetch.
+     */
+    orderBy?: RideStopOrderByWithRelationInput | RideStopOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RideStops.
+     */
+    cursor?: RideStopWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RideStops from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RideStops.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RideStops.
+     */
+    distinct?: RideStopScalarFieldEnum | RideStopScalarFieldEnum[]
+  }
+
+  /**
+   * RideStop findMany
+   */
+  export type RideStopFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    /**
+     * Filter, which RideStops to fetch.
+     */
+    where?: RideStopWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RideStops to fetch.
+     */
+    orderBy?: RideStopOrderByWithRelationInput | RideStopOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RideStops.
+     */
+    cursor?: RideStopWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RideStops from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RideStops.
+     */
+    skip?: number
+    distinct?: RideStopScalarFieldEnum | RideStopScalarFieldEnum[]
+  }
+
+  /**
+   * RideStop create
+   */
+  export type RideStopCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RideStop.
+     */
+    data: XOR<RideStopCreateInput, RideStopUncheckedCreateInput>
+  }
+
+  /**
+   * RideStop createMany
+   */
+  export type RideStopCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RideStops.
+     */
+    data: RideStopCreateManyInput | RideStopCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RideStop createManyAndReturn
+   */
+  export type RideStopCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many RideStops.
+     */
+    data: RideStopCreateManyInput | RideStopCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RideStop update
+   */
+  export type RideStopUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RideStop.
+     */
+    data: XOR<RideStopUpdateInput, RideStopUncheckedUpdateInput>
+    /**
+     * Choose, which RideStop to update.
+     */
+    where: RideStopWhereUniqueInput
+  }
+
+  /**
+   * RideStop updateMany
+   */
+  export type RideStopUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RideStops.
+     */
+    data: XOR<RideStopUpdateManyMutationInput, RideStopUncheckedUpdateManyInput>
+    /**
+     * Filter which RideStops to update
+     */
+    where?: RideStopWhereInput
+  }
+
+  /**
+   * RideStop upsert
+   */
+  export type RideStopUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RideStop to update in case it exists.
+     */
+    where: RideStopWhereUniqueInput
+    /**
+     * In case the RideStop found by the `where` argument doesn't exist, create a new RideStop with this data.
+     */
+    create: XOR<RideStopCreateInput, RideStopUncheckedCreateInput>
+    /**
+     * In case the RideStop was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RideStopUpdateInput, RideStopUncheckedUpdateInput>
+  }
+
+  /**
+   * RideStop delete
+   */
+  export type RideStopDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    /**
+     * Filter which RideStop to delete.
+     */
+    where: RideStopWhereUniqueInput
+  }
+
+  /**
+   * RideStop deleteMany
+   */
+  export type RideStopDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RideStops to delete
+     */
+    where?: RideStopWhereInput
+  }
+
+  /**
+   * RideStop.selectedByBookings
+   */
+  export type RideStop$selectedByBookingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Booking
+     */
+    select?: BookingSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingInclude<ExtArgs> | null
+    where?: BookingWhereInput
+    orderBy?: BookingOrderByWithRelationInput | BookingOrderByWithRelationInput[]
+    cursor?: BookingWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BookingScalarFieldEnum | BookingScalarFieldEnum[]
+  }
+
+  /**
+   * RideStop without action
+   */
+  export type RideStopDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model Booking
    */
 
@@ -10717,10 +13071,13 @@ export namespace Prisma {
     sharedDistanceKm: number | null
     detourKm: number | null
     status: $Enums.BookingStatus | null
+    expiresAt: Date | null
+    seatHeld: boolean | null
     paymentStatus: $Enums.PaymentStatus | null
     passengerLat: number | null
     passengerLng: number | null
     pickupAddress: string | null
+    pickupStopId: string | null
     isPickedUp: boolean | null
     driverArrivedAt: Date | null
     pickedUpAt: Date | null
@@ -10743,10 +13100,13 @@ export namespace Prisma {
     sharedDistanceKm: number | null
     detourKm: number | null
     status: $Enums.BookingStatus | null
+    expiresAt: Date | null
+    seatHeld: boolean | null
     paymentStatus: $Enums.PaymentStatus | null
     passengerLat: number | null
     passengerLng: number | null
     pickupAddress: string | null
+    pickupStopId: string | null
     isPickedUp: boolean | null
     driverArrivedAt: Date | null
     pickedUpAt: Date | null
@@ -10770,10 +13130,13 @@ export namespace Prisma {
     detourKm: number
     priceBreakdown: number
     status: number
+    expiresAt: number
+    seatHeld: number
     paymentStatus: number
     passengerLat: number
     passengerLng: number
     pickupAddress: number
+    pickupStopId: number
     isPickedUp: number
     driverArrivedAt: number
     pickedUpAt: number
@@ -10820,10 +13183,13 @@ export namespace Prisma {
     sharedDistanceKm?: true
     detourKm?: true
     status?: true
+    expiresAt?: true
+    seatHeld?: true
     paymentStatus?: true
     passengerLat?: true
     passengerLng?: true
     pickupAddress?: true
+    pickupStopId?: true
     isPickedUp?: true
     driverArrivedAt?: true
     pickedUpAt?: true
@@ -10846,10 +13212,13 @@ export namespace Prisma {
     sharedDistanceKm?: true
     detourKm?: true
     status?: true
+    expiresAt?: true
+    seatHeld?: true
     paymentStatus?: true
     passengerLat?: true
     passengerLng?: true
     pickupAddress?: true
+    pickupStopId?: true
     isPickedUp?: true
     driverArrivedAt?: true
     pickedUpAt?: true
@@ -10873,10 +13242,13 @@ export namespace Prisma {
     detourKm?: true
     priceBreakdown?: true
     status?: true
+    expiresAt?: true
+    seatHeld?: true
     paymentStatus?: true
     passengerLat?: true
     passengerLng?: true
     pickupAddress?: true
+    pickupStopId?: true
     isPickedUp?: true
     driverArrivedAt?: true
     pickedUpAt?: true
@@ -10987,10 +13359,13 @@ export namespace Prisma {
     detourKm: number | null
     priceBreakdown: JsonValue | null
     status: $Enums.BookingStatus
+    expiresAt: Date | null
+    seatHeld: boolean
     paymentStatus: $Enums.PaymentStatus
     passengerLat: number | null
     passengerLng: number | null
     pickupAddress: string | null
+    pickupStopId: string | null
     isPickedUp: boolean
     driverArrivedAt: Date | null
     pickedUpAt: Date | null
@@ -11033,10 +13408,13 @@ export namespace Prisma {
     detourKm?: boolean
     priceBreakdown?: boolean
     status?: boolean
+    expiresAt?: boolean
+    seatHeld?: boolean
     paymentStatus?: boolean
     passengerLat?: boolean
     passengerLng?: boolean
     pickupAddress?: boolean
+    pickupStopId?: boolean
     isPickedUp?: boolean
     driverArrivedAt?: boolean
     pickedUpAt?: boolean
@@ -11051,6 +13429,7 @@ export namespace Prisma {
     ride?: boolean | RideDefaultArgs<ExtArgs>
     passenger?: boolean | UserDefaultArgs<ExtArgs>
     transactions?: boolean | Booking$transactionsArgs<ExtArgs>
+    pickupStop?: boolean | Booking$pickupStopArgs<ExtArgs>
     _count?: boolean | BookingCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["booking"]>
 
@@ -11064,10 +13443,13 @@ export namespace Prisma {
     detourKm?: boolean
     priceBreakdown?: boolean
     status?: boolean
+    expiresAt?: boolean
+    seatHeld?: boolean
     paymentStatus?: boolean
     passengerLat?: boolean
     passengerLng?: boolean
     pickupAddress?: boolean
+    pickupStopId?: boolean
     isPickedUp?: boolean
     driverArrivedAt?: boolean
     pickedUpAt?: boolean
@@ -11081,6 +13463,7 @@ export namespace Prisma {
     updatedAt?: boolean
     ride?: boolean | RideDefaultArgs<ExtArgs>
     passenger?: boolean | UserDefaultArgs<ExtArgs>
+    pickupStop?: boolean | Booking$pickupStopArgs<ExtArgs>
   }, ExtArgs["result"]["booking"]>
 
   export type BookingSelectScalar = {
@@ -11093,10 +13476,13 @@ export namespace Prisma {
     detourKm?: boolean
     priceBreakdown?: boolean
     status?: boolean
+    expiresAt?: boolean
+    seatHeld?: boolean
     paymentStatus?: boolean
     passengerLat?: boolean
     passengerLng?: boolean
     pickupAddress?: boolean
+    pickupStopId?: boolean
     isPickedUp?: boolean
     driverArrivedAt?: boolean
     pickedUpAt?: boolean
@@ -11114,11 +13500,13 @@ export namespace Prisma {
     ride?: boolean | RideDefaultArgs<ExtArgs>
     passenger?: boolean | UserDefaultArgs<ExtArgs>
     transactions?: boolean | Booking$transactionsArgs<ExtArgs>
+    pickupStop?: boolean | Booking$pickupStopArgs<ExtArgs>
     _count?: boolean | BookingCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type BookingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ride?: boolean | RideDefaultArgs<ExtArgs>
     passenger?: boolean | UserDefaultArgs<ExtArgs>
+    pickupStop?: boolean | Booking$pickupStopArgs<ExtArgs>
   }
 
   export type $BookingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11127,6 +13515,7 @@ export namespace Prisma {
       ride: Prisma.$RidePayload<ExtArgs>
       passenger: Prisma.$UserPayload<ExtArgs>
       transactions: Prisma.$TransactionPayload<ExtArgs>[]
+      pickupStop: Prisma.$RideStopPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -11138,10 +13527,13 @@ export namespace Prisma {
       detourKm: number | null
       priceBreakdown: Prisma.JsonValue | null
       status: $Enums.BookingStatus
+      expiresAt: Date | null
+      seatHeld: boolean
       paymentStatus: $Enums.PaymentStatus
       passengerLat: number | null
       passengerLng: number | null
       pickupAddress: string | null
+      pickupStopId: string | null
       isPickedUp: boolean
       driverArrivedAt: Date | null
       pickedUpAt: Date | null
@@ -11520,6 +13912,7 @@ export namespace Prisma {
     ride<T extends RideDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RideDefaultArgs<ExtArgs>>): Prisma__RideClient<$Result.GetResult<Prisma.$RidePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     passenger<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     transactions<T extends Booking$transactionsArgs<ExtArgs> = {}>(args?: Subset<T, Booking$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany"> | Null>
+    pickupStop<T extends Booking$pickupStopArgs<ExtArgs> = {}>(args?: Subset<T, Booking$pickupStopArgs<ExtArgs>>): Prisma__RideStopClient<$Result.GetResult<Prisma.$RideStopPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11558,10 +13951,13 @@ export namespace Prisma {
     readonly detourKm: FieldRef<"Booking", 'Float'>
     readonly priceBreakdown: FieldRef<"Booking", 'Json'>
     readonly status: FieldRef<"Booking", 'BookingStatus'>
+    readonly expiresAt: FieldRef<"Booking", 'DateTime'>
+    readonly seatHeld: FieldRef<"Booking", 'Boolean'>
     readonly paymentStatus: FieldRef<"Booking", 'PaymentStatus'>
     readonly passengerLat: FieldRef<"Booking", 'Float'>
     readonly passengerLng: FieldRef<"Booking", 'Float'>
     readonly pickupAddress: FieldRef<"Booking", 'String'>
+    readonly pickupStopId: FieldRef<"Booking", 'String'>
     readonly isPickedUp: FieldRef<"Booking", 'Boolean'>
     readonly driverArrivedAt: FieldRef<"Booking", 'DateTime'>
     readonly pickedUpAt: FieldRef<"Booking", 'DateTime'>
@@ -11908,6 +14304,21 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: TransactionScalarFieldEnum | TransactionScalarFieldEnum[]
+  }
+
+  /**
+   * Booking.pickupStop
+   */
+  export type Booking$pickupStopArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RideStop
+     */
+    select?: RideStopSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RideStopInclude<ExtArgs> | null
+    where?: RideStopWhereInput
   }
 
   /**
@@ -21351,6 +23762,7 @@ export namespace Prisma {
     offeredSeats: 'offeredSeats',
     pricePerSeat: 'pricePerSeat',
     tollCost: 'tollCost',
+    bookingPolicy: 'bookingPolicy',
     status: 'status',
     description: 'description',
     createdAt: 'createdAt',
@@ -21370,6 +23782,7 @@ export namespace Prisma {
     addressDetailLevel: 'addressDetailLevel',
     cancelReason: 'cancelReason',
     vehicleId: 'vehicleId',
+    scheduleId: 'scheduleId',
     allowRoutePickup: 'allowRoutePickup',
     allowSmoking: 'allowSmoking',
     allowPets: 'allowPets',
@@ -21377,6 +23790,31 @@ export namespace Prisma {
   };
 
   export type RideScalarFieldEnum = (typeof RideScalarFieldEnum)[keyof typeof RideScalarFieldEnum]
+
+
+  export const RideScheduleScalarFieldEnum: {
+    id: 'id',
+    driverId: 'driverId',
+    timezone: 'timezone',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type RideScheduleScalarFieldEnum = (typeof RideScheduleScalarFieldEnum)[keyof typeof RideScheduleScalarFieldEnum]
+
+
+  export const RideStopScalarFieldEnum: {
+    id: 'id',
+    rideId: 'rideId',
+    address: 'address',
+    name: 'name',
+    latitude: 'latitude',
+    longitude: 'longitude',
+    order: 'order',
+    createdAt: 'createdAt'
+  };
+
+  export type RideStopScalarFieldEnum = (typeof RideStopScalarFieldEnum)[keyof typeof RideStopScalarFieldEnum]
 
 
   export const BookingScalarFieldEnum: {
@@ -21389,10 +23827,13 @@ export namespace Prisma {
     detourKm: 'detourKm',
     priceBreakdown: 'priceBreakdown',
     status: 'status',
+    expiresAt: 'expiresAt',
+    seatHeld: 'seatHeld',
     paymentStatus: 'paymentStatus',
     passengerLat: 'passengerLat',
     passengerLng: 'passengerLng',
     pickupAddress: 'pickupAddress',
+    pickupStopId: 'pickupStopId',
     isPickedUp: 'isPickedUp',
     driverArrivedAt: 'driverArrivedAt',
     pickedUpAt: 'pickedUpAt',
@@ -21722,6 +24163,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'BookingPolicy'
+   */
+  export type EnumBookingPolicyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BookingPolicy'>
+    
+
+
+  /**
+   * Reference to a field of type 'BookingPolicy[]'
+   */
+  export type ListEnumBookingPolicyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BookingPolicy[]'>
+    
+
+
+  /**
    * Reference to a field of type 'RideStatus'
    */
   export type EnumRideStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RideStatus'>
@@ -21892,6 +24347,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     ridesAsDriver?: RideListRelationFilter
+    rideSchedules?: RideScheduleListRelationFilter
     bookings?: BookingListRelationFilter
     tripsAsPassenger?: TripRequestListRelationFilter
     tripsAsDriver?: TripRequestListRelationFilter
@@ -21926,6 +24382,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     ridesAsDriver?: RideOrderByRelationAggregateInput
+    rideSchedules?: RideScheduleOrderByRelationAggregateInput
     bookings?: BookingOrderByRelationAggregateInput
     tripsAsPassenger?: TripRequestOrderByRelationAggregateInput
     tripsAsDriver?: TripRequestOrderByRelationAggregateInput
@@ -21963,6 +24420,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     ridesAsDriver?: RideListRelationFilter
+    rideSchedules?: RideScheduleListRelationFilter
     bookings?: BookingListRelationFilter
     tripsAsPassenger?: TripRequestListRelationFilter
     tripsAsDriver?: TripRequestListRelationFilter
@@ -22399,6 +24857,7 @@ export namespace Prisma {
     offeredSeats?: IntFilter<"Ride"> | number
     pricePerSeat?: FloatFilter<"Ride"> | number
     tollCost?: FloatFilter<"Ride"> | number
+    bookingPolicy?: EnumBookingPolicyFilter<"Ride"> | $Enums.BookingPolicy
     status?: EnumRideStatusFilter<"Ride"> | $Enums.RideStatus
     description?: StringNullableFilter<"Ride"> | string | null
     createdAt?: DateTimeFilter<"Ride"> | Date | string
@@ -22418,13 +24877,16 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableFilter<"Ride"> | string | null
     cancelReason?: StringNullableFilter<"Ride"> | string | null
     vehicleId?: StringNullableFilter<"Ride"> | string | null
+    scheduleId?: StringNullableFilter<"Ride"> | string | null
     allowRoutePickup?: BoolFilter<"Ride"> | boolean
     allowSmoking?: BoolFilter<"Ride"> | boolean
     allowPets?: BoolFilter<"Ride"> | boolean
     allowLuggage?: BoolFilter<"Ride"> | boolean
     driver?: XOR<UserRelationFilter, UserWhereInput>
     vehicle?: XOR<VehicleNullableRelationFilter, VehicleWhereInput> | null
+    schedule?: XOR<RideScheduleNullableRelationFilter, RideScheduleWhereInput> | null
     bookings?: BookingListRelationFilter
+    stops?: RideStopListRelationFilter
     reviews?: ReviewListRelationFilter
     messages?: MessageListRelationFilter
     reports?: ReportListRelationFilter
@@ -22447,6 +24909,7 @@ export namespace Prisma {
     offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
     tollCost?: SortOrder
+    bookingPolicy?: SortOrder
     status?: SortOrder
     description?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -22466,13 +24929,16 @@ export namespace Prisma {
     addressDetailLevel?: SortOrderInput | SortOrder
     cancelReason?: SortOrderInput | SortOrder
     vehicleId?: SortOrderInput | SortOrder
+    scheduleId?: SortOrderInput | SortOrder
     allowRoutePickup?: SortOrder
     allowSmoking?: SortOrder
     allowPets?: SortOrder
     allowLuggage?: SortOrder
     driver?: UserOrderByWithRelationInput
     vehicle?: VehicleOrderByWithRelationInput
+    schedule?: RideScheduleOrderByWithRelationInput
     bookings?: BookingOrderByRelationAggregateInput
+    stops?: RideStopOrderByRelationAggregateInput
     reviews?: ReviewOrderByRelationAggregateInput
     messages?: MessageOrderByRelationAggregateInput
     reports?: ReportOrderByRelationAggregateInput
@@ -22480,6 +24946,7 @@ export namespace Prisma {
 
   export type RideWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    driverId_departureTime?: RideDriverIdDepartureTimeCompoundUniqueInput
     AND?: RideWhereInput | RideWhereInput[]
     OR?: RideWhereInput[]
     NOT?: RideWhereInput | RideWhereInput[]
@@ -22498,6 +24965,7 @@ export namespace Prisma {
     offeredSeats?: IntFilter<"Ride"> | number
     pricePerSeat?: FloatFilter<"Ride"> | number
     tollCost?: FloatFilter<"Ride"> | number
+    bookingPolicy?: EnumBookingPolicyFilter<"Ride"> | $Enums.BookingPolicy
     status?: EnumRideStatusFilter<"Ride"> | $Enums.RideStatus
     description?: StringNullableFilter<"Ride"> | string | null
     createdAt?: DateTimeFilter<"Ride"> | Date | string
@@ -22517,17 +24985,20 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableFilter<"Ride"> | string | null
     cancelReason?: StringNullableFilter<"Ride"> | string | null
     vehicleId?: StringNullableFilter<"Ride"> | string | null
+    scheduleId?: StringNullableFilter<"Ride"> | string | null
     allowRoutePickup?: BoolFilter<"Ride"> | boolean
     allowSmoking?: BoolFilter<"Ride"> | boolean
     allowPets?: BoolFilter<"Ride"> | boolean
     allowLuggage?: BoolFilter<"Ride"> | boolean
     driver?: XOR<UserRelationFilter, UserWhereInput>
     vehicle?: XOR<VehicleNullableRelationFilter, VehicleWhereInput> | null
+    schedule?: XOR<RideScheduleNullableRelationFilter, RideScheduleWhereInput> | null
     bookings?: BookingListRelationFilter
+    stops?: RideStopListRelationFilter
     reviews?: ReviewListRelationFilter
     messages?: MessageListRelationFilter
     reports?: ReportListRelationFilter
-  }, "id">
+  }, "id" | "driverId_departureTime">
 
   export type RideOrderByWithAggregationInput = {
     id?: SortOrder
@@ -22546,6 +25017,7 @@ export namespace Prisma {
     offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
     tollCost?: SortOrder
+    bookingPolicy?: SortOrder
     status?: SortOrder
     description?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -22565,6 +25037,7 @@ export namespace Prisma {
     addressDetailLevel?: SortOrderInput | SortOrder
     cancelReason?: SortOrderInput | SortOrder
     vehicleId?: SortOrderInput | SortOrder
+    scheduleId?: SortOrderInput | SortOrder
     allowRoutePickup?: SortOrder
     allowSmoking?: SortOrder
     allowPets?: SortOrder
@@ -22596,6 +25069,7 @@ export namespace Prisma {
     offeredSeats?: IntWithAggregatesFilter<"Ride"> | number
     pricePerSeat?: FloatWithAggregatesFilter<"Ride"> | number
     tollCost?: FloatWithAggregatesFilter<"Ride"> | number
+    bookingPolicy?: EnumBookingPolicyWithAggregatesFilter<"Ride"> | $Enums.BookingPolicy
     status?: EnumRideStatusWithAggregatesFilter<"Ride"> | $Enums.RideStatus
     description?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Ride"> | Date | string
@@ -22615,10 +25089,145 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     cancelReason?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     vehicleId?: StringNullableWithAggregatesFilter<"Ride"> | string | null
+    scheduleId?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     allowRoutePickup?: BoolWithAggregatesFilter<"Ride"> | boolean
     allowSmoking?: BoolWithAggregatesFilter<"Ride"> | boolean
     allowPets?: BoolWithAggregatesFilter<"Ride"> | boolean
     allowLuggage?: BoolWithAggregatesFilter<"Ride"> | boolean
+  }
+
+  export type RideScheduleWhereInput = {
+    AND?: RideScheduleWhereInput | RideScheduleWhereInput[]
+    OR?: RideScheduleWhereInput[]
+    NOT?: RideScheduleWhereInput | RideScheduleWhereInput[]
+    id?: StringFilter<"RideSchedule"> | string
+    driverId?: StringFilter<"RideSchedule"> | string
+    timezone?: StringFilter<"RideSchedule"> | string
+    createdAt?: DateTimeFilter<"RideSchedule"> | Date | string
+    updatedAt?: DateTimeFilter<"RideSchedule"> | Date | string
+    driver?: XOR<UserRelationFilter, UserWhereInput>
+    rides?: RideListRelationFilter
+  }
+
+  export type RideScheduleOrderByWithRelationInput = {
+    id?: SortOrder
+    driverId?: SortOrder
+    timezone?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    driver?: UserOrderByWithRelationInput
+    rides?: RideOrderByRelationAggregateInput
+  }
+
+  export type RideScheduleWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: RideScheduleWhereInput | RideScheduleWhereInput[]
+    OR?: RideScheduleWhereInput[]
+    NOT?: RideScheduleWhereInput | RideScheduleWhereInput[]
+    driverId?: StringFilter<"RideSchedule"> | string
+    timezone?: StringFilter<"RideSchedule"> | string
+    createdAt?: DateTimeFilter<"RideSchedule"> | Date | string
+    updatedAt?: DateTimeFilter<"RideSchedule"> | Date | string
+    driver?: XOR<UserRelationFilter, UserWhereInput>
+    rides?: RideListRelationFilter
+  }, "id">
+
+  export type RideScheduleOrderByWithAggregationInput = {
+    id?: SortOrder
+    driverId?: SortOrder
+    timezone?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: RideScheduleCountOrderByAggregateInput
+    _max?: RideScheduleMaxOrderByAggregateInput
+    _min?: RideScheduleMinOrderByAggregateInput
+  }
+
+  export type RideScheduleScalarWhereWithAggregatesInput = {
+    AND?: RideScheduleScalarWhereWithAggregatesInput | RideScheduleScalarWhereWithAggregatesInput[]
+    OR?: RideScheduleScalarWhereWithAggregatesInput[]
+    NOT?: RideScheduleScalarWhereWithAggregatesInput | RideScheduleScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"RideSchedule"> | string
+    driverId?: StringWithAggregatesFilter<"RideSchedule"> | string
+    timezone?: StringWithAggregatesFilter<"RideSchedule"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"RideSchedule"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"RideSchedule"> | Date | string
+  }
+
+  export type RideStopWhereInput = {
+    AND?: RideStopWhereInput | RideStopWhereInput[]
+    OR?: RideStopWhereInput[]
+    NOT?: RideStopWhereInput | RideStopWhereInput[]
+    id?: StringFilter<"RideStop"> | string
+    rideId?: StringFilter<"RideStop"> | string
+    address?: StringFilter<"RideStop"> | string
+    name?: StringNullableFilter<"RideStop"> | string | null
+    latitude?: FloatFilter<"RideStop"> | number
+    longitude?: FloatFilter<"RideStop"> | number
+    order?: IntFilter<"RideStop"> | number
+    createdAt?: DateTimeFilter<"RideStop"> | Date | string
+    ride?: XOR<RideRelationFilter, RideWhereInput>
+    selectedByBookings?: BookingListRelationFilter
+  }
+
+  export type RideStopOrderByWithRelationInput = {
+    id?: SortOrder
+    rideId?: SortOrder
+    address?: SortOrder
+    name?: SortOrderInput | SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    order?: SortOrder
+    createdAt?: SortOrder
+    ride?: RideOrderByWithRelationInput
+    selectedByBookings?: BookingOrderByRelationAggregateInput
+  }
+
+  export type RideStopWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    rideId_order?: RideStopRideIdOrderCompoundUniqueInput
+    AND?: RideStopWhereInput | RideStopWhereInput[]
+    OR?: RideStopWhereInput[]
+    NOT?: RideStopWhereInput | RideStopWhereInput[]
+    rideId?: StringFilter<"RideStop"> | string
+    address?: StringFilter<"RideStop"> | string
+    name?: StringNullableFilter<"RideStop"> | string | null
+    latitude?: FloatFilter<"RideStop"> | number
+    longitude?: FloatFilter<"RideStop"> | number
+    order?: IntFilter<"RideStop"> | number
+    createdAt?: DateTimeFilter<"RideStop"> | Date | string
+    ride?: XOR<RideRelationFilter, RideWhereInput>
+    selectedByBookings?: BookingListRelationFilter
+  }, "id" | "rideId_order">
+
+  export type RideStopOrderByWithAggregationInput = {
+    id?: SortOrder
+    rideId?: SortOrder
+    address?: SortOrder
+    name?: SortOrderInput | SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    order?: SortOrder
+    createdAt?: SortOrder
+    _count?: RideStopCountOrderByAggregateInput
+    _avg?: RideStopAvgOrderByAggregateInput
+    _max?: RideStopMaxOrderByAggregateInput
+    _min?: RideStopMinOrderByAggregateInput
+    _sum?: RideStopSumOrderByAggregateInput
+  }
+
+  export type RideStopScalarWhereWithAggregatesInput = {
+    AND?: RideStopScalarWhereWithAggregatesInput | RideStopScalarWhereWithAggregatesInput[]
+    OR?: RideStopScalarWhereWithAggregatesInput[]
+    NOT?: RideStopScalarWhereWithAggregatesInput | RideStopScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"RideStop"> | string
+    rideId?: StringWithAggregatesFilter<"RideStop"> | string
+    address?: StringWithAggregatesFilter<"RideStop"> | string
+    name?: StringNullableWithAggregatesFilter<"RideStop"> | string | null
+    latitude?: FloatWithAggregatesFilter<"RideStop"> | number
+    longitude?: FloatWithAggregatesFilter<"RideStop"> | number
+    order?: IntWithAggregatesFilter<"RideStop"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"RideStop"> | Date | string
   }
 
   export type BookingWhereInput = {
@@ -22634,10 +25243,13 @@ export namespace Prisma {
     detourKm?: FloatNullableFilter<"Booking"> | number | null
     priceBreakdown?: JsonNullableFilter<"Booking">
     status?: EnumBookingStatusFilter<"Booking"> | $Enums.BookingStatus
+    expiresAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
+    seatHeld?: BoolFilter<"Booking"> | boolean
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
     passengerLat?: FloatNullableFilter<"Booking"> | number | null
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
+    pickupStopId?: StringNullableFilter<"Booking"> | string | null
     isPickedUp?: BoolFilter<"Booking"> | boolean
     driverArrivedAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
     pickedUpAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
@@ -22652,6 +25264,7 @@ export namespace Prisma {
     ride?: XOR<RideRelationFilter, RideWhereInput>
     passenger?: XOR<UserRelationFilter, UserWhereInput>
     transactions?: TransactionListRelationFilter
+    pickupStop?: XOR<RideStopNullableRelationFilter, RideStopWhereInput> | null
   }
 
   export type BookingOrderByWithRelationInput = {
@@ -22664,10 +25277,13 @@ export namespace Prisma {
     detourKm?: SortOrderInput | SortOrder
     priceBreakdown?: SortOrderInput | SortOrder
     status?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    seatHeld?: SortOrder
     paymentStatus?: SortOrder
     passengerLat?: SortOrderInput | SortOrder
     passengerLng?: SortOrderInput | SortOrder
     pickupAddress?: SortOrderInput | SortOrder
+    pickupStopId?: SortOrderInput | SortOrder
     isPickedUp?: SortOrder
     driverArrivedAt?: SortOrderInput | SortOrder
     pickedUpAt?: SortOrderInput | SortOrder
@@ -22682,6 +25298,7 @@ export namespace Prisma {
     ride?: RideOrderByWithRelationInput
     passenger?: UserOrderByWithRelationInput
     transactions?: TransactionOrderByRelationAggregateInput
+    pickupStop?: RideStopOrderByWithRelationInput
   }
 
   export type BookingWhereUniqueInput = Prisma.AtLeast<{
@@ -22697,10 +25314,13 @@ export namespace Prisma {
     detourKm?: FloatNullableFilter<"Booking"> | number | null
     priceBreakdown?: JsonNullableFilter<"Booking">
     status?: EnumBookingStatusFilter<"Booking"> | $Enums.BookingStatus
+    expiresAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
+    seatHeld?: BoolFilter<"Booking"> | boolean
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
     passengerLat?: FloatNullableFilter<"Booking"> | number | null
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
+    pickupStopId?: StringNullableFilter<"Booking"> | string | null
     isPickedUp?: BoolFilter<"Booking"> | boolean
     driverArrivedAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
     pickedUpAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
@@ -22715,6 +25335,7 @@ export namespace Prisma {
     ride?: XOR<RideRelationFilter, RideWhereInput>
     passenger?: XOR<UserRelationFilter, UserWhereInput>
     transactions?: TransactionListRelationFilter
+    pickupStop?: XOR<RideStopNullableRelationFilter, RideStopWhereInput> | null
   }, "id">
 
   export type BookingOrderByWithAggregationInput = {
@@ -22727,10 +25348,13 @@ export namespace Prisma {
     detourKm?: SortOrderInput | SortOrder
     priceBreakdown?: SortOrderInput | SortOrder
     status?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    seatHeld?: SortOrder
     paymentStatus?: SortOrder
     passengerLat?: SortOrderInput | SortOrder
     passengerLng?: SortOrderInput | SortOrder
     pickupAddress?: SortOrderInput | SortOrder
+    pickupStopId?: SortOrderInput | SortOrder
     isPickedUp?: SortOrder
     driverArrivedAt?: SortOrderInput | SortOrder
     pickedUpAt?: SortOrderInput | SortOrder
@@ -22762,10 +25386,13 @@ export namespace Prisma {
     detourKm?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     priceBreakdown?: JsonNullableWithAggregatesFilter<"Booking">
     status?: EnumBookingStatusWithAggregatesFilter<"Booking"> | $Enums.BookingStatus
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
+    seatHeld?: BoolWithAggregatesFilter<"Booking"> | boolean
     paymentStatus?: EnumPaymentStatusWithAggregatesFilter<"Booking"> | $Enums.PaymentStatus
     passengerLat?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     passengerLng?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     pickupAddress?: StringNullableWithAggregatesFilter<"Booking"> | string | null
+    pickupStopId?: StringNullableWithAggregatesFilter<"Booking"> | string | null
     isPickedUp?: BoolWithAggregatesFilter<"Booking"> | boolean
     driverArrivedAt?: DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
     pickedUpAt?: DateTimeNullableWithAggregatesFilter<"Booking"> | Date | string | null
@@ -23626,6 +26253,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -23660,6 +26288,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -23694,6 +26323,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -23728,6 +26358,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -24176,6 +26807,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -24200,7 +26832,9 @@ export namespace Prisma {
     allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
+    schedule?: RideScheduleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
+    stops?: RideStopCreateNestedManyWithoutRideInput
     reviews?: ReviewCreateNestedManyWithoutRideInput
     messages?: MessageCreateNestedManyWithoutRideInput
     reports?: ReportCreateNestedManyWithoutRideInput
@@ -24223,6 +26857,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -24242,11 +26877,13 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    scheduleId?: string | null
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
+    stops?: RideStopUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
     reports?: ReportUncheckedCreateNestedManyWithoutRideInput
@@ -24268,6 +26905,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24292,7 +26930,9 @@ export namespace Prisma {
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
+    schedule?: RideScheduleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
+    stops?: RideStopUpdateManyWithoutRideNestedInput
     reviews?: ReviewUpdateManyWithoutRideNestedInput
     messages?: MessageUpdateManyWithoutRideNestedInput
     reports?: ReportUpdateManyWithoutRideNestedInput
@@ -24315,6 +26955,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24334,11 +26975,13 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
+    stops?: RideStopUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
     reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
@@ -24361,6 +27004,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -24380,6 +27024,7 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    scheduleId?: string | null
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
@@ -24402,6 +27047,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24443,6 +27089,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -24462,10 +27109,150 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type RideScheduleCreateInput = {
+    id?: string
+    timezone?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    driver: UserCreateNestedOneWithoutRideSchedulesInput
+    rides?: RideCreateNestedManyWithoutScheduleInput
+  }
+
+  export type RideScheduleUncheckedCreateInput = {
+    id?: string
+    driverId: string
+    timezone?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    rides?: RideUncheckedCreateNestedManyWithoutScheduleInput
+  }
+
+  export type RideScheduleUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    timezone?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    driver?: UserUpdateOneRequiredWithoutRideSchedulesNestedInput
+    rides?: RideUpdateManyWithoutScheduleNestedInput
+  }
+
+  export type RideScheduleUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    driverId?: StringFieldUpdateOperationsInput | string
+    timezone?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    rides?: RideUncheckedUpdateManyWithoutScheduleNestedInput
+  }
+
+  export type RideScheduleCreateManyInput = {
+    id?: string
+    driverId: string
+    timezone?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RideScheduleUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    timezone?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RideScheduleUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    driverId?: StringFieldUpdateOperationsInput | string
+    timezone?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RideStopCreateInput = {
+    id?: string
+    address: string
+    name?: string | null
+    latitude: number
+    longitude: number
+    order: number
+    createdAt?: Date | string
+    ride: RideCreateNestedOneWithoutStopsInput
+    selectedByBookings?: BookingCreateNestedManyWithoutPickupStopInput
+  }
+
+  export type RideStopUncheckedCreateInput = {
+    id?: string
+    rideId: string
+    address: string
+    name?: string | null
+    latitude: number
+    longitude: number
+    order: number
+    createdAt?: Date | string
+    selectedByBookings?: BookingUncheckedCreateNestedManyWithoutPickupStopInput
+  }
+
+  export type RideStopUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ride?: RideUpdateOneRequiredWithoutStopsNestedInput
+    selectedByBookings?: BookingUpdateManyWithoutPickupStopNestedInput
+  }
+
+  export type RideStopUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rideId?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    selectedByBookings?: BookingUncheckedUpdateManyWithoutPickupStopNestedInput
+  }
+
+  export type RideStopCreateManyInput = {
+    id?: string
+    rideId: string
+    address: string
+    name?: string | null
+    latitude: number
+    longitude: number
+    order: number
+    createdAt?: Date | string
+  }
+
+  export type RideStopUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RideStopUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rideId?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type BookingCreateInput = {
@@ -24476,6 +27263,8 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
@@ -24494,6 +27283,7 @@ export namespace Prisma {
     ride: RideCreateNestedOneWithoutBookingsInput
     passenger: UserCreateNestedOneWithoutBookingsInput
     transactions?: TransactionCreateNestedManyWithoutBookingInput
+    pickupStop?: RideStopCreateNestedOneWithoutSelectedByBookingsInput
   }
 
   export type BookingUncheckedCreateInput = {
@@ -24506,10 +27296,13 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    pickupStopId?: string | null
     isPickedUp?: boolean
     driverArrivedAt?: Date | string | null
     pickedUpAt?: Date | string | null
@@ -24532,6 +27325,8 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
@@ -24550,6 +27345,7 @@ export namespace Prisma {
     ride?: RideUpdateOneRequiredWithoutBookingsNestedInput
     passenger?: UserUpdateOneRequiredWithoutBookingsNestedInput
     transactions?: TransactionUpdateManyWithoutBookingNestedInput
+    pickupStop?: RideStopUpdateOneWithoutSelectedByBookingsNestedInput
   }
 
   export type BookingUncheckedUpdateInput = {
@@ -24562,10 +27358,13 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    pickupStopId?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -24590,10 +27389,13 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    pickupStopId?: string | null
     isPickedUp?: boolean
     driverArrivedAt?: Date | string | null
     pickedUpAt?: Date | string | null
@@ -24615,6 +27417,8 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
@@ -24642,10 +27446,13 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    pickupStopId?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -25679,6 +28486,12 @@ export namespace Prisma {
     none?: RideWhereInput
   }
 
+  export type RideScheduleListRelationFilter = {
+    every?: RideScheduleWhereInput
+    some?: RideScheduleWhereInput
+    none?: RideScheduleWhereInput
+  }
+
   export type BookingListRelationFilter = {
     every?: BookingWhereInput
     some?: BookingWhereInput
@@ -25743,6 +28556,10 @@ export namespace Prisma {
   }
 
   export type RideOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RideScheduleOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -26203,6 +29020,13 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
+  export type EnumBookingPolicyFilter<$PrismaModel = never> = {
+    equals?: $Enums.BookingPolicy | EnumBookingPolicyFieldRefInput<$PrismaModel>
+    in?: $Enums.BookingPolicy[] | ListEnumBookingPolicyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BookingPolicy[] | ListEnumBookingPolicyFieldRefInput<$PrismaModel>
+    not?: NestedEnumBookingPolicyFilter<$PrismaModel> | $Enums.BookingPolicy
+  }
+
   export type EnumRideStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.RideStatus | EnumRideStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RideStatus[] | ListEnumRideStatusFieldRefInput<$PrismaModel>
@@ -26213,6 +29037,26 @@ export namespace Prisma {
   export type VehicleNullableRelationFilter = {
     is?: VehicleWhereInput | null
     isNot?: VehicleWhereInput | null
+  }
+
+  export type RideScheduleNullableRelationFilter = {
+    is?: RideScheduleWhereInput | null
+    isNot?: RideScheduleWhereInput | null
+  }
+
+  export type RideStopListRelationFilter = {
+    every?: RideStopWhereInput
+    some?: RideStopWhereInput
+    none?: RideStopWhereInput
+  }
+
+  export type RideStopOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RideDriverIdDepartureTimeCompoundUniqueInput = {
+    driverId: string
+    departureTime: Date | string
   }
 
   export type RideCountOrderByAggregateInput = {
@@ -26232,6 +29076,7 @@ export namespace Prisma {
     offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
     tollCost?: SortOrder
+    bookingPolicy?: SortOrder
     status?: SortOrder
     description?: SortOrder
     createdAt?: SortOrder
@@ -26251,6 +29096,7 @@ export namespace Prisma {
     addressDetailLevel?: SortOrder
     cancelReason?: SortOrder
     vehicleId?: SortOrder
+    scheduleId?: SortOrder
     allowRoutePickup?: SortOrder
     allowSmoking?: SortOrder
     allowPets?: SortOrder
@@ -26287,6 +29133,7 @@ export namespace Prisma {
     offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
     tollCost?: SortOrder
+    bookingPolicy?: SortOrder
     status?: SortOrder
     description?: SortOrder
     createdAt?: SortOrder
@@ -26306,6 +29153,7 @@ export namespace Prisma {
     addressDetailLevel?: SortOrder
     cancelReason?: SortOrder
     vehicleId?: SortOrder
+    scheduleId?: SortOrder
     allowRoutePickup?: SortOrder
     allowSmoking?: SortOrder
     allowPets?: SortOrder
@@ -26329,6 +29177,7 @@ export namespace Prisma {
     offeredSeats?: SortOrder
     pricePerSeat?: SortOrder
     tollCost?: SortOrder
+    bookingPolicy?: SortOrder
     status?: SortOrder
     description?: SortOrder
     createdAt?: SortOrder
@@ -26348,6 +29197,7 @@ export namespace Prisma {
     addressDetailLevel?: SortOrder
     cancelReason?: SortOrder
     vehicleId?: SortOrder
+    scheduleId?: SortOrder
     allowRoutePickup?: SortOrder
     allowSmoking?: SortOrder
     allowPets?: SortOrder
@@ -26383,6 +29233,16 @@ export namespace Prisma {
     _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
+  export type EnumBookingPolicyWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BookingPolicy | EnumBookingPolicyFieldRefInput<$PrismaModel>
+    in?: $Enums.BookingPolicy[] | ListEnumBookingPolicyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BookingPolicy[] | ListEnumBookingPolicyFieldRefInput<$PrismaModel>
+    not?: NestedEnumBookingPolicyWithAggregatesFilter<$PrismaModel> | $Enums.BookingPolicy
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBookingPolicyFilter<$PrismaModel>
+    _max?: NestedEnumBookingPolicyFilter<$PrismaModel>
+  }
+
   export type EnumRideStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.RideStatus | EnumRideStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RideStatus[] | ListEnumRideStatusFieldRefInput<$PrismaModel>
@@ -26391,6 +29251,80 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumRideStatusFilter<$PrismaModel>
     _max?: NestedEnumRideStatusFilter<$PrismaModel>
+  }
+
+  export type RideScheduleCountOrderByAggregateInput = {
+    id?: SortOrder
+    driverId?: SortOrder
+    timezone?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RideScheduleMaxOrderByAggregateInput = {
+    id?: SortOrder
+    driverId?: SortOrder
+    timezone?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RideScheduleMinOrderByAggregateInput = {
+    id?: SortOrder
+    driverId?: SortOrder
+    timezone?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RideStopRideIdOrderCompoundUniqueInput = {
+    rideId: string
+    order: number
+  }
+
+  export type RideStopCountOrderByAggregateInput = {
+    id?: SortOrder
+    rideId?: SortOrder
+    address?: SortOrder
+    name?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    order?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RideStopAvgOrderByAggregateInput = {
+    latitude?: SortOrder
+    longitude?: SortOrder
+    order?: SortOrder
+  }
+
+  export type RideStopMaxOrderByAggregateInput = {
+    id?: SortOrder
+    rideId?: SortOrder
+    address?: SortOrder
+    name?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    order?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RideStopMinOrderByAggregateInput = {
+    id?: SortOrder
+    rideId?: SortOrder
+    address?: SortOrder
+    name?: SortOrder
+    latitude?: SortOrder
+    longitude?: SortOrder
+    order?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RideStopSumOrderByAggregateInput = {
+    latitude?: SortOrder
+    longitude?: SortOrder
+    order?: SortOrder
   }
   export type JsonNullableFilter<$PrismaModel = never> = 
     | PatchUndefined<
@@ -26422,13 +29356,6 @@ export namespace Prisma {
     not?: NestedEnumBookingStatusFilter<$PrismaModel> | $Enums.BookingStatus
   }
 
-  export type EnumPaymentStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.PaymentStatus | EnumPaymentStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumPaymentStatusFilter<$PrismaModel> | $Enums.PaymentStatus
-  }
-
   export type DateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -26438,6 +29365,18 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type EnumPaymentStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentStatus | EnumPaymentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPaymentStatusFilter<$PrismaModel> | $Enums.PaymentStatus
+  }
+
+  export type RideStopNullableRelationFilter = {
+    is?: RideStopWhereInput | null
+    isNot?: RideStopWhereInput | null
   }
 
   export type BookingCountOrderByAggregateInput = {
@@ -26450,10 +29389,13 @@ export namespace Prisma {
     detourKm?: SortOrder
     priceBreakdown?: SortOrder
     status?: SortOrder
+    expiresAt?: SortOrder
+    seatHeld?: SortOrder
     paymentStatus?: SortOrder
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
+    pickupStopId?: SortOrder
     isPickedUp?: SortOrder
     driverArrivedAt?: SortOrder
     pickedUpAt?: SortOrder
@@ -26487,10 +29429,13 @@ export namespace Prisma {
     sharedDistanceKm?: SortOrder
     detourKm?: SortOrder
     status?: SortOrder
+    expiresAt?: SortOrder
+    seatHeld?: SortOrder
     paymentStatus?: SortOrder
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
+    pickupStopId?: SortOrder
     isPickedUp?: SortOrder
     driverArrivedAt?: SortOrder
     pickedUpAt?: SortOrder
@@ -26513,10 +29458,13 @@ export namespace Prisma {
     sharedDistanceKm?: SortOrder
     detourKm?: SortOrder
     status?: SortOrder
+    expiresAt?: SortOrder
+    seatHeld?: SortOrder
     paymentStatus?: SortOrder
     passengerLat?: SortOrder
     passengerLng?: SortOrder
     pickupAddress?: SortOrder
+    pickupStopId?: SortOrder
     isPickedUp?: SortOrder
     driverArrivedAt?: SortOrder
     pickedUpAt?: SortOrder
@@ -26576,16 +29524,6 @@ export namespace Prisma {
     _max?: NestedEnumBookingStatusFilter<$PrismaModel>
   }
 
-  export type EnumPaymentStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.PaymentStatus | EnumPaymentStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumPaymentStatusWithAggregatesFilter<$PrismaModel> | $Enums.PaymentStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumPaymentStatusFilter<$PrismaModel>
-    _max?: NestedEnumPaymentStatusFilter<$PrismaModel>
-  }
-
   export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -26598,6 +29536,16 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumPaymentStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentStatus | EnumPaymentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPaymentStatusWithAggregatesFilter<$PrismaModel> | $Enums.PaymentStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPaymentStatusFilter<$PrismaModel>
+    _max?: NestedEnumPaymentStatusFilter<$PrismaModel>
   }
 
   export type EnumReviewTypeFilter<$PrismaModel = never> = {
@@ -27221,6 +30169,13 @@ export namespace Prisma {
     connect?: RideWhereUniqueInput | RideWhereUniqueInput[]
   }
 
+  export type RideScheduleCreateNestedManyWithoutDriverInput = {
+    create?: XOR<RideScheduleCreateWithoutDriverInput, RideScheduleUncheckedCreateWithoutDriverInput> | RideScheduleCreateWithoutDriverInput[] | RideScheduleUncheckedCreateWithoutDriverInput[]
+    connectOrCreate?: RideScheduleCreateOrConnectWithoutDriverInput | RideScheduleCreateOrConnectWithoutDriverInput[]
+    createMany?: RideScheduleCreateManyDriverInputEnvelope
+    connect?: RideScheduleWhereUniqueInput | RideScheduleWhereUniqueInput[]
+  }
+
   export type BookingCreateNestedManyWithoutPassengerInput = {
     create?: XOR<BookingCreateWithoutPassengerInput, BookingUncheckedCreateWithoutPassengerInput> | BookingCreateWithoutPassengerInput[] | BookingUncheckedCreateWithoutPassengerInput[]
     connectOrCreate?: BookingCreateOrConnectWithoutPassengerInput | BookingCreateOrConnectWithoutPassengerInput[]
@@ -27322,6 +30277,13 @@ export namespace Prisma {
     connectOrCreate?: RideCreateOrConnectWithoutDriverInput | RideCreateOrConnectWithoutDriverInput[]
     createMany?: RideCreateManyDriverInputEnvelope
     connect?: RideWhereUniqueInput | RideWhereUniqueInput[]
+  }
+
+  export type RideScheduleUncheckedCreateNestedManyWithoutDriverInput = {
+    create?: XOR<RideScheduleCreateWithoutDriverInput, RideScheduleUncheckedCreateWithoutDriverInput> | RideScheduleCreateWithoutDriverInput[] | RideScheduleUncheckedCreateWithoutDriverInput[]
+    connectOrCreate?: RideScheduleCreateOrConnectWithoutDriverInput | RideScheduleCreateOrConnectWithoutDriverInput[]
+    createMany?: RideScheduleCreateManyDriverInputEnvelope
+    connect?: RideScheduleWhereUniqueInput | RideScheduleWhereUniqueInput[]
   }
 
   export type BookingUncheckedCreateNestedManyWithoutPassengerInput = {
@@ -27468,6 +30430,20 @@ export namespace Prisma {
     update?: RideUpdateWithWhereUniqueWithoutDriverInput | RideUpdateWithWhereUniqueWithoutDriverInput[]
     updateMany?: RideUpdateManyWithWhereWithoutDriverInput | RideUpdateManyWithWhereWithoutDriverInput[]
     deleteMany?: RideScalarWhereInput | RideScalarWhereInput[]
+  }
+
+  export type RideScheduleUpdateManyWithoutDriverNestedInput = {
+    create?: XOR<RideScheduleCreateWithoutDriverInput, RideScheduleUncheckedCreateWithoutDriverInput> | RideScheduleCreateWithoutDriverInput[] | RideScheduleUncheckedCreateWithoutDriverInput[]
+    connectOrCreate?: RideScheduleCreateOrConnectWithoutDriverInput | RideScheduleCreateOrConnectWithoutDriverInput[]
+    upsert?: RideScheduleUpsertWithWhereUniqueWithoutDriverInput | RideScheduleUpsertWithWhereUniqueWithoutDriverInput[]
+    createMany?: RideScheduleCreateManyDriverInputEnvelope
+    set?: RideScheduleWhereUniqueInput | RideScheduleWhereUniqueInput[]
+    disconnect?: RideScheduleWhereUniqueInput | RideScheduleWhereUniqueInput[]
+    delete?: RideScheduleWhereUniqueInput | RideScheduleWhereUniqueInput[]
+    connect?: RideScheduleWhereUniqueInput | RideScheduleWhereUniqueInput[]
+    update?: RideScheduleUpdateWithWhereUniqueWithoutDriverInput | RideScheduleUpdateWithWhereUniqueWithoutDriverInput[]
+    updateMany?: RideScheduleUpdateManyWithWhereWithoutDriverInput | RideScheduleUpdateManyWithWhereWithoutDriverInput[]
+    deleteMany?: RideScheduleScalarWhereInput | RideScheduleScalarWhereInput[]
   }
 
   export type BookingUpdateManyWithoutPassengerNestedInput = {
@@ -27670,6 +30646,20 @@ export namespace Prisma {
     update?: RideUpdateWithWhereUniqueWithoutDriverInput | RideUpdateWithWhereUniqueWithoutDriverInput[]
     updateMany?: RideUpdateManyWithWhereWithoutDriverInput | RideUpdateManyWithWhereWithoutDriverInput[]
     deleteMany?: RideScalarWhereInput | RideScalarWhereInput[]
+  }
+
+  export type RideScheduleUncheckedUpdateManyWithoutDriverNestedInput = {
+    create?: XOR<RideScheduleCreateWithoutDriverInput, RideScheduleUncheckedCreateWithoutDriverInput> | RideScheduleCreateWithoutDriverInput[] | RideScheduleUncheckedCreateWithoutDriverInput[]
+    connectOrCreate?: RideScheduleCreateOrConnectWithoutDriverInput | RideScheduleCreateOrConnectWithoutDriverInput[]
+    upsert?: RideScheduleUpsertWithWhereUniqueWithoutDriverInput | RideScheduleUpsertWithWhereUniqueWithoutDriverInput[]
+    createMany?: RideScheduleCreateManyDriverInputEnvelope
+    set?: RideScheduleWhereUniqueInput | RideScheduleWhereUniqueInput[]
+    disconnect?: RideScheduleWhereUniqueInput | RideScheduleWhereUniqueInput[]
+    delete?: RideScheduleWhereUniqueInput | RideScheduleWhereUniqueInput[]
+    connect?: RideScheduleWhereUniqueInput | RideScheduleWhereUniqueInput[]
+    update?: RideScheduleUpdateWithWhereUniqueWithoutDriverInput | RideScheduleUpdateWithWhereUniqueWithoutDriverInput[]
+    updateMany?: RideScheduleUpdateManyWithWhereWithoutDriverInput | RideScheduleUpdateManyWithWhereWithoutDriverInput[]
+    deleteMany?: RideScheduleScalarWhereInput | RideScheduleScalarWhereInput[]
   }
 
   export type BookingUncheckedUpdateManyWithoutPassengerNestedInput = {
@@ -28052,11 +31042,24 @@ export namespace Prisma {
     connect?: VehicleWhereUniqueInput
   }
 
+  export type RideScheduleCreateNestedOneWithoutRidesInput = {
+    create?: XOR<RideScheduleCreateWithoutRidesInput, RideScheduleUncheckedCreateWithoutRidesInput>
+    connectOrCreate?: RideScheduleCreateOrConnectWithoutRidesInput
+    connect?: RideScheduleWhereUniqueInput
+  }
+
   export type BookingCreateNestedManyWithoutRideInput = {
     create?: XOR<BookingCreateWithoutRideInput, BookingUncheckedCreateWithoutRideInput> | BookingCreateWithoutRideInput[] | BookingUncheckedCreateWithoutRideInput[]
     connectOrCreate?: BookingCreateOrConnectWithoutRideInput | BookingCreateOrConnectWithoutRideInput[]
     createMany?: BookingCreateManyRideInputEnvelope
     connect?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+  }
+
+  export type RideStopCreateNestedManyWithoutRideInput = {
+    create?: XOR<RideStopCreateWithoutRideInput, RideStopUncheckedCreateWithoutRideInput> | RideStopCreateWithoutRideInput[] | RideStopUncheckedCreateWithoutRideInput[]
+    connectOrCreate?: RideStopCreateOrConnectWithoutRideInput | RideStopCreateOrConnectWithoutRideInput[]
+    createMany?: RideStopCreateManyRideInputEnvelope
+    connect?: RideStopWhereUniqueInput | RideStopWhereUniqueInput[]
   }
 
   export type ReviewCreateNestedManyWithoutRideInput = {
@@ -28085,6 +31088,13 @@ export namespace Prisma {
     connectOrCreate?: BookingCreateOrConnectWithoutRideInput | BookingCreateOrConnectWithoutRideInput[]
     createMany?: BookingCreateManyRideInputEnvelope
     connect?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+  }
+
+  export type RideStopUncheckedCreateNestedManyWithoutRideInput = {
+    create?: XOR<RideStopCreateWithoutRideInput, RideStopUncheckedCreateWithoutRideInput> | RideStopCreateWithoutRideInput[] | RideStopUncheckedCreateWithoutRideInput[]
+    connectOrCreate?: RideStopCreateOrConnectWithoutRideInput | RideStopCreateOrConnectWithoutRideInput[]
+    createMany?: RideStopCreateManyRideInputEnvelope
+    connect?: RideStopWhereUniqueInput | RideStopWhereUniqueInput[]
   }
 
   export type ReviewUncheckedCreateNestedManyWithoutRideInput = {
@@ -28116,6 +31126,10 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type EnumBookingPolicyFieldUpdateOperationsInput = {
+    set?: $Enums.BookingPolicy
+  }
+
   export type EnumRideStatusFieldUpdateOperationsInput = {
     set?: $Enums.RideStatus
   }
@@ -28138,6 +31152,16 @@ export namespace Prisma {
     update?: XOR<XOR<VehicleUpdateToOneWithWhereWithoutRidesInput, VehicleUpdateWithoutRidesInput>, VehicleUncheckedUpdateWithoutRidesInput>
   }
 
+  export type RideScheduleUpdateOneWithoutRidesNestedInput = {
+    create?: XOR<RideScheduleCreateWithoutRidesInput, RideScheduleUncheckedCreateWithoutRidesInput>
+    connectOrCreate?: RideScheduleCreateOrConnectWithoutRidesInput
+    upsert?: RideScheduleUpsertWithoutRidesInput
+    disconnect?: RideScheduleWhereInput | boolean
+    delete?: RideScheduleWhereInput | boolean
+    connect?: RideScheduleWhereUniqueInput
+    update?: XOR<XOR<RideScheduleUpdateToOneWithWhereWithoutRidesInput, RideScheduleUpdateWithoutRidesInput>, RideScheduleUncheckedUpdateWithoutRidesInput>
+  }
+
   export type BookingUpdateManyWithoutRideNestedInput = {
     create?: XOR<BookingCreateWithoutRideInput, BookingUncheckedCreateWithoutRideInput> | BookingCreateWithoutRideInput[] | BookingUncheckedCreateWithoutRideInput[]
     connectOrCreate?: BookingCreateOrConnectWithoutRideInput | BookingCreateOrConnectWithoutRideInput[]
@@ -28150,6 +31174,20 @@ export namespace Prisma {
     update?: BookingUpdateWithWhereUniqueWithoutRideInput | BookingUpdateWithWhereUniqueWithoutRideInput[]
     updateMany?: BookingUpdateManyWithWhereWithoutRideInput | BookingUpdateManyWithWhereWithoutRideInput[]
     deleteMany?: BookingScalarWhereInput | BookingScalarWhereInput[]
+  }
+
+  export type RideStopUpdateManyWithoutRideNestedInput = {
+    create?: XOR<RideStopCreateWithoutRideInput, RideStopUncheckedCreateWithoutRideInput> | RideStopCreateWithoutRideInput[] | RideStopUncheckedCreateWithoutRideInput[]
+    connectOrCreate?: RideStopCreateOrConnectWithoutRideInput | RideStopCreateOrConnectWithoutRideInput[]
+    upsert?: RideStopUpsertWithWhereUniqueWithoutRideInput | RideStopUpsertWithWhereUniqueWithoutRideInput[]
+    createMany?: RideStopCreateManyRideInputEnvelope
+    set?: RideStopWhereUniqueInput | RideStopWhereUniqueInput[]
+    disconnect?: RideStopWhereUniqueInput | RideStopWhereUniqueInput[]
+    delete?: RideStopWhereUniqueInput | RideStopWhereUniqueInput[]
+    connect?: RideStopWhereUniqueInput | RideStopWhereUniqueInput[]
+    update?: RideStopUpdateWithWhereUniqueWithoutRideInput | RideStopUpdateWithWhereUniqueWithoutRideInput[]
+    updateMany?: RideStopUpdateManyWithWhereWithoutRideInput | RideStopUpdateManyWithWhereWithoutRideInput[]
+    deleteMany?: RideStopScalarWhereInput | RideStopScalarWhereInput[]
   }
 
   export type ReviewUpdateManyWithoutRideNestedInput = {
@@ -28208,6 +31246,20 @@ export namespace Prisma {
     deleteMany?: BookingScalarWhereInput | BookingScalarWhereInput[]
   }
 
+  export type RideStopUncheckedUpdateManyWithoutRideNestedInput = {
+    create?: XOR<RideStopCreateWithoutRideInput, RideStopUncheckedCreateWithoutRideInput> | RideStopCreateWithoutRideInput[] | RideStopUncheckedCreateWithoutRideInput[]
+    connectOrCreate?: RideStopCreateOrConnectWithoutRideInput | RideStopCreateOrConnectWithoutRideInput[]
+    upsert?: RideStopUpsertWithWhereUniqueWithoutRideInput | RideStopUpsertWithWhereUniqueWithoutRideInput[]
+    createMany?: RideStopCreateManyRideInputEnvelope
+    set?: RideStopWhereUniqueInput | RideStopWhereUniqueInput[]
+    disconnect?: RideStopWhereUniqueInput | RideStopWhereUniqueInput[]
+    delete?: RideStopWhereUniqueInput | RideStopWhereUniqueInput[]
+    connect?: RideStopWhereUniqueInput | RideStopWhereUniqueInput[]
+    update?: RideStopUpdateWithWhereUniqueWithoutRideInput | RideStopUpdateWithWhereUniqueWithoutRideInput[]
+    updateMany?: RideStopUpdateManyWithWhereWithoutRideInput | RideStopUpdateManyWithWhereWithoutRideInput[]
+    deleteMany?: RideStopScalarWhereInput | RideStopScalarWhereInput[]
+  }
+
   export type ReviewUncheckedUpdateManyWithoutRideNestedInput = {
     create?: XOR<ReviewCreateWithoutRideInput, ReviewUncheckedCreateWithoutRideInput> | ReviewCreateWithoutRideInput[] | ReviewUncheckedCreateWithoutRideInput[]
     connectOrCreate?: ReviewCreateOrConnectWithoutRideInput | ReviewCreateOrConnectWithoutRideInput[]
@@ -28250,6 +31302,118 @@ export namespace Prisma {
     deleteMany?: ReportScalarWhereInput | ReportScalarWhereInput[]
   }
 
+  export type UserCreateNestedOneWithoutRideSchedulesInput = {
+    create?: XOR<UserCreateWithoutRideSchedulesInput, UserUncheckedCreateWithoutRideSchedulesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutRideSchedulesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type RideCreateNestedManyWithoutScheduleInput = {
+    create?: XOR<RideCreateWithoutScheduleInput, RideUncheckedCreateWithoutScheduleInput> | RideCreateWithoutScheduleInput[] | RideUncheckedCreateWithoutScheduleInput[]
+    connectOrCreate?: RideCreateOrConnectWithoutScheduleInput | RideCreateOrConnectWithoutScheduleInput[]
+    createMany?: RideCreateManyScheduleInputEnvelope
+    connect?: RideWhereUniqueInput | RideWhereUniqueInput[]
+  }
+
+  export type RideUncheckedCreateNestedManyWithoutScheduleInput = {
+    create?: XOR<RideCreateWithoutScheduleInput, RideUncheckedCreateWithoutScheduleInput> | RideCreateWithoutScheduleInput[] | RideUncheckedCreateWithoutScheduleInput[]
+    connectOrCreate?: RideCreateOrConnectWithoutScheduleInput | RideCreateOrConnectWithoutScheduleInput[]
+    createMany?: RideCreateManyScheduleInputEnvelope
+    connect?: RideWhereUniqueInput | RideWhereUniqueInput[]
+  }
+
+  export type UserUpdateOneRequiredWithoutRideSchedulesNestedInput = {
+    create?: XOR<UserCreateWithoutRideSchedulesInput, UserUncheckedCreateWithoutRideSchedulesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutRideSchedulesInput
+    upsert?: UserUpsertWithoutRideSchedulesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutRideSchedulesInput, UserUpdateWithoutRideSchedulesInput>, UserUncheckedUpdateWithoutRideSchedulesInput>
+  }
+
+  export type RideUpdateManyWithoutScheduleNestedInput = {
+    create?: XOR<RideCreateWithoutScheduleInput, RideUncheckedCreateWithoutScheduleInput> | RideCreateWithoutScheduleInput[] | RideUncheckedCreateWithoutScheduleInput[]
+    connectOrCreate?: RideCreateOrConnectWithoutScheduleInput | RideCreateOrConnectWithoutScheduleInput[]
+    upsert?: RideUpsertWithWhereUniqueWithoutScheduleInput | RideUpsertWithWhereUniqueWithoutScheduleInput[]
+    createMany?: RideCreateManyScheduleInputEnvelope
+    set?: RideWhereUniqueInput | RideWhereUniqueInput[]
+    disconnect?: RideWhereUniqueInput | RideWhereUniqueInput[]
+    delete?: RideWhereUniqueInput | RideWhereUniqueInput[]
+    connect?: RideWhereUniqueInput | RideWhereUniqueInput[]
+    update?: RideUpdateWithWhereUniqueWithoutScheduleInput | RideUpdateWithWhereUniqueWithoutScheduleInput[]
+    updateMany?: RideUpdateManyWithWhereWithoutScheduleInput | RideUpdateManyWithWhereWithoutScheduleInput[]
+    deleteMany?: RideScalarWhereInput | RideScalarWhereInput[]
+  }
+
+  export type RideUncheckedUpdateManyWithoutScheduleNestedInput = {
+    create?: XOR<RideCreateWithoutScheduleInput, RideUncheckedCreateWithoutScheduleInput> | RideCreateWithoutScheduleInput[] | RideUncheckedCreateWithoutScheduleInput[]
+    connectOrCreate?: RideCreateOrConnectWithoutScheduleInput | RideCreateOrConnectWithoutScheduleInput[]
+    upsert?: RideUpsertWithWhereUniqueWithoutScheduleInput | RideUpsertWithWhereUniqueWithoutScheduleInput[]
+    createMany?: RideCreateManyScheduleInputEnvelope
+    set?: RideWhereUniqueInput | RideWhereUniqueInput[]
+    disconnect?: RideWhereUniqueInput | RideWhereUniqueInput[]
+    delete?: RideWhereUniqueInput | RideWhereUniqueInput[]
+    connect?: RideWhereUniqueInput | RideWhereUniqueInput[]
+    update?: RideUpdateWithWhereUniqueWithoutScheduleInput | RideUpdateWithWhereUniqueWithoutScheduleInput[]
+    updateMany?: RideUpdateManyWithWhereWithoutScheduleInput | RideUpdateManyWithWhereWithoutScheduleInput[]
+    deleteMany?: RideScalarWhereInput | RideScalarWhereInput[]
+  }
+
+  export type RideCreateNestedOneWithoutStopsInput = {
+    create?: XOR<RideCreateWithoutStopsInput, RideUncheckedCreateWithoutStopsInput>
+    connectOrCreate?: RideCreateOrConnectWithoutStopsInput
+    connect?: RideWhereUniqueInput
+  }
+
+  export type BookingCreateNestedManyWithoutPickupStopInput = {
+    create?: XOR<BookingCreateWithoutPickupStopInput, BookingUncheckedCreateWithoutPickupStopInput> | BookingCreateWithoutPickupStopInput[] | BookingUncheckedCreateWithoutPickupStopInput[]
+    connectOrCreate?: BookingCreateOrConnectWithoutPickupStopInput | BookingCreateOrConnectWithoutPickupStopInput[]
+    createMany?: BookingCreateManyPickupStopInputEnvelope
+    connect?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+  }
+
+  export type BookingUncheckedCreateNestedManyWithoutPickupStopInput = {
+    create?: XOR<BookingCreateWithoutPickupStopInput, BookingUncheckedCreateWithoutPickupStopInput> | BookingCreateWithoutPickupStopInput[] | BookingUncheckedCreateWithoutPickupStopInput[]
+    connectOrCreate?: BookingCreateOrConnectWithoutPickupStopInput | BookingCreateOrConnectWithoutPickupStopInput[]
+    createMany?: BookingCreateManyPickupStopInputEnvelope
+    connect?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+  }
+
+  export type RideUpdateOneRequiredWithoutStopsNestedInput = {
+    create?: XOR<RideCreateWithoutStopsInput, RideUncheckedCreateWithoutStopsInput>
+    connectOrCreate?: RideCreateOrConnectWithoutStopsInput
+    upsert?: RideUpsertWithoutStopsInput
+    connect?: RideWhereUniqueInput
+    update?: XOR<XOR<RideUpdateToOneWithWhereWithoutStopsInput, RideUpdateWithoutStopsInput>, RideUncheckedUpdateWithoutStopsInput>
+  }
+
+  export type BookingUpdateManyWithoutPickupStopNestedInput = {
+    create?: XOR<BookingCreateWithoutPickupStopInput, BookingUncheckedCreateWithoutPickupStopInput> | BookingCreateWithoutPickupStopInput[] | BookingUncheckedCreateWithoutPickupStopInput[]
+    connectOrCreate?: BookingCreateOrConnectWithoutPickupStopInput | BookingCreateOrConnectWithoutPickupStopInput[]
+    upsert?: BookingUpsertWithWhereUniqueWithoutPickupStopInput | BookingUpsertWithWhereUniqueWithoutPickupStopInput[]
+    createMany?: BookingCreateManyPickupStopInputEnvelope
+    set?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+    disconnect?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+    delete?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+    connect?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+    update?: BookingUpdateWithWhereUniqueWithoutPickupStopInput | BookingUpdateWithWhereUniqueWithoutPickupStopInput[]
+    updateMany?: BookingUpdateManyWithWhereWithoutPickupStopInput | BookingUpdateManyWithWhereWithoutPickupStopInput[]
+    deleteMany?: BookingScalarWhereInput | BookingScalarWhereInput[]
+  }
+
+  export type BookingUncheckedUpdateManyWithoutPickupStopNestedInput = {
+    create?: XOR<BookingCreateWithoutPickupStopInput, BookingUncheckedCreateWithoutPickupStopInput> | BookingCreateWithoutPickupStopInput[] | BookingUncheckedCreateWithoutPickupStopInput[]
+    connectOrCreate?: BookingCreateOrConnectWithoutPickupStopInput | BookingCreateOrConnectWithoutPickupStopInput[]
+    upsert?: BookingUpsertWithWhereUniqueWithoutPickupStopInput | BookingUpsertWithWhereUniqueWithoutPickupStopInput[]
+    createMany?: BookingCreateManyPickupStopInputEnvelope
+    set?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+    disconnect?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+    delete?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+    connect?: BookingWhereUniqueInput | BookingWhereUniqueInput[]
+    update?: BookingUpdateWithWhereUniqueWithoutPickupStopInput | BookingUpdateWithWhereUniqueWithoutPickupStopInput[]
+    updateMany?: BookingUpdateManyWithWhereWithoutPickupStopInput | BookingUpdateManyWithWhereWithoutPickupStopInput[]
+    deleteMany?: BookingScalarWhereInput | BookingScalarWhereInput[]
+  }
+
   export type RideCreateNestedOneWithoutBookingsInput = {
     create?: XOR<RideCreateWithoutBookingsInput, RideUncheckedCreateWithoutBookingsInput>
     connectOrCreate?: RideCreateOrConnectWithoutBookingsInput
@@ -28269,6 +31433,12 @@ export namespace Prisma {
     connect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
   }
 
+  export type RideStopCreateNestedOneWithoutSelectedByBookingsInput = {
+    create?: XOR<RideStopCreateWithoutSelectedByBookingsInput, RideStopUncheckedCreateWithoutSelectedByBookingsInput>
+    connectOrCreate?: RideStopCreateOrConnectWithoutSelectedByBookingsInput
+    connect?: RideStopWhereUniqueInput
+  }
+
   export type TransactionUncheckedCreateNestedManyWithoutBookingInput = {
     create?: XOR<TransactionCreateWithoutBookingInput, TransactionUncheckedCreateWithoutBookingInput> | TransactionCreateWithoutBookingInput[] | TransactionUncheckedCreateWithoutBookingInput[]
     connectOrCreate?: TransactionCreateOrConnectWithoutBookingInput | TransactionCreateOrConnectWithoutBookingInput[]
@@ -28280,12 +31450,12 @@ export namespace Prisma {
     set?: $Enums.BookingStatus
   }
 
-  export type EnumPaymentStatusFieldUpdateOperationsInput = {
-    set?: $Enums.PaymentStatus
-  }
-
   export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null
+  }
+
+  export type EnumPaymentStatusFieldUpdateOperationsInput = {
+    set?: $Enums.PaymentStatus
   }
 
   export type RideUpdateOneRequiredWithoutBookingsNestedInput = {
@@ -28316,6 +31486,16 @@ export namespace Prisma {
     update?: TransactionUpdateWithWhereUniqueWithoutBookingInput | TransactionUpdateWithWhereUniqueWithoutBookingInput[]
     updateMany?: TransactionUpdateManyWithWhereWithoutBookingInput | TransactionUpdateManyWithWhereWithoutBookingInput[]
     deleteMany?: TransactionScalarWhereInput | TransactionScalarWhereInput[]
+  }
+
+  export type RideStopUpdateOneWithoutSelectedByBookingsNestedInput = {
+    create?: XOR<RideStopCreateWithoutSelectedByBookingsInput, RideStopUncheckedCreateWithoutSelectedByBookingsInput>
+    connectOrCreate?: RideStopCreateOrConnectWithoutSelectedByBookingsInput
+    upsert?: RideStopUpsertWithoutSelectedByBookingsInput
+    disconnect?: RideStopWhereInput | boolean
+    delete?: RideStopWhereInput | boolean
+    connect?: RideStopWhereUniqueInput
+    update?: XOR<XOR<RideStopUpdateToOneWithWhereWithoutSelectedByBookingsInput, RideStopUpdateWithoutSelectedByBookingsInput>, RideStopUncheckedUpdateWithoutSelectedByBookingsInput>
   }
 
   export type TransactionUncheckedUpdateManyWithoutBookingNestedInput = {
@@ -28873,6 +32053,13 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedEnumBookingPolicyFilter<$PrismaModel = never> = {
+    equals?: $Enums.BookingPolicy | EnumBookingPolicyFieldRefInput<$PrismaModel>
+    in?: $Enums.BookingPolicy[] | ListEnumBookingPolicyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BookingPolicy[] | ListEnumBookingPolicyFieldRefInput<$PrismaModel>
+    not?: NestedEnumBookingPolicyFilter<$PrismaModel> | $Enums.BookingPolicy
+  }
+
   export type NestedEnumRideStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.RideStatus | EnumRideStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RideStatus[] | ListEnumRideStatusFieldRefInput<$PrismaModel>
@@ -28896,6 +32083,16 @@ export namespace Prisma {
     _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
+  export type NestedEnumBookingPolicyWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BookingPolicy | EnumBookingPolicyFieldRefInput<$PrismaModel>
+    in?: $Enums.BookingPolicy[] | ListEnumBookingPolicyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BookingPolicy[] | ListEnumBookingPolicyFieldRefInput<$PrismaModel>
+    not?: NestedEnumBookingPolicyWithAggregatesFilter<$PrismaModel> | $Enums.BookingPolicy
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBookingPolicyFilter<$PrismaModel>
+    _max?: NestedEnumBookingPolicyFilter<$PrismaModel>
+  }
+
   export type NestedEnumRideStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.RideStatus | EnumRideStatusFieldRefInput<$PrismaModel>
     in?: $Enums.RideStatus[] | ListEnumRideStatusFieldRefInput<$PrismaModel>
@@ -28913,13 +32110,6 @@ export namespace Prisma {
     not?: NestedEnumBookingStatusFilter<$PrismaModel> | $Enums.BookingStatus
   }
 
-  export type NestedEnumPaymentStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.PaymentStatus | EnumPaymentStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumPaymentStatusFilter<$PrismaModel> | $Enums.PaymentStatus
-  }
-
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -28929,6 +32119,13 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedEnumPaymentStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentStatus | EnumPaymentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPaymentStatusFilter<$PrismaModel> | $Enums.PaymentStatus
   }
   export type NestedJsonNullableFilter<$PrismaModel = never> = 
     | PatchUndefined<
@@ -28963,16 +32160,6 @@ export namespace Prisma {
     _max?: NestedEnumBookingStatusFilter<$PrismaModel>
   }
 
-  export type NestedEnumPaymentStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.PaymentStatus | EnumPaymentStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumPaymentStatusWithAggregatesFilter<$PrismaModel> | $Enums.PaymentStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumPaymentStatusFilter<$PrismaModel>
-    _max?: NestedEnumPaymentStatusFilter<$PrismaModel>
-  }
-
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -28985,6 +32172,16 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPaymentStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentStatus | EnumPaymentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPaymentStatusWithAggregatesFilter<$PrismaModel> | $Enums.PaymentStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPaymentStatusFilter<$PrismaModel>
+    _max?: NestedEnumPaymentStatusFilter<$PrismaModel>
   }
 
   export type NestedEnumReviewTypeFilter<$PrismaModel = never> = {
@@ -29122,6 +32319,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -29145,7 +32343,9 @@ export namespace Prisma {
     allowPets?: boolean
     allowLuggage?: boolean
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
+    schedule?: RideScheduleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
+    stops?: RideStopCreateNestedManyWithoutRideInput
     reviews?: ReviewCreateNestedManyWithoutRideInput
     messages?: MessageCreateNestedManyWithoutRideInput
     reports?: ReportCreateNestedManyWithoutRideInput
@@ -29167,6 +32367,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -29186,11 +32387,13 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    scheduleId?: string | null
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
+    stops?: RideStopUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
     reports?: ReportUncheckedCreateNestedManyWithoutRideInput
@@ -29206,6 +32409,32 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type RideScheduleCreateWithoutDriverInput = {
+    id?: string
+    timezone?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    rides?: RideCreateNestedManyWithoutScheduleInput
+  }
+
+  export type RideScheduleUncheckedCreateWithoutDriverInput = {
+    id?: string
+    timezone?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    rides?: RideUncheckedCreateNestedManyWithoutScheduleInput
+  }
+
+  export type RideScheduleCreateOrConnectWithoutDriverInput = {
+    where: RideScheduleWhereUniqueInput
+    create: XOR<RideScheduleCreateWithoutDriverInput, RideScheduleUncheckedCreateWithoutDriverInput>
+  }
+
+  export type RideScheduleCreateManyDriverInputEnvelope = {
+    data: RideScheduleCreateManyDriverInput | RideScheduleCreateManyDriverInput[]
+    skipDuplicates?: boolean
+  }
+
   export type BookingCreateWithoutPassengerInput = {
     id?: string
     seats: number
@@ -29214,6 +32443,8 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
@@ -29231,6 +32462,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     ride: RideCreateNestedOneWithoutBookingsInput
     transactions?: TransactionCreateNestedManyWithoutBookingInput
+    pickupStop?: RideStopCreateNestedOneWithoutSelectedByBookingsInput
   }
 
   export type BookingUncheckedCreateWithoutPassengerInput = {
@@ -29242,10 +32474,13 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    pickupStopId?: string | null
     isPickedUp?: boolean
     driverArrivedAt?: Date | string | null
     pickedUpAt?: Date | string | null
@@ -29782,6 +33017,7 @@ export namespace Prisma {
     offeredSeats?: IntFilter<"Ride"> | number
     pricePerSeat?: FloatFilter<"Ride"> | number
     tollCost?: FloatFilter<"Ride"> | number
+    bookingPolicy?: EnumBookingPolicyFilter<"Ride"> | $Enums.BookingPolicy
     status?: EnumRideStatusFilter<"Ride"> | $Enums.RideStatus
     description?: StringNullableFilter<"Ride"> | string | null
     createdAt?: DateTimeFilter<"Ride"> | Date | string
@@ -29801,10 +33037,38 @@ export namespace Prisma {
     addressDetailLevel?: StringNullableFilter<"Ride"> | string | null
     cancelReason?: StringNullableFilter<"Ride"> | string | null
     vehicleId?: StringNullableFilter<"Ride"> | string | null
+    scheduleId?: StringNullableFilter<"Ride"> | string | null
     allowRoutePickup?: BoolFilter<"Ride"> | boolean
     allowSmoking?: BoolFilter<"Ride"> | boolean
     allowPets?: BoolFilter<"Ride"> | boolean
     allowLuggage?: BoolFilter<"Ride"> | boolean
+  }
+
+  export type RideScheduleUpsertWithWhereUniqueWithoutDriverInput = {
+    where: RideScheduleWhereUniqueInput
+    update: XOR<RideScheduleUpdateWithoutDriverInput, RideScheduleUncheckedUpdateWithoutDriverInput>
+    create: XOR<RideScheduleCreateWithoutDriverInput, RideScheduleUncheckedCreateWithoutDriverInput>
+  }
+
+  export type RideScheduleUpdateWithWhereUniqueWithoutDriverInput = {
+    where: RideScheduleWhereUniqueInput
+    data: XOR<RideScheduleUpdateWithoutDriverInput, RideScheduleUncheckedUpdateWithoutDriverInput>
+  }
+
+  export type RideScheduleUpdateManyWithWhereWithoutDriverInput = {
+    where: RideScheduleScalarWhereInput
+    data: XOR<RideScheduleUpdateManyMutationInput, RideScheduleUncheckedUpdateManyWithoutDriverInput>
+  }
+
+  export type RideScheduleScalarWhereInput = {
+    AND?: RideScheduleScalarWhereInput | RideScheduleScalarWhereInput[]
+    OR?: RideScheduleScalarWhereInput[]
+    NOT?: RideScheduleScalarWhereInput | RideScheduleScalarWhereInput[]
+    id?: StringFilter<"RideSchedule"> | string
+    driverId?: StringFilter<"RideSchedule"> | string
+    timezone?: StringFilter<"RideSchedule"> | string
+    createdAt?: DateTimeFilter<"RideSchedule"> | Date | string
+    updatedAt?: DateTimeFilter<"RideSchedule"> | Date | string
   }
 
   export type BookingUpsertWithWhereUniqueWithoutPassengerInput = {
@@ -29836,10 +33100,13 @@ export namespace Prisma {
     detourKm?: FloatNullableFilter<"Booking"> | number | null
     priceBreakdown?: JsonNullableFilter<"Booking">
     status?: EnumBookingStatusFilter<"Booking"> | $Enums.BookingStatus
+    expiresAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
+    seatHeld?: BoolFilter<"Booking"> | boolean
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
     passengerLat?: FloatNullableFilter<"Booking"> | number | null
     passengerLng?: FloatNullableFilter<"Booking"> | number | null
     pickupAddress?: StringNullableFilter<"Booking"> | string | null
+    pickupStopId?: StringNullableFilter<"Booking"> | string | null
     isPickedUp?: BoolFilter<"Booking"> | boolean
     driverArrivedAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
     pickedUpAt?: DateTimeNullableFilter<"Booking"> | Date | string | null
@@ -30235,6 +33502,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -30268,6 +33536,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -30353,6 +33622,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -30386,6 +33656,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -30465,6 +33736,8 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
@@ -30482,6 +33755,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     ride: RideCreateNestedOneWithoutBookingsInput
     passenger: UserCreateNestedOneWithoutBookingsInput
+    pickupStop?: RideStopCreateNestedOneWithoutSelectedByBookingsInput
   }
 
   export type BookingUncheckedCreateWithoutTransactionsInput = {
@@ -30494,10 +33768,13 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    pickupStopId?: string | null
     isPickedUp?: boolean
     driverArrivedAt?: Date | string | null
     pickedUpAt?: Date | string | null
@@ -30631,6 +33908,8 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
@@ -30648,6 +33927,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ride?: RideUpdateOneRequiredWithoutBookingsNestedInput
     passenger?: UserUpdateOneRequiredWithoutBookingsNestedInput
+    pickupStop?: RideStopUpdateOneWithoutSelectedByBookingsNestedInput
   }
 
   export type BookingUncheckedUpdateWithoutTransactionsInput = {
@@ -30660,10 +33940,13 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    pickupStopId?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -30766,6 +34049,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -30790,7 +34074,9 @@ export namespace Prisma {
     allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
+    schedule?: RideScheduleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
+    stops?: RideStopCreateNestedManyWithoutRideInput
     reviews?: ReviewCreateNestedManyWithoutRideInput
     reports?: ReportCreateNestedManyWithoutRideInput
   }
@@ -30812,6 +34098,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -30831,11 +34118,13 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    scheduleId?: string | null
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
+    stops?: RideStopUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     reports?: ReportUncheckedCreateNestedManyWithoutRideInput
   }
@@ -30863,6 +34152,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -30896,6 +34186,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -30934,6 +34225,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -30967,6 +34259,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -31014,6 +34307,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -31038,7 +34332,9 @@ export namespace Prisma {
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
+    schedule?: RideScheduleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
+    stops?: RideStopUpdateManyWithoutRideNestedInput
     reviews?: ReviewUpdateManyWithoutRideNestedInput
     reports?: ReportUpdateManyWithoutRideNestedInput
   }
@@ -31060,6 +34356,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -31079,11 +34376,13 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
+    stops?: RideStopUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
   }
@@ -31117,6 +34416,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -31150,6 +34450,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -31194,6 +34495,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -31227,6 +34529,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -31260,6 +34563,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -31293,6 +34597,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -31342,6 +34647,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -31375,6 +34681,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -31408,6 +34715,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -31441,6 +34749,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -31490,6 +34799,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -31523,6 +34833,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -31555,6 +34866,7 @@ export namespace Prisma {
     isDriverVerified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -31588,6 +34900,7 @@ export namespace Prisma {
     isDriverVerified?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -31638,6 +34951,27 @@ export namespace Prisma {
     create: XOR<VehicleCreateWithoutRidesInput, VehicleUncheckedCreateWithoutRidesInput>
   }
 
+  export type RideScheduleCreateWithoutRidesInput = {
+    id?: string
+    timezone?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    driver: UserCreateNestedOneWithoutRideSchedulesInput
+  }
+
+  export type RideScheduleUncheckedCreateWithoutRidesInput = {
+    id?: string
+    driverId: string
+    timezone?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RideScheduleCreateOrConnectWithoutRidesInput = {
+    where: RideScheduleWhereUniqueInput
+    create: XOR<RideScheduleCreateWithoutRidesInput, RideScheduleUncheckedCreateWithoutRidesInput>
+  }
+
   export type BookingCreateWithoutRideInput = {
     id?: string
     seats: number
@@ -31646,6 +34980,8 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
@@ -31663,6 +34999,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     passenger: UserCreateNestedOneWithoutBookingsInput
     transactions?: TransactionCreateNestedManyWithoutBookingInput
+    pickupStop?: RideStopCreateNestedOneWithoutSelectedByBookingsInput
   }
 
   export type BookingUncheckedCreateWithoutRideInput = {
@@ -31674,10 +35011,13 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    pickupStopId?: string | null
     isPickedUp?: boolean
     driverArrivedAt?: Date | string | null
     pickedUpAt?: Date | string | null
@@ -31699,6 +35039,38 @@ export namespace Prisma {
 
   export type BookingCreateManyRideInputEnvelope = {
     data: BookingCreateManyRideInput | BookingCreateManyRideInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RideStopCreateWithoutRideInput = {
+    id?: string
+    address: string
+    name?: string | null
+    latitude: number
+    longitude: number
+    order: number
+    createdAt?: Date | string
+    selectedByBookings?: BookingCreateNestedManyWithoutPickupStopInput
+  }
+
+  export type RideStopUncheckedCreateWithoutRideInput = {
+    id?: string
+    address: string
+    name?: string | null
+    latitude: number
+    longitude: number
+    order: number
+    createdAt?: Date | string
+    selectedByBookings?: BookingUncheckedCreateNestedManyWithoutPickupStopInput
+  }
+
+  export type RideStopCreateOrConnectWithoutRideInput = {
+    where: RideStopWhereUniqueInput
+    create: XOR<RideStopCreateWithoutRideInput, RideStopUncheckedCreateWithoutRideInput>
+  }
+
+  export type RideStopCreateManyRideInputEnvelope = {
+    data: RideStopCreateManyRideInput | RideStopCreateManyRideInput[]
     skipDuplicates?: boolean
   }
 
@@ -31822,6 +35194,7 @@ export namespace Prisma {
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -31855,6 +35228,7 @@ export namespace Prisma {
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -31906,6 +35280,33 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type RideScheduleUpsertWithoutRidesInput = {
+    update: XOR<RideScheduleUpdateWithoutRidesInput, RideScheduleUncheckedUpdateWithoutRidesInput>
+    create: XOR<RideScheduleCreateWithoutRidesInput, RideScheduleUncheckedCreateWithoutRidesInput>
+    where?: RideScheduleWhereInput
+  }
+
+  export type RideScheduleUpdateToOneWithWhereWithoutRidesInput = {
+    where?: RideScheduleWhereInput
+    data: XOR<RideScheduleUpdateWithoutRidesInput, RideScheduleUncheckedUpdateWithoutRidesInput>
+  }
+
+  export type RideScheduleUpdateWithoutRidesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    timezone?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    driver?: UserUpdateOneRequiredWithoutRideSchedulesNestedInput
+  }
+
+  export type RideScheduleUncheckedUpdateWithoutRidesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    driverId?: StringFieldUpdateOperationsInput | string
+    timezone?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type BookingUpsertWithWhereUniqueWithoutRideInput = {
     where: BookingWhereUniqueInput
     update: XOR<BookingUpdateWithoutRideInput, BookingUncheckedUpdateWithoutRideInput>
@@ -31920,6 +35321,36 @@ export namespace Prisma {
   export type BookingUpdateManyWithWhereWithoutRideInput = {
     where: BookingScalarWhereInput
     data: XOR<BookingUpdateManyMutationInput, BookingUncheckedUpdateManyWithoutRideInput>
+  }
+
+  export type RideStopUpsertWithWhereUniqueWithoutRideInput = {
+    where: RideStopWhereUniqueInput
+    update: XOR<RideStopUpdateWithoutRideInput, RideStopUncheckedUpdateWithoutRideInput>
+    create: XOR<RideStopCreateWithoutRideInput, RideStopUncheckedCreateWithoutRideInput>
+  }
+
+  export type RideStopUpdateWithWhereUniqueWithoutRideInput = {
+    where: RideStopWhereUniqueInput
+    data: XOR<RideStopUpdateWithoutRideInput, RideStopUncheckedUpdateWithoutRideInput>
+  }
+
+  export type RideStopUpdateManyWithWhereWithoutRideInput = {
+    where: RideStopScalarWhereInput
+    data: XOR<RideStopUpdateManyMutationInput, RideStopUncheckedUpdateManyWithoutRideInput>
+  }
+
+  export type RideStopScalarWhereInput = {
+    AND?: RideStopScalarWhereInput | RideStopScalarWhereInput[]
+    OR?: RideStopScalarWhereInput[]
+    NOT?: RideStopScalarWhereInput | RideStopScalarWhereInput[]
+    id?: StringFilter<"RideStop"> | string
+    rideId?: StringFilter<"RideStop"> | string
+    address?: StringFilter<"RideStop"> | string
+    name?: StringNullableFilter<"RideStop"> | string | null
+    latitude?: FloatFilter<"RideStop"> | number
+    longitude?: FloatFilter<"RideStop"> | number
+    order?: IntFilter<"RideStop"> | number
+    createdAt?: DateTimeFilter<"RideStop"> | Date | string
   }
 
   export type ReviewUpsertWithWhereUniqueWithoutRideInput = {
@@ -31970,7 +35401,80 @@ export namespace Prisma {
     data: XOR<ReportUpdateManyMutationInput, ReportUncheckedUpdateManyWithoutRideInput>
   }
 
-  export type RideCreateWithoutBookingsInput = {
+  export type UserCreateWithoutRideSchedulesInput = {
+    id?: string
+    email: string
+    password: string
+    firstName?: string | null
+    lastName?: string | null
+    phone?: string | null
+    avatarUrl?: string | null
+    bio?: string | null
+    role?: $Enums.Role
+    driverRating?: number
+    driverRatingCount?: number
+    passengerRating?: number
+    passengerRatingCount?: number
+    isDriverVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    bookings?: BookingCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
+    reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
+    reviewsReceived?: ReviewCreateNestedManyWithoutRevieweeInput
+    refreshTokens?: RefreshTokenCreateNestedManyWithoutUserInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    sentMessages?: MessageCreateNestedManyWithoutSenderInput
+    receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
+    wallet?: WalletCreateNestedOneWithoutUserInput
+    driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
+    vehicles?: VehicleCreateNestedManyWithoutUserInput
+    reportsSent?: ReportCreateNestedManyWithoutReporterInput
+    reportsReceived?: ReportCreateNestedManyWithoutReportedInput
+  }
+
+  export type UserUncheckedCreateWithoutRideSchedulesInput = {
+    id?: string
+    email: string
+    password: string
+    firstName?: string | null
+    lastName?: string | null
+    phone?: string | null
+    avatarUrl?: string | null
+    bio?: string | null
+    role?: $Enums.Role
+    driverRating?: number
+    driverRatingCount?: number
+    passengerRating?: number
+    passengerRatingCount?: number
+    isDriverVerified?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
+    tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
+    reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
+    reviewsReceived?: ReviewUncheckedCreateNestedManyWithoutRevieweeInput
+    refreshTokens?: RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
+    wallet?: WalletUncheckedCreateNestedOneWithoutUserInput
+    driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
+    vehicles?: VehicleUncheckedCreateNestedManyWithoutUserInput
+    reportsSent?: ReportUncheckedCreateNestedManyWithoutReporterInput
+    reportsReceived?: ReportUncheckedCreateNestedManyWithoutReportedInput
+  }
+
+  export type UserCreateOrConnectWithoutRideSchedulesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutRideSchedulesInput, UserUncheckedCreateWithoutRideSchedulesInput>
+  }
+
+  export type RideCreateWithoutScheduleInput = {
     id?: string
     origin: string
     originLat?: number | null
@@ -31986,6 +35490,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -32010,12 +35515,14 @@ export namespace Prisma {
     allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
+    bookings?: BookingCreateNestedManyWithoutRideInput
+    stops?: RideStopCreateNestedManyWithoutRideInput
     reviews?: ReviewCreateNestedManyWithoutRideInput
     messages?: MessageCreateNestedManyWithoutRideInput
     reports?: ReportCreateNestedManyWithoutRideInput
   }
 
-  export type RideUncheckedCreateWithoutBookingsInput = {
+  export type RideUncheckedCreateWithoutScheduleInput = {
     id?: string
     driverId: string
     origin: string
@@ -32032,6 +35539,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -32055,6 +35563,503 @@ export namespace Prisma {
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
+    bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
+    stops?: RideStopUncheckedCreateNestedManyWithoutRideInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
+    messages?: MessageUncheckedCreateNestedManyWithoutRideInput
+    reports?: ReportUncheckedCreateNestedManyWithoutRideInput
+  }
+
+  export type RideCreateOrConnectWithoutScheduleInput = {
+    where: RideWhereUniqueInput
+    create: XOR<RideCreateWithoutScheduleInput, RideUncheckedCreateWithoutScheduleInput>
+  }
+
+  export type RideCreateManyScheduleInputEnvelope = {
+    data: RideCreateManyScheduleInput | RideCreateManyScheduleInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserUpsertWithoutRideSchedulesInput = {
+    update: XOR<UserUpdateWithoutRideSchedulesInput, UserUncheckedUpdateWithoutRideSchedulesInput>
+    create: XOR<UserCreateWithoutRideSchedulesInput, UserUncheckedCreateWithoutRideSchedulesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutRideSchedulesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutRideSchedulesInput, UserUncheckedUpdateWithoutRideSchedulesInput>
+  }
+
+  export type UserUpdateWithoutRideSchedulesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    driverRating?: FloatFieldUpdateOperationsInput | number
+    driverRatingCount?: IntFieldUpdateOperationsInput | number
+    passengerRating?: FloatFieldUpdateOperationsInput | number
+    passengerRatingCount?: IntFieldUpdateOperationsInput | number
+    isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    bookings?: BookingUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
+    reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
+    reviewsReceived?: ReviewUpdateManyWithoutRevieweeNestedInput
+    refreshTokens?: RefreshTokenUpdateManyWithoutUserNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    sentMessages?: MessageUpdateManyWithoutSenderNestedInput
+    receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
+    wallet?: WalletUpdateOneWithoutUserNestedInput
+    driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
+    vehicles?: VehicleUpdateManyWithoutUserNestedInput
+    reportsSent?: ReportUpdateManyWithoutReporterNestedInput
+    reportsReceived?: ReportUpdateManyWithoutReportedNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutRideSchedulesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    bio?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    driverRating?: FloatFieldUpdateOperationsInput | number
+    driverRatingCount?: IntFieldUpdateOperationsInput | number
+    passengerRating?: FloatFieldUpdateOperationsInput | number
+    passengerRatingCount?: IntFieldUpdateOperationsInput | number
+    isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
+    tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
+    reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
+    reviewsReceived?: ReviewUncheckedUpdateManyWithoutRevieweeNestedInput
+    refreshTokens?: RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
+    wallet?: WalletUncheckedUpdateOneWithoutUserNestedInput
+    driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
+    vehicles?: VehicleUncheckedUpdateManyWithoutUserNestedInput
+    reportsSent?: ReportUncheckedUpdateManyWithoutReporterNestedInput
+    reportsReceived?: ReportUncheckedUpdateManyWithoutReportedNestedInput
+  }
+
+  export type RideUpsertWithWhereUniqueWithoutScheduleInput = {
+    where: RideWhereUniqueInput
+    update: XOR<RideUpdateWithoutScheduleInput, RideUncheckedUpdateWithoutScheduleInput>
+    create: XOR<RideCreateWithoutScheduleInput, RideUncheckedCreateWithoutScheduleInput>
+  }
+
+  export type RideUpdateWithWhereUniqueWithoutScheduleInput = {
+    where: RideWhereUniqueInput
+    data: XOR<RideUpdateWithoutScheduleInput, RideUncheckedUpdateWithoutScheduleInput>
+  }
+
+  export type RideUpdateManyWithWhereWithoutScheduleInput = {
+    where: RideScalarWhereInput
+    data: XOR<RideUpdateManyMutationInput, RideUncheckedUpdateManyWithoutScheduleInput>
+  }
+
+  export type RideCreateWithoutStopsInput = {
+    id?: string
+    origin: string
+    originLat?: number | null
+    originLng?: number | null
+    destination: string
+    destinationLat?: number | null
+    destinationLng?: number | null
+    distance?: number | null
+    duration?: number | null
+    routePolyline?: string | null
+    departureTime: Date | string
+    availableSeats: number
+    offeredSeats?: number
+    pricePerSeat: number
+    tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
+    status?: $Enums.RideStatus
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    originHouseNumber?: string | null
+    originStreet?: string | null
+    originWard?: string | null
+    originDistrict?: string | null
+    originProvince?: string | null
+    originAddressType?: string | null
+    destHouseNumber?: string | null
+    destStreet?: string | null
+    destWard?: string | null
+    destDistrict?: string | null
+    destProvince?: string | null
+    destAddressType?: string | null
+    addressDetailLevel?: string | null
+    cancelReason?: string | null
+    allowRoutePickup?: boolean
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
+    driver: UserCreateNestedOneWithoutRidesAsDriverInput
+    vehicle?: VehicleCreateNestedOneWithoutRidesInput
+    schedule?: RideScheduleCreateNestedOneWithoutRidesInput
+    bookings?: BookingCreateNestedManyWithoutRideInput
+    reviews?: ReviewCreateNestedManyWithoutRideInput
+    messages?: MessageCreateNestedManyWithoutRideInput
+    reports?: ReportCreateNestedManyWithoutRideInput
+  }
+
+  export type RideUncheckedCreateWithoutStopsInput = {
+    id?: string
+    driverId: string
+    origin: string
+    originLat?: number | null
+    originLng?: number | null
+    destination: string
+    destinationLat?: number | null
+    destinationLng?: number | null
+    distance?: number | null
+    duration?: number | null
+    routePolyline?: string | null
+    departureTime: Date | string
+    availableSeats: number
+    offeredSeats?: number
+    pricePerSeat: number
+    tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
+    status?: $Enums.RideStatus
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    originHouseNumber?: string | null
+    originStreet?: string | null
+    originWard?: string | null
+    originDistrict?: string | null
+    originProvince?: string | null
+    originAddressType?: string | null
+    destHouseNumber?: string | null
+    destStreet?: string | null
+    destWard?: string | null
+    destDistrict?: string | null
+    destProvince?: string | null
+    destAddressType?: string | null
+    addressDetailLevel?: string | null
+    cancelReason?: string | null
+    vehicleId?: string | null
+    scheduleId?: string | null
+    allowRoutePickup?: boolean
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
+    bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
+    reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
+    messages?: MessageUncheckedCreateNestedManyWithoutRideInput
+    reports?: ReportUncheckedCreateNestedManyWithoutRideInput
+  }
+
+  export type RideCreateOrConnectWithoutStopsInput = {
+    where: RideWhereUniqueInput
+    create: XOR<RideCreateWithoutStopsInput, RideUncheckedCreateWithoutStopsInput>
+  }
+
+  export type BookingCreateWithoutPickupStopInput = {
+    id?: string
+    seats: number
+    totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
+    paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
+    isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ride: RideCreateNestedOneWithoutBookingsInput
+    passenger: UserCreateNestedOneWithoutBookingsInput
+    transactions?: TransactionCreateNestedManyWithoutBookingInput
+  }
+
+  export type BookingUncheckedCreateWithoutPickupStopInput = {
+    id?: string
+    rideId: string
+    passengerId: string
+    seats: number
+    totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
+    paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
+    isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    transactions?: TransactionUncheckedCreateNestedManyWithoutBookingInput
+  }
+
+  export type BookingCreateOrConnectWithoutPickupStopInput = {
+    where: BookingWhereUniqueInput
+    create: XOR<BookingCreateWithoutPickupStopInput, BookingUncheckedCreateWithoutPickupStopInput>
+  }
+
+  export type BookingCreateManyPickupStopInputEnvelope = {
+    data: BookingCreateManyPickupStopInput | BookingCreateManyPickupStopInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RideUpsertWithoutStopsInput = {
+    update: XOR<RideUpdateWithoutStopsInput, RideUncheckedUpdateWithoutStopsInput>
+    create: XOR<RideCreateWithoutStopsInput, RideUncheckedCreateWithoutStopsInput>
+    where?: RideWhereInput
+  }
+
+  export type RideUpdateToOneWithWhereWithoutStopsInput = {
+    where?: RideWhereInput
+    data: XOR<RideUpdateWithoutStopsInput, RideUncheckedUpdateWithoutStopsInput>
+  }
+
+  export type RideUpdateWithoutStopsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    origin?: StringFieldUpdateOperationsInput | string
+    originLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    originLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    destination?: StringFieldUpdateOperationsInput | string
+    destinationLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    distance?: NullableFloatFieldUpdateOperationsInput | number | null
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
+    departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
+    availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
+    pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
+    status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    originHouseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    originStreet?: NullableStringFieldUpdateOperationsInput | string | null
+    originWard?: NullableStringFieldUpdateOperationsInput | string | null
+    originDistrict?: NullableStringFieldUpdateOperationsInput | string | null
+    originProvince?: NullableStringFieldUpdateOperationsInput | string | null
+    originAddressType?: NullableStringFieldUpdateOperationsInput | string | null
+    destHouseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    destStreet?: NullableStringFieldUpdateOperationsInput | string | null
+    destWard?: NullableStringFieldUpdateOperationsInput | string | null
+    destDistrict?: NullableStringFieldUpdateOperationsInput | string | null
+    destProvince?: NullableStringFieldUpdateOperationsInput | string | null
+    destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
+    addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
+    driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
+    vehicle?: VehicleUpdateOneWithoutRidesNestedInput
+    schedule?: RideScheduleUpdateOneWithoutRidesNestedInput
+    bookings?: BookingUpdateManyWithoutRideNestedInput
+    reviews?: ReviewUpdateManyWithoutRideNestedInput
+    messages?: MessageUpdateManyWithoutRideNestedInput
+    reports?: ReportUpdateManyWithoutRideNestedInput
+  }
+
+  export type RideUncheckedUpdateWithoutStopsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    driverId?: StringFieldUpdateOperationsInput | string
+    origin?: StringFieldUpdateOperationsInput | string
+    originLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    originLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    destination?: StringFieldUpdateOperationsInput | string
+    destinationLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    distance?: NullableFloatFieldUpdateOperationsInput | number | null
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
+    departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
+    availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
+    pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
+    status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    originHouseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    originStreet?: NullableStringFieldUpdateOperationsInput | string | null
+    originWard?: NullableStringFieldUpdateOperationsInput | string | null
+    originDistrict?: NullableStringFieldUpdateOperationsInput | string | null
+    originProvince?: NullableStringFieldUpdateOperationsInput | string | null
+    originAddressType?: NullableStringFieldUpdateOperationsInput | string | null
+    destHouseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    destStreet?: NullableStringFieldUpdateOperationsInput | string | null
+    destWard?: NullableStringFieldUpdateOperationsInput | string | null
+    destDistrict?: NullableStringFieldUpdateOperationsInput | string | null
+    destProvince?: NullableStringFieldUpdateOperationsInput | string | null
+    destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
+    addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
+    bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
+    messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
+    reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
+  }
+
+  export type BookingUpsertWithWhereUniqueWithoutPickupStopInput = {
+    where: BookingWhereUniqueInput
+    update: XOR<BookingUpdateWithoutPickupStopInput, BookingUncheckedUpdateWithoutPickupStopInput>
+    create: XOR<BookingCreateWithoutPickupStopInput, BookingUncheckedCreateWithoutPickupStopInput>
+  }
+
+  export type BookingUpdateWithWhereUniqueWithoutPickupStopInput = {
+    where: BookingWhereUniqueInput
+    data: XOR<BookingUpdateWithoutPickupStopInput, BookingUncheckedUpdateWithoutPickupStopInput>
+  }
+
+  export type BookingUpdateManyWithWhereWithoutPickupStopInput = {
+    where: BookingScalarWhereInput
+    data: XOR<BookingUpdateManyMutationInput, BookingUncheckedUpdateManyWithoutPickupStopInput>
+  }
+
+  export type RideCreateWithoutBookingsInput = {
+    id?: string
+    origin: string
+    originLat?: number | null
+    originLng?: number | null
+    destination: string
+    destinationLat?: number | null
+    destinationLng?: number | null
+    distance?: number | null
+    duration?: number | null
+    routePolyline?: string | null
+    departureTime: Date | string
+    availableSeats: number
+    offeredSeats?: number
+    pricePerSeat: number
+    tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
+    status?: $Enums.RideStatus
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    originHouseNumber?: string | null
+    originStreet?: string | null
+    originWard?: string | null
+    originDistrict?: string | null
+    originProvince?: string | null
+    originAddressType?: string | null
+    destHouseNumber?: string | null
+    destStreet?: string | null
+    destWard?: string | null
+    destDistrict?: string | null
+    destProvince?: string | null
+    destAddressType?: string | null
+    addressDetailLevel?: string | null
+    cancelReason?: string | null
+    allowRoutePickup?: boolean
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
+    driver: UserCreateNestedOneWithoutRidesAsDriverInput
+    vehicle?: VehicleCreateNestedOneWithoutRidesInput
+    schedule?: RideScheduleCreateNestedOneWithoutRidesInput
+    stops?: RideStopCreateNestedManyWithoutRideInput
+    reviews?: ReviewCreateNestedManyWithoutRideInput
+    messages?: MessageCreateNestedManyWithoutRideInput
+    reports?: ReportCreateNestedManyWithoutRideInput
+  }
+
+  export type RideUncheckedCreateWithoutBookingsInput = {
+    id?: string
+    driverId: string
+    origin: string
+    originLat?: number | null
+    originLng?: number | null
+    destination: string
+    destinationLat?: number | null
+    destinationLng?: number | null
+    distance?: number | null
+    duration?: number | null
+    routePolyline?: string | null
+    departureTime: Date | string
+    availableSeats: number
+    offeredSeats?: number
+    pricePerSeat: number
+    tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
+    status?: $Enums.RideStatus
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    originHouseNumber?: string | null
+    originStreet?: string | null
+    originWard?: string | null
+    originDistrict?: string | null
+    originProvince?: string | null
+    originAddressType?: string | null
+    destHouseNumber?: string | null
+    destStreet?: string | null
+    destWard?: string | null
+    destDistrict?: string | null
+    destProvince?: string | null
+    destAddressType?: string | null
+    addressDetailLevel?: string | null
+    cancelReason?: string | null
+    vehicleId?: string | null
+    scheduleId?: string | null
+    allowRoutePickup?: boolean
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
+    stops?: RideStopUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
     reports?: ReportUncheckedCreateNestedManyWithoutRideInput
@@ -32083,6 +36088,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
@@ -32116,6 +36122,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
@@ -32172,6 +36179,33 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type RideStopCreateWithoutSelectedByBookingsInput = {
+    id?: string
+    address: string
+    name?: string | null
+    latitude: number
+    longitude: number
+    order: number
+    createdAt?: Date | string
+    ride: RideCreateNestedOneWithoutStopsInput
+  }
+
+  export type RideStopUncheckedCreateWithoutSelectedByBookingsInput = {
+    id?: string
+    rideId: string
+    address: string
+    name?: string | null
+    latitude: number
+    longitude: number
+    order: number
+    createdAt?: Date | string
+  }
+
+  export type RideStopCreateOrConnectWithoutSelectedByBookingsInput = {
+    where: RideStopWhereUniqueInput
+    create: XOR<RideStopCreateWithoutSelectedByBookingsInput, RideStopUncheckedCreateWithoutSelectedByBookingsInput>
+  }
+
   export type RideUpsertWithoutBookingsInput = {
     update: XOR<RideUpdateWithoutBookingsInput, RideUncheckedUpdateWithoutBookingsInput>
     create: XOR<RideCreateWithoutBookingsInput, RideUncheckedCreateWithoutBookingsInput>
@@ -32199,6 +36233,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -32223,6 +36258,8 @@ export namespace Prisma {
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
+    schedule?: RideScheduleUpdateOneWithoutRidesNestedInput
+    stops?: RideStopUpdateManyWithoutRideNestedInput
     reviews?: ReviewUpdateManyWithoutRideNestedInput
     messages?: MessageUpdateManyWithoutRideNestedInput
     reports?: ReportUpdateManyWithoutRideNestedInput
@@ -32245,6 +36282,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -32264,10 +36302,12 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
+    stops?: RideStopUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
     reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
@@ -32302,6 +36342,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
@@ -32335,6 +36376,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
@@ -32366,6 +36408,39 @@ export namespace Prisma {
     data: XOR<TransactionUpdateManyMutationInput, TransactionUncheckedUpdateManyWithoutBookingInput>
   }
 
+  export type RideStopUpsertWithoutSelectedByBookingsInput = {
+    update: XOR<RideStopUpdateWithoutSelectedByBookingsInput, RideStopUncheckedUpdateWithoutSelectedByBookingsInput>
+    create: XOR<RideStopCreateWithoutSelectedByBookingsInput, RideStopUncheckedCreateWithoutSelectedByBookingsInput>
+    where?: RideStopWhereInput
+  }
+
+  export type RideStopUpdateToOneWithWhereWithoutSelectedByBookingsInput = {
+    where?: RideStopWhereInput
+    data: XOR<RideStopUpdateWithoutSelectedByBookingsInput, RideStopUncheckedUpdateWithoutSelectedByBookingsInput>
+  }
+
+  export type RideStopUpdateWithoutSelectedByBookingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ride?: RideUpdateOneRequiredWithoutStopsNestedInput
+  }
+
+  export type RideStopUncheckedUpdateWithoutSelectedByBookingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rideId?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type RideCreateWithoutReviewsInput = {
     id?: string
     origin: string
@@ -32382,6 +36457,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -32406,7 +36482,9 @@ export namespace Prisma {
     allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
+    schedule?: RideScheduleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
+    stops?: RideStopCreateNestedManyWithoutRideInput
     messages?: MessageCreateNestedManyWithoutRideInput
     reports?: ReportCreateNestedManyWithoutRideInput
   }
@@ -32428,6 +36506,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -32447,11 +36526,13 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    scheduleId?: string | null
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
+    stops?: RideStopUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
     reports?: ReportUncheckedCreateNestedManyWithoutRideInput
   }
@@ -32479,6 +36560,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -32512,6 +36594,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -32550,6 +36633,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -32583,6 +36667,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -32630,6 +36715,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -32654,7 +36740,9 @@ export namespace Prisma {
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
+    schedule?: RideScheduleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
+    stops?: RideStopUpdateManyWithoutRideNestedInput
     messages?: MessageUpdateManyWithoutRideNestedInput
     reports?: ReportUpdateManyWithoutRideNestedInput
   }
@@ -32676,6 +36764,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -32695,11 +36784,13 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
+    stops?: RideStopUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
     reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
   }
@@ -32733,6 +36824,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -32766,6 +36858,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -32810,6 +36903,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -32843,6 +36937,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -32876,6 +36971,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -32909,6 +37005,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -32958,6 +37055,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -32991,6 +37089,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -33024,6 +37123,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
@@ -33057,6 +37157,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
@@ -33095,6 +37196,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     reviewsSent?: ReviewCreateNestedManyWithoutReviewerInput
@@ -33128,6 +37230,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     reviewsSent?: ReviewUncheckedCreateNestedManyWithoutReviewerInput
@@ -33247,6 +37350,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
@@ -33280,6 +37384,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
@@ -33324,6 +37429,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     reviewsSent?: ReviewUpdateManyWithoutReviewerNestedInput
@@ -33357,6 +37463,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     reviewsSent?: ReviewUncheckedUpdateManyWithoutReviewerNestedInput
@@ -33422,6 +37529,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -33455,6 +37563,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -33491,6 +37600,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -33514,7 +37624,9 @@ export namespace Prisma {
     allowPets?: boolean
     allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
+    schedule?: RideScheduleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
+    stops?: RideStopCreateNestedManyWithoutRideInput
     reviews?: ReviewCreateNestedManyWithoutRideInput
     messages?: MessageCreateNestedManyWithoutRideInput
     reports?: ReportCreateNestedManyWithoutRideInput
@@ -33537,6 +37649,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -33555,11 +37668,13 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    scheduleId?: string | null
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
+    stops?: RideStopUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
     reports?: ReportUncheckedCreateNestedManyWithoutRideInput
@@ -33604,6 +37719,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -33637,6 +37753,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -33686,6 +37803,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -33719,6 +37837,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -33757,6 +37876,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleCreateNestedManyWithoutDriverInput
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestCreateNestedManyWithoutDriverInput
@@ -33790,6 +37910,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ridesAsDriver?: RideUncheckedCreateNestedManyWithoutDriverInput
+    rideSchedules?: RideScheduleUncheckedCreateNestedManyWithoutDriverInput
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsPassenger?: TripRequestUncheckedCreateNestedManyWithoutPassengerInput
     tripsAsDriver?: TripRequestUncheckedCreateNestedManyWithoutDriverInput
@@ -33826,6 +37947,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -33850,7 +37972,9 @@ export namespace Prisma {
     allowLuggage?: boolean
     driver: UserCreateNestedOneWithoutRidesAsDriverInput
     vehicle?: VehicleCreateNestedOneWithoutRidesInput
+    schedule?: RideScheduleCreateNestedOneWithoutRidesInput
     bookings?: BookingCreateNestedManyWithoutRideInput
+    stops?: RideStopCreateNestedManyWithoutRideInput
     reviews?: ReviewCreateNestedManyWithoutRideInput
     messages?: MessageCreateNestedManyWithoutRideInput
   }
@@ -33872,6 +37996,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -33891,11 +38016,13 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    scheduleId?: string | null
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
     bookings?: BookingUncheckedCreateNestedManyWithoutRideInput
+    stops?: RideStopUncheckedCreateNestedManyWithoutRideInput
     reviews?: ReviewUncheckedCreateNestedManyWithoutRideInput
     messages?: MessageUncheckedCreateNestedManyWithoutRideInput
   }
@@ -34001,6 +38128,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -34034,6 +38162,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -34078,6 +38207,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUpdateManyWithoutDriverNestedInput
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUpdateManyWithoutDriverNestedInput
@@ -34111,6 +38241,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ridesAsDriver?: RideUncheckedUpdateManyWithoutDriverNestedInput
+    rideSchedules?: RideScheduleUncheckedUpdateManyWithoutDriverNestedInput
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsPassenger?: TripRequestUncheckedUpdateManyWithoutPassengerNestedInput
     tripsAsDriver?: TripRequestUncheckedUpdateManyWithoutDriverNestedInput
@@ -34153,6 +38284,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34177,7 +38309,9 @@ export namespace Prisma {
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
+    schedule?: RideScheduleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
+    stops?: RideStopUpdateManyWithoutRideNestedInput
     reviews?: ReviewUpdateManyWithoutRideNestedInput
     messages?: MessageUpdateManyWithoutRideNestedInput
   }
@@ -34199,6 +38333,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34218,11 +38353,13 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
+    stops?: RideStopUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
   }
@@ -34316,6 +38453,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -34335,10 +38473,18 @@ export namespace Prisma {
     addressDetailLevel?: string | null
     cancelReason?: string | null
     vehicleId?: string | null
+    scheduleId?: string | null
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
     allowLuggage?: boolean
+  }
+
+  export type RideScheduleCreateManyDriverInput = {
+    id?: string
+    timezone?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type BookingCreateManyPassengerInput = {
@@ -34350,10 +38496,13 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    pickupStopId?: string | null
     isPickedUp?: boolean
     driverArrivedAt?: Date | string | null
     pickedUpAt?: Date | string | null
@@ -34531,6 +38680,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34554,7 +38704,9 @@ export namespace Prisma {
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     vehicle?: VehicleUpdateOneWithoutRidesNestedInput
+    schedule?: RideScheduleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
+    stops?: RideStopUpdateManyWithoutRideNestedInput
     reviews?: ReviewUpdateManyWithoutRideNestedInput
     messages?: MessageUpdateManyWithoutRideNestedInput
     reports?: ReportUpdateManyWithoutRideNestedInput
@@ -34576,6 +38728,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34595,11 +38748,13 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
+    stops?: RideStopUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
     reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
@@ -34621,6 +38776,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -34640,10 +38796,34 @@ export namespace Prisma {
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type RideScheduleUpdateWithoutDriverInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    timezone?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    rides?: RideUpdateManyWithoutScheduleNestedInput
+  }
+
+  export type RideScheduleUncheckedUpdateWithoutDriverInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    timezone?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    rides?: RideUncheckedUpdateManyWithoutScheduleNestedInput
+  }
+
+  export type RideScheduleUncheckedUpdateManyWithoutDriverInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    timezone?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type BookingUpdateWithoutPassengerInput = {
@@ -34654,6 +38834,8 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
@@ -34671,6 +38853,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ride?: RideUpdateOneRequiredWithoutBookingsNestedInput
     transactions?: TransactionUpdateManyWithoutBookingNestedInput
+    pickupStop?: RideStopUpdateOneWithoutSelectedByBookingsNestedInput
   }
 
   export type BookingUncheckedUpdateWithoutPassengerInput = {
@@ -34682,10 +38865,13 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    pickupStopId?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -34709,10 +38895,13 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    pickupStopId?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -35241,10 +39430,13 @@ export namespace Prisma {
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
     paymentStatus?: $Enums.PaymentStatus
     passengerLat?: number | null
     passengerLng?: number | null
     pickupAddress?: string | null
+    pickupStopId?: string | null
     isPickedUp?: boolean
     driverArrivedAt?: Date | string | null
     pickedUpAt?: Date | string | null
@@ -35256,6 +39448,16 @@ export namespace Prisma {
     cancelReason?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type RideStopCreateManyRideInput = {
+    id?: string
+    address: string
+    name?: string | null
+    latitude: number
+    longitude: number
+    order: number
+    createdAt?: Date | string
   }
 
   export type ReviewCreateManyRideInput = {
@@ -35297,6 +39499,8 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
@@ -35314,6 +39518,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     passenger?: UserUpdateOneRequiredWithoutBookingsNestedInput
     transactions?: TransactionUpdateManyWithoutBookingNestedInput
+    pickupStop?: RideStopUpdateOneWithoutSelectedByBookingsNestedInput
   }
 
   export type BookingUncheckedUpdateWithoutRideInput = {
@@ -35325,10 +39530,13 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    pickupStopId?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -35352,10 +39560,13 @@ export namespace Prisma {
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
     status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
     passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
     passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
     pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    pickupStopId?: NullableStringFieldUpdateOperationsInput | string | null
     isPickedUp?: BoolFieldUpdateOperationsInput | boolean
     driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -35367,6 +39578,38 @@ export namespace Prisma {
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RideStopUpdateWithoutRideInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    selectedByBookings?: BookingUpdateManyWithoutPickupStopNestedInput
+  }
+
+  export type RideStopUncheckedUpdateWithoutRideInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    selectedByBookings?: BookingUncheckedUpdateManyWithoutPickupStopNestedInput
+  }
+
+  export type RideStopUncheckedUpdateManyWithoutRideInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    latitude?: FloatFieldUpdateOperationsInput | number
+    longitude?: FloatFieldUpdateOperationsInput | number
+    order?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ReviewUpdateWithoutRideInput = {
@@ -35458,6 +39701,306 @@ export namespace Prisma {
     reason?: StringFieldUpdateOperationsInput | string
     detail?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RideCreateManyScheduleInput = {
+    id?: string
+    driverId: string
+    origin: string
+    originLat?: number | null
+    originLng?: number | null
+    destination: string
+    destinationLat?: number | null
+    destinationLng?: number | null
+    distance?: number | null
+    duration?: number | null
+    routePolyline?: string | null
+    departureTime: Date | string
+    availableSeats: number
+    offeredSeats?: number
+    pricePerSeat: number
+    tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
+    status?: $Enums.RideStatus
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    originHouseNumber?: string | null
+    originStreet?: string | null
+    originWard?: string | null
+    originDistrict?: string | null
+    originProvince?: string | null
+    originAddressType?: string | null
+    destHouseNumber?: string | null
+    destStreet?: string | null
+    destWard?: string | null
+    destDistrict?: string | null
+    destProvince?: string | null
+    destAddressType?: string | null
+    addressDetailLevel?: string | null
+    cancelReason?: string | null
+    vehicleId?: string | null
+    allowRoutePickup?: boolean
+    allowSmoking?: boolean
+    allowPets?: boolean
+    allowLuggage?: boolean
+  }
+
+  export type RideUpdateWithoutScheduleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    origin?: StringFieldUpdateOperationsInput | string
+    originLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    originLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    destination?: StringFieldUpdateOperationsInput | string
+    destinationLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    distance?: NullableFloatFieldUpdateOperationsInput | number | null
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
+    departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
+    availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
+    pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
+    status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    originHouseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    originStreet?: NullableStringFieldUpdateOperationsInput | string | null
+    originWard?: NullableStringFieldUpdateOperationsInput | string | null
+    originDistrict?: NullableStringFieldUpdateOperationsInput | string | null
+    originProvince?: NullableStringFieldUpdateOperationsInput | string | null
+    originAddressType?: NullableStringFieldUpdateOperationsInput | string | null
+    destHouseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    destStreet?: NullableStringFieldUpdateOperationsInput | string | null
+    destWard?: NullableStringFieldUpdateOperationsInput | string | null
+    destDistrict?: NullableStringFieldUpdateOperationsInput | string | null
+    destProvince?: NullableStringFieldUpdateOperationsInput | string | null
+    destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
+    addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
+    driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
+    vehicle?: VehicleUpdateOneWithoutRidesNestedInput
+    bookings?: BookingUpdateManyWithoutRideNestedInput
+    stops?: RideStopUpdateManyWithoutRideNestedInput
+    reviews?: ReviewUpdateManyWithoutRideNestedInput
+    messages?: MessageUpdateManyWithoutRideNestedInput
+    reports?: ReportUpdateManyWithoutRideNestedInput
+  }
+
+  export type RideUncheckedUpdateWithoutScheduleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    driverId?: StringFieldUpdateOperationsInput | string
+    origin?: StringFieldUpdateOperationsInput | string
+    originLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    originLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    destination?: StringFieldUpdateOperationsInput | string
+    destinationLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    distance?: NullableFloatFieldUpdateOperationsInput | number | null
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
+    departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
+    availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
+    pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
+    status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    originHouseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    originStreet?: NullableStringFieldUpdateOperationsInput | string | null
+    originWard?: NullableStringFieldUpdateOperationsInput | string | null
+    originDistrict?: NullableStringFieldUpdateOperationsInput | string | null
+    originProvince?: NullableStringFieldUpdateOperationsInput | string | null
+    originAddressType?: NullableStringFieldUpdateOperationsInput | string | null
+    destHouseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    destStreet?: NullableStringFieldUpdateOperationsInput | string | null
+    destWard?: NullableStringFieldUpdateOperationsInput | string | null
+    destDistrict?: NullableStringFieldUpdateOperationsInput | string | null
+    destProvince?: NullableStringFieldUpdateOperationsInput | string | null
+    destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
+    addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
+    bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
+    stops?: RideStopUncheckedUpdateManyWithoutRideNestedInput
+    reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
+    messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
+    reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
+  }
+
+  export type RideUncheckedUpdateManyWithoutScheduleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    driverId?: StringFieldUpdateOperationsInput | string
+    origin?: StringFieldUpdateOperationsInput | string
+    originLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    originLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    destination?: StringFieldUpdateOperationsInput | string
+    destinationLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    destinationLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    distance?: NullableFloatFieldUpdateOperationsInput | number | null
+    duration?: NullableFloatFieldUpdateOperationsInput | number | null
+    routePolyline?: NullableStringFieldUpdateOperationsInput | string | null
+    departureTime?: DateTimeFieldUpdateOperationsInput | Date | string
+    availableSeats?: IntFieldUpdateOperationsInput | number
+    offeredSeats?: IntFieldUpdateOperationsInput | number
+    pricePerSeat?: FloatFieldUpdateOperationsInput | number
+    tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
+    status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    originHouseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    originStreet?: NullableStringFieldUpdateOperationsInput | string | null
+    originWard?: NullableStringFieldUpdateOperationsInput | string | null
+    originDistrict?: NullableStringFieldUpdateOperationsInput | string | null
+    originProvince?: NullableStringFieldUpdateOperationsInput | string | null
+    originAddressType?: NullableStringFieldUpdateOperationsInput | string | null
+    destHouseNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    destStreet?: NullableStringFieldUpdateOperationsInput | string | null
+    destWard?: NullableStringFieldUpdateOperationsInput | string | null
+    destDistrict?: NullableStringFieldUpdateOperationsInput | string | null
+    destProvince?: NullableStringFieldUpdateOperationsInput | string | null
+    destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
+    addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    vehicleId?: NullableStringFieldUpdateOperationsInput | string | null
+    allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    allowSmoking?: BoolFieldUpdateOperationsInput | boolean
+    allowPets?: BoolFieldUpdateOperationsInput | boolean
+    allowLuggage?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BookingCreateManyPickupStopInput = {
+    id?: string
+    rideId: string
+    passengerId: string
+    seats: number
+    totalPrice: number
+    sharedDistanceKm?: number | null
+    detourKm?: number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
+    status?: $Enums.BookingStatus
+    expiresAt?: Date | string | null
+    seatHeld?: boolean
+    paymentStatus?: $Enums.PaymentStatus
+    passengerLat?: number | null
+    passengerLng?: number | null
+    pickupAddress?: string | null
+    isPickedUp?: boolean
+    driverArrivedAt?: Date | string | null
+    pickedUpAt?: Date | string | null
+    dropoffLat?: number | null
+    dropoffLng?: number | null
+    dropoffAddress?: string | null
+    isDroppedOff?: boolean
+    droppedOffAt?: Date | string | null
+    cancelReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BookingUpdateWithoutPickupStopInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    seats?: IntFieldUpdateOperationsInput | number
+    totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ride?: RideUpdateOneRequiredWithoutBookingsNestedInput
+    passenger?: UserUpdateOneRequiredWithoutBookingsNestedInput
+    transactions?: TransactionUpdateManyWithoutBookingNestedInput
+  }
+
+  export type BookingUncheckedUpdateWithoutPickupStopInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rideId?: StringFieldUpdateOperationsInput | string
+    passengerId?: StringFieldUpdateOperationsInput | string
+    seats?: IntFieldUpdateOperationsInput | number
+    totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactions?: TransactionUncheckedUpdateManyWithoutBookingNestedInput
+  }
+
+  export type BookingUncheckedUpdateManyWithoutPickupStopInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    rideId?: StringFieldUpdateOperationsInput | string
+    passengerId?: StringFieldUpdateOperationsInput | string
+    seats?: IntFieldUpdateOperationsInput | number
+    totalPrice?: FloatFieldUpdateOperationsInput | number
+    sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
+    priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
+    status?: EnumBookingStatusFieldUpdateOperationsInput | $Enums.BookingStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    seatHeld?: BoolFieldUpdateOperationsInput | boolean
+    paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    passengerLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    passengerLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    pickupAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isPickedUp?: BoolFieldUpdateOperationsInput | boolean
+    driverArrivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pickedUpAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dropoffLat?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffLng?: NullableFloatFieldUpdateOperationsInput | number | null
+    dropoffAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    isDroppedOff?: BoolFieldUpdateOperationsInput | boolean
+    droppedOffAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -35631,6 +40174,7 @@ export namespace Prisma {
     offeredSeats?: number
     pricePerSeat: number
     tollCost?: number
+    bookingPolicy?: $Enums.BookingPolicy
     status?: $Enums.RideStatus
     description?: string | null
     createdAt?: Date | string
@@ -35649,6 +40193,7 @@ export namespace Prisma {
     destAddressType?: string | null
     addressDetailLevel?: string | null
     cancelReason?: string | null
+    scheduleId?: string | null
     allowRoutePickup?: boolean
     allowSmoking?: boolean
     allowPets?: boolean
@@ -35671,6 +40216,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -35694,7 +40240,9 @@ export namespace Prisma {
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     driver?: UserUpdateOneRequiredWithoutRidesAsDriverNestedInput
+    schedule?: RideScheduleUpdateOneWithoutRidesNestedInput
     bookings?: BookingUpdateManyWithoutRideNestedInput
+    stops?: RideStopUpdateManyWithoutRideNestedInput
     reviews?: ReviewUpdateManyWithoutRideNestedInput
     messages?: MessageUpdateManyWithoutRideNestedInput
     reports?: ReportUpdateManyWithoutRideNestedInput
@@ -35717,6 +40265,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -35735,11 +40284,13 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     bookings?: BookingUncheckedUpdateManyWithoutRideNestedInput
+    stops?: RideStopUncheckedUpdateManyWithoutRideNestedInput
     reviews?: ReviewUncheckedUpdateManyWithoutRideNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRideNestedInput
     reports?: ReportUncheckedUpdateManyWithoutRideNestedInput
@@ -35762,6 +40313,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     pricePerSeat?: FloatFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
+    bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     status?: EnumRideStatusFieldUpdateOperationsInput | $Enums.RideStatus
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -35780,6 +40332,7 @@ export namespace Prisma {
     destAddressType?: NullableStringFieldUpdateOperationsInput | string | null
     addressDetailLevel?: NullableStringFieldUpdateOperationsInput | string | null
     cancelReason?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
     allowSmoking?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -35803,6 +40356,14 @@ export namespace Prisma {
      * @deprecated Use RideCountOutputTypeDefaultArgs instead
      */
     export type RideCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RideCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RideScheduleCountOutputTypeDefaultArgs instead
+     */
+    export type RideScheduleCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RideScheduleCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RideStopCountOutputTypeDefaultArgs instead
+     */
+    export type RideStopCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RideStopCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use BookingCountOutputTypeDefaultArgs instead
      */
@@ -35843,6 +40404,14 @@ export namespace Prisma {
      * @deprecated Use RideDefaultArgs instead
      */
     export type RideArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RideDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RideScheduleDefaultArgs instead
+     */
+    export type RideScheduleArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RideScheduleDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use RideStopDefaultArgs instead
+     */
+    export type RideStopArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RideStopDefaultArgs<ExtArgs>
     /**
      * @deprecated Use BookingDefaultArgs instead
      */

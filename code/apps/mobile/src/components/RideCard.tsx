@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
@@ -6,6 +6,7 @@ import { Car, Clock, MapPin, Star, User, Users } from 'lucide-react-native';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import type { Ride } from '../services/ride.service';
+import { getStaticMapUrlMobile } from '../services/goong.service';
 import { colors, layout, radius, spacing } from '../theme/tokens';
 import { MatchExplanation } from './MatchExplanation';
 import { AppText } from './ui/AppText';
@@ -17,6 +18,7 @@ interface RideCardProps {
 
 export const RideCard: React.FC<RideCardProps> = ({ ride, showMatch = true }) => {
   const router = useRouter();
+  const [mapFailed, setMapFailed] = useState(false);
   const formattedTime = format(new Date(ride.departureTime), 'HH:mm');
   const formattedDate = format(new Date(ride.departureTime), 'EEE, dd/MM', { locale: vi });
   const driverName = [ride.driver?.firstName, ride.driver?.lastName].filter(Boolean).join(' ') || 'Tài xế CoRide';
@@ -33,6 +35,16 @@ export const RideCard: React.FC<RideCardProps> = ({ ride, showMatch = true }) =>
       routeOverlap: ride.routeOverlap?.toString(),
     },
   } as any);
+  const staticMapUrl = ride.departureCoords && ride.destinationCoords
+    ? getStaticMapUrlMobile({
+        origin: `${ride.departureCoords.latitude},${ride.departureCoords.longitude}`,
+        destination: `${ride.destinationCoords.latitude},${ride.destinationCoords.longitude}`,
+        width: 720,
+        height: 240,
+        vehicle: 'car',
+        color: colors.mapRoute,
+      })
+    : null;
 
   return (
     <View style={styles.card}>
@@ -43,6 +55,7 @@ export const RideCard: React.FC<RideCardProps> = ({ ride, showMatch = true }) =>
         accessibilityHint="Mở chi tiết chuyến đi"
         style={({ pressed }) => pressed && styles.pressed}
       >
+        {staticMapUrl && !mapFailed ? <Image source={{ uri: staticMapUrl }} style={styles.routePreview} accessibilityLabel="Ảnh xem trước tuyến đường" onError={() => setMapFailed(true)} /> : null}
         <View style={styles.topRow}>
           <View style={styles.timeRow}>
             <Clock size={17} color={colors.textSecondary} />
@@ -121,6 +134,7 @@ export const RideCard: React.FC<RideCardProps> = ({ ride, showMatch = true }) =>
 const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, marginBottom: spacing.md, padding: spacing.md },
   pressed: { opacity: 0.82 },
+  routePreview: { backgroundColor: colors.surfaceMuted, borderRadius: radius.input, height: 112, marginBottom: spacing.md, width: '100%' },
   topRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
   timeRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
   price: { color: colors.primary, fontSize: 18, fontWeight: '600', fontVariant: ['tabular-nums'] },

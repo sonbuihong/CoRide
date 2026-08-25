@@ -76,6 +76,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Quá nhiều yêu cầu từ IP này, vui lòng thử lại sau 15 phút' },
+  skip: (req) => req.path.startsWith('/api/goong'),
 });
 app.use('/api/', apiLimiter);
 

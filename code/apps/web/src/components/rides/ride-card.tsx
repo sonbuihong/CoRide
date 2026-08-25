@@ -3,6 +3,7 @@
 import React from 'react';
 import { Bike, Calendar, Car, Users, Star, ChevronRight, Route } from 'lucide-react';
 import Link from 'next/link';
+import { getStaticMapUrl } from '@/lib/goong';
 
 export interface Driver {
   id: string;
@@ -99,6 +100,15 @@ export function RideCard({ ride, href, userLocation, onMouseEnter, onMouseLeave,
       ? 'bg-blue-50 text-[#0066cc] dark:bg-blue-500/15 dark:text-blue-300'
       : 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300';
   const vehicleTypeLabel = ride.vehicle?.type === 'CAR' ? 'Ô tô' : 'Xe máy';
+  const staticMapUrl = ride.originLat != null && ride.originLng != null && ride.destinationLat != null && ride.destinationLng != null
+    ? getStaticMapUrl({
+        origin: `${ride.originLat},${ride.originLng}`,
+        destination: `${ride.destinationLat},${ride.destinationLng}`,
+        width: 960,
+        height: 260,
+        vehicle: ride.vehicle?.type === 'BIKE' ? 'bike' : 'car',
+      })
+    : null;
 
   return (
     <div 
@@ -107,6 +117,9 @@ export function RideCard({ ride, href, userLocation, onMouseEnter, onMouseLeave,
       onMouseLeave={onMouseLeave}
       onClick={onClick}
     >
+      {staticMapUrl && (
+        <img src={staticMapUrl} alt="Ảnh xem trước tuyến đường" className="mb-5 h-32 w-full rounded-2xl bg-gray-50 object-cover dark:bg-white/5" loading="lazy" />
+      )}
       {matchLabel && ride.matchScore != null && (
         <div className="mb-5 flex flex-wrap items-center gap-2" aria-label={`Mức độ phù hợp ${ride.matchScore}%`}>
           <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold ${matchBadgeClass}`}>

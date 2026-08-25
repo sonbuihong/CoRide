@@ -24,6 +24,13 @@ export function getDriverEligibility(user?: User | null): DriverEligibilityResul
   const isVerifiedFlag = user.isDriverVerified === true;
   const kycStatus = user.driverVerification?.status;
 
+  // `/users/me` hiện chỉ trả cờ chuẩn `isDriverVerified` và không luôn include
+  // quan hệ driverVerification. Cờ true do backend chỉ bật sau transaction APPROVED,
+  // vì vậy đây là nguồn xác thực đủ để mở Driver Mode khi relation bị lược bỏ.
+  if (isVerifiedFlag && !kycStatus) {
+    return { eligible: true, reason: 'approved' };
+  }
+
   // Không có driverVerification và isDriverVerified === false
   if (!user.driverVerification && !isVerifiedFlag) {
     return { eligible: false, reason: 'not_registered' };

@@ -55,6 +55,10 @@ class ClientCache {
       expiresAt: Date.now() + ttlSeconds * 1000,
     });
   }
+
+  clear(): void {
+    this.store.clear();
+  }
 }
 
 // Singleton per-tab — dùng chung cho toàn bộ app trong 1 session

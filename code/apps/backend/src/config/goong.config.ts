@@ -9,6 +9,10 @@ export const goongConfig = {
   get restApiKey() {
     return process.env.GOONG_REST_API_KEY || '';
   },
+
+  get geolocationEnabled() {
+    return process.env.GOONG_GEOLOCATION_ENABLED === 'true';
+  },
   
   // Base URL cho REST API
   baseUrl: 'https://rsapi.goong.io',

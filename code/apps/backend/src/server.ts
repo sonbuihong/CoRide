@@ -7,6 +7,7 @@ import app from './app';
 import { initSocket } from './socket/socket.server';
 import { connectRedis } from './shared/lib/redis';
 import { connectRabbitMQ } from './shared/lib/rabbitmq';
+import { BookingsService } from './modules/bookings/bookings.service';
 
 const port = Number(process.env.PORT ?? '5101');
 
@@ -28,6 +29,14 @@ if (process.env.NODE_ENV !== 'test') {
   connectRabbitMQ().catch((err) => {
     console.error('[RabbitMQ] Startup connection failed:', err.message);
   });
+
+  // Quét ngắn theo phút; thao tác có điều kiện trong transaction nên an toàn khi nhiều instance cùng chạy.
+  const bookingExpiryTimer = setInterval(() => {
+    BookingsService.expirePendingBookings().catch((err) => {
+      console.error('[Booking expiry] cleanup failed:', err.message);
+    });
+  }, 60_000);
+  bookingExpiryTimer.unref();
 
   server.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {

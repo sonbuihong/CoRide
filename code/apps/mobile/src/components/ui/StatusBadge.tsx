@@ -21,6 +21,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
         return { text: 'Bị từ chối', bg: 'bg-rejected/10', color: 'text-rejected' };
       case 'CANCELLED':
         return { text: 'Đã hủy', bg: 'bg-cancelled/10', color: 'text-cancelled' };
+      case 'EXPIRED':
+        return { text: 'Đã hết hạn', bg: 'bg-slate-100', color: 'text-text-secondary' };
       
       // Verification Status khusus
       case 'APPROVED':

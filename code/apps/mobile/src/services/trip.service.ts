@@ -1,6 +1,28 @@
 import { apiClient } from '../api/client';
 import type { CreateTripRequestInput, TripStatus } from '@repo/shared';
 
+export interface ActiveDriverTrip {
+  id: string;
+  status: TripStatus;
+  originAddress: string;
+  destAddress: string;
+  estimatedPrice?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  passenger?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
+    passengerRating?: number;
+  };
+}
+
+export interface ActiveDriverTripResponse {
+  success: boolean;
+  data: ActiveDriverTrip | null;
+}
+
 export const tripService = {
   createTrip: async (data: CreateTripRequestInput) => {
     const response = await apiClient.post('/trips', data);
@@ -12,7 +34,7 @@ export const tripService = {
     return response.data;
   },
 
-  getActiveDriverTrip: async () => {
+  getActiveDriverTrip: async (): Promise<ActiveDriverTripResponse> => {
     const response = await apiClient.get('/trips/active-driver');
     return response.data;
   },

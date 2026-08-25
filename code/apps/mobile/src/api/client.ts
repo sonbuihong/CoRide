@@ -66,9 +66,9 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
 
-    if (!error.response) {
-      useAppStore.getState().setOffline(true);
-    }
+    // A HTTP error still proves that the server is reachable. Only requests
+    // without any response should put the app into offline state.
+    useAppStore.getState().setOffline(!error.response);
     
     // Nếu request bị hủy hoặc không có response
     if (!originalRequest || !error.response) {

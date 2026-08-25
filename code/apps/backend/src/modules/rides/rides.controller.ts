@@ -30,6 +30,19 @@ export const searchRides = async (
   }
 };
 
+export const createRideSchedule = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const result = await RidesService.createRideSchedule(req.user!.id, req.body);
+    res.status(201).json({ message: `Đã đăng ${result.rides.length} chuyến đi`, ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getMyRides = async (
   req: Request,
   res: Response,

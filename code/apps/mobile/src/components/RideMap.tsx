@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { getDirections } from '../services/direction.service';
 
 interface RideMapProps {
   departureCoords?: { latitude: number; longitude: number };
@@ -10,6 +11,23 @@ interface RideMapProps {
 }
 
 export const RideMap: React.FC<RideMapProps> = ({ departureCoords, destinationCoords, containerStyle, fullScreen = false }) => {
+  const [route, setRoute] = useState<{ latitude: number; longitude: number }[]>([]);
+  const departureLat = departureCoords?.latitude;
+  const departureLng = departureCoords?.longitude;
+  const destinationLat = destinationCoords?.latitude;
+  const destinationLng = destinationCoords?.longitude;
+  useEffect(() => {
+    if (departureLat == null || departureLng == null || destinationLat == null || destinationLng == null) return;
+    let active = true;
+    getDirections(
+      { latitude: departureLat, longitude: departureLng },
+      { latitude: destinationLat, longitude: destinationLng },
+    ).then((result) => {
+      // Keep the last successful route when Goong is temporarily unavailable.
+      if (active && result?.polylineCoords?.length) setRoute(result.polylineCoords);
+    });
+    return () => { active = false; };
+  }, [departureLat, departureLng, destinationLat, destinationLng]);
   // Tọa độ mặc định (Hà Nội) nếu không có dữ liệu
   const defaultRegion = {
     latitude: 21.0285,
@@ -36,6 +54,7 @@ export const RideMap: React.FC<RideMapProps> = ({ departureCoords, destinationCo
         toolbarEnabled={false}
         accessibilityLabel="Bản đồ hành trình"
       >
+        {route.length > 1 && <Polyline coordinates={route} strokeColor="#0071E3" strokeWidth={5} />}
         {departureCoords && (
           <Marker 
             coordinate={departureCoords} 

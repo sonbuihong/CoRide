@@ -26,7 +26,7 @@ export default function MyRidesScreen() {
     queryFn: () => bookingService.getDriverBookings(),
   });
 
-  const bookings = bookingsData?.bookings || bookingsData || [];
+  const bookings = bookingsData?.bookings ?? [];
   const isLoading = isActiveLoading || isBookingsLoading;
 
   if (isLoading) {

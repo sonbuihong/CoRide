@@ -24,6 +24,14 @@ export const estimateCarpoolPriceSchema = estimatePriceSchema.extend({
   tollCost: z.coerce.number().min(0).optional(),
 });
 
+export const estimateCarpoolRouteSchema = estimateCarpoolPriceSchema.extend({
+  waypoints: z.array(z.object({
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+  })).max(3).default([]),
+  routePolyline: z.string().min(1).max(100000).optional(),
+});
+
 /**
  * Schema validate request upsert PricingConfig (Admin).
  */
@@ -43,7 +51,7 @@ export const upsertPricingConfigSchema = z.object({
   fuelConsumption: z.number().positive().optional(),
   vehicleOverheadRatio: z.number().min(0).max(2).optional(),
   minimumDriverShare: z.number().min(0.2).max(1).optional(),
-  driverPriceAdjustment: z.number().min(0).max(0.15).optional(),
+  driverPriceAdjustment: z.number().min(0).max(0.2).optional(),
   roundingUnit: z.number().int().positive().optional(),
   maxDetourKm: z.number().positive().optional(),
   maxDetourRatio: z.number().positive().max(1).optional(),

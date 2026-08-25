@@ -9,6 +9,21 @@ export * from './trip.schema';
 
 // Goong API types — dùng chung cho backend, web, mobile
 export type {
+  GoongApiVersion,
+  GoongVehicleType,
+  GoongLatLng,
+  GoongRouteLeg,
+  GoongRoute,
+  GoongDirectionsResult,
+  GoongMatrixElement,
+  GoongMatrixResult,
+  GoongTripWaypoint,
+  GoongOptimizedTripResult,
+  GoongStaticMapOptions,
+  GoongGeolocationRequest,
+  GoongGeolocationResult,
+  GoongErrorCode,
+  GoongApiErrorPayload,
   GoongAutocompletePrediction,
   GoongAutocompleteResponse,
   GoongPlaceDetailResult,

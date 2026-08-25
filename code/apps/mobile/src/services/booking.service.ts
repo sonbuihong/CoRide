@@ -1,8 +1,76 @@
 import { apiClient as api } from '../api/client';
 
+export interface DriverBookingPassenger {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
+  phone?: string;
+  passengerRating?: number;
+  passengerRatingCount?: number;
+}
+
+export interface DriverBookingRide {
+  id: string;
+  origin: string;
+  destination: string;
+  departureTime: string;
+  status: string;
+  distance?: number;
+  duration?: number;
+  originLat?: number | null;
+  originLng?: number | null;
+  destinationLat?: number | null;
+  destinationLng?: number | null;
+  routePolyline?: string | null;
+}
+
+export interface DriverBookingMatching {
+  matchScore?: number;
+  detourKm?: number;
+  pickupDistanceKm?: number;
+  dropoffDistanceKm?: number;
+  expectedPickupTime?: string;
+}
+
+export interface DriverBookingSummary {
+  id: string;
+  seats: number;
+  totalPrice: number;
+  status: string;
+  detourKm?: number;
+  additionalTimeMinutes?: number;
+  passengerLat?: number | null;
+  passengerLng?: number | null;
+  pickupAddress?: string | null;
+  dropoffAddress?: string | null;
+  isPickedUp: boolean;
+  isDroppedOff: boolean;
+  createdAt?: string;
+  matching?: DriverBookingMatching | null;
+  passenger: DriverBookingPassenger;
+  ride: DriverBookingRide;
+}
+
+export interface ActiveDriverBooking {
+  id?: string;
+  status?: string;
+  userRole?: 'DRIVER' | 'PASSENGER';
+  passenger?: DriverBookingPassenger;
+  ride?: DriverBookingRide & {
+    availableSeats?: number;
+    updatedAt?: string;
+    bookings?: DriverBookingSummary[];
+  };
+}
+
+export interface DriverBookingsResponse {
+  bookings: DriverBookingSummary[];
+}
+
 export const bookingService = {
-  async createBooking(rideId: string, seats: number) {
-    const response = await api.post('/bookings', { rideId, seats });
+  async createBooking(rideId: string, seats: number, pickupStopId?: string) {
+    const response = await api.post('/bookings', { rideId, seats, pickupStopId });
     return response.data;
   },
 
@@ -11,9 +79,9 @@ export const bookingService = {
     return response.data;
   },
 
-  async getDriverBookings() {
+  async getDriverBookings(): Promise<DriverBookingsResponse> {
     const response = await api.get('/bookings/driver');
-    return response.data;
+    return { bookings: response.data.bookings ?? response.data ?? [] };
   },
 
   async getBookingById(id: string) {
@@ -31,7 +99,7 @@ export const bookingService = {
     return response.data;
   },
 
-  async getActiveBooking() {
+  async getActiveBooking(): Promise<ActiveDriverBooking | null> {
     const response = await api.get('/bookings/active');
     return response.data.activeBooking;
   },

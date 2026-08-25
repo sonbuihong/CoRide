@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import { Loader2 } from 'lucide-react';
 import { getGoongMultiStopRoute, decodeGoongPolyline } from '../lib/tsp.utils';
+import { getTripOptimization } from '../lib/goong';
 
 interface OngoingMapProps {
   originLat: number;
@@ -50,15 +51,11 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
         const destCoord = { lat: destLat, lng: destLng };
 
         // 1. Sắp xếp waypoint bằng Goong /v2/trip API (tương đương OSRM /trip)
-        if (waypoints.length > 1 && !useCustomOrder) {
+        if (waypoints.length + 2 >= 10 && !useCustomOrder) {
           const waypointsStr = waypoints.map(wp => `${wp.lat},${wp.lng}`).join(';');
           // Goong v2/trip nhận origin, destination, waypoints
           // Thêm roundtrip=false để không vẽ đường quay ngược lại điểm xuất phát
-          const apiKey = process.env.NEXT_PUBLIC_GOONG_API_KEY || '';
-          const url = `https://rsapi.goong.io/v2/trip?origin=${startLat},${startLng}&destination=${destLat},${destLng}&waypoints=${waypointsStr}&roundtrip=false&api_key=${apiKey}`;
-          
-          const res = await fetch(url);
-          const data = await res.json();
+          const data = await getTripOptimization(`${startLat},${startLng}`, waypointsStr, `${destLat},${destLng}`, 'car');
           
           if (data.code === 'Ok' && data.trips && data.trips.length > 0) {
             // Lấy polyline

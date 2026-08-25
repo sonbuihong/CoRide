@@ -1,3 +1,5 @@
+import type { BookingPolicy, CreateRideInput, CreateRideScheduleInput } from '@repo/shared';
+
 import { apiClient as api } from '../api/client';
 
 export interface Ride {
@@ -22,6 +24,10 @@ export interface Ride {
   totalSeats: number;
   price: number;
   status: string;
+  origin?: string;
+  bookedSeats?: number;
+  pendingBookings?: number;
+  updatedAt?: string;
   departureCoords?: { latitude: number; longitude: number };
   destinationCoords?: { latitude: number; longitude: number };
   matchType?: 'DIRECT' | 'NEARBY' | 'ON_ROUTE';
@@ -34,6 +40,18 @@ export interface Ride {
   routeOverlap?: number;
   expectedPickupTime?: string;
   timeDifferenceMinutes?: number;
+  bookingPolicy?: BookingPolicy;
+  scheduleId?: string | null;
+  stops?: RideStop[];
+}
+
+export interface RideStop {
+  id: string;
+  name?: string | null;
+  address: string;
+  latitude: number;
+  longitude: number;
+  order: number;
 }
 
 export interface RideSearchParams {
@@ -81,9 +99,17 @@ export const rideService = {
     return (response.data.rides ?? []).map(normalizeRide);
   },
 
-  async createRide(data: any) {
+  async createRide(data: CreateRideInput): Promise<Ride> {
     const response = await api.post('/rides', data);
     return normalizeRide(response.data.ride ?? response.data);
+  },
+
+  async createRideSchedule(data: CreateRideScheduleInput): Promise<{ schedule: { id: string }; rides: Ride[] }> {
+    const response = await api.post('/rides/schedules', data);
+    return {
+      schedule: response.data.schedule,
+      rides: (response.data.rides ?? []).map(normalizeRide),
+    };
   },
 
   async getMyRides(): Promise<Ride[]> {

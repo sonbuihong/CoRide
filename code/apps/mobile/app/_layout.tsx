@@ -89,11 +89,13 @@ function RootLayoutNav() {
       <Stack.Screen name="(auth)/register" options={{ headerShown: false, title: 'Đăng ký' }} />
       <Stack.Screen name="(passenger-tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(driver-tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="ride/create" options={{ headerShown: false }} />
       <Stack.Screen name="dev/mode-prototype" options={{ headerShown: true, title: 'Dev Prototype' }} />
       <Stack.Screen name="ride/[id]" options={{ title: 'Chi tiết chuyến đi' }} />
       <Stack.Screen name="ride/active-ride" options={{ headerShown: false, title: 'Chuyến đi' }} />
       <Stack.Screen name="booking/[id]" options={{ title: 'Chi tiết đặt chỗ' }} />
       <Stack.Screen name="search" options={{ headerShown: false }} />
+      <Stack.Screen name="search-results" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       <Stack.Screen name="report-modal" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="review-modal" options={{ presentation: 'transparentModal', headerShown: false }} />

@@ -46,7 +46,7 @@ export default function ActiveRideScreen() {
   const userRole = activeData?.userRole || 'PASSENGER';
   const ride = activeData?.ride;
   const booking = userRole === 'PASSENGER' ? activeData : activeData?.ride?.bookings?.[0];
-  const rideId = ride?.id;
+  const rideId = ride?.id ?? null;
 
   // Tọa độ điểm đi và điểm đến từ ride data
   const originCoords: LatLng | null = useMemo(() => ride?.originLat && ride?.originLng

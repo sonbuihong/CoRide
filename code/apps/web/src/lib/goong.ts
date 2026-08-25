@@ -3,10 +3,9 @@ import axios from 'axios';
 import { goongClientCache } from './goong-client-cache';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-const GOONG_API_KEY = process.env.NEXT_PUBLIC_GOONG_API_KEY || '';
-const GOONG_BASE_URL = 'https://rsapi.goong.io';
 
 export type GoongApiVersion = 'v1' | 'v2';
+export const createGoongSessionToken = () => crypto.randomUUID();
 
 /**
  * Loại bỏ mã bưu chính (5-6 chữ số) và "Việt Nam" dư thừa
@@ -156,15 +155,19 @@ export async function autocompleteAddress(
     radius?: number; // in km
     more_compound?: boolean;
     version?: GoongApiVersion;
+    sessionToken?: string;
+    signal?: AbortSignal;
   }
 ): Promise<AutocompleteResult[]> {
-  // Mặc định: Giới hạn 5 kết quả, tìm kiếm xung quanh Hà Nội, bán kính 10km
+  // Không khóa cứng Hà Nội/radius; caller truyền vị trí người dùng khi có.
   const { 
     limit = 5, 
-    location = '21.028511,105.804817', // Tọa độ Hà Nội
-    radius = 10, 
+    location,
+    radius,
     more_compound,
-    version = 'v1',
+    version = 'v2',
+    sessionToken,
+    signal,
   } = options || {};
 
   // JS cache: ngăn duplicate calls trong cùng tab ngay tại tầng JavaScript
@@ -179,6 +182,7 @@ export async function autocompleteAddress(
       location,
       radius,
       version,
+      ...(sessionToken && { session_token: sessionToken }),
       // more_compound=true → backend truyền cho Goong, trả thêm compound (quận/xã/tỉnh)
       more_compound: more_compound !== false ? 'true' : 'false',
     };
@@ -186,6 +190,7 @@ export async function autocompleteAddress(
     const response = await axios.get(`${API_URL}/goong/autocomplete`, {
       params,
       timeout: 5000,
+      signal,
     });
 
     const results: AutocompleteResult[] = response.data || [];
@@ -193,6 +198,7 @@ export async function autocompleteAddress(
     goongClientCache.set(cacheKey, results, 60);
     return results;
   } catch (error) {
+    if (axios.isCancel(error)) return [];
     console.warn('Backend Autocomplete failed, falling back to Nominatim');
     
     // Fallback Nominatim
@@ -210,6 +216,7 @@ export async function autocompleteAddress(
           'Accept-Language': 'vi,en',
         },
         timeout: 5000,
+        signal,
       });
 
       return res.data.map((item: any) => ({
@@ -230,10 +237,10 @@ export async function autocompleteAddress(
 /**
  * Geocoding - Gọi qua backend API
  */
-export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
+export async function geocodeAddress(address: string, version: GoongApiVersion = 'v2'): Promise<GeocodeResult | null> {
   try {
     const response = await axios.get(`${API_URL}/goong/geocode`, {
-      params: { address },
+      params: { address, version },
       timeout: 5000,
     });
 
@@ -395,18 +402,19 @@ export interface ReverseGeocodeDetailedResult {
 
 export async function reverseGeocodeDetailed(
   lat: number,
-  lng: number
+  lng: number,
+  version: GoongApiVersion = 'v2',
 ): Promise<ReverseGeocodeDetailedResult | null> {
   // Làm tròn 4 chữ số thập phân — cùng lý do với reverseGeocode ở trên
   const roundedLat = Math.round(lat * 10000) / 10000;
   const roundedLng = Math.round(lng * 10000) / 10000;
-  const cacheKey = `reverse-geocode-detailed:${roundedLat},${roundedLng}`;
+  const cacheKey = `reverse-geocode-detailed:${version}:${roundedLat},${roundedLng}`;
   const cached = goongClientCache.get<ReverseGeocodeDetailedResult>(cacheKey);
   if (cached) return cached;
 
   try {
     const response = await axios.get(`${API_URL}/goong/reverse-geocode`, {
-      params: { lat, lng },
+      params: { lat, lng, version },
       timeout: 5000,
     });
 
@@ -567,13 +575,15 @@ export async function reverseGeocodeStructured(lat: number, lng: number): Promis
 export async function getDirections(
   origin: string,
   destination: string,
-  vehicle: string = 'car'
+  vehicle: string = 'car',
+  alternatives = false,
 ): Promise<DirectionsResult | null> {
   try {
     const response = await axios.post(`${API_URL}/goong/directions`, {
       origin,
       destination,
       vehicle,
+      alternatives,
     }, { timeout: 10000 });
 
     if (response.data) {
@@ -622,34 +632,53 @@ export async function getDirections(
   }
 }
 
+export async function getDistanceMatrix(origins: string, destinations: string, vehicle = 'car') {
+  try {
+    const response = await axios.post(`${API_URL}/goong/distance-matrix`, { origins, destinations, vehicle }, { timeout: 10000 });
+    return response.data;
+  } catch (error) {
+    console.warn('[getDistanceMatrix] Backend proxy failed:', error);
+    return null;
+  }
+}
+
+export function getStaticMapUrl(options: {
+  origin: string; destination: string; width?: number; height?: number;
+  vehicle?: string; type?: 'fastest' | 'shortest'; color?: string;
+}) {
+  const params = new URLSearchParams();
+  Object.entries(options).forEach(([key, value]) => {
+    if (value !== undefined) params.set(key, String(value));
+  });
+  return `${API_URL}/goong/static-map?${params.toString()}`;
+}
+
+export async function geolocateFromNetwork(payload: Record<string, unknown>) {
+  try {
+    const response = await axios.post(`${API_URL}/goong/geolocation`, { ...payload, considerIp: false }, { timeout: 10000 });
+    return response.data;
+  } catch (error) {
+    console.warn('[geolocateFromNetwork] unavailable:', error);
+    return null;
+  }
+}
+
 /**
  * Lấy thông tin chi tiết về địa điểm
  * Gọi qua backend API proxy để không lộ API key trên client
  * API Docs: https://docs.goong.io/rest/place/details/
  */
-export async function getPlaceDetail(placeId: string, version: GoongApiVersion = 'v1'): Promise<any> {
+export async function getPlaceDetail(placeId: string, version: GoongApiVersion = 'v2', sessionToken?: string): Promise<any> {
   try {
     // Ưu tiên gọi qua backend proxy (nhất quán với autocompleteAddress)
     const response = await axios.get(`${API_URL}/goong/place-detail`, {
-      params: { place_id: placeId, version },
+      params: { place_id: placeId, version, ...(sessionToken && { session_token: sessionToken }) },
       timeout: 5000,
     });
     return response.data?.result || response.data || null;
   } catch (error) {
-    console.warn('[getPlaceDetail] Backend proxy failed, trying direct Goong call');
-    // Fallback: gọi trực tiếp nếu backend không có route này
-    if (!GOONG_API_KEY) return null;
-    try {
-      const endpoint = version === 'v2' ? '/v2/place/detail' : '/place/detail';
-      const res = await axios.get(`${GOONG_BASE_URL}${endpoint}`, {
-        params: { api_key: GOONG_API_KEY, place_id: placeId },
-        timeout: 5000,
-      });
-      return res.data.result;
-    } catch (err) {
-      console.error('[getPlaceDetail] Lỗi:', err);
-      return null;
-    }
+    console.warn('[getPlaceDetail] Backend proxy failed');
+    return null;
   }
 }
 
@@ -663,22 +692,14 @@ export async function getTripOptimization(
   destination?: string,
   vehicle: string = 'car'
 ): Promise<any> {
-  if (!GOONG_API_KEY) {
-    console.error('Goong API key not configured');
-    return null;
-  }
-
   try {
-    const response = await axios.get('https://rsapi.goong.io/trip', {
-      params: {
+    const response = await axios.post(`${API_URL}/goong/trip`, {
         origin,
         waypoints,
         destination,
         vehicle,
-        api_key: GOONG_API_KEY,
-      },
-      timeout: 10000, // Tăng timeout vì tính toán TSP có thể lâu
-    });
+        roundtrip: false,
+      }, { timeout: 15000 });
 
     if (response.data.code === 'Ok') {
       return response.data;

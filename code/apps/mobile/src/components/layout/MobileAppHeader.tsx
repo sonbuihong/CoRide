@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Bell, Car, ChevronRight, ClipboardList, LogOut, Menu, Navigation, PlusSquare, Search, User, WalletCards, X } from 'lucide-react-native';
-import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { ArrowLeftRight, Car, User } from 'lucide-react-native';
+import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '../../hooks/useAuth';
-import { useAppStore } from '../../stores/useAppStore';
 import * as SecureStore from '../../services/secure-store';
-import { getDriverEligibility } from '../../utils/mode-checker';
+import { useAppStore } from '../../stores/useAppStore';
 import { colors, layout, radius, spacing } from '../../theme/tokens';
+import { getDriverEligibility } from '../../utils/mode-checker';
 import { AppText } from '../ui/AppText';
-import { IconButton } from '../ui/IconButton';
 
 interface MobileAppHeaderProps {
   mode: 'passenger' | 'driver';
@@ -18,163 +17,196 @@ interface MobileAppHeaderProps {
 
 export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { setAppMode } = useAppStore();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { width } = useWindowDimensions();
+  const [isSwitching, setIsSwitching] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const isDriver = mode === 'driver';
-  const foreground = isDriver ? '#FFFFFF' : colors.textPrimary;
+  const foreground = isDriver ? colors.surface : colors.textPrimary;
+  const avatarUri = user?.avatarUrl || user?.avatar;
+  const compact = width < 340;
+  const nextModeLabel = isDriver ? 'Hành khách' : 'Tài xế';
+  const modeActionLabel = compact ? nextModeLabel : `Sang ${nextModeLabel}`;
+  const initials = `${user?.firstName?.charAt(0) || ''}${user?.lastName?.charAt(0) || ''}`.toUpperCase() || 'C';
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [avatarUri]);
+
+  const goHome = () => {
+    router.replace((isDriver ? '/(driver-tabs)' : '/(passenger-tabs)') as any);
+  };
 
   const switchMode = async () => {
+    if (isSwitching) return;
     const nextMode = isDriver ? 'passenger' : 'driver';
+
     if (nextMode === 'driver') {
       const eligibility = getDriverEligibility(user);
       if (!eligibility.eligible) {
-        setMenuOpen(false);
-        Alert.alert('Cần xác thực tài xế', 'Hoàn tất hồ sơ tài xế trước khi chuyển sang chế độ này.', [
-          { text: 'Để sau', style: 'cancel' },
-          { text: 'Mở hồ sơ', onPress: () => router.push('/driver/register' as any) },
-        ]);
+        Alert.alert(
+          'Cần xác thực tài xế',
+          'Hoàn tất hồ sơ tài xế trước khi chuyển sang chế độ này.',
+          [
+            { text: 'Để sau', style: 'cancel' },
+            { text: 'Mở hồ sơ', onPress: () => router.push('/driver/register' as any) },
+          ],
+        );
         return;
       }
     }
-    if (user?.id) await SecureStore.setAppMode(user.id, nextMode);
-    setAppMode(nextMode);
-    setMenuOpen(false);
-    router.replace((nextMode === 'driver' ? '/(driver-tabs)' : '/(passenger-tabs)') as any);
+
+    setIsSwitching(true);
+    try {
+      if (user?.id) await SecureStore.setAppMode(user.id, nextMode);
+      setAppMode(nextMode);
+      router.replace((nextMode === 'driver' ? '/(driver-tabs)' : '/(passenger-tabs)') as any);
+    } catch {
+      Alert.alert('Không thể chuyển chế độ', 'Vui lòng thử lại sau ít phút.');
+    } finally {
+      setIsSwitching(false);
+    }
   };
 
-  const openRoute = (route: string) => {
-    setMenuOpen(false);
-    router.push(route as any);
-  };
-
-  const handleLogout = () => {
-    setMenuOpen(false);
-    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất khỏi CoRide?', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Đăng xuất', style: 'destructive', onPress: () => logout() },
-    ]);
+  const openProfile = () => {
+    router.push((isDriver ? '/(driver-tabs)/profile' : '/(passenger-tabs)/profile') as any);
   };
 
   return (
-    <>
-      <SafeAreaView edges={['top']} style={[styles.safeArea, isDriver && styles.driverSafeArea]}>
-        <View style={[styles.header, isDriver && styles.driverHeader]}>
+    <SafeAreaView edges={['top']} style={[styles.safeArea, isDriver && styles.driverSafeArea]}>
+      <View style={[styles.header, compact && styles.compactHeader, isDriver && styles.driverHeader]}>
+        <Pressable
+          onPress={goHome}
+          accessibilityRole="button"
+          accessibilityLabel="Về trang chủ CoRide"
+          style={({ pressed }) => [styles.brand, pressed && styles.brandPressed]}
+        >
+          <Car size={22} color={foreground} strokeWidth={2.1} />
+          <AppText numberOfLines={1} maxFontSizeMultiplier={1.5} style={[styles.brandText, { color: foreground }]}>CoRide</AppText>
+        </Pressable>
+
+        <View style={styles.actions}>
           <Pressable
-            onPress={() => router.replace((isDriver ? '/(driver-tabs)' : '/(passenger-tabs)') as any)}
+            onPress={switchMode}
+            disabled={isSwitching}
             accessibilityRole="button"
-            accessibilityLabel="Về trang chủ CoRide"
-            style={({ pressed }) => [styles.brand, pressed && styles.pressed]}
+            accessibilityLabel={`Chuyển sang chế độ ${nextModeLabel}`}
+            accessibilityHint="Thay đổi vai trò sử dụng CoRide"
+            accessibilityState={{ busy: isSwitching, disabled: isSwitching }}
+            style={({ pressed }) => [styles.modeTouchTarget, pressed && styles.controlPressed, isSwitching && styles.controlDisabled]}
           >
-            <Car size={20} color={foreground} strokeWidth={2} />
-            <AppText style={[styles.brandText, { color: foreground }]}>CoRide</AppText>
+            <View style={[styles.modePill, compact && styles.compactModePill, isDriver && styles.driverModePill]}>
+              {isSwitching
+                ? <ActivityIndicator size="small" color={colors.surface} />
+                : <ArrowLeftRight size={16} color={colors.surface} strokeWidth={2.2} />}
+              <AppText numberOfLines={1} maxFontSizeMultiplier={1.5} variant="caption" weight="semibold" style={styles.modeText}>
+                {modeActionLabel}
+              </AppText>
+            </View>
           </Pressable>
 
-          <View style={styles.actions}>
-            <Pressable
-              onPress={switchMode}
-              accessibilityRole="button"
-              accessibilityLabel={`Đang ở chế độ ${isDriver ? 'Tài xế' : 'Hành khách'}. Nhấn để chuyển chế độ.`}
-              style={({ pressed }) => [styles.modePill, isDriver && styles.driverModePill, pressed && styles.pressed]}
-            >
-              <AppText variant="caption" weight="semibold" style={styles.modeText}>{isDriver ? 'Tài xế' : 'Hành khách'}</AppText>
-            </Pressable>
-            <View style={[styles.separator, isDriver && styles.driverSeparator]} />
-            <IconButton
-              tone="ghost"
-              icon={<Menu size={21} color={foreground} />}
-              accessibilityLabel="Mở menu"
-              onPress={() => setMenuOpen(true)}
-              style={styles.headerIcon}
-            />
-          </View>
-        </View>
-      </SafeAreaView>
-
-      <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
-        <View style={styles.modalRoot}>
-          <Pressable style={styles.scrim} accessibilityLabel="Đóng menu" onPress={() => setMenuOpen(false)} />
-          <SafeAreaView edges={['top', 'bottom']} style={[styles.drawer, isDriver && styles.driverDrawer]}>
-            <View style={styles.drawerHeader}>
-              <View>
-                <AppText variant="h2" weight="semibold" style={isDriver && styles.lightText}>Menu</AppText>
-                <AppText variant="caption" style={isDriver ? styles.lightSecondary : styles.secondaryText}>
-                  {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Tài khoản CoRide'}
-                </AppText>
-              </View>
-              <IconButton tone="ghost" icon={<X size={21} color={foreground} />} accessibilityLabel="Đóng menu" onPress={() => setMenuOpen(false)} />
-            </View>
-
-            <View style={styles.menuGroup}>
-              {isDriver ? (
-                <>
-                  <MenuItem icon={<PlusSquare size={20} color={foreground} />} label="Đăng chuyến mới" foreground={foreground} onPress={() => openRoute('/ride/create')} />
-                  <MenuItem icon={<ClipboardList size={20} color={foreground} />} label="Chuyến và yêu cầu" foreground={foreground} onPress={() => openRoute('/(driver-tabs)/requests')} />
-                </>
+          <Pressable
+            onPress={openProfile}
+            accessibilityRole="button"
+            accessibilityLabel="Mở hồ sơ cá nhân"
+            accessibilityHint="Chuyển đến tab Hồ sơ"
+            style={({ pressed }) => [styles.avatarTouchTarget, pressed && styles.controlPressed]}
+          >
+            <View style={[styles.avatarFrame, isDriver && styles.driverAvatarFrame]}>
+              {avatarUri && !avatarFailed ? (
+                <Image source={{ uri: avatarUri }} onError={() => setAvatarFailed(true)} style={styles.avatarImage} accessibilityIgnoresInvertColors />
+              ) : initials ? (
+                <AppText maxFontSizeMultiplier={1.3} weight="semibold" style={[styles.initials, isDriver && styles.driverInitials]}>{initials}</AppText>
               ) : (
-                <>
-                  <MenuItem icon={<Search size={20} color={foreground} />} label="Tìm chuyến" foreground={foreground} onPress={() => openRoute('/(passenger-tabs)')} />
-                  <MenuItem icon={<ClipboardList size={20} color={foreground} />} label="Chuyến của tôi" foreground={foreground} onPress={() => openRoute('/(passenger-tabs)/my-rides')} />
-                </>
+                <User size={18} color={foreground} />
               )}
             </View>
-
-            <View style={styles.utilityGroup}>
-              <MenuItem icon={<Bell size={20} color={foreground} />} label="Thông báo" foreground={foreground} onPress={() => openRoute(isDriver ? '/(driver-tabs)/notifications' : '/(passenger-tabs)/notifications')} />
-              <MenuItem icon={<User size={20} color={foreground} />} label="Hồ sơ cá nhân" foreground={foreground} onPress={() => openRoute(isDriver ? '/(driver-tabs)/profile' : '/(passenger-tabs)/profile')} />
-              <MenuItem icon={<WalletCards size={20} color={foreground} />} label="Ví và giao dịch" foreground={foreground} onPress={() => openRoute('/profile/wallet')} />
-              <MenuItem icon={<Navigation size={20} color={foreground} />} label={`Chuyển sang ${isDriver ? 'Hành khách' : 'Tài xế'}`} foreground={foreground} onPress={switchMode} />
-            </View>
-
-            <Pressable onPress={handleLogout} accessibilityRole="button" style={({ pressed }) => [styles.logout, pressed && styles.pressed]}>
-              <LogOut size={20} color={colors.danger} />
-              <AppText weight="semibold" style={styles.logoutText}>Đăng xuất</AppText>
-            </Pressable>
-          </SafeAreaView>
+          </Pressable>
         </View>
-      </Modal>
-    </>
-  );
-}
-
-function MenuItem({ icon, label, foreground, onPress }: { icon: React.ReactNode; label: string; foreground: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}>
-      {icon}
-      <AppText variant="bodySmall" weight="medium" style={[styles.menuLabel, { color: foreground }]}>{label}</AppText>
-      <ChevronRight size={18} color={foreground} opacity={0.45} />
-    </Pressable>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: 'rgba(255,255,255,0.96)' },
+  safeArea: { backgroundColor: colors.surface },
   driverSafeArea: { backgroundColor: colors.driverSurface },
-  header: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.96)', borderBottomColor: 'rgba(0,0,0,0.16)', borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', height: 48, justifyContent: 'space-between', paddingHorizontal: spacing.md },
-  driverHeader: { backgroundColor: 'rgba(10,30,60,0.96)', borderBottomColor: 'rgba(255,255,255,0.08)' },
-  brand: { alignItems: 'center', flexDirection: 'row', gap: 5, minHeight: 44 },
-  brandText: { fontSize: 17, fontWeight: '600', letterSpacing: -0.37 },
+  header: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderBottomColor: colors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    minHeight: 56,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xxs,
+  },
+  compactHeader: { paddingHorizontal: spacing.md },
+  driverHeader: {
+    backgroundColor: colors.driverSurface,
+    borderBottomColor: 'rgba(255,255,255,0.10)',
+  },
+  brand: {
+    alignItems: 'center',
+    borderRadius: radius.sm,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    minHeight: layout.minTouchTarget,
+    paddingHorizontal: spacing.xxs,
+  },
+  brandPressed: { opacity: 0.58 },
+  brandText: {
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+    lineHeight: 23,
+  },
   actions: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
-  modePill: { alignItems: 'center', backgroundColor: '#0071E3', borderRadius: radius.pill, justifyContent: 'center', minHeight: 32, paddingHorizontal: 12 },
+  modeTouchTarget: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    justifyContent: 'center',
+    minHeight: layout.minTouchTarget,
+    paddingHorizontal: spacing.xxs,
+  },
+  controlPressed: { opacity: 0.68 },
+  controlDisabled: { opacity: 0.72 },
+  modePill: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    height: 36,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+    minWidth: 118,
+    paddingHorizontal: spacing.md,
+  },
+  compactModePill: { minWidth: 92, paddingHorizontal: spacing.sm },
   driverModePill: { backgroundColor: colors.driverAccent },
-  modeText: { color: '#FFFFFF' },
-  separator: { backgroundColor: 'rgba(0,0,0,0.2)', height: 14, width: StyleSheet.hairlineWidth },
-  driverSeparator: { backgroundColor: 'rgba(255,255,255,0.2)' },
-  headerIcon: { minHeight: 40, minWidth: 40 },
-  pressed: { opacity: 0.66 },
-  modalRoot: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end' },
-  scrim: { backgroundColor: colors.scrim, ...StyleSheet.absoluteFillObject },
-  drawer: { backgroundColor: colors.background, height: '100%', paddingHorizontal: spacing.lg, width: '85%' },
-  driverDrawer: { backgroundColor: colors.driverSurface },
-  drawerHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', paddingBottom: spacing.lg, paddingTop: spacing.md },
-  lightText: { color: '#FFFFFF' },
-  lightSecondary: { color: 'rgba(255,255,255,0.6)', marginTop: 3 },
-  secondaryText: { color: colors.textSecondary, marginTop: 3 },
-  menuGroup: { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.sm },
-  utilityGroup: { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, marginTop: spacing.md, paddingTop: spacing.sm },
-  menuItem: { alignItems: 'center', borderRadius: radius.sm, flexDirection: 'row', gap: spacing.sm, minHeight: layout.minTouchTarget, paddingHorizontal: spacing.sm },
-  menuItemPressed: { backgroundColor: 'rgba(127,127,127,0.1)' },
-  menuLabel: { flex: 1 },
-  logout: { alignItems: 'center', borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl, minHeight: 52, paddingHorizontal: spacing.sm },
-  logoutText: { color: colors.danger },
+  modeText: { color: colors.surface, letterSpacing: -0.1 },
+  avatarTouchTarget: {
+    alignItems: 'center',
+    borderRadius: radius.pill,
+    height: layout.minTouchTarget,
+    justifyContent: 'center',
+    width: layout.minTouchTarget,
+  },
+  avatarFrame: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 36,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    width: 36,
+  },
+  driverAvatarFrame: { backgroundColor: 'rgba(255,255,255,0.12)', borderColor: 'rgba(255,255,255,0.24)' },
+  avatarImage: { height: '100%', width: '100%' },
+  initials: { color: colors.primary, fontSize: 13, letterSpacing: 0.2 },
+  driverInitials: { color: colors.surface },
 });

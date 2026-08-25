@@ -9,7 +9,7 @@ import { RideMap } from '../../src/components/RideMap';
 import { MatchExplanation } from '../../src/components/MatchExplanation';
 import { AppText } from '../../src/components/ui/AppText';
 import { AppButton } from '../../src/components/ui/AppButton';
-import { Clock, Users, Star, ShieldCheck, MessageCircle, ArrowLeft, Heart } from 'lucide-react-native';
+import { Clock, Users, Star, ShieldCheck, MessageCircle, ArrowLeft, Heart, MapPin, CircleDot } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -25,6 +25,7 @@ export default function RideDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [seats, setSeats] = useState(1);
+  const [pickupStopId, setPickupStopId] = useState<string | undefined>();
 
   const { data: ride, isLoading } = useQuery({
     queryKey: ['ride', id],
@@ -33,9 +34,14 @@ export default function RideDetailScreen() {
   });
 
   const bookingMutation = useMutation({
-    mutationFn: () => bookingService.createBooking(id as string, seats),
-    onSuccess: () => {
-      Alert.alert('Thành công', 'Yêu cầu đặt chỗ của bạn đã được gửi tới tài xế.', [
+    mutationFn: () => bookingService.createBooking(id as string, seats, pickupStopId),
+    onSuccess: (result) => {
+      const confirmed = result.booking?.status === 'CONFIRMED';
+      Alert.alert(
+        confirmed ? 'Đã đặt chỗ' : 'Đã gửi yêu cầu',
+        confirmed
+          ? 'Chỗ của bạn đã được xác nhận ngay.'
+          : 'Ghế được giữ trong 15 phút để tài xế phản hồi.', [
         { text: 'OK', onPress: () => router.replace('/(passenger-tabs)/my-rides' as any) }
       ]);
     },
@@ -139,6 +145,34 @@ export default function RideDetailScreen() {
                 Vì sao chuyến này phù hợp?
               </AppText>
               <MatchExplanation ride={matchingRide} />
+            </View>
+          )}
+
+          {ride.stops && ride.stops.length > 0 && (
+            <View className="mb-6">
+              <AppText variant="body" weight="semibold" className="text-text-primary mb-1">
+                Chọn điểm đón
+              </AppText>
+              <AppText variant="bodySmall" className="text-text-secondary mb-3">
+                Bạn có thể bắt đầu tại điểm đi chính hoặc một điểm đón công khai dọc tuyến.
+              </AppText>
+              <View className="bg-surface rounded-3xl border border-border/40 overflow-hidden">
+                <PickupChoice
+                  title="Điểm đi chính"
+                  address={ride.departure}
+                  selected={!pickupStopId}
+                  onPress={() => setPickupStopId(undefined)}
+                />
+                {ride.stops.map((stop) => (
+                  <PickupChoice
+                    key={stop.id}
+                    title={stop.name || `Điểm đón ${stop.order + 1}`}
+                    address={stop.address}
+                    selected={pickupStopId === stop.id}
+                    onPress={() => setPickupStopId(stop.id)}
+                  />
+                ))}
+              </View>
             </View>
           )}
 
@@ -248,5 +282,29 @@ export default function RideDetailScreen() {
         />
       </View>
     </View>
+  );
+}
+
+function PickupChoice({ title, address, selected, onPress }: { title: string; address: string; selected: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`${title}, ${address}`}
+      onPress={onPress}
+      className={`min-h-[72px] flex-row items-center px-4 py-3 border-b border-border/30 ${selected ? 'bg-passenger-soft' : 'bg-surface'}`}
+    >
+      <View className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${selected ? 'bg-passenger' : 'bg-background'}`}>
+        {selected ? <CircleDot size={20} color="#FFFFFF" /> : <MapPin size={20} color="#64748B" />}
+      </View>
+      <View className="flex-1 min-w-0">
+        <AppText variant="bodySmall" weight="semibold" className={selected ? 'text-passenger' : 'text-text-primary'} numberOfLines={1}>
+          {title}
+        </AppText>
+        <AppText variant="caption" className={selected ? 'text-passenger-pressed' : 'text-text-secondary'} numberOfLines={2}>
+          {address}
+        </AppText>
+      </View>
+    </TouchableOpacity>
   );
 }
