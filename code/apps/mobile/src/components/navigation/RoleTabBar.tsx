@@ -1,4 +1,5 @@
 import React from 'react';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
@@ -30,6 +31,46 @@ const modeColors = {
 
 export function getRoleTabColor(mode: NavigationMode) {
   return modeColors[mode].active;
+}
+
+export function RoleBottomTabBar({ mode, state, descriptors, navigation, insets }: BottomTabBarProps & { mode: NavigationMode }) {
+  const visibleRoutes = state.routes.slice(0, 4);
+
+  return (
+    <View style={[styles.bottomBar, { height: layout.tabBarHeight + insets.bottom, paddingBottom: insets.bottom }]}>
+      {visibleRoutes.map((route) => {
+        const index = state.routes.indexOf(route);
+        const focused = state.index === index;
+        const options = descriptors[route.key].options;
+        const color = focused ? modeColors[mode].active : colors.textTertiary;
+        const label = options.tabBarLabel;
+
+        return (
+          <Pressable
+            key={route.key}
+            accessibilityRole="button"
+            accessibilityState={{ selected: focused }}
+            accessibilityLabel={options.tabBarAccessibilityLabel}
+            onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
+            onPress={() => {
+              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+            }}
+            style={styles.bottomButton}
+          >
+            <View style={styles.bottomIconSlot}>
+              {options.tabBarIcon?.({ focused, color, size: 21 })}
+            </View>
+            <View style={styles.bottomLabelSlot}>
+              {typeof label === 'function'
+                ? label({ focused, color, position: 'below-icon', children: options.title ?? route.name })
+                : label}
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
 }
 
 export function createRoleTabBarStyle(bottomInset: number) {
@@ -75,6 +116,7 @@ export function RoleTabLabel({ color, focused, label }: RoleTabLabelProps) {
   return (
     <Text
       allowFontScaling
+      maxFontSizeMultiplier={1}
       numberOfLines={1}
       style={[styles.label, { color }, focused && styles.labelFocused]}
     >
@@ -98,18 +140,58 @@ export function RoleTabButton({ style, ...props }: React.ComponentProps<typeof P
 }
 
 export const roleTabBarStyles = StyleSheet.create({
+  iconSlot: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 0,
+    width: '100%',
+  },
   item: {
+    alignItems: 'center',
     borderRadius: radius.button,
+    justifyContent: 'center',
     minHeight: layout.minTouchTarget,
     paddingHorizontal: spacing.xxs,
   },
 });
 
 const styles = StyleSheet.create({
-  button: {
+  bottomBar: {
+    alignItems: 'flex-start',
+    alignSelf: 'stretch',
+    backgroundColor: colors.surface,
+    borderTopColor: colors.navigationDivider,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    elevation: 4,
+    flexDirection: 'row',
+    paddingHorizontal: layout.tabBarHorizontalInset,
+    paddingTop: spacing.xxs,
+    shadowColor: colors.textPrimary,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    width: '100%',
+  },
+  bottomButton: {
+    alignItems: 'center',
     borderRadius: radius.button,
+    height: layout.tabBarHeight - spacing.xxs,
+    justifyContent: 'flex-start',
+    minWidth: 0,
+    paddingTop: 1,
+    width: '25%',
+  },
+  bottomIconSlot: { alignItems: 'center', height: 32, justifyContent: 'center', width: '100%' },
+  bottomLabelSlot: { alignItems: 'center', justifyContent: 'center', width: '100%' },
+  button: {
+    alignItems: 'center',
+    borderRadius: radius.button,
+    flex: 1,
+    justifyContent: 'center',
     minHeight: layout.minTouchTarget,
     overflow: 'hidden',
+    padding: 0,
+    width: '100%',
     ...Platform.select({
       web: { cursor: 'pointer' },
       default: {},

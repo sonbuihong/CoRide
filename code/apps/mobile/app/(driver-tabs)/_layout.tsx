@@ -1,18 +1,14 @@
 import React, { useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Bell, ClipboardList, Home, User } from 'lucide-react-native';
-import type { ComponentProps } from 'react';
-import { ActivityIndicator, Alert, Pressable, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, Alert, View } from 'react-native';
 
 import { MobileAppHeader } from '../../src/components/layout/MobileAppHeader';
 import {
-  createRoleTabBarStyle,
   getRoleTabColor,
-  RoleTabButton,
+  RoleBottomTabBar,
   RoleTabIcon,
   RoleTabLabel,
-  roleTabBarStyles,
 } from '../../src/components/navigation/RoleTabBar';
 import { useAppModeGuard } from '../../src/hooks/useAppModeGuard';
 import { socketService } from '../../src/services/socket.service';
@@ -21,7 +17,6 @@ import { colors } from '../../src/theme/tokens';
 export default function DriverTabLayout() {
   const router = useRouter();
   const { isGuardLoading } = useAppModeGuard();
-  const insets = useSafeAreaInsets();
   const mode = 'driver' as const;
   const activeColor = getRoleTabColor(mode);
 
@@ -54,15 +49,12 @@ export default function DriverTabLayout() {
   }
 
   return (
-    <Tabs screenOptions={{
+    <Tabs tabBar={(props) => <RoleBottomTabBar {...props} mode={mode} />} screenOptions={{
       headerShown: true,
       header: () => <MobileAppHeader mode="driver" />,
       tabBarActiveTintColor: activeColor,
       tabBarInactiveTintColor: colors.textTertiary,
-      tabBarButton: (props) => <RoleTabButton {...(props as ComponentProps<typeof Pressable>)} />,
       tabBarHideOnKeyboard: true,
-      tabBarStyle: createRoleTabBarStyle(insets.bottom),
-      tabBarItemStyle: roleTabBarStyles.item,
     }}>
       <Tabs.Screen name="index" options={{ title: 'Home', tabBarAccessibilityLabel: 'Home', tabBarLabel: ({ color, focused }) => <RoleTabLabel color={color} focused={focused} label="Home" />, tabBarIcon: ({ color, focused }) => <RoleTabIcon focused={focused} mode={mode}><Home size={21} color={color} strokeWidth={focused ? 2.5 : 2} /></RoleTabIcon> }} />
       <Tabs.Screen name="requests" options={{ title: 'Hoạt động', tabBarAccessibilityLabel: 'Hoạt động', tabBarLabel: ({ color, focused }) => <RoleTabLabel color={color} focused={focused} label="Hoạt động" />, tabBarIcon: ({ color, focused }) => <RoleTabIcon focused={focused} mode={mode}><ClipboardList size={21} color={color} strokeWidth={focused ? 2.5 : 2} /></RoleTabIcon> }} />

@@ -82,8 +82,10 @@ export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
           accessibilityLabel="Về trang chủ CoRide"
           style={({ pressed }) => [styles.brand, pressed && styles.brandPressed]}
         >
-          <Car size={22} color={foreground} strokeWidth={2.1} />
-          <AppText numberOfLines={1} maxFontSizeMultiplier={1.5} style={[styles.brandText, { color: foreground }]}>CoRide</AppText>
+          <View style={styles.brandContent}>
+            <Car size={18} color={foreground} strokeWidth={2.1} />
+            <AppText numberOfLines={1} maxFontSizeMultiplier={1} style={[styles.brandText, { color: foreground }]}>CoRide</AppText>
+          </View>
         </Pressable>
 
         <View style={styles.actions}>
@@ -100,7 +102,7 @@ export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
               {isSwitching
                 ? <ActivityIndicator size="small" color={colors.surface} />
                 : <ArrowLeftRight size={16} color={colors.surface} strokeWidth={2.2} />}
-              <AppText numberOfLines={1} maxFontSizeMultiplier={1.5} variant="caption" weight="semibold" style={styles.modeText}>
+              <AppText numberOfLines={1} maxFontSizeMultiplier={1} variant="caption" weight="semibold" style={styles.modeText}>
                 {modeActionLabel}
               </AppText>
             </View>
@@ -117,7 +119,7 @@ export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
               {avatarUri && !avatarFailed ? (
                 <Image source={{ uri: avatarUri }} onError={() => setAvatarFailed(true)} style={styles.avatarImage} accessibilityIgnoresInvertColors />
               ) : initials ? (
-                <AppText maxFontSizeMultiplier={1.3} weight="semibold" style={[styles.initials, isDriver && styles.driverInitials]}>{initials}</AppText>
+                <AppText maxFontSizeMultiplier={1} weight="semibold" style={[styles.initials, isDriver && styles.driverInitials]}>{initials}</AppText>
               ) : (
                 <User size={18} color={foreground} />
               )}
@@ -138,9 +140,9 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    minHeight: 56,
+    minHeight: 64,
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.xxs,
   },
   compactHeader: { paddingHorizontal: spacing.md },
@@ -149,19 +151,17 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.10)',
   },
   brand: {
-    alignItems: 'center',
     borderRadius: radius.sm,
-    flexDirection: 'row',
-    gap: spacing.xs,
     minHeight: layout.minTouchTarget,
     paddingHorizontal: spacing.xxs,
   },
+  brandContent: { alignItems: 'flex-start', gap: 1, justifyContent: 'center' },
   brandPressed: { opacity: 0.58 },
   brandText: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '600',
     letterSpacing: -0.4,
-    lineHeight: 23,
+    lineHeight: 19,
   },
   actions: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
   modeTouchTarget: {
@@ -177,12 +177,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
-    height: 36,
+    height: 32,
     justifyContent: 'center',
     flexDirection: 'row',
     gap: spacing.xs,
-    minWidth: 118,
-    paddingHorizontal: spacing.md,
+    minWidth: 100,
+    paddingHorizontal: spacing.sm,
   },
   compactModePill: { minWidth: 92, paddingHorizontal: spacing.sm },
   driverModePill: { backgroundColor: colors.driverAccent },
@@ -200,10 +200,10 @@ const styles = StyleSheet.create({
     borderColor: colors.borderStrong,
     borderRadius: radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
-    height: 36,
+    height: 32,
     justifyContent: 'center',
     overflow: 'hidden',
-    width: 36,
+    width: 32,
   },
   driverAvatarFrame: { backgroundColor: 'rgba(255,255,255,0.12)', borderColor: 'rgba(255,255,255,0.24)' },
   avatarImage: { height: '100%', width: '100%' },

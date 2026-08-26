@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
-import { Car, Clock, MapPin, Star, User, Users } from 'lucide-react-native';
+import { Clock, Navigation, Star, User, Users } from 'lucide-react-native';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import type { Ride } from '../services/ride.service';
-import { getStaticMapUrlMobile } from '../services/goong.service';
-import { colors, layout, radius, spacing } from '../theme/tokens';
-import { MatchExplanation } from './MatchExplanation';
+import { colors, radius, spacing } from '../theme/tokens';
 import { AppText } from './ui/AppText';
 
 interface RideCardProps {
@@ -16,14 +14,23 @@ interface RideCardProps {
   showMatch?: boolean;
 }
 
-export const RideCard: React.FC<RideCardProps> = ({ ride, showMatch = true }) => {
+const formatDistance = (distance?: number) => {
+  if (distance == null || !Number.isFinite(distance)) return '— km';
+  return `${distance < 10 ? distance.toFixed(1) : Math.round(distance)} km`;
+};
+
+const formatDuration = (duration?: number) => {
+  if (duration == null || !Number.isFinite(duration)) return '— phút';
+  return `${Math.max(1, Math.round(duration))} phút`;
+};
+
+export const RideCard: React.FC<RideCardProps> = ({ ride }) => {
   const router = useRouter();
-  const [mapFailed, setMapFailed] = useState(false);
   const formattedTime = format(new Date(ride.departureTime), 'HH:mm');
   const formattedDate = format(new Date(ride.departureTime), 'EEE, dd/MM', { locale: vi });
   const driverName = [ride.driver?.firstName, ride.driver?.lastName].filter(Boolean).join(' ') || 'Tài xế CoRide';
-  const vehicle = ride.driver?.vehicle;
-  const vehicleLabel = [vehicle?.brand, vehicle?.model].filter(Boolean).join(' ') || 'Phương tiện đã xác minh';
+  const rating = ride.driver?.rating?.toFixed(1) || '5.0';
+
   const handlePress = () => router.push({
     pathname: '/ride/[id]',
     params: {
@@ -35,16 +42,6 @@ export const RideCard: React.FC<RideCardProps> = ({ ride, showMatch = true }) =>
       routeOverlap: ride.routeOverlap?.toString(),
     },
   } as any);
-  const staticMapUrl = ride.departureCoords && ride.destinationCoords
-    ? getStaticMapUrlMobile({
-        origin: `${ride.departureCoords.latitude},${ride.departureCoords.longitude}`,
-        destination: `${ride.destinationCoords.latitude},${ride.destinationCoords.longitude}`,
-        width: 720,
-        height: 240,
-        vehicle: 'car',
-        color: colors.mapRoute,
-      })
-    : null;
 
   return (
     <View style={styles.card}>
@@ -53,78 +50,73 @@ export const RideCard: React.FC<RideCardProps> = ({ ride, showMatch = true }) =>
         accessibilityRole="button"
         accessibilityLabel={`${formattedTime}, từ ${ride.departure} đến ${ride.destination}, ${ride.price.toLocaleString('vi-VN')} đồng`}
         accessibilityHint="Mở chi tiết chuyến đi"
-        style={({ pressed }) => pressed && styles.pressed}
+        style={styles.cardBody}
       >
-        {staticMapUrl && !mapFailed ? <Image source={{ uri: staticMapUrl }} style={styles.routePreview} accessibilityLabel="Ảnh xem trước tuyến đường" onError={() => setMapFailed(true)} /> : null}
-        <View style={styles.topRow}>
-          <View style={styles.timeRow}>
-            <Clock size={17} color={colors.textSecondary} />
-            <AppText variant="body" weight="semibold">{formattedTime}</AppText>
-            <AppText variant="caption" style={styles.secondaryText}>{formattedDate}</AppText>
+        <View style={styles.header}>
+          <View style={styles.schedule}>
+            <View style={styles.timeRow}>
+              <Clock size={16} color={colors.textSecondary} />
+              <AppText variant="body" weight="semibold" style={styles.tabularText}>{formattedTime}</AppText>
+            </View>
+            <AppText variant="caption" style={styles.date}>{formattedDate}</AppText>
           </View>
           <AppText style={styles.price}>{ride.price.toLocaleString('vi-VN')}đ</AppText>
         </View>
 
-        <View style={styles.driverRow}>
-          {ride.driver?.avatar ? (
-            <Image source={{ uri: ride.driver.avatar }} style={styles.avatar} accessibilityLabel={`Ảnh ${driverName}`} />
-          ) : (
-            <View style={[styles.avatar, styles.avatarFallback]}>
-              <User size={19} color={colors.primary} />
+        <View style={styles.middle}>
+          <View style={styles.routeColumn}>
+            <View style={styles.routeRail}>
+              <View style={[styles.dot, styles.pickupDot]} />
+              <View style={styles.routeLine} />
+              <View style={[styles.dot, styles.destinationDot]} />
             </View>
-          )}
-          <View style={styles.driverCopy}>
-            <AppText variant="bodySmall" weight="semibold" numberOfLines={1}>{driverName}</AppText>
-            <View style={styles.metaRow}>
+            <View style={styles.routeCopy}>
+              <View style={styles.routePoint}>
+                <AppText variant="caption" style={styles.secondaryText}>Điểm đón</AppText>
+                <AppText variant="bodySmall" weight="semibold" numberOfLines={2}>{ride.departure}</AppText>
+              </View>
+              <View style={styles.routePoint}>
+                <AppText variant="caption" style={styles.secondaryText}>Điểm đến</AppText>
+                <AppText variant="bodySmall" weight="semibold" numberOfLines={2}>{ride.destination}</AppText>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.driverColumn}>
+            {ride.driver?.avatar ? (
+              <Image source={{ uri: ride.driver.avatar }} style={styles.avatar} accessibilityLabel={`Ảnh ${driverName}`} />
+            ) : (
+              <View style={[styles.avatar, styles.avatarFallback]}>
+                <User size={22} color={colors.primary} />
+              </View>
+            )}
+            <AppText variant="caption" weight="semibold" numberOfLines={2} style={styles.driverName}>{driverName}</AppText>
+            <View style={styles.ratingRow}>
               <Star size={13} color={colors.warning} fill={colors.warning} />
-              <AppText variant="caption" style={styles.secondaryText}>{ride.driver?.rating?.toFixed(1) || '5.0'}</AppText>
-              <Car size={14} color={colors.textTertiary} />
-              <AppText variant="caption" style={[styles.secondaryText, styles.vehicleText]} numberOfLines={1}>{vehicleLabel}</AppText>
+              <AppText variant="caption" weight="medium">{rating}</AppText>
             </View>
           </View>
         </View>
 
-        <View style={styles.routeRow}>
-          <View style={styles.routeRail}>
-            <View style={[styles.dot, styles.pickupDot]} />
-            <View style={styles.line} />
-            <View style={[styles.dot, styles.destinationDot]} />
+        <View style={styles.metadata}>
+          <View style={styles.metadataItem}>
+            <Users size={14} color={colors.textSecondary} />
+            <AppText variant="caption" style={styles.secondaryText}>Còn {ride.availableSeats} chỗ</AppText>
           </View>
-          <View style={styles.routeCopy}>
-            <View>
-              <AppText variant="caption" style={styles.secondaryText}>Điểm đón</AppText>
-              <AppText variant="bodySmall" weight="medium" numberOfLines={1}>{ride.departure}</AppText>
-            </View>
-            <View>
-              <AppText variant="caption" style={styles.secondaryText}>Điểm đến</AppText>
-              <AppText variant="bodySmall" weight="medium" numberOfLines={1}>{ride.destination}</AppText>
-            </View>
+          <View style={styles.metadataDivider} />
+          <View style={styles.metadataItem}>
+            <Navigation size={14} color={colors.textSecondary} />
+            <AppText variant="caption" style={styles.secondaryText}>{formatDistance(ride.distance)}</AppText>
+          </View>
+          <View style={styles.metadataDivider} />
+          <View style={styles.metadataItem}>
+            <Clock size={14} color={colors.textSecondary} />
+            <AppText variant="caption" style={styles.secondaryText}>{formatDuration(ride.duration)}</AppText>
           </View>
         </View>
-
-        <View style={styles.seatRow}>
-          <Users size={15} color={colors.textSecondary} />
-          <AppText variant="caption" style={styles.secondaryText}>Còn {ride.availableSeats} chỗ</AppText>
-          {ride.pickupDistanceKm != null && (
-            <>
-              <View style={styles.separator} />
-              <MapPin size={15} color={colors.textSecondary} />
-              <AppText variant="caption" style={styles.secondaryText}>
-                Cách điểm đón {ride.pickupDistanceKm < 1 ? `${Math.round(ride.pickupDistanceKm * 1000)} m` : `${ride.pickupDistanceKm.toFixed(1)} km`}
-              </AppText>
-            </>
-          )}
-        </View>
-
-        {showMatch && <MatchExplanation ride={ride} compact />}
       </Pressable>
 
-      <Pressable
-        onPress={handlePress}
-        accessibilityRole="button"
-        accessibilityLabel="Chọn chuyến"
-        style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
-      >
+      <Pressable onPress={handlePress} accessibilityRole="button" accessibilityLabel="Chọn chuyến" style={styles.cta}>
         <AppText variant="button" weight="semibold" style={styles.ctaText}>Chọn chuyến</AppText>
       </Pressable>
     </View>
@@ -133,28 +125,31 @@ export const RideCard: React.FC<RideCardProps> = ({ ride, showMatch = true }) =>
 
 const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.card, borderWidth: StyleSheet.hairlineWidth, marginBottom: spacing.md, padding: spacing.md },
-  pressed: { opacity: 0.82 },
-  routePreview: { backgroundColor: colors.surfaceMuted, borderRadius: radius.input, height: 112, marginBottom: spacing.md, width: '100%' },
-  topRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
+  cardBody: { width: '100%' },
+  header: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
+  schedule: { gap: spacing.xxs },
   timeRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
+  tabularText: { fontVariant: ['tabular-nums'] },
+  date: { marginLeft: 24 },
   price: { color: colors.primary, fontSize: 18, fontWeight: '600', fontVariant: ['tabular-nums'] },
-  secondaryText: { color: colors.textSecondary },
-  driverRow: { alignItems: 'center', flexDirection: 'row', marginBottom: spacing.md },
-  avatar: { backgroundColor: colors.surfaceMuted, borderRadius: radius.pill, height: 44, marginRight: spacing.sm, width: 44 },
-  avatarFallback: { alignItems: 'center', justifyContent: 'center' },
-  driverCopy: { flex: 1 },
-  metaRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xxs, marginTop: spacing.xxs },
-  vehicleText: { flexShrink: 1 },
-  routeRow: { flexDirection: 'row', marginBottom: spacing.md },
+  middle: { alignItems: 'stretch', flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+  routeColumn: { flex: 1, flexDirection: 'row', minWidth: 0 },
   routeRail: { alignItems: 'center', marginRight: spacing.sm, paddingVertical: 5 },
   dot: { backgroundColor: colors.surface, borderRadius: radius.pill, borderWidth: 2, height: 10, width: 10 },
   pickupDot: { borderColor: colors.mapPickup },
   destinationDot: { borderColor: colors.mapDestination },
-  line: { backgroundColor: colors.borderStrong, flex: 1, minHeight: 31, width: 2 },
-  routeCopy: { flex: 1, gap: spacing.md },
-  seatRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.sm },
-  separator: { backgroundColor: colors.borderStrong, height: 14, width: 1 },
-  cta: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius.button, justifyContent: 'center', marginTop: spacing.md, minHeight: layout.minTouchTarget },
-  ctaPressed: { backgroundColor: colors.primaryPressed },
+  routeLine: { backgroundColor: colors.borderStrong, flex: 1, minHeight: 38, width: 2 },
+  routeCopy: { flex: 1, gap: spacing.sm, minWidth: 0 },
+  routePoint: { minHeight: 48 },
+  secondaryText: { color: colors.textSecondary },
+  driverColumn: { alignItems: 'center', justifyContent: 'center', width: 92 },
+  avatar: { backgroundColor: colors.surfaceMuted, borderRadius: radius.pill, height: 52, width: 52 },
+  avatarFallback: { alignItems: 'center', justifyContent: 'center' },
+  driverName: { marginTop: spacing.xs, textAlign: 'center' },
+  ratingRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xxs, marginTop: spacing.xxs },
+  metadata: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', minHeight: 28 },
+  metadataItem: { alignItems: 'center', flexDirection: 'row', gap: spacing.xxs, minWidth: 0 },
+  metadataDivider: { backgroundColor: colors.borderStrong, height: 12, width: StyleSheet.hairlineWidth },
+  cta: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius.sm, justifyContent: 'center', marginTop: spacing.sm, minHeight: 44 },
   ctaText: { color: colors.surface },
 });

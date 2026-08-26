@@ -23,6 +23,8 @@ export interface Ride {
   availableSeats: number;
   totalSeats: number;
   price: number;
+  distance?: number;
+  duration?: number;
   status: string;
   origin?: string;
   bookedSeats?: number;

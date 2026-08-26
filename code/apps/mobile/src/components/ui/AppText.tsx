@@ -1,4 +1,6 @@
-import { Text, TextProps, StyleSheet } from 'react-native';
+import { Text, TextProps, StyleSheet, TextStyle } from 'react-native';
+
+import { colors } from '../../theme/tokens';
 
 export interface AppTextProps extends TextProps {
   variant?: 'display' | 'h1' | 'h2' | 'h3' | 'title' | 'body' | 'bodySmall' | 'caption' | 'button';
@@ -16,33 +18,32 @@ export const AppText: React.FC<AppTextProps> = ({
   ...props
 }) => {
   const flatStyle = StyleSheet.flatten(style) || {};
-  const hasColor = flatStyle.color || /\btext-/.test(className);
-  const baseStyle = hasColor ? '' : 'text-text-primary';
-  
-  const variantStyles = {
-    display: 'text-3xl leading-tight',
-    h1: 'text-2xl leading-snug',
-    h2: 'text-xl leading-snug',
-    h3: 'text-lg leading-snug',
-    title: 'text-lg leading-normal',
-    body: 'text-base leading-normal',
-    bodySmall: 'text-sm leading-normal',
-    caption: 'text-xs text-text-secondary leading-normal',
-    button: 'text-base text-center',
-  };
-  
-  const weightStyles = {
-    normal: 'font-normal',
-    medium: 'font-medium',
-    semibold: 'font-semibold',
-    bold: 'font-bold',
-  };
-
-  const combinedStyles = `${baseStyle} ${variantStyles[variant]} ${weightStyles[weight]} ${className}`;
+  const baseStyle = flatStyle.color || /\btext-/.test(className) ? undefined : styles.base;
 
   return (
-    <Text className={combinedStyles} {...props} style={style}>
+    <Text className={className} {...props} maxFontSizeMultiplier={props.maxFontSizeMultiplier ?? 1} style={[baseStyle, variantStyles[variant], weightStyles[weight], style]}>
       {children}
     </Text>
   );
 };
+
+const variantStyles: Record<NonNullable<AppTextProps['variant']>, TextStyle> = {
+  display: { fontSize: 30, lineHeight: 36 },
+  h1: { fontSize: 24, lineHeight: 30 },
+  h2: { fontSize: 20, lineHeight: 26 },
+  h3: { fontSize: 18, lineHeight: 24 },
+  title: { fontSize: 18, lineHeight: 27 },
+  body: { fontSize: 16, lineHeight: 24 },
+  bodySmall: { fontSize: 14, lineHeight: 21 },
+  caption: { color: colors.textSecondary, fontSize: 12, lineHeight: 18 },
+  button: { fontSize: 16, lineHeight: 24, textAlign: 'center' },
+};
+
+const weightStyles: Record<NonNullable<AppTextProps['weight']>, TextStyle> = {
+  normal: { fontWeight: '400' },
+  medium: { fontWeight: '500' },
+  semibold: { fontWeight: '600' },
+  bold: { fontWeight: '700' },
+};
+
+const styles = StyleSheet.create({ base: { color: colors.textPrimary } });
