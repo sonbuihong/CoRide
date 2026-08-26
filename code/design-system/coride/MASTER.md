@@ -1,226 +1,74 @@
-# Design System Master File
+# CoRide Design System
 
-> **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
-> If that file exists, its rules **override** this Master file.
-> If not, strictly follow the rules below.
+Runtime values live in `packages/design-tokens`; neither Web CSS nor Native styles are the source of truth.
 
----
-
-**Project:** CoRide
-**Generated:** 2026-07-16 22:33:14
-**Category:** Ride Hailing / Transportation
-**Design Dials:** Variance 4/10 (Balanced / Modern) | Motion 5/10 (Standard) | Density 6/10 (Standard)
-
----
-
-## Global Rules
-
-### Color Palette
-
-| Role | Hex | CSS Variable |
-|------|-----|--------------|
-| Primary | `#1E293B` | `--color-primary` |
-| On Primary | `#FFFFFF` | `--color-on-primary` |
-| Secondary | `#334155` | `--color-secondary` |
-| Accent/CTA | `#2563EB` | `--color-accent` |
-| Background | `#0F172A` | `--color-background` |
-| Foreground | `#FFFFFF` | `--color-foreground` |
-| Muted | `#10182B` | `--color-muted` |
-| Border | `rgba(255,255,255,0.08)` | `--color-border` |
-| Destructive | `#DC2626` | `--color-destructive` |
-| Ring | `#1E293B` | `--color-ring` |
-
-**Color Notes:** Map dark + route blue
-
-### Typography
-
-- **Heading Font:** Be Vietnam Pro
-- **Body Font:** Noto Sans
-- **Mood:** vietnamese, international, readable, clean, multilingual, accessible
-- **Google Fonts:** [Be Vietnam Pro + Noto Sans](https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Noto+Sans:wght@300;400;500;600;700&display=swap)
-
-**CSS Import:**
-```css
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Noto+Sans:wght@300;400;500;600;700&display=swap');
+```text
+Semantic tokens (@repo/design-tokens)
+              |
+ Shared Tailwind vocabulary
+ (@repo/tailwind-config)
+        /             \
+Web: Tailwind/CSS   Mobile: NativeWind/StyleSheet
+                           |
+                      Android + iOS
 ```
 
-### Spacing Variables
+> **Web CSS is NOT reusable Native CSS.** Share token meaning and component behavior, then use platform-correct rendering primitives.
 
-*Density: 6/10 — Standard*
+## Semantic foundation
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-xs` | `4px` / `0.25rem` | Tight gaps |
-| `--space-sm` | `8px` / `0.5rem` | Icon gaps, inline spacing |
-| `--space-md` | `16px` / `1rem` | Standard padding |
-| `--space-lg` | `24px` / `1.5rem` | Section padding |
-| `--space-xl` | `32px` / `2rem` | Large gaps |
-| `--space-2xl` | `48px` / `3rem` | Section margins |
-| `--space-3xl` | `64px` / `4rem` | Hero padding |
+- Action: `primary`, `primaryPressed`, `primarySoft`, `accent`.
+- Canvas: `background`, `surface`, `surfaceSecondary`.
+- Content: `textPrimary`, `textSecondary`, `textMuted`.
+- Structure: `border`, `borderStrong`.
+- Feedback: `success`, `warning`, `danger`, `info` and soft surfaces.
+- Map colors are domain tokens, not general status colors.
+- Do not add raw colors when an existing semantic token expresses the purpose.
 
-### Shadow Depths
+The current light-first CoRide blue palette is intentionally preserved. Palette changes require a separate product decision.
 
-| Level | Value | Usage |
-|-------|-------|-------|
-| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle lift |
-| `--shadow-md` | `0 4px 6px rgba(0,0,0,0.1)` | Cards, buttons |
-| `--shadow-lg` | `0 10px 15px rgba(0,0,0,0.1)` | Modals, dropdowns |
-| `--shadow-xl` | `0 20px 25px rgba(0,0,0,0.15)` | Hero images, featured cards |
+## Spacing, typography, radius
 
----
+- Shared spacing: 4, 8, 12, 16, 20, 24, 32, 48. Screen gutter is 20; touch targets are at least 48dp.
+- Type: `display`, `heading1`, `heading2`, `heading3`, `body`, `bodySmall`, `caption`. Preserve OS text scaling. Text containers use padding/min-height, not fixed height.
+- Radius: `sm`, `input`, `button`, `card`, `sheet`, `full`.
+- Native elevation uses `nativeShadows`: iOS shadow properties and Android elevation. Match hierarchy, not pixels.
+- Motion uses 150–300ms and respects reduced motion.
 
-## Component Specs
+CoRide currently uses platform/system fonts. The former Be Vietnam Pro/Noto Sans CSS import was not a native font contract. Any future font change must add Expo font assets/loading and Web loading together.
 
-### Buttons
+## Component behavior
 
-```css
-/* Primary Button */
-.btn-primary {
-  background: #2563EB;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
+- Button: primary, secondary, outline, ghost, danger; disabled/loading states.
+- Input: default, focused, error, disabled; visible label/error.
+- Card: default, outlined, elevated.
+- Badge: info, success, warning, danger, neutral.
+- Screen: background, optional safe area, scrolling, keyboard adaptation and gutter.
 
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
+Keep existing public APIs backward-compatible during migration. Android and iOS share the mobile component unless a native capability requires adaptation.
 
-/* Secondary Button */
-.btn-secondary {
-  background: transparent;
-  color: #1E293B;
-  border: 2px solid #1E293B;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-```
+## Platform adaptation
 
-### Cards
+### WEB ONLY
 
-```css
-.card {
-  background: #0F172A;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  transition: all 200ms ease;
-  cursor: pointer;
-}
+Web may use `:hover`, `:focus-visible`, cursor, media/container queries, CSS Grid, fixed positioning, backdrop filter, CSS box-shadow and CSS animation. MapLibre browser DOM/CSS stays on Web.
 
-.card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-```
+### NATIVE ONLY
 
-### Inputs
+Use React Native primitives, NativeWind and `StyleSheet`. Safe area comes from `react-native-safe-area-context`. Platform branches are allowed for keyboard behavior, system UI, permissions, storage, native pickers/maps, iOS shadow and Android elevation.
 
-```css
-.input {
-  padding: 12px 16px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 200ms ease;
-}
+Do not use `Platform` for ordinary layout. Do not put browser CSS in native branches. Expo Web implementations belong in `.web.tsx` files or guarded Web branches.
 
-.input:focus {
-  border-color: #1E293B;
-  outline: none;
-  box-shadow: 0 0 0 3px #1E293B20;
-}
-```
+Mobile layout is Flexbox-first. Never encode a target device frame. `useWindowDimensions` is for a real breakpoint (tablet at 768+), not ordinary positioning.
 
-### Modals
+### Map screens
 
-```css
-.modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
+Maps may use absolute overlays, markers, floating controls and bottom sheets. Account for safe-area, bottom navigation and home indicators. Map algorithms/providers are outside style migration.
 
-.modal {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-  max-width: 500px;
-  width: 90%;
-}
-```
+## Shared Tailwind vocabulary
 
----
+Both apps may use `bg-coride-background`, `bg-coride-surface`, `bg-coride-accent`, `text-coride-primary`, `text-coride-secondary`, `border-coride-border`, `text-title`, `text-body`, and `text-caption`. Web interaction utilities remain Web-only.
 
-## Style Guidelines
+## Migration order
 
-**Style:** Soft UI Evolution
-
-**Keywords:** Evolved soft UI, better contrast, modern aesthetics, subtle depth, accessibility-focused, improved shadows, hybrid
-
-**Best For:** Modern enterprise apps, SaaS platforms, health/wellness, modern business tools, professional, hybrid
-
-**Key Effects:** Improved shadows (softer than flat, clearer than neumorphism), modern (200-300ms), focus visible, WCAG AA/AAA
-
-### Page Pattern
-
-**Pattern Name:** Marketplace / Directory
-
-- **Conversion Strategy:** Search bar is the CTA. Reduce friction to search. Popular searches suggestions.
-- **CTA Placement:** Hero Search Bar + Navbar 'List your item'
-- **Section Order:** 1. Hero (Search focused), 2. Categories, 3. Featured Listings, 4. Trust/Safety, 5. CTA (Become a host/seller)
-
----
-
-## Motion
-
-**Page Transition** (Standard) — Trigger: route change | Duration: 400-600ms | Easing: `power2.inOut`
-
-```js
-const tl = gsap.timeline(); tl.to('.transition-overlay', { yPercent: 0, duration: 0.4, ease: 'power2.inOut' }).call(navigate).to('.transition-overlay', { yPercent: -100, duration: 0.4, ease: 'power2.inOut', delay: 0.1 });
-```
-
-**Framework notes:** Keep the overlay element mounted at the layout root (outside the page component) so it survives the route swap
-
-- ✅ Show a lightweight loading indicator if the destination route's data fetch outlasts the overlay
-- ❌ Don't tie the overlay's reveal directly to data-fetch completion without a max-wait timeout; a slow API stalls the whole transition
-- ⚡ Prefer CSS transform (yPercent) over top/left to keep the overlay animation on the compositor thread
-
----
-
-## Anti-Patterns (Do NOT Use)
-
-- ❌ Excessive decoration
-
-### Additional Forbidden Patterns
-
-- ❌ **Emojis as icons** — Use SVG icons (Heroicons, Lucide, Simple Icons)
-- ❌ **Missing cursor:pointer** — All clickable elements must have cursor:pointer
-- ❌ **Layout-shifting hovers** — Avoid scale transforms that shift layout
-- ❌ **Low contrast text** — Maintain 4.5:1 minimum contrast ratio
-- ❌ **Instant state changes** — Always use transitions (150-300ms)
-- ❌ **Invisible focus states** — Focus states must be visible for a11y
-
----
-
-## Pre-Delivery Checklist
-
-Before delivering any UI code, verify:
-
-- [ ] No emojis used as icons (use SVG instead)
-- [ ] All icons from consistent icon set (Heroicons/Lucide)
-- [ ] `cursor-pointer` on all clickable elements
-- [ ] Hover states with smooth transitions (150-300ms)
-- [ ] Light mode: text contrast 4.5:1 minimum
-- [ ] Focus states visible for keyboard navigation
-- [ ] `prefers-reduced-motion` respected
-- [ ] Responsive: 375px, 768px, 1024px, 1440px
-- [ ] No content hidden behind fixed navbars
-- [ ] No horizontal scroll on mobile
+Tokens/preset → Mobile foundations → Screen/Button/Input/Card/Typography → common layouts → high-traffic screens → remaining screens → verified legacy cleanup. Each group must pass typecheck/lint and retain routes, API contracts, navigation, business rules and map providers.

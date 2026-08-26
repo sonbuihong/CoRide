@@ -18,14 +18,15 @@ class SocketService {
     const token = await SecureStoreService.getAccessToken();
 
     if (!token) {
-      console.warn('SocketService: Không có token để kết nối.');
+      // Realtime hooks may mount while auth is hydrating or after logout.
+      // Missing credentials is an expected state, not a socket failure.
       this.isConnecting = false;
       return;
     }
 
     this.socket = io(SOCKET_URL, {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,

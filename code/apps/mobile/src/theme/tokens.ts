@@ -1,77 +1,48 @@
+import {
+  colors as sharedColors,
+  motion,
+  radius as sharedRadius,
+  sizing,
+  spacing as sharedSpacing,
+  typography,
+} from '@repo/design-tokens';
+
 export const colors = {
-  primary: '#0071E3',
-  primaryPressed: '#0066CC',
-  primarySoft: '#EAF4FF',
-  driverAccent: '#34C759',
-  driverAccentSoft: '#EAF9EE',
-  driverSurface: '#0A1E3C',
+  ...sharedColors,
   navigationPassenger: '#0071E3',
   navigationPassengerSoft: '#EAF4FF',
   navigationDriver: '#15803D',
   navigationDriverSoft: '#EAF9EE',
   navigationDivider: '#E5E5EA',
   navigationPressed: '#F2F2F7',
-  background: '#F5F5F7',
-  surface: '#FFFFFF',
-  surfaceMuted: '#FAFAFC',
-  textPrimary: '#1D1D1F',
-  textSecondary: '#515154',
+  surfaceMuted: sharedColors.surfaceSecondary,
   textTertiary: '#737377',
-  border: '#E5E5EA',
-  borderStrong: '#D1D1D6',
-  success: '#15803D',
-  successSoft: '#F0FDF4',
-  warning: '#B45309',
-  warningSoft: '#FFFBEB',
-  danger: '#DC2626',
-  error: '#DC2626',
-  dangerSoft: '#FEF2F2',
-  mapRoute: '#0071E3',
-  mapPickup: '#0F766E',
-  mapDestination: '#DC2626',
-  scrim: 'rgba(15, 23, 42, 0.48)',
+  error: sharedColors.danger,
 } as const;
 
+// Compatibility aliases keep existing screens stable while new code uses the shared scale.
 export const spacing = {
-  xxs: 4,
-  xs: 8,
-  sm: 12,
-  md: 16,
-  lg: 20,
-  xl: 24,
-  xxl: 32,
+  xxs: sharedSpacing.xs,
+  xs: sharedSpacing.sm,
+  sm: sharedSpacing.md,
+  md: sharedSpacing.lg,
+  lg: sharedSpacing.screen,
+  xl: sharedSpacing.xl,
+  xxl: sharedSpacing['2xl'],
   xxxl: 40,
 } as const;
 
 export const radius = {
-  sm: 10,
-  input: 14,
-  button: 16,
-  card: 18,
-  sheet: 26,
-  pill: 999,
+  ...sharedRadius,
+  pill: sharedRadius.full,
 } as const;
-
-export const typography = {
-  display: { fontSize: 30, lineHeight: 36, fontWeight: '600' as const },
-  pageTitle: { fontSize: 24, lineHeight: 30, fontWeight: '600' as const },
-  sectionTitle: { fontSize: 19, lineHeight: 25, fontWeight: '600' as const },
-  body: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const },
-  secondary: { fontSize: 14, lineHeight: 20, fontWeight: '400' as const },
-  caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' as const },
-} as const;
-
-export const motion = {
-  fast: 150,
-  standard: 220,
-  slow: 300,
-} as const;
+export { motion, typography };
 
 export const layout = {
-  screenGutter: 20,
-  minTouchTarget: 48,
-  tabBarHeight: 64,
+  screenGutter: sharedSpacing.screen,
+  minTouchTarget: sizing.touchTarget,
+  tabBarHeight: sizing.tabBar,
   tabBarHorizontalInset: 8,
   tabIconCapsuleWidth: 48,
-  maxContentWidth: 560,
+  maxContentWidth: sizing.maxMobileContent,
 } as const;

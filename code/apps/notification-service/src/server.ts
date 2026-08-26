@@ -15,7 +15,7 @@ const server = http.createServer(app);
 // CORS được xử lý tại API Gateway
 app.use(express.json());
 
-const PORT = process.env.PORT || 5201;
+const PORT = Number(process.env.PORT ?? '5201');
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const prisma = new PrismaClient();
@@ -23,7 +23,7 @@ const prisma = new PrismaClient();
 // /health phải đặt TRƯỚC notificationRoutes để không bị chặn bởi authenticate middleware
 // WHY: Express khớp route theo thứ tự khai báo — đặt sau sẽ bị router chặn trước
 app.get('/health', (req, res) => {
-  res.json({ status: 'Notification Service is running' });
+  res.json({ status: 'ok', service: 'notification-service' });
 });
 
 import notificationRoutes from './routes';
@@ -86,7 +86,7 @@ async function connectRabbitMQ() {
   }
 }
 
-server.listen(PORT, async () => {
+server.listen(PORT, '0.0.0.0', async () => {
   console.log(`🔔 Notification Service is running on port ${PORT}`);
   await connectRabbitMQ();
 });

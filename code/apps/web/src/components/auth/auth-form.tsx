@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -40,13 +40,27 @@ export function LoginForm() {
   const { setMode } = useRoleMode();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberAccount, setRememberAccount] = useState(false);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
     setError,
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
+
+  // Tự động khôi phục tài khoản đã nhớ khi mở trang
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const remembered = localStorage.getItem('coride.rememberAccount') === 'true';
+      const savedEmail = localStorage.getItem('coride.rememberedEmail');
+      if (remembered && savedEmail) {
+        setRememberAccount(true);
+        setValue('email', savedEmail);
+      }
+    }
+  }, [setValue]);
 
   const onSubmit = async (data: LoginInput) => {
     setLoading(true);
@@ -54,6 +68,17 @@ export function LoginForm() {
       const userData = await login(data.email, data.password);
       toast.success('Đăng nhập thành công!');
       
+      // Lưu hoặc xóa thông tin tài khoản theo lựa chọn
+      if (typeof window !== 'undefined') {
+        if (rememberAccount) {
+          localStorage.setItem('coride.rememberAccount', 'true');
+          localStorage.setItem('coride.rememberedEmail', data.email.trim());
+        } else {
+          localStorage.removeItem('coride.rememberAccount');
+          localStorage.removeItem('coride.rememberedEmail');
+        }
+      }
+
       // Tự động thiết lập chế độ Tìm chuyến đi (passenger) khi đăng nhập thành công
       setMode('passenger');
       
@@ -117,7 +142,18 @@ export function LoginForm() {
           {errors.password && (
             <p className="text-[12px] text-[#d93025] mt-1 ml-1">{errors.password.message}</p>
           )}
-          <div className="flex justify-end mt-1">
+          <div className="flex items-center justify-between mt-2">
+            <label className="flex items-center space-x-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberAccount}
+                onChange={(e) => setRememberAccount(e.target.checked)}
+                className="w-4 h-4 rounded-[4px] border-gray-300 text-[#0071e3] focus:ring-[#0071e3] cursor-pointer accent-[#0071e3]"
+              />
+              <span className="text-[14px] text-[rgba(0,0,0,0.7)] dark:text-[rgba(255,255,255,0.7)]">
+                Nhớ tài khoản
+              </span>
+            </label>
             <button
               type="button"
               onClick={() => router.push('/forgot-password')}

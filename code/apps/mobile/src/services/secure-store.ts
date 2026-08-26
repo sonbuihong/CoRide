@@ -4,6 +4,8 @@ import { Platform } from 'react-native';
 export const SECURE_STORAGE_KEYS = {
   accessToken: 'coride.accessToken',
   refreshToken: 'coride.refreshToken',
+  rememberAccount: 'coride.rememberAccount',
+  rememberedEmail: 'coride.rememberedEmail',
 } as const;
 
 export const getAccessToken = async (): Promise<string | null> => {
@@ -106,4 +108,59 @@ export const removeAppMode = async (userId: string): Promise<void> => {
     return;
   }
   await SecureStore.deleteItemAsync(key);
+};
+
+// --- Remember Account Persistence ---
+export const getRememberedAccount = async (): Promise<{ remember: boolean; email: string }> => {
+  try {
+    let rememberStr: string | null = null;
+    let email: string | null = null;
+
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
+        rememberStr = localStorage.getItem(SECURE_STORAGE_KEYS.rememberAccount);
+        email = localStorage.getItem(SECURE_STORAGE_KEYS.rememberedEmail);
+      }
+    } else {
+      rememberStr = await SecureStore.getItemAsync(SECURE_STORAGE_KEYS.rememberAccount);
+      email = await SecureStore.getItemAsync(SECURE_STORAGE_KEYS.rememberedEmail);
+    }
+
+    const remember = rememberStr === 'true';
+    return {
+      remember,
+      email: remember && email ? email : '',
+    };
+  } catch {
+    return { remember: false, email: '' };
+  }
+};
+
+export const setRememberedAccount = async (remember: boolean, email: string): Promise<void> => {
+  try {
+    if (remember) {
+      const trimmedEmail = email.trim();
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(SECURE_STORAGE_KEYS.rememberAccount, 'true');
+          localStorage.setItem(SECURE_STORAGE_KEYS.rememberedEmail, trimmedEmail);
+        }
+      } else {
+        await SecureStore.setItemAsync(SECURE_STORAGE_KEYS.rememberAccount, 'true');
+        await SecureStore.setItemAsync(SECURE_STORAGE_KEYS.rememberedEmail, trimmedEmail);
+      }
+    } else {
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(SECURE_STORAGE_KEYS.rememberAccount);
+          localStorage.removeItem(SECURE_STORAGE_KEYS.rememberedEmail);
+        }
+      } else {
+        await SecureStore.deleteItemAsync(SECURE_STORAGE_KEYS.rememberAccount);
+        await SecureStore.deleteItemAsync(SECURE_STORAGE_KEYS.rememberedEmail);
+      }
+    }
+  } catch {
+    // Ignore storage write error
+  }
 };

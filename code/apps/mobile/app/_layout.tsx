@@ -11,6 +11,7 @@ import { useAppStore } from '../src/stores/useAppStore';
 import { QueryProvider } from '../src/providers/query-provider';
 import { OfflineBanner } from '../src/components/ui/OfflineBanner';
 import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -82,7 +83,8 @@ function RootLayoutNav() {
   }, [isAuthenticated, segments, router, appMode]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
       <OfflineBanner />
       <Stack>
       <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
@@ -91,7 +93,7 @@ function RootLayoutNav() {
       <Stack.Screen name="(driver-tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="ride/create" options={{ headerShown: false }} />
       <Stack.Screen name="dev/mode-prototype" options={{ headerShown: true, title: 'Dev Prototype' }} />
-      <Stack.Screen name="ride/[id]" options={{ title: 'Chi tiết chuyến đi' }} />
+      <Stack.Screen name="ride/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="ride/active-ride" options={{ headerShown: false, title: 'Chuyến đi' }} />
       <Stack.Screen name="booking/[id]" options={{ title: 'Chi tiết đặt chỗ' }} />
       <Stack.Screen name="search" options={{ headerShown: false }} />
@@ -102,6 +104,7 @@ function RootLayoutNav() {
       <Stack.Screen name="cancel-modal" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="chat/[rideId]" options={{ headerShown: false }} />
       </Stack>
-    </View>
+      </View>
+    </GestureHandlerRootView>
   );
 }

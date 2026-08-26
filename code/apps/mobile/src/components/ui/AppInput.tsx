@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, TextInputProps } from 'react-native';
+import { colors } from '../../theme/tokens';
 import { AppText } from './AppText';
 
 export interface AppInputProps extends TextInputProps {
@@ -21,16 +22,6 @@ export const AppInput: React.FC<AppInputProps> = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
 
-  const handleFocus = (e: any) => {
-    setIsFocused(true);
-    if (onFocus) onFocus(e);
-  };
-
-  const handleBlur = (e: any) => {
-    setIsFocused(false);
-    if (onBlur) onBlur(e);
-  };
-
   const borderStyle = error
     ? 'border-[2px] border-status-danger'
     : isFocused
@@ -44,9 +35,15 @@ export const AppInput: React.FC<AppInputProps> = ({
         {leftIcon && <View className="mr-3">{leftIcon}</View>}
         <TextInput
           className="flex-1 text-text-primary text-[17px] py-2.5"
-          placeholderTextColor="#737377"
-          onFocus={handleFocus}
-          onBlur={handleBlur}
+          placeholderTextColor={colors.textMuted}
+          onFocus={(event) => {
+            setIsFocused(true);
+            onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setIsFocused(false);
+            onBlur?.(event);
+          }}
           accessibilityLabel={`${label || props.placeholder}${error ? `. Lỗi: ${error}` : ''}`}
           {...props}
         />

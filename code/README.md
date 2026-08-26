@@ -131,11 +131,28 @@ Khởi chạy toàn bộ dự án (Web, Backend) bằng Turborepo:
 npm run dev
 ```
 
-Chạy riêng Mobile App:
+Chạy Mobile App cùng Backend và API Gateway (khuyến nghị):
+
+```bash
+npm run dev:mobile
+```
+
+Lệnh trên dùng launcher Node cục bộ để tự khởi động đồng thời Expo, Backend ở
+cổng `5101` và API Gateway ở cổng `5001`, vì vậy không cần chạy thủ công
+`node ./node_modules/tsx/dist/cli.mjs src/server.ts` nữa.
+
+Nếu đang đứng trong thư mục `apps/mobile`, có thể dùng lệnh tương đương:
 
 ```bash
 cd apps/mobile
 npm run start
+```
+
+Chỉ chạy riêng Expo (chỉ dùng khi Backend và API Gateway đã chạy ở terminal khác):
+
+```bash
+cd apps/mobile
+npm run start:expo
 ```
 
 ## ⚙️ Environment Variables
@@ -251,13 +268,15 @@ Các biện pháp bảo mật hiện tại được triển khai trong source co
 
 Hệ thống được thiết lập sẵn với Docker Compose.
 
-### Docker
+### Docker Development
 Khởi chạy toàn bộ services trong nền:
 
 ```bash
-docker-compose up --build -d
+docker compose up -d
 ```
-Quá trình build sẽ biên dịch image từ `apps/backend/Dockerfile` và `apps/web/Dockerfile`.
+
+Source TypeScript được bind mount và tự reload; không cần rebuild khi chỉ sửa code.
+Xem hướng dẫn đầy đủ tại [docs/docker-development.md](docs/docker-development.md).
 
 ### CI/CD
 Dự án sử dụng GitHub Actions (cấu hình trong `.github`) để thiết lập luồng CI/CD, tự động lint, format và build khi có thay đổi trên repository.

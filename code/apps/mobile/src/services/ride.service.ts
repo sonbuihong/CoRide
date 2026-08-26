@@ -10,6 +10,7 @@ export interface Ride {
     lastName: string;
     avatar?: string;
     rating?: number;
+    isVerified?: boolean;
     vehicle?: {
       brand?: string;
       model?: string;
@@ -82,6 +83,7 @@ const normalizeRide = (ride: any): Ride => ({
     ...ride.driver,
     avatar: ride.driver?.avatar ?? ride.driver?.avatarUrl,
     rating: ride.driver?.rating ?? ride.driver?.driverRating,
+    isVerified: ride.driver?.isVerified ?? ride.driver?.isDriverVerified ?? false,
   },
 });
 

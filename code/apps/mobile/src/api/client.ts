@@ -19,6 +19,7 @@ const NO_AUTH_URLS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/f
 
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.baseURL || ''}${config.url || ''}`);
     // Không đính kèm token cho các route auth public
     if (config.url && NO_AUTH_URLS.some(url => config.url?.includes(url))) {
       return config;
@@ -65,6 +66,14 @@ apiClient.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
+    const requestUrl = originalRequest?.url ?? '';
+    const isPublicAuthRequest = NO_AUTH_URLS.some(url => requestUrl.includes(url));
+
+    // 4xx từ form đăng nhập/đăng ký là phản hồi nghiệp vụ dự kiến và đã được
+    // hiển thị trên UI; không đẩy thành console.error với stack trace rất dài.
+    if (!error.response || (error.response.status ?? 0) >= 500) {
+      console.error(`[API Error] ${originalRequest?.baseURL || ''}${requestUrl} -> ${error.message} (code: ${error.code}, status: ${error.response?.status})`);
+    }
 
     // A HTTP error still proves that the server is reachable. Only requests
     // without any response should put the app into offline state.
@@ -79,8 +88,20 @@ apiClient.interceptors.response.use(
     if (error.response.status === 401 && !originalRequest._retry) {
       
       // Bỏ qua refresh đối với các URL auth để tránh vòng lặp
-      if (originalRequest.url && NO_AUTH_URLS.some(url => originalRequest.url?.includes(url))) {
-        return Promise.reject(error);
+      if (isPublicAuthRequest) {
+        const responseData = error.response.data;
+        const backendMessage = responseData
+          && typeof responseData === 'object'
+          && 'message' in responseData
+          && typeof responseData.message === 'string'
+            ? responseData.message
+            : error.message;
+
+        return Promise.reject({
+          message: backendMessage,
+          status: error.response.status,
+          data: responseData ?? null,
+        });
       }
 
       // Xử lý chống trùng lặp request refresh

@@ -112,7 +112,7 @@ export function RideCard({ ride, href, userLocation, onMouseEnter, onMouseLeave,
 
   return (
     <div 
-      className="group relative w-full bg-white dark:bg-[#1d1d1f] rounded-[24px] p-6 sm:p-8 transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border border-transparent hover:border-[rgba(0,0,0,0.04)] dark:hover:border-[rgba(255,255,255,0.05)] overflow-hidden cursor-pointer"
+      className="group relative w-full bg-white dark:bg-[#1d1d1f] rounded-[24px] p-6 sm:p-8 transition-all shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border-2 border-slate-300 dark:border-slate-700 overflow-hidden cursor-pointer"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={onClick}

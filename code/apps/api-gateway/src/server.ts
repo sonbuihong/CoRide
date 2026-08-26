@@ -10,26 +10,34 @@ import morgan from 'morgan';
 
 const app = express();
 
-const PORT = process.env.PORT || 5001;
+const PORT = Number(process.env.PORT ?? '5001');
 const MONOLITH_URL = process.env.MONOLITH_URL || 'http://127.0.0.1:5101';
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://127.0.0.1:5201';
 
 // Middleware
 app.use(
   cors({
-    origin: [
-      process.env.FRONTEND_URL || 'http://localhost:3000',
-      'http://localhost:8081',
-      'http://localhost:8082' // Đề phòng Expo mở port 8082
-    ],
+    origin: process.env.NODE_ENV === 'production'
+      ? [
+          process.env.FRONTEND_URL || 'http://localhost:3000',
+          'http://localhost:8081',
+          'http://localhost:8082'
+        ]
+      : true, // Cho phép tất cả origin ở môi trường dev (localhost, LAN IP, Expo Web)
     credentials: true,
   })
 );
-app.use(morgan('dev'));
+// Docker probes this endpoint periodically. Keep normal API access logs useful
+// by omitting successful readiness traffic from Morgan output.
+app.use(
+  morgan('dev', {
+    skip: (req) => req.path === '/health',
+  })
+);
 
 // Health Check
 app.get('/health', (req, res) => {
-  res.json({ status: 'API Gateway is running' });
+  res.json({ status: 'ok', service: 'api-gateway' });
 });
 
 // Xử lý Chrome DevTools probe request để tránh lỗi 404 & CSP trên Console
@@ -60,13 +68,16 @@ const socketProxy = createProxyMiddleware({
   target: MONOLITH_URL,
   changeOrigin: true,
   ws: true,
+  // Mount proxy ở root để giữ nguyên /socket.io; mount tại /socket.io sẽ khiến
+  // Express strip prefix và backend nhận sai path "/" đối với polling request.
+  pathFilter: (pathname) => pathname.startsWith('/socket.io'),
   on: {
     error: (err) => {
       console.error('[API Gateway Error] Socket Proxy error:', err.message);
     },
   },
 });
-app.use('/socket.io', socketProxy);
+app.use(socketProxy);
 
 // 3. Fallback to Monolith cho tất cả HTTP requests còn lại
 app.use(
@@ -99,7 +110,7 @@ server.on('upgrade', (req, socket, head) => {
   }
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`API Gateway is running on http://localhost:${PORT}`);
   console.log(`Routing /socket.io to Monolith with WebSocket support at ${MONOLITH_URL}`);
   console.log(`Routing /api/notifications to Notification Service at ${NOTIFICATION_SERVICE_URL}`);

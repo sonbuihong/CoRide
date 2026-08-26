@@ -1,0 +1,143 @@
+;
+; Archive created at 2026-08-26 16:26:31
+;     dbname: coride_db
+;     TOC Entries: 133
+;     Compression: gzip
+;     Dump Version: 1.16-0
+;     Format: CUSTOM
+;     Integer: 4 bytes
+;     Offset: 8 bytes
+;     Dumped from database version: 18.3
+;     Dumped by pg_dump version: 18.3
+;
+;
+; Selected TOC Entries:
+;
+5; 2615 20490 SCHEMA - public postgres
+5311; 0 0 COMMENT - SCHEMA public postgres
+964; 1247 29634 TYPE public BookingPolicy postgres
+880; 1247 20522 TYPE public BookingStatus postgres
+961; 1247 29586 TYPE public PaymentMethod postgres
+907; 1247 20694 TYPE public PaymentStatus postgres
+949; 1247 27294 TYPE public ReportStatus postgres
+925; 1247 23482 TYPE public ReviewType postgres
+877; 1247 20512 TYPE public RideStatus postgres
+874; 1247 20506 TYPE public Role postgres
+901; 1247 20675 TYPE public TransactionStatus postgres
+904; 1247 20682 TYPE public TransactionType postgres
+934; 1247 24272 TYPE public TripStatus postgres
+946; 1247 27288 TYPE public VehicleStatus postgres
+937; 1247 24290 TYPE public VehicleType postgres
+928; 1247 23488 TYPE public VerificationStatus postgres
+223; 1259 20582 TABLE public Booking postgres
+231; 1259 23510 TABLE public DriverVerification postgres
+230; 1259 22528 TABLE public Location postgres
+228; 1259 20733 TABLE public Message postgres
+225; 1259 20652 TABLE public Notification postgres
+235; 1259 27318 TABLE public OTP postgres
+233; 1259 24326 TABLE public PricingConfig postgres
+229; 1259 21320 TABLE public ProvinceMapping postgres
+221; 1259 20548 TABLE public RefreshToken postgres
+236; 1259 27333 TABLE public Report postgres
+224; 1259 20599 TABLE public Review postgres
+222; 1259 20563 TABLE public Ride postgres
+237; 1259 29639 TABLE public RideSchedule postgres
+238; 1259 29653 TABLE public RideStop postgres
+227; 1259 20717 TABLE public Transaction postgres
+232; 1259 24295 TABLE public TripRequest postgres
+220; 1259 20531 TABLE public User postgres
+234; 1259 27301 TABLE public Vehicle postgres
+226; 1259 20703 TABLE public Wallet postgres
+219; 1259 20491 TABLE public _prisma_migrations postgres
+5289; 0 20582 TABLE DATA public Booking postgres
+5297; 0 23510 TABLE DATA public DriverVerification postgres
+5296; 0 22528 TABLE DATA public Location postgres
+5294; 0 20733 TABLE DATA public Message postgres
+5291; 0 20652 TABLE DATA public Notification postgres
+5301; 0 27318 TABLE DATA public OTP postgres
+5299; 0 24326 TABLE DATA public PricingConfig postgres
+5295; 0 21320 TABLE DATA public ProvinceMapping postgres
+5287; 0 20548 TABLE DATA public RefreshToken postgres
+5302; 0 27333 TABLE DATA public Report postgres
+5290; 0 20599 TABLE DATA public Review postgres
+5288; 0 20563 TABLE DATA public Ride postgres
+5303; 0 29639 TABLE DATA public RideSchedule postgres
+5304; 0 29653 TABLE DATA public RideStop postgres
+5293; 0 20717 TABLE DATA public Transaction postgres
+5298; 0 24295 TABLE DATA public TripRequest postgres
+5286; 0 20531 TABLE DATA public User postgres
+5300; 0 27301 TABLE DATA public Vehicle postgres
+5292; 0 20703 TABLE DATA public Wallet postgres
+5061; 2606 20598 CONSTRAINT public Booking Booking_pkey postgres
+5084; 2606 23526 CONSTRAINT public DriverVerification DriverVerification_pkey postgres
+5081; 2606 22543 CONSTRAINT public Location Location_pkey postgres
+5075; 2606 20748 CONSTRAINT public Message Message_pkey postgres
+5067; 2606 20667 CONSTRAINT public Notification Notification_pkey postgres
+5100; 2606 27332 CONSTRAINT public OTP OTP_pkey postgres
+5093; 2606 24345 CONSTRAINT public PricingConfig PricingConfig_pkey postgres
+5079; 2606 21335 CONSTRAINT public ProvinceMapping ProvinceMapping_pkey postgres
+5051; 2606 20562 CONSTRAINT public RefreshToken RefreshToken_pkey postgres
+5102; 2606 27348 CONSTRAINT public Report Report_pkey postgres
+5065; 2606 20612 CONSTRAINT public Review Review_pkey postgres
+5105; 2606 29652 CONSTRAINT public RideSchedule RideSchedule_pkey postgres
+5107; 2606 29667 CONSTRAINT public RideStop RideStop_pkey postgres
+5057; 2606 20581 CONSTRAINT public Ride Ride_pkey postgres
+5073; 2606 20732 CONSTRAINT public Transaction Transaction_pkey postgres
+5090; 2606 24325 CONSTRAINT public TripRequest TripRequest_pkey postgres
+5049; 2606 20547 CONSTRAINT public User User_pkey postgres
+5097; 2606 27317 CONSTRAINT public Vehicle Vehicle_pkey postgres
+5069; 2606 20716 CONSTRAINT public Wallet Wallet_pkey postgres
+5046; 2606 20504 CONSTRAINT public _prisma_migrations _prisma_migrations_pkey postgres
+5059; 1259 29678 INDEX public Booking_pickupStopId_idx postgres
+5062; 1259 28117 INDEX public Booking_rideId_passengerId_partial_key postgres
+5063; 1259 29677 INDEX public Booking_status_expiresAt_idx postgres
+5085; 1259 23527 INDEX public DriverVerification_userId_key postgres
+5082; 1259 22544 INDEX public Location_placeId_key postgres
+5098; 1259 27350 INDEX public OTP_email_idx postgres
+5094; 1259 24350 INDEX public PricingConfig_vehicleType_key postgres
+5076; 1259 21336 INDEX public ProvinceMapping_isActive_idx postgres
+5077; 1259 21337 INDEX public ProvinceMapping_oldProvince_effectiveDate_key postgres
+5052; 1259 20614 INDEX public RefreshToken_token_key postgres
+5103; 1259 29672 INDEX public RideSchedule_driverId_createdAt_idx postgres
+5108; 1259 29676 INDEX public RideStop_rideId_idx postgres
+5109; 1259 29675 INDEX public RideStop_rideId_order_key postgres
+5053; 1259 29674 INDEX public Ride_driverId_departureTime_key postgres
+5054; 1259 21338 INDEX public Ride_originProvince_destProvince_idx postgres
+5055; 1259 20668 INDEX public Ride_origin_destination_departureTime_idx postgres
+5058; 1259 29673 INDEX public Ride_scheduleId_departureTime_idx postgres
+5071; 1259 20750 INDEX public Transaction_externalId_key postgres
+5086; 1259 24347 INDEX public TripRequest_driverId_status_idx postgres
+5087; 1259 24349 INDEX public TripRequest_originLat_originLng_idx postgres
+5088; 1259 24346 INDEX public TripRequest_passengerId_status_idx postgres
+5091; 1259 24348 INDEX public TripRequest_status_createdAt_idx postgres
+5047; 1259 20613 INDEX public User_email_key postgres
+5095; 1259 27349 INDEX public Vehicle_licensePlate_key postgres
+5070; 1259 20749 INDEX public Wallet_userId_key postgres
+5114; 2606 20630 FK CONSTRAINT public Booking Booking_passengerId_fkey postgres
+5115; 2606 29694 FK CONSTRAINT public Booking Booking_pickupStopId_fkey postgres
+5116; 2606 20625 FK CONSTRAINT public Booking Booking_rideId_fkey postgres
+5128; 2606 23528 FK CONSTRAINT public DriverVerification DriverVerification_userId_fkey postgres
+5125; 2606 20771 FK CONSTRAINT public Message Message_receiverId_fkey postgres
+5126; 2606 20761 FK CONSTRAINT public Message Message_rideId_fkey postgres
+5127; 2606 20766 FK CONSTRAINT public Message Message_senderId_fkey postgres
+5120; 2606 20669 FK CONSTRAINT public Notification Notification_userId_fkey postgres
+5110; 2606 20615 FK CONSTRAINT public RefreshToken RefreshToken_userId_fkey postgres
+5132; 2606 27366 FK CONSTRAINT public Report Report_reportedId_fkey postgres
+5133; 2606 27361 FK CONSTRAINT public Report Report_reporterId_fkey postgres
+5134; 2606 27371 FK CONSTRAINT public Report Report_rideId_fkey postgres
+5135; 2606 27376 FK CONSTRAINT public Report Report_tripRequestId_fkey postgres
+5117; 2606 20645 FK CONSTRAINT public Review Review_revieweeId_fkey postgres
+5118; 2606 20640 FK CONSTRAINT public Review Review_reviewerId_fkey postgres
+5119; 2606 20635 FK CONSTRAINT public Review Review_rideId_fkey postgres
+5136; 2606 29679 FK CONSTRAINT public RideSchedule RideSchedule_driverId_fkey postgres
+5137; 2606 29689 FK CONSTRAINT public RideStop RideStop_rideId_fkey postgres
+5111; 2606 20620 FK CONSTRAINT public Ride Ride_driverId_fkey postgres
+5112; 2606 29684 FK CONSTRAINT public Ride Ride_scheduleId_fkey postgres
+5113; 2606 27351 FK CONSTRAINT public Ride Ride_vehicleId_fkey postgres
+5122; 2606 21339 FK CONSTRAINT public Transaction Transaction_bookingId_fkey postgres
+5123; 2606 29599 FK CONSTRAINT public Transaction Transaction_tripRequestId_fkey postgres
+5124; 2606 20756 FK CONSTRAINT public Transaction Transaction_walletId_fkey postgres
+5129; 2606 24356 FK CONSTRAINT public TripRequest TripRequest_driverId_fkey postgres
+5130; 2606 24351 FK CONSTRAINT public TripRequest TripRequest_passengerId_fkey postgres
+5131; 2606 27356 FK CONSTRAINT public Vehicle Vehicle_userId_fkey postgres
+5121; 2606 20751 FK CONSTRAINT public Wallet Wallet_userId_fkey postgres

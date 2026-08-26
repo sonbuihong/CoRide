@@ -9,7 +9,7 @@ SET "offeredSeats" = GREATEST(
     SELECT SUM(b."seats")
     FROM "Booking" b
     WHERE b."rideId" = r."id"
-      AND b."status" IN ('PENDING', 'CONFIRMED', 'COMPLETED')
+      AND b."status" IN ('PENDING', 'CONFIRMED')
   ), 0),
   1
 );

@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "migrate": "npx prisma migrate deploy --schema ../packages/database/prisma/schema.prisma",
+    "migrate": "prisma migrate deploy --schema ../../packages/database/prisma/schema.prisma",
     "test": "jest",
     "test:watch": "jest --watch"
   },

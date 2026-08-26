@@ -96,9 +96,15 @@ app.use('/uploads', express.static(uploadsDir));
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
+    service: 'backend',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV ?? 'development',
   });
+});
+
+// Alias tối giản cho Docker/readiness tools; API public vẫn dùng /api/health.
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'backend' });
 });
 
 // ─── API Routes ───────────────────────────────────────────────────────────────

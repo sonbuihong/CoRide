@@ -14,8 +14,9 @@ config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, "node_modules"),
   path.resolve(workspaceRoot, "node_modules"),
 ];
-// 3. Force Metro to resolve (sub)dependencies only from the `nodeModulesPaths`
-config.resolver.disableHierarchicalLookup = true;
+// 3. Keep hierarchical lookup enabled. pnpm stores transitive dependencies
+// beside each package under .pnpm; disabling this makes valid Expo dependencies
+// such as whatwg-fetch invisible to Metro.
 
 // 4. Mock native-only packages for web platform
 const defaultResolveRequest = config.resolver.resolveRequest;

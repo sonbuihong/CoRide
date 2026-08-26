@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,24 +8,43 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { AppInput } from '../../src/components/ui/AppInput';
 import { AppButton } from '../../src/components/ui/AppButton';
 import { AppText } from '../../src/components/ui/AppText';
+import { AppCheckbox } from '../../src/components/ui/AppCheckbox';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { colors } from '../../src/theme/tokens';
+import * as SecureStore from '../../src/services/secure-store';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberAccount, setRememberAccount] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
+  const { control, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
+
+  // Tự động load tài khoản đã nhớ khi mở màn hình đăng nhập
+  useEffect(() => {
+    let isMounted = true;
+    SecureStore.getRememberedAccount().then(({ remember, email }) => {
+      if (isMounted && remember && email) {
+        setRememberAccount(true);
+        setValue('email', email, { shouldValidate: true });
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [setValue]);
 
   const onSubmit = async (data: LoginInput) => {
     try {
       setErrorMsg(null);
       await login(data);
+      // Lưu hoặc xóa thông tin tài khoản theo lựa chọn của người dùng
+      await SecureStore.setRememberedAccount(rememberAccount, data.email);
     } catch (error: any) {
       setErrorMsg(error.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
     }
@@ -109,12 +128,19 @@ export default function LoginScreen() {
             />
           </View>
 
-          <TouchableOpacity 
-            className="self-end mb-6"
-            onPress={() => router.push('/(auth)/forgot-password' as any)}
-          >
-            <AppText variant="bodySmall" weight="semibold" className="text-passenger">Quên mật khẩu?</AppText>
-          </TouchableOpacity>
+          <View className="flex-row justify-between items-center mb-6">
+            <AppCheckbox
+              checked={rememberAccount}
+              onCheckedChange={setRememberAccount}
+              label="Nhớ tài khoản"
+            />
+
+            <TouchableOpacity 
+              onPress={() => router.push('/(auth)/forgot-password' as any)}
+            >
+              <AppText variant="bodySmall" weight="semibold" className="text-passenger">Quên mật khẩu?</AppText>
+            </TouchableOpacity>
+          </View>
 
           <AppButton
             title="Đăng nhập"

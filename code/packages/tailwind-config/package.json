@@ -1,0 +1,8 @@
+{
+  "name": "@repo/tailwind-config",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./coride-preset.js",
+  "exports": { ".": "./coride-preset.js", "./coride-preset": "./coride-preset.js" },
+  "dependencies": { "@repo/design-tokens": "workspace:*" }
+}

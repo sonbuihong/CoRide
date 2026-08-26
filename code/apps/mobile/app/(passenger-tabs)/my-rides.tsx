@@ -140,7 +140,7 @@ export default function MyRidesScreen() {
           filteredBookings.map((item: any) => (
             <TouchableOpacity
               key={item.id}
-              className="bg-white p-4 rounded-2xl mb-3 shadow-sm border border-gray-100"
+              className="bg-white p-4 rounded-2xl mb-3 shadow-sm border-[1.5px] border-slate-400"
               onPress={() => router.push(`/booking/${item.id}`)}
             >
               <View className="flex-row justify-between items-start mb-3">

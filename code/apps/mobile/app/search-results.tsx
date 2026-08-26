@@ -5,10 +5,9 @@ import { ArrowLeft, CalendarDays, RefreshCw, Search, Users, WifiOff } from 'luci
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { RideCard } from '../src/components/RideCard';
+import { RideCard, RideCardSkeleton } from '../src/components/RideCard';
 import { AppText } from '../src/components/ui/AppText';
 import { EmptyState } from '../src/components/ui/EmptyState';
-import { SkeletonLoader } from '../src/components/ui/SkeletonLoader';
 import { type RideSearchParams, rideService } from '../src/services/ride.service';
 import { colors, layout, radius, spacing } from '../src/theme/tokens';
 
@@ -74,8 +73,10 @@ export default function SearchResultsScreen() {
         </View>
 
         {query.isPending ? (
-          <View accessibilityRole="progressbar" accessibilityLabel="Đang tìm chuyến" style={styles.skeletonList}>
-            {[0, 1, 2].map((item) => <View key={item} style={styles.skeletonCard}><SkeletonLoader height={22} width="45%" borderRadius={7} /><SkeletonLoader height={48} width="100%" borderRadius={12} /><SkeletonLoader height={82} width="100%" borderRadius={12} /></View>)}
+          <View accessibilityRole="progressbar" accessibilityLabel="Đang tìm chuyến">
+            <RideCardSkeleton />
+            <RideCardSkeleton />
+            <RideCardSkeleton />
           </View>
         ) : query.isError ? (
           <EmptyState icon={<WifiOff size={44} color={colors.danger} />} title="Không thể tải danh sách chuyến" description="Kiểm tra kết nối mạng rồi thử lại." actionTitle="Thử lại" onAction={() => query.refetch()} />
@@ -85,7 +86,7 @@ export default function SearchResultsScreen() {
               <AppText variant="h2" weight="semibold">{query.data.length} chuyến tìm thấy</AppText>
               <AppText variant="caption" style={styles.secondaryText}>Ưu tiên chuyến gần tuyến và đúng thời gian</AppText>
             </View>
-            {query.data.map((ride) => <RideCard key={ride.id} ride={ride} />)}
+            {query.data.map((ride) => <RideCard key={ride.id} ride={ride} showMatch />)}
           </View>
         ) : (
           <EmptyState icon={<Search size={44} color={colors.textTertiary} />} title="Chưa có chuyến phù hợp" description="Hãy thử đổi giờ khởi hành hoặc chọn một điểm đến gần tuyến đường chính hơn." actionTitle="Sửa tìm kiếm" onAction={() => router.back()} />
@@ -96,7 +97,7 @@ export default function SearchResultsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { backgroundColor: colors.background, flex: 1 },
+  screen: { backgroundColor: '#F0F2F6', flex: 1 },
   header: { alignItems: 'center', backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 64, paddingHorizontal: spacing.sm },
   headerButton: { alignItems: 'center', borderRadius: radius.pill, height: layout.minTouchTarget, justifyContent: 'center', width: layout.minTouchTarget },
   headerCopy: { flex: 1, minWidth: 0, paddingHorizontal: spacing.xs },
