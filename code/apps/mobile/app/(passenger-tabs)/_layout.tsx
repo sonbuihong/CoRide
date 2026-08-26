@@ -1,68 +1,33 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Home, Car, Bell, User, Zap } from 'lucide-react-native';
+import { Bell, ClipboardList, Home, User } from 'lucide-react-native';
+import { MobileAppHeader } from '../../src/components/layout/MobileAppHeader';
+import {
+  getRoleTabColor,
+  RoleBottomTabBar,
+  RoleTabIcon,
+  RoleTabLabel,
+} from '../../src/components/navigation/RoleTabBar';
+import { colors } from '../../src/theme/tokens';
 
-export default function TabLayout() {
-  const activeColor = '#3B82F6'; // CoRide Blue
-  const inactiveColor = '#64748B'; // Text Secondary
+export default function PassengerTabLayout() {
+  const mode = 'passenger' as const;
+  const activeColor = getRoleTabColor(mode);
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: activeColor,
-        tabBarInactiveTintColor: inactiveColor,
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E2E8F0',
-          elevation: 0,
-          shadowOpacity: 0,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-          marginTop: 2,
-        },
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Trang chủ',
-          tabBarIcon: ({ color, size }) => <Home size={24} color={color} strokeWidth={2.5} />,
-        }}
-      />
-      <Tabs.Screen
-        name="my-rides"
-        options={{
-          title: 'Chuyến đi',
-          tabBarIcon: ({ color, size }) => <Car size={24} color={color} strokeWidth={2.5} />,
-        }}
-      />
-      <Tabs.Screen
-        name="ride-hailing"
-        options={{
-          title: 'Gọi Xe Nhanh',
-          tabBarIcon: ({ color, size }) => <Zap size={24} color={color} strokeWidth={2.5} />,
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: 'Thông báo',
-          tabBarIcon: ({ color, size }) => <Bell size={24} color={color} strokeWidth={2.5} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Cá nhân',
-          tabBarIcon: ({ color, size }) => <User size={24} color={color} strokeWidth={2.5} />,
-        }}
-      />
+    <Tabs tabBar={(props) => <RoleBottomTabBar {...props} mode={mode} />} screenOptions={{
+      headerShown: true,
+      header: () => <MobileAppHeader mode="passenger" />,
+      tabBarActiveTintColor: activeColor,
+      tabBarInactiveTintColor: colors.textTertiary,
+      tabBarHideOnKeyboard: true,
+    }}>
+      <Tabs.Screen name="index" options={{ title: 'Home', tabBarAccessibilityLabel: 'Home', tabBarLabel: ({ color, focused }) => <RoleTabLabel color={color} focused={focused} label="Home" />, tabBarIcon: ({ color, focused }) => <RoleTabIcon focused={focused} mode={mode}><Home size={21} color={color} strokeWidth={focused ? 2.5 : 2} /></RoleTabIcon> }} />
+      <Tabs.Screen name="my-rides" options={{ title: 'Hoạt động', tabBarAccessibilityLabel: 'Hoạt động', tabBarLabel: ({ color, focused }) => <RoleTabLabel color={color} focused={focused} label="Hoạt động" />, tabBarIcon: ({ color, focused }) => <RoleTabIcon focused={focused} mode={mode}><ClipboardList size={21} color={color} strokeWidth={focused ? 2.5 : 2} /></RoleTabIcon> }} />
+      <Tabs.Screen name="notifications" options={{ title: 'Thông báo', tabBarAccessibilityLabel: 'Thông báo', tabBarLabel: ({ color, focused }) => <RoleTabLabel color={color} focused={focused} label="Thông báo" />, tabBarIcon: ({ color, focused }) => <RoleTabIcon focused={focused} mode={mode}><Bell size={21} color={color} strokeWidth={focused ? 2.5 : 2} /></RoleTabIcon> }} />
+      <Tabs.Screen name="profile" options={{ title: 'Hồ sơ', tabBarAccessibilityLabel: 'Hồ sơ cá nhân', tabBarLabel: ({ color, focused }) => <RoleTabLabel color={color} focused={focused} label="Hồ sơ" />, tabBarIcon: ({ color, focused }) => <RoleTabIcon focused={focused} mode={mode}><User size={21} color={color} strokeWidth={focused ? 2.5 : 2} /></RoleTabIcon> }} />
+      <Tabs.Screen name="messages" options={{ href: null }} />
+      <Tabs.Screen name="ride-hailing" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -30,6 +30,12 @@ enum BookingStatus {
   COMPLETED
   CANCELLED
   REJECTED
+  EXPIRED
+}
+
+enum BookingPolicy {
+  INSTANT
+  DRIVER_APPROVAL
 }
 
 enum TransactionStatus {
@@ -129,8 +135,9 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations — Carpooling
-  ridesAsDriver Ride[]    @relation("DriverRides")
-  bookings      Booking[] @relation("PassengerBookings")
+  ridesAsDriver Ride[]         @relation("DriverRides")
+  rideSchedules RideSchedule[]
+  bookings      Booking[]      @relation("PassengerBookings")
 
   // Relations — Ride-Hailing
   tripsAsPassenger TripRequest[] @relation("PassengerTrips")
@@ -218,9 +225,9 @@ model Notification {
 }
 
 model Ride {
-  id             String     @id @default(uuid())
+  id             String        @id @default(uuid())
   driverId       String
-  driver         User       @relation("DriverRides", fields: [driverId], references: [id])
+  driver         User          @relation("DriverRides", fields: [driverId], references: [id])
   origin         String
   originLat      Float?
   originLng      Float?
@@ -229,16 +236,17 @@ model Ride {
   destinationLng Float?
   distance       Float?
   duration       Float?
-  routePolyline  String?    @db.Text
+  routePolyline  String?       @db.Text
   departureTime  DateTime
   availableSeats Int
-  offeredSeats   Int        @default(1) // Số ghế mở bán ban đầu, cố định trong công thức chia chi phí
+  offeredSeats   Int           @default(1) // Số ghế mở bán ban đầu, cố định trong công thức chia chi phí
   pricePerSeat   Float
-  tollCost       Float      @default(0) // Tổng phí cầu đường của tuyến tài xế (VND)
-  status         RideStatus @default(SCHEDULED)
+  tollCost       Float         @default(0) // Tổng phí cầu đường của tuyến tài xế (VND)
+  bookingPolicy  BookingPolicy @default(DRIVER_APPROVAL)
+  status         RideStatus    @default(SCHEDULED)
   description    String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   // Structured address fields for origin
   originHouseNumber String?
@@ -264,6 +272,9 @@ model Ride {
   vehicleId String?
   vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
 
+  scheduleId String?
+  schedule   RideSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+
   // Quy định chuyến đi — tài xế thiết lập khi đăng chuyến
   allowRoutePickup Boolean @default(true)
   allowSmoking     Boolean @default(false)
@@ -272,12 +283,45 @@ model Ride {
 
   // Relations
   bookings Booking[]
+  stops    RideStop[]
   reviews  Review[]
   messages Message[]
   reports  Report[]
 
+  @@unique([driverId, departureTime])
   @@index([origin, destination, departureTime])
   @@index([originProvince, destProvince])
+  @@index([scheduleId, departureTime])
+}
+
+model RideSchedule {
+  id        String   @id @default(uuid())
+  driverId  String
+  driver    User     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  timezone  String   @default("Asia/Ho_Chi_Minh")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rides Ride[]
+
+  @@index([driverId, createdAt])
+}
+
+model RideStop {
+  id        String   @id @default(uuid())
+  rideId    String
+  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  address   String
+  name      String?
+  latitude  Float
+  longitude Float
+  order     Int
+  createdAt DateTime @default(now())
+
+  selectedByBookings Booking[] @relation("BookingPickupStop")
+
+  @@unique([rideId, order])
+  @@index([rideId])
 }
 
 model Booking {
@@ -292,6 +336,8 @@ model Booking {
   detourKm         Float? // Quãng đường phát sinh do đón/trả booking này
   priceBreakdown   Json? // Chi tiết tính đóng góp để có thể kiểm tra/audit
   status           BookingStatus @default(PENDING)
+  expiresAt        DateTime?
+  seatHeld         Boolean       @default(false)
   paymentStatus    PaymentStatus @default(UNPAID)
   transactions     Transaction[]
 
@@ -301,6 +347,8 @@ model Booking {
   passengerLat  Float?
   passengerLng  Float?
   pickupAddress String? // Địa chỉ đón chi tiết để hiển thị cho tài xế
+  pickupStopId  String?
+  pickupStop    RideStop? @relation("BookingPickupStop", fields: [pickupStopId], references: [id], onDelete: SetNull)
 
   // Tài xế đã đón khách lên xe hay chưa — chỉ có ý nghĩa khi status = CONFIRMED và ride = ONGOING
   // false: đang trên đường đến điểm đón | true: đã đón khách, đang di chuyển về đích
@@ -324,6 +372,9 @@ model Booking {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([status, expiresAt])
+  @@index([pickupStopId])
 }
 
 model Review {
@@ -473,7 +524,7 @@ model PricingConfig {
   fuelConsumption       Float       @default(6.5) // lít/100km
   vehicleOverheadRatio  Float       @default(0.5) // bảo dưỡng, khấu hao = 50% nhiên liệu
   minimumDriverShare    Float       @default(0.2) // tài xế luôn chịu tối thiểu 20%
-  driverPriceAdjustment Float       @default(0.15) // biên điều chỉnh ±15%
+  driverPriceAdjustment Float       @default(0.2) // biên điều chỉnh ±20%
   roundingUnit          Int         @default(1000) // làm tròn đến 1.000 VND
   maxDetourKm           Float       @default(5)
   maxDetourRatio        Float       @default(0.1)

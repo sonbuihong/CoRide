@@ -47,7 +47,7 @@ export function SearchForm({
   activeLocationField,
   isMapPicking,
   onActiveLocationFieldChange,
-  autocompleteVersion = 'v1',
+  autocompleteVersion = 'v2',
 }: SearchFormProps) {
   // Dùng chung một mốc khởi tạo cho value và min để tránh lệch phút sau re-render.
   const [minimumDateTime] = useState(() => toLocalDateTimeValue(new Date()));

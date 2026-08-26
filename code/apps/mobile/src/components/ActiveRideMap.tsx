@@ -88,7 +88,7 @@ export const ActiveRideMap: React.FC<ActiveRideMapProps> = ({
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         }}
-        showsUserLocation={false}
+        showsUserLocation
         showsMyLocationButton={false}
       >
         {/* Route polyline */}

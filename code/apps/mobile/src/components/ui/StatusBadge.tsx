@@ -21,6 +21,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
         return { text: 'Bị từ chối', bg: 'bg-rejected/10', color: 'text-rejected' };
       case 'CANCELLED':
         return { text: 'Đã hủy', bg: 'bg-cancelled/10', color: 'text-cancelled' };
+      case 'EXPIRED':
+        return { text: 'Đã hết hạn', bg: 'bg-slate-100', color: 'text-text-secondary' };
       
       // Verification Status khusus
       case 'APPROVED':
@@ -37,6 +39,17 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
         return { text: 'Đã đủ chỗ', bg: 'bg-slate-200', color: 'text-text-secondary' };
       case 'ONGOING':
         return { text: 'Đang diễn ra', bg: 'bg-passenger-soft', color: 'text-passenger' };
+      case 'WAITING_PICKUP':
+        return { text: 'Đã đặt chuyến', bg: 'bg-passenger-soft', color: 'text-passenger' };
+      case 'PICKING_UP':
+      case 'ARRIVING':
+        return { text: 'Tài xế đang đến', bg: 'bg-passenger-soft', color: 'text-passenger' };
+      case 'ACCEPTED':
+        return { text: 'Tài xế đã xác nhận', bg: 'bg-confirmed/10', color: 'text-confirmed' };
+      case 'IN_PROGRESS':
+        return { text: 'Đang di chuyển', bg: 'bg-passenger-soft', color: 'text-passenger' };
+      case 'WAITING_PAYMENT':
+        return { text: 'Chờ thanh toán', bg: 'bg-pending/10', color: 'text-pending' };
       case 'COMPLETED':
         return { text: 'Đã hoàn thành', bg: 'bg-confirmed/10', color: 'text-confirmed' };
         

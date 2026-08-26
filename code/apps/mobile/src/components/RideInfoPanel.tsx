@@ -3,8 +3,8 @@
 // Driver ONGOING: hiển thị thông tin khách đang đón + danh sách pickup status
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Linking, ScrollView } from 'react-native';
-import { MapPin, Phone, Clock, Users, ChevronUp, ChevronDown, Navigation } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, Linking, ScrollView, LayoutAnimation } from 'react-native';
+import { MapPin, Phone, Clock, Users, Navigation, Send, User, Wallet } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -98,42 +98,104 @@ export const RideInfoPanel: React.FC<RideInfoPanelProps> = ({
   };
 
   return (
-    <View className="bg-white rounded-t-3xl shadow-lg border-t border-gray-100">
+    <View className="pt-2">
       {/* Handle kéo lên/xuống */}
       <TouchableOpacity
-        onPress={() => setExpanded(!expanded)}
-        className="items-center pt-3 pb-2"
+        onPress={() => {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setExpanded(!expanded);
+        }}
+        className="items-center pt-3 pb-4"
+        activeOpacity={0.7}
       >
-        <View className="w-10 h-1 bg-gray-300 rounded-full mb-2" />
-        {expanded ? (
-          <ChevronDown size={18} color="#9CA3AF" />
-        ) : (
-          <ChevronUp size={18} color="#9CA3AF" />
-        )}
+        <View className="w-12 h-1.5 bg-gray-200 rounded-full" />
       </TouchableOpacity>
 
       {/* Compact info — luôn hiển thị */}
-      <View className="px-5 pb-4">
+      <View className="px-5 pb-2">
         {/* Trạng thái + thông tin route */}
-        <View className="flex-row items-center justify-between mb-3">
+        <View className="flex-row items-center justify-between mb-4">
           <View className="flex-row items-center">
-            <Navigation size={16} color="#3B82F6" />
-            <Text className={`ml-2 font-bold ${rideStatusColor()}`}>
+            <Send 
+              size={20} 
+              color={ride.status === 'SCHEDULED' ? '#D97706' : '#2563EB'} 
+              style={{ transform: [{ rotate: '45deg' }, { translateY: -2 }, { translateX: -2 }] }} 
+            />
+            <Text className={`ml-2.5 font-bold text-[17px] ${rideStatusColor()}`}>
               {rideStatusLabel()}
             </Text>
           </View>
           {distance !== undefined && duration !== undefined && (
-            <View className="flex-row items-center">
-              <Text className="text-gray-500 text-sm">
-                {formatDistance(distance)} - {formatDuration(duration)}
+            <Text className="text-gray-500 font-medium text-[15px]">
+              {formatDuration(duration)} • {formatDistance(distance)}
+            </Text>
+          )}
+        </View>
+
+        {/* Thẻ gộp Điểm đi - Điểm đến - Thống kê */}
+        <View className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm mb-3" style={{ elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8 }}>
+          {/* Điểm đi */}
+          <View className="flex-row items-stretch">
+            <View className="w-5 items-center mr-3">
+              <View className="w-3.5 h-3.5 bg-green-500 rounded-full mt-0.5" />
+              <View className="flex-1 w-[2px] border-l-[2px] border-dashed border-gray-300 my-1.5" />
+            </View>
+            <View className="flex-1 pb-4">
+              <Text className="text-[13px] text-gray-500 font-medium mb-1">Điểm đi</Text>
+              <Text className="text-gray-800 font-bold text-[15px]" numberOfLines={2}>
+                {ride.origin}
               </Text>
             </View>
-          )}
+          </View>
+
+          {/* Điểm đến */}
+          <View className="flex-row items-stretch mb-4">
+            <View className="w-5 items-center mr-3">
+              <View className="w-3.5 h-3.5 bg-red-500 rounded-full mt-0.5" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[13px] text-gray-500 font-medium mb-1">Điểm đến</Text>
+              <Text className="text-gray-800 font-bold text-[15px]" numberOfLines={2}>
+                {ride.destination}
+              </Text>
+            </View>
+          </View>
+
+          {/* Đường kẻ ngang */}
+          <View className="h-[1px] bg-gray-100 w-full mb-4" />
+
+          {/* 3 Cột thống kê */}
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center flex-1">
+              <View className="w-8 h-8 bg-blue-50 rounded-full items-center justify-center mr-2">
+                <User size={16} color="#3B82F6" strokeWidth={2.5} />
+              </View>
+              <Text className="text-[13px] text-gray-700 font-medium">
+                {userRole === 'PASSENGER' ? `${booking?.seats || 0}` : `${ride.availableSeats}`} khách
+              </Text>
+            </View>
+            <View className="flex-row items-center flex-1 justify-center">
+              <View className="w-8 h-8 bg-blue-50 rounded-full items-center justify-center mr-2">
+                <MapPin size={16} color="#3B82F6" strokeWidth={2.5} />
+              </View>
+              <Text className="text-[13px] text-gray-700 font-medium">
+                {distance ? formatDistance(distance) : '0 km'}
+              </Text>
+            </View>
+            <View className="flex-row items-center flex-1 justify-end">
+              <View className="w-8 h-8 bg-blue-50 rounded-full items-center justify-center mr-2">
+                <Wallet size={16} color="#3B82F6" strokeWidth={2.5} />
+              </View>
+              <Text className="text-[12px] text-gray-700 font-medium leading-[16px]">
+                Thanh toán{'\n'}tiền mặt
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Section đón khách — chỉ hiện cho driver khi đang ONGOING và có khách cần đón */}
         {userRole === 'DRIVER' && currentTargetType === 'PICKUP' && currentBooking && (
-          <View className="bg-orange-50 p-4 rounded-2xl mb-3 border border-orange-200">
+          <View className="bg-orange-50 p-4 rounded-2xl mb-1 border border-orange-200">
             <View className="flex-row items-center justify-between mb-2">
               <Text className="text-orange-700 font-bold text-sm">Đang đi đón khách</Text>
               {(pendingPickups.length + pickedUpBookings.length) > 1 && (
@@ -174,71 +236,45 @@ export const RideInfoPanel: React.FC<RideInfoPanelProps> = ({
 
         {/* Badge đã đón hết khách — hiện khi đang đi đến điểm đến */}
         {userRole === 'DRIVER' && currentTargetType === 'DESTINATION' && pickedUpBookings.length > 0 && (
-          <View className="bg-green-50 p-3 rounded-2xl mb-3 border border-green-200">
+          <View className="bg-green-50 p-3 rounded-2xl mb-1 border border-green-200">
             <Text className="text-green-700 font-medium text-sm text-center">
               Đã đón {pickedUpBookings.length} hành khách - Đang đi đến điểm đến
             </Text>
-          </View>
-        )}
-
-        {/* Điểm đi → Điểm đến */}
-        <View className="bg-gray-50 p-4 rounded-2xl mb-3">
-          <View className="flex-row items-start mb-3">
-            <View className="w-3 h-3 bg-green-500 rounded-full mt-1 mr-3" />
-            <View className="flex-1">
-              <Text className="text-xs text-gray-400">Điểm đi</Text>
-              <Text className="text-gray-800 font-medium" numberOfLines={2}>
-                {ride.origin}
-              </Text>
-            </View>
-          </View>
-
-          {/* Đường nối dọc */}
-          <View className="ml-1.5 border-l border-dashed border-gray-300 h-3 mb-3" />
-
-          <View className="flex-row items-start">
-            <View className="w-3 h-3 bg-red-500 rounded-full mt-1 mr-3" />
-            <View className="flex-1">
-              <Text className="text-xs text-gray-400">Điểm đến</Text>
-              <Text className="text-gray-800 font-medium" numberOfLines={2}>
-                {ride.destination}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Thông tin đối tác — compact */}
-        {partnerInfo && (
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center flex-1">
-              <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mr-3">
-                <Text className="text-blue-600 font-bold">
-                  {partnerInfo.firstName?.charAt(0) || '?'}
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-gray-800 font-bold">
-                  {partnerInfo.firstName} {partnerInfo.lastName}
-                </Text>
-                <Text className="text-gray-400 text-xs">{partnerLabel}</Text>
-              </View>
-            </View>
-
-            {partnerInfo.phone && (
-              <TouchableOpacity
-                onPress={handleCall}
-                className="bg-green-50 p-3 rounded-full"
-              >
-                <Phone size={20} color="#22C55E" />
-              </TouchableOpacity>
-            )}
           </View>
         )}
       </View>
 
       {/* Expanded info — chi tiết thêm */}
       {expanded && (
-        <ScrollView className="px-5 pb-6 max-h-60">
+        <ScrollView className="px-5 pb-6 max-h-60" showsVerticalScrollIndicator={false}>
+          {/* Thông tin đối tác — Di chuyển từ compact sang đây */}
+          {partnerInfo && (
+            <View className="flex-row items-center justify-between mb-5 bg-blue-50/50 p-3 rounded-2xl border border-blue-50">
+              <View className="flex-row items-center flex-1">
+                <View className="w-11 h-11 bg-blue-100 rounded-full items-center justify-center mr-3">
+                  <Text className="text-blue-600 font-bold text-lg">
+                    {partnerInfo.firstName?.charAt(0) || '?'}
+                  </Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-gray-800 font-bold text-base">
+                    {partnerInfo.firstName} {partnerInfo.lastName}
+                  </Text>
+                  <Text className="text-gray-500 text-sm font-medium">{partnerLabel}</Text>
+                </View>
+              </View>
+
+              {partnerInfo.phone && (
+                <TouchableOpacity
+                  onPress={handleCall}
+                  className="bg-green-100 p-3 rounded-full"
+                >
+                  <Phone size={20} color="#16A34A" />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
           <View className="border-t border-gray-100 pt-4">
             {/* Thời gian */}
             <View className="flex-row items-center mb-3">

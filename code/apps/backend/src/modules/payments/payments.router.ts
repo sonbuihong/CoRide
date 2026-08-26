@@ -17,7 +17,7 @@ router.get('/wallet', authenticate, PaymentsController.getMyWallet);
  * @desc Lấy mã QR giả lập thanh toán
  * @access Private
  */
-router.get('/simulator/qr/:tripId', authenticate, PaymentsController.getSimulatorQR);
+router.get('/simulator/qr/:id', authenticate, PaymentsController.getSimulatorQR);
 
 /**
  * @route POST /api/payments/simulator/confirm

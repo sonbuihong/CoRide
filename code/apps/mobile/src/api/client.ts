@@ -1,24 +1,16 @@
-import axios from 'axios';
+import axios, { create } from 'axios';
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import * as SecureStore from '../services/secure-store';
 
-import { Platform } from 'react-native';
+import { useAppStore } from '../stores/useAppStore';
+import { API_URL } from '../config/network';
 
-let API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:5001/api';
-
-if (Platform.OS !== 'android') {
-  API_URL = API_URL.replace('10.0.2.2', 'localhost');
-}
-
-if (!API_URL) {
-  console.warn('Cảnh báo: EXPO_PUBLIC_API_URL chưa được định nghĩa trong file .env');
-}
-
-export const apiClient: AxiosInstance = axios.create({
+export const apiClient: AxiosInstance = create({
   baseURL: API_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
+    'X-Client-Type': 'mobile',
   },
 });
 
@@ -27,6 +19,7 @@ const NO_AUTH_URLS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/f
 
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.baseURL || ''}${config.url || ''}`);
     // Không đính kèm token cho các route auth public
     if (config.url && NO_AUTH_URLS.some(url => config.url?.includes(url))) {
       return config;
@@ -45,12 +38,12 @@ apiClient.interceptors.request.use(
 
 // Trạng thái cho luồng refresh token
 let isRefreshing = false;
-let failedQueue: Array<{
+let failedQueue: {
   resolve: (value?: unknown) => void;
-  reject: (reason?: any) => void;
-}> = [];
+  reject: (reason?: unknown) => void;
+}[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);
@@ -67,9 +60,24 @@ interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
 }
 
 apiClient.interceptors.response.use(
-  (response: AxiosResponse) => response,
+  (response: AxiosResponse) => {
+    useAppStore.getState().setOffline(false);
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
+    const requestUrl = originalRequest?.url ?? '';
+    const isPublicAuthRequest = NO_AUTH_URLS.some(url => requestUrl.includes(url));
+
+    // 4xx từ form đăng nhập/đăng ký là phản hồi nghiệp vụ dự kiến và đã được
+    // hiển thị trên UI; không đẩy thành console.error với stack trace rất dài.
+    if (!error.response || (error.response.status ?? 0) >= 500) {
+      console.error(`[API Error] ${originalRequest?.baseURL || ''}${requestUrl} -> ${error.message} (code: ${error.code}, status: ${error.response?.status})`);
+    }
+
+    // A HTTP error still proves that the server is reachable. Only requests
+    // without any response should put the app into offline state.
+    useAppStore.getState().setOffline(!error.response);
     
     // Nếu request bị hủy hoặc không có response
     if (!originalRequest || !error.response) {
@@ -80,8 +88,20 @@ apiClient.interceptors.response.use(
     if (error.response.status === 401 && !originalRequest._retry) {
       
       // Bỏ qua refresh đối với các URL auth để tránh vòng lặp
-      if (originalRequest.url && NO_AUTH_URLS.some(url => originalRequest.url?.includes(url))) {
-        return Promise.reject(error);
+      if (isPublicAuthRequest) {
+        const responseData = error.response.data;
+        const backendMessage = responseData
+          && typeof responseData === 'object'
+          && 'message' in responseData
+          && typeof responseData.message === 'string'
+            ? responseData.message
+            : error.message;
+
+        return Promise.reject({
+          message: backendMessage,
+          status: error.response.status,
+          data: responseData ?? null,
+        });
       }
 
       // Xử lý chống trùng lặp request refresh
@@ -104,15 +124,22 @@ apiClient.interceptors.response.use(
         // Trên Mobile, Axios sẽ tự động gửi cookie nếu nó cùng domain và OS hỗ trợ.
         // Hoặc chúng ta gửi kèm thông qua Header nếu backend hỗ trợ custom extraction.
         // Ở đây chúng ta chỉ gọi API refresh. Cookie xử lý bởi OS native network layer.
-        const response = await axios.post(`${apiClient.defaults.baseURL}/auth/refresh`, {}, {
-          // withCredentials: true, // Chỉ ý nghĩa với browser, nhưng giữ để tương thích nếu cần
-        });
+        const refreshToken = await SecureStore.getRefreshToken();
+        if (!refreshToken) throw new Error('Phiên đăng nhập đã hết hạn');
+        const response = await axios.post(
+          `${apiClient.defaults.baseURL}/auth/refresh`,
+          { refreshToken },
+          { headers: { 'X-Client-Type': 'mobile' } },
+        );
 
         const newAccessToken = response.data.accessToken;
         
         // Lưu lại token mới
         if (newAccessToken) {
           await SecureStore.setAccessToken(newAccessToken);
+          if (response.data.refreshToken) {
+            await SecureStore.setRefreshToken(response.data.refreshToken);
+          }
           
           apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;

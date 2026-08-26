@@ -58,6 +58,10 @@ export type ExtendedPrismaClient = typeof extendedPrisma;
 
 export default extendedPrisma;
 
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;
+const nodeEnv = (globalThis as typeof globalThis & {
+  process?: { env?: { NODE_ENV?: string } };
+}).process?.env?.NODE_ENV;
+
+if (nodeEnv !== 'production') globalThis.prisma = prisma;
 
 export * from '../generated/client';

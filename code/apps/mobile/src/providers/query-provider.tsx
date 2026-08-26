@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import type { ComponentProps } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Tạo một instance duy nhất cho toàn bộ app
@@ -20,10 +20,10 @@ export const queryClient = new QueryClient({
 });
 
 interface QueryProviderProps {
-  children: ReactNode;
+  children: ComponentProps<typeof QueryClientProvider>['children'];
 }
 
-export const QueryProvider: React.FC<QueryProviderProps> = ({ children }) => {
+export const QueryProvider = ({ children }: QueryProviderProps) => {
   return (
     <QueryClientProvider client={queryClient}>
       {children}

@@ -29,7 +29,7 @@ export function RideSearchPanel({
   activeLocationField,
   isMapPicking,
   onActiveLocationFieldChange,
-  autocompleteVersion = 'v1',
+  autocompleteVersion = 'v2',
 }: RideSearchPanelProps) {
   return (
     <div className="w-full bg-white dark:bg-black">

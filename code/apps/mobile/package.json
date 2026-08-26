@@ -3,7 +3,9 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "dev": "expo start",
+    "start": "npm --prefix ../.. run dev:mobile",
+    "start:expo": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
@@ -12,9 +14,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@babel/runtime": "7.18.6",
     "@expo/vector-icons": "^15.0.3",
     "@hookform/resolvers": "^5.2.2",
     "@react-native-community/datetimepicker": "8.4.4",
+    "@react-native/normalize-colors": "0.74.1",
     "@react-native/virtualized-lists": "^0.86.0",
     "@react-navigation/native": "^7.3.7",
     "@repo/shared": "workspace:*",
@@ -41,6 +45,9 @@
     "react-hook-form": "^7.72.1",
     "react-native": "0.81.5",
     "react-native-css-interop": "^0.2.6",
+    "@gorhom/bottom-sheet": "^5.0.0",
+    "expo-location": "~19.0.8",
+    "react-native-gesture-handler": "~2.20.2",
     "react-native-maps": "1.20.1",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",

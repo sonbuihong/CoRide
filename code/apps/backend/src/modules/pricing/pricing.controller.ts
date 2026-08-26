@@ -1,9 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
 import { PricingService } from './pricing.service';
-import { estimateCarpoolPriceSchema, estimatePriceSchema, upsertPricingConfigSchema } from './pricing.validation';
+import { estimateCarpoolPriceSchema, estimateCarpoolRouteSchema, estimatePriceSchema, upsertPricingConfigSchema } from './pricing.validation';
 import { VehicleType } from '@repo/database';
 
 export class PricingController {
+  static async estimateCarpoolRoute(req: Request, res: Response, next: NextFunction) {
+    try {
+      const parsed = estimateCarpoolRouteSchema.parse(req.body);
+      const result = await PricingService.estimateCarpoolRoute({
+        ...parsed,
+        vehicleType: parsed.vehicleType as VehicleType,
+      });
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async estimateCarpool(req: Request, res: Response, next: NextFunction) {
     try {
       const parsed = estimateCarpoolPriceSchema.parse({

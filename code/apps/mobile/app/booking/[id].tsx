@@ -9,7 +9,7 @@ import { authService } from '../../src/services/auth.service';
 import { AppText } from '../../src/components/ui/AppText';
 import { AppButton } from '../../src/components/ui/AppButton';
 import { StatusBadge } from '../../src/components/ui/StatusBadge';
-import { Star, Phone, CreditCard, ArrowLeft, ShieldCheck, Mail, MessageSquare } from 'lucide-react-native';
+import { Star, Phone, CreditCard, ArrowLeft, Mail, MessageSquare } from 'lucide-react-native';
 
 export default function BookingManageScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,18 +44,32 @@ export default function BookingManageScreen() {
     }
   });
 
-  const createPaymentMutation = useMutation({
-    mutationFn: () => paymentService.createPayment(id as string),
+  const confirmPaymentMutation = useMutation({
+    mutationFn: () => paymentService.confirmSimulatorPayment(id as string),
     onSuccess: (data) => {
-      if (data.order_url) {
-        Linking.openURL(data.order_url);
-      } else {
-        Alert.alert('Lỗi', 'Không nhận được URL thanh toán từ hệ thống.');
-      }
+      Alert.alert('Đang xử lý', data.message || 'Thanh toán đang được xác nhận.');
+      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['booking', id] }), 3500);
     },
     onError: (error: any) => {
       Alert.alert('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi tạo thanh toán.');
     }
+  });
+
+  const createPaymentMutation = useMutation({
+    mutationFn: () => paymentService.getSimulatorQr(id as string),
+    onSuccess: async (data) => {
+      const qrUrl = data?.data?.qrUrl;
+      if (!qrUrl) {
+        Alert.alert('Lỗi', 'Không nhận được mã QR thanh toán từ hệ thống.');
+        return;
+      }
+      await Linking.openURL(qrUrl);
+      Alert.alert('Thanh toán mô phỏng', 'Sau khi quét mã QR, hãy xác nhận thanh toán.', [
+        { text: 'Để sau', style: 'cancel' },
+        { text: 'Tôi đã thanh toán', onPress: () => confirmPaymentMutation.mutate() },
+      ]);
+    },
+    onError: () => Alert.alert('Lỗi', 'Không thể tạo mã QR thanh toán.'),
   });
 
   if (isLoading) {
@@ -245,10 +259,24 @@ export default function BookingManageScreen() {
             title="Thanh toán chuyến đi"
             variant="passenger"
             onPress={() => createPaymentMutation.mutate()}
-            disabled={createPaymentMutation.isPending}
+            disabled={createPaymentMutation.isPending || confirmPaymentMutation.isPending}
             className="w-full flex-row justify-center items-center"
             leftIcon={<CreditCard size={20} color="white" className="mr-2" />}
             accessibilityLabel="Nhấn để tiến hành thanh toán chi phí chuyến đi"
+          />
+        </View>
+      )}
+
+      {booking.status === 'COMPLETED' && displayUser?.id && (
+        <View className="p-6 bg-surface border-t border-border/40">
+          <AppButton
+            title="Đánh giá chuyến đi"
+            variant="secondary"
+            leftIcon={<Star size={20} color="#2563EB" />}
+            onPress={() => router.push({
+              pathname: '/review-modal' as any,
+              params: { rideId: booking.rideId, revieweeId: displayUser.id },
+            })}
           />
         </View>
       )}

@@ -1,13 +1,33 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ViewStyle } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { getDirections } from '../services/direction.service';
 
 interface RideMapProps {
   departureCoords?: { latitude: number; longitude: number };
   destinationCoords?: { latitude: number; longitude: number };
+  containerStyle?: ViewStyle;
+  fullScreen?: boolean;
 }
 
-export const RideMap: React.FC<RideMapProps> = ({ departureCoords, destinationCoords }) => {
+export const RideMap: React.FC<RideMapProps> = ({ departureCoords, destinationCoords, containerStyle, fullScreen = false }) => {
+  const [route, setRoute] = useState<{ latitude: number; longitude: number }[]>([]);
+  const departureLat = departureCoords?.latitude;
+  const departureLng = departureCoords?.longitude;
+  const destinationLat = destinationCoords?.latitude;
+  const destinationLng = destinationCoords?.longitude;
+  useEffect(() => {
+    if (departureLat == null || departureLng == null || destinationLat == null || destinationLng == null) return;
+    let active = true;
+    getDirections(
+      { latitude: departureLat, longitude: departureLng },
+      { latitude: destinationLat, longitude: destinationLng },
+    ).then((result) => {
+      // Keep the last successful route when Goong is temporarily unavailable.
+      if (active && result?.polylineCoords?.length) setRoute(result.polylineCoords);
+    });
+    return () => { active = false; };
+  }, [departureLat, departureLng, destinationLat, destinationLng]);
   // Tọa độ mặc định (Hà Nội) nếu không có dữ liệu
   const defaultRegion = {
     latitude: 21.0285,
@@ -17,7 +37,10 @@ export const RideMap: React.FC<RideMapProps> = ({ departureCoords, destinationCo
   };
 
   return (
-    <View className="h-60 w-full rounded-2xl overflow-hidden bg-gray-200">
+    <View
+      className={fullScreen ? 'flex-1 w-full overflow-hidden bg-slate-200' : 'h-60 w-full rounded-2xl overflow-hidden bg-slate-200'}
+      style={containerStyle}
+    >
       <MapView
         provider={PROVIDER_GOOGLE}
         style={StyleSheet.absoluteFillObject}
@@ -26,19 +49,24 @@ export const RideMap: React.FC<RideMapProps> = ({ departureCoords, destinationCo
           latitudeDelta: 0.1,
           longitudeDelta: 0.1,
         } : defaultRegion}
+        showsUserLocation
+        showsMyLocationButton={false}
+        toolbarEnabled={false}
+        accessibilityLabel="Bản đồ hành trình"
       >
+        {route.length > 1 && <Polyline coordinates={route} strokeColor="#0071E3" strokeWidth={5} />}
         {departureCoords && (
           <Marker 
             coordinate={departureCoords} 
             title="Điểm đi" 
-            pinColor="blue"
+            pinColor="#0F766E"
           />
         )}
         {destinationCoords && (
           <Marker 
             coordinate={destinationCoords} 
             title="Điểm đến" 
-            pinColor="red"
+            pinColor="#DC2626"
           />
         )}
       </MapView>

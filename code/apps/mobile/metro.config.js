@@ -14,7 +14,23 @@ config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, "node_modules"),
   path.resolve(workspaceRoot, "node_modules"),
 ];
-// 3. Force Metro to resolve (sub)dependencies only from the `nodeModulesPaths`
-config.resolver.disableHierarchicalLookup = true;
+// 3. Keep hierarchical lookup enabled. pnpm stores transitive dependencies
+// beside each package under .pnpm; disabling this makes valid Expo dependencies
+// such as whatwg-fetch invisible to Metro.
+
+// 4. Mock native-only packages for web platform
+const defaultResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (platform === "web" && (moduleName === "react-native-maps" || moduleName.startsWith("react-native-maps/"))) {
+    return {
+      filePath: path.resolve(projectRoot, "src/mocks/react-native-maps.web.tsx"),
+      type: "sourceFile",
+    };
+  }
+  if (defaultResolveRequest) {
+    return defaultResolveRequest(context, moduleName, platform);
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
 
 module.exports = withNativeWind(config, { input: "./global.css" });

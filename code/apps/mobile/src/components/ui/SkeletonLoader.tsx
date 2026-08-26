@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { Animated } from 'react-native';
 
 interface SkeletonLoaderProps {
   width?: number | string;
@@ -15,22 +14,30 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   borderRadius = 8,
   className = '',
 }) => {
-  const opacity = useSharedValue(0.3);
+  const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(
-        withTiming(0.7, { duration: 800 }),
-        withTiming(0.3, { duration: 800 })
-      ),
-      -1,
-      true
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.7,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
     );
-  }, []);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+    animation.start();
+    return () => {
+      animation.stop();
+      opacity.setValue(0.3);
+    };
+  }, [opacity]);
 
   return (
     <Animated.View
@@ -39,7 +46,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
       accessibilityLabel="Đang tải dữ liệu"
       style={[
         { width: width as any, height: height as any, borderRadius },
-        animatedStyle,
+        { opacity },
       ]}
     />
   );

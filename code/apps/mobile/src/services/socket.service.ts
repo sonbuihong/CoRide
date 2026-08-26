@@ -1,12 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import * as SecureStoreService from './secure-store';
-import { Platform } from 'react-native';
-
-let SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://10.0.2.2:5001';
-
-if (Platform.OS !== 'android') {
-  SOCKET_URL = SOCKET_URL.replace('10.0.2.2', 'localhost');
-}
+import { SOCKET_URL } from '../config/network';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -24,14 +18,15 @@ class SocketService {
     const token = await SecureStoreService.getAccessToken();
 
     if (!token) {
-      console.warn('SocketService: Không có token để kết nối.');
+      // Realtime hooks may mount while auth is hydrating or after logout.
+      // Missing credentials is an expected state, not a socket failure.
       this.isConnecting = false;
       return;
     }
 
     this.socket = io(SOCKET_URL, {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
@@ -89,10 +84,11 @@ class SocketService {
   }
 
   public emit(event: string, ...args: any[]): void {
-    if (!this.socket?.connected) {
-      console.warn(`SocketService: Không thể emit sự kiện '${event}' vì socket chưa kết nối.`);
+    if (!this.socket) {
+      console.warn(`SocketService: Không thể emit sự kiện '${event}' vì socket chưa khởi tạo.`);
       return;
     }
+    // Socket.IO tự xếp hàng event trong lúc đang reconnect.
     this.socket.emit(event, ...args);
   }
 }

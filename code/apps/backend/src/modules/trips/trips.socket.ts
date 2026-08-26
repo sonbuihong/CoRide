@@ -28,7 +28,15 @@ export const registerTripsSocket = (io: Server, socket: Socket, userId: string) 
         select: { driverId: true },
       });
 
-      if (!ride) {
+      const rideHailingTrip = ride ? null : await prisma.tripRequest.findFirst({
+        where: {
+          id: tripId,
+          OR: [{ passengerId: userId }, { driverId: userId }],
+        },
+        select: { driverId: true },
+      });
+
+      if (!ride && !rideHailingTrip) {
         socket.emit(SocketEvents.ERROR, { message: 'Bạn không có quyền truy cập chuyến đi này' });
         return;
       }
@@ -37,7 +45,8 @@ export const registerTripsSocket = (io: Server, socket: Socket, userId: string) 
       socket.join(roomName);
       
       // Cache role để kiểm tra quyền phát vị trí tài xế
-      socket.data.tripRoles[tripId] = ride.driverId === userId ? 'DRIVER' : 'PASSENGER';
+      const driverId = ride?.driverId ?? rideHailingTrip?.driverId;
+      socket.data.tripRoles[tripId] = driverId === userId ? 'DRIVER' : 'PASSENGER';
       console.log(`[Socket] User ${userId} joined ${roomName} as ${socket.data.tripRoles[tripId]}`);
     } catch (error) {
       console.error('[Socket] TRIP_JOIN_ROOM error:', error);

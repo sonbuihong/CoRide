@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { apiClient as api } from '../../src/api/client';
 import { Plus, Trash2, Car, Bike, X } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 interface Vehicle {
   id: string;
@@ -13,7 +14,6 @@ interface Vehicle {
 }
 
 export default function VehiclesScreen() {
-  const router = useRouter();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -36,9 +36,7 @@ export default function VehiclesScreen() {
   }, []);
 
   const pickImage = async () => {
-    // import động để không lỗi nếu chưa reload app
-    const ImagePicker = require('expo-image-picker');
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],

@@ -2,7 +2,7 @@ import { extendedPrisma as prisma } from '@repo/database';
 import { VehicleType } from '@repo/database';
 import { AppError } from '../../shared/errors/AppError';
 import { PricingService } from '../pricing/pricing.service';
-import { CreateTripRequestInput } from './trips.validation';
+import type { CreateTripRequestInput, DriverTripStatus } from '@repo/shared';
 
 /**
  * TripsService — Business logic cho luồng Ride-Hailing (TripRequest).
@@ -26,7 +26,7 @@ export class TripsService {
     const activeTrip = await prisma.tripRequest.findFirst({
       where: {
         passengerId,
-        status: { in: ['PENDING', 'MATCHING', 'ACCEPTED', 'ARRIVING', 'IN_PROGRESS'] },
+        status: { in: ['PENDING', 'MATCHING', 'ACCEPTED', 'ARRIVING', 'IN_PROGRESS', 'WAITING_PAYMENT'] },
       },
     });
 
@@ -173,7 +173,7 @@ export class TripsService {
   static async updateTripStatus(
     tripId: string,
     driverId: string,
-    status: 'ARRIVING' | 'IN_PROGRESS' | 'COMPLETED'
+    status: DriverTripStatus
   ) {
     const trip = await prisma.tripRequest.findUnique({
       where: { id: tripId },
@@ -188,7 +188,7 @@ export class TripsService {
     const validTransitions: Record<string, string[]> = {
       ACCEPTED: ['ARRIVING'],
       ARRIVING: ['IN_PROGRESS'],
-      IN_PROGRESS: ['COMPLETED'],
+      IN_PROGRESS: ['WAITING_PAYMENT'],
     };
 
     const allowed = validTransitions[trip.status];
@@ -229,7 +229,7 @@ export class TripsService {
     return prisma.tripRequest.findFirst({
       where: {
         passengerId,
-        status: { in: ['PENDING', 'MATCHING', 'ACCEPTED', 'ARRIVING', 'IN_PROGRESS'] },
+        status: { in: ['PENDING', 'MATCHING', 'ACCEPTED', 'ARRIVING', 'IN_PROGRESS', 'WAITING_PAYMENT'] },
       },
       include: {
         driver: {
@@ -254,7 +254,7 @@ export class TripsService {
     return prisma.tripRequest.findFirst({
       where: {
         driverId,
-        status: { in: ['ACCEPTED', 'ARRIVING', 'IN_PROGRESS'] },
+        status: { in: ['ACCEPTED', 'ARRIVING', 'IN_PROGRESS', 'WAITING_PAYMENT'] },
       },
       include: {
         passenger: {

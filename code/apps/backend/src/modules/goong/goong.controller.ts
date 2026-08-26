@@ -1,14 +1,52 @@
 import { Request, Response } from 'express';
 import goongService from './goong.service';
+import { reversePlaces, searchPlaces } from './place-search.service';
 
 class GoongController {
+  async searchPlaces(req: Request, res: Response) {
+    try {
+      const { q, limit, location, version, session_token } = res.locals.validatedQuery as {
+        q: string;
+        limit: number;
+        location?: string;
+        version: 'v1' | 'v2';
+        session_token?: string;
+      };
+      const results = await searchPlaces(q, {
+        limit,
+        location,
+        version,
+        sessionToken: session_token,
+      });
+      res.json(results);
+    } catch (error) {
+      console.error('[PlaceSearch] search failed:', error);
+      res.status(502).json({ message: 'Không thể tìm kiếm địa điểm lúc này' });
+    }
+  }
+
+  async reversePlaces(req: Request, res: Response) {
+    try {
+      const { lat, lng, limit, version } = res.locals.validatedQuery as {
+        lat: number;
+        lng: number;
+        limit: number;
+        version: 'v1' | 'v2';
+      };
+      res.json(await reversePlaces(lat, lng, limit, version));
+    } catch (error) {
+      console.error('[PickupMap] reverse failed:', error);
+      res.status(502).json({ message: 'Không thể xác định địa điểm tại vị trí này' });
+    }
+  }
+
   /**
    * GET /api/goong/autocomplete
    * Autocomplete V1/V2 — version=v2 trả địa chỉ theo địa giới sau sáp nhập
    */
   async autocomplete(req: Request, res: Response) {
     try {
-      const { query, limit, location, radius, more_compound, version } = req.query;
+      const { query, limit, location, radius, more_compound, version, session_token } = (res.locals.validatedQuery ?? req.query) as any;
 
       if (!query || typeof query !== 'string') {
         return res.status(400).json({ message: 'Query parameter is required' });
@@ -26,7 +64,8 @@ class GoongController {
         location as string | undefined,
         radiusNum,
         moreCompound,
-        apiVersion
+        apiVersion,
+        session_token,
       );
 
       res.json(results);
@@ -42,13 +81,13 @@ class GoongController {
    */
   async geocode(req: Request, res: Response) {
     try {
-      const { address } = req.query;
+      const { address, version } = (res.locals.validatedQuery ?? req.query) as any;
 
       if (!address || typeof address !== 'string') {
         return res.status(400).json({ message: 'Address parameter is required' });
       }
 
-      const result = await goongService.geocode(address);
+      const result = await goongService.forwardGeocode(address, version);
 
       if (!result) {
         return res.status(404).json({ message: 'Không tìm thấy địa chỉ' });
@@ -92,7 +131,7 @@ class GoongController {
    */
   async reverseGeocode(req: Request, res: Response) {
     try {
-      const { lat, lng } = req.query;
+      const { lat, lng, version } = (res.locals.validatedQuery ?? req.query) as any;
 
       if (!lat || !lng) {
         return res.status(400).json({ message: 'Lat and Lng parameters are required' });
@@ -105,7 +144,8 @@ class GoongController {
         return res.status(400).json({ message: 'Invalid coordinates' });
       }
 
-      const result = await goongService.reverseGeocode(latNum, lngNum);
+      const apiVersion = version === 'v2' ? 'v2' : 'v1';
+      const result = await goongService.reverseGeocode(latNum, lngNum, apiVersion);
 
       if (!result) {
         return res.status(404).json({ message: 'Không tìm thấy địa chỉ' });
@@ -124,14 +164,14 @@ class GoongController {
    */
   async directions(req: Request, res: Response) {
     try {
-      const { origin, destination, vehicle } = req.body;
+      const { origin, destination, vehicle, alternatives, waypoints = [] } = req.body;
 
       if (!origin || !destination) {
         return res.status(400).json({ message: 'Origin and destination are required' });
       }
 
       const vehicleType = vehicle || 'car';
-      const result = await goongService.directions(origin, destination, vehicleType);
+      const result = await goongService.directions(origin, destination, vehicleType, alternatives, waypoints);
 
       if (!result) {
         return res.status(404).json({ message: 'Không thể tính toán lộ trình' });
@@ -150,14 +190,14 @@ class GoongController {
    */
   async getPlaceDetail(req: Request, res: Response) {
     try {
-      const { place_id, version } = req.query;
+      const { place_id, version, session_token } = (res.locals.validatedQuery ?? req.query) as any;
 
       if (!place_id || typeof place_id !== 'string') {
         return res.status(400).json({ message: 'Place ID parameter is required' });
       }
 
       const apiVersion = version === 'v2' ? 'v2' : 'v1';
-      const result = await goongService.getPlaceDetail(place_id, apiVersion);
+      const result = await goongService.getPlaceDetail(place_id, apiVersion, session_token);
 
       if (!result) {
         return res.status(404).json({ message: 'Không tìm thấy địa điểm' });
@@ -167,6 +207,57 @@ class GoongController {
     } catch (error) {
       console.error('Place detail controller error:', error);
       res.status(500).json({ message: 'Không thể lấy thông tin chi tiết địa điểm' });
+    }
+  }
+
+  async distanceMatrix(req: Request, res: Response) {
+    try {
+      const { origins, destinations, vehicle } = req.body;
+      const result = await goongService.distanceMatrix(origins, destinations, vehicle);
+      if (!result) return res.status(404).json({ code: 'NOT_FOUND', message: 'Không tìm thấy ma trận khoảng cách', retryable: false });
+      res.json(result);
+    } catch (error: any) {
+      res.status(502).json({ code: 'UPSTREAM_ERROR', message: 'Không thể tính ma trận khoảng cách', retryable: true });
+    }
+  }
+
+  async trip(req: Request, res: Response) {
+    try {
+      const { origin, waypoints, destination, vehicle, roundtrip } = req.body;
+      const result = await goongService.optimizeTrip(origin, waypoints, destination, vehicle, roundtrip);
+      if (!result) return res.status(404).json({ code: 'NOT_FOUND', message: 'Không thể tối ưu tuyến đa điểm', retryable: false });
+      res.json(result);
+    } catch (error: any) {
+      res.status(502).json({ code: 'UPSTREAM_ERROR', message: 'Dịch vụ tối ưu tuyến đang bận', retryable: true });
+    }
+  }
+
+  async staticMap(req: Request, res: Response) {
+    try {
+      const options = (res.locals.validatedQuery ?? req.query) as any;
+      const image = await goongService.staticMap(options);
+      // Helmet defaults CORP to `same-origin`, while Expo Web renders this
+      // image from a different development/production origin. Static maps are
+      // public, immutable render assets, so allow embedding without weakening
+      // the policy for the rest of the API.
+      res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=3600');
+      res.send(image);
+    } catch (error: any) {
+      res.status(502).json({ code: 'UPSTREAM_ERROR', message: 'Không thể tải bản đồ tĩnh', retryable: true });
+    }
+  }
+
+  async geolocation(req: Request, res: Response) {
+    try {
+      const result = await goongService.geolocate(req.body);
+      res.json(result);
+    } catch (error: any) {
+      if (error?.message === 'GOONG_GEOLOCATION_DISABLED') {
+        return res.status(503).json({ code: 'FEATURE_DISABLED', message: 'Geo Location chưa được bật cho bản build này', retryable: false });
+      }
+      res.status(502).json({ code: 'UPSTREAM_ERROR', message: 'Không thể định vị từ dữ liệu mạng', retryable: true });
     }
   }
 }

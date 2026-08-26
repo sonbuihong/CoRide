@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, X, MapPin } from 'lucide-react';
-import { autocompleteAddress, geocodeAddress, cleanAddressText, getPlaceDetail, buildFullAddressFromDetail } from '@/lib/goong';
+import { autocompleteAddress, createGoongSessionToken, geocodeAddress, cleanAddressText, getPlaceDetail, buildFullAddressFromDetail } from '@/lib/goong';
 import type { GoongApiVersion } from '@/lib/goong';
 import useDebounce from '@/lib/hooks/use-debounce';
+import { goongClientCache } from '@/lib/goong-client-cache';
 
 interface AutocompleteResult {
   description: string;
@@ -34,6 +35,7 @@ interface GoongAutocompleteProps {
   suggestionsMobilePortalId?: string;
   onSuggestionsVisibilityChange?: (visible: boolean) => void;
   apiVersion?: GoongApiVersion;
+  biasLocation?: { lat: number; lng: number };
 }
 
 const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
@@ -48,12 +50,13 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
   inputClassName = '',
   variant = 'default',
   defaultValue = '',
-  debounceMs = 500,
+  debounceMs = 300,
   suggestionsPlacement = 'inline',
   suggestionsPortalId,
   suggestionsMobilePortalId,
   onSuggestionsVisibilityChange,
-  apiVersion = 'v1',
+  apiVersion = 'v2',
+  biasLocation,
 }) => {
   const [query, setQuery] = useState(defaultValue);
   const [suggestions, setSuggestions] = useState<AutocompleteResult[]>([]);
@@ -65,6 +68,7 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
   // mỗi ký tự cách nhau ~160ms → 500ms loại bỏ được 2-3 request trung gian
   const debouncedQuery = useDebounce(query, debounceMs);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sessionTokenRef = useRef(createGoongSessionToken());
   const containerRef = useRef<HTMLDivElement>(null);
   const suggestionsPanelRef = useRef<HTMLDivElement>(null);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
@@ -74,6 +78,12 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
   useEffect(() => {
     setQuery(defaultValue);
   }, [defaultValue]);
+
+  useEffect(() => {
+    sessionTokenRef.current = createGoongSessionToken();
+    goongClientCache.clear();
+    setSuggestions([]);
+  }, [apiVersion]);
 
   useEffect(() => {
     const targetId = isDesktop ? suggestionsPortalId : suggestionsMobilePortalId;
@@ -95,6 +105,7 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
   // Fetch suggestions when debounced query changes
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
 
     const fetchSuggestions = async () => {
       if (debouncedQuery.length < 2) {
@@ -108,6 +119,9 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
         const results = await autocompleteAddress(debouncedQuery, {
           more_compound: true,
           version: apiVersion,
+          sessionToken: sessionTokenRef.current,
+          signal: controller.signal,
+          location: biasLocation ? `${biasLocation.lat},${biasLocation.lng}` : undefined,
         });
         if (!cancelled) setSuggestions(results);
       } catch (error) {
@@ -121,8 +135,9 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
     fetchSuggestions();
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [apiVersion, debouncedQuery]);
+  }, [apiVersion, biasLocation?.lat, biasLocation?.lng, debouncedQuery]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -154,6 +169,7 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
     onClear?.();
     onQueryChange?.('');
     inputRef.current?.focus();
+    sessionTokenRef.current = createGoongSessionToken();
   };
 
   const handleSelect = async (suggestion: AutocompleteResult) => {
@@ -166,7 +182,7 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
     try {
       // Ưu tiên dùng Place Detail: trả về name (số nhà) + formatted_address + tọa độ
       // Tốt hơn geocodeAddress vì không cần thêm 1 API call riêng cho tọa độ
-      const placeDetail = await getPlaceDetail(suggestion.place_id, apiVersion);
+      const placeDetail = await getPlaceDetail(suggestion.place_id, apiVersion, sessionTokenRef.current);
       if (placeDetail) {
         const fullAddress = buildFullAddressFromDetail(placeDetail) ?? fallbackAddress;
         setQuery(fullAddress); // Cập nhật input với địa chỉ đầy đủ
@@ -186,7 +202,7 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
           // Không dùng (0, 0) làm tọa độ giả vì nó khiến Route-Aware tìm ở
           // Đại Tây Dương. Geocode lại địa chỉ; nếu vẫn lỗi, giữ text để form
           // có thể thử fallback thêm một lần khi submit.
-          const geocodeResult = await geocodeAddress(fullAddress);
+          const geocodeResult = await geocodeAddress(fullAddress, apiVersion);
           if (geocodeResult?.geometry.location && onSelect) {
             onSelect(fullAddress, geocodeResult.geometry.location);
           } else {
@@ -195,7 +211,7 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
         }
       } else {
         // Fallback: dùng geocodeAddress nếu Place Detail thất bại
-        const geocodeResult = await geocodeAddress(fallbackAddress);
+        const geocodeResult = await geocodeAddress(fallbackAddress, apiVersion);
         if (geocodeResult && onSelect) {
           onSelect(fallbackAddress, {
             lat: geocodeResult.geometry.location.lat,
@@ -207,7 +223,7 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
       console.error('[GoongAutocomplete] Lỗi lấy chi tiết địa điểm:', error);
       // Cuối cùng fallback về geocode cũ
       try {
-        const geocodeResult = await geocodeAddress(fallbackAddress);
+        const geocodeResult = await geocodeAddress(fallbackAddress, apiVersion);
         if (geocodeResult && onSelect) {
           onSelect(fallbackAddress, {
             lat: geocodeResult.geometry.location.lat,
@@ -218,6 +234,7 @@ const GoongAutocomplete: React.FC<GoongAutocompleteProps> = ({
         console.error('[GoongAutocomplete] Cả geocode fallback cũng thất bại');
       }
     }
+    sessionTokenRef.current = createGoongSessionToken();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

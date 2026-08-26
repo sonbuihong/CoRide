@@ -8,7 +8,10 @@ export const createBooking = async (
 ): Promise<void> => {
   try {
     const booking = await BookingsService.createBooking(req.user!.id, req.body);
-    res.status(201).json({ message: 'Gửi yêu cầu đặt chỗ thành công', booking });
+    res.status(201).json({
+      message: booking.status === 'CONFIRMED' ? 'Đặt chỗ đã được xác nhận' : 'Đã gửi yêu cầu, tài xế có 15 phút để phản hồi',
+      booking,
+    });
   } catch (error) {
     next(error);
   }

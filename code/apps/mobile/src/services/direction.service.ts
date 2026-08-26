@@ -19,7 +19,7 @@ interface DirectionsResult {
  * Goong API trả polyline dạng encoded string (cùng format Google Maps).
  * Thuật toán: đọc từng byte, shift bits, tính delta lat/lng
  */
-const decodePolyline = (encoded: string): LatLng[] => {
+export const decodePolyline = (encoded: string): LatLng[] => {
   const points: LatLng[] = [];
   let index = 0;
   let lat = 0;

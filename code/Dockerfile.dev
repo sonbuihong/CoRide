@@ -1,0 +1,46 @@
+FROM node:20-bookworm-slim
+
+WORKDIR /app
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY patches ./patches
+COPY apps/backend/package.json ./apps/backend/package.json
+COPY apps/api-gateway/package.json ./apps/api-gateway/package.json
+COPY apps/notification-service/package.json ./apps/notification-service/package.json
+COPY packages/database/package.json ./packages/database/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
+
+RUN corepack enable \
+    && corepack prepare "$(node -p "require('./package.json').packageManager")" --activate \
+    && pnpm install --frozen-lockfile \
+      --filter backend \
+      --filter api-gateway \
+      --filter notification-service \
+      --filter @repo/database \
+      --filter @repo/shared
+
+COPY packages/database/prisma ./packages/database/prisma
+COPY apps/backend/src ./apps/backend/src
+COPY apps/backend/tsconfig.json ./apps/backend/tsconfig.json
+COPY apps/api-gateway/src ./apps/api-gateway/src
+COPY apps/api-gateway/tsconfig.json ./apps/api-gateway/tsconfig.json
+COPY apps/notification-service/src ./apps/notification-service/src
+COPY apps/notification-service/tsconfig.json ./apps/notification-service/tsconfig.json
+COPY packages/database/src ./packages/database/src
+COPY packages/database/tsconfig.json ./packages/database/tsconfig.json
+COPY packages/shared/src ./packages/shared/src
+COPY packages/shared/tsconfig.json ./packages/shared/tsconfig.json
+
+RUN pnpm --filter @repo/database generate \
+    && pnpm --filter @repo/database build \
+    && pnpm --filter @repo/shared build
+
+CMD ["pnpm", "--filter", "backend", "dev"]

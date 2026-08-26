@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import { ArrowLeft, Car, Bike, Upload, CheckCircle2, Shield, Eye } from 'lucide-react-native';
+import { ArrowLeft, Car, Bike, Upload, CheckCircle2, Shield } from 'lucide-react-native';
 import { authService } from '../../src/services/auth.service';
 import { authKeys } from '../../src/hooks/useAuth';
 import { AppText } from '../../src/components/ui/AppText';

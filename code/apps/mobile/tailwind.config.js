@@ -1,29 +1,30 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}"],
-  presets: [require("nativewind/preset")],
+  presets: [require("nativewind/preset"), require("../../packages/tailwind-config/coride-preset")],
   theme: {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#3B82F6", // Blue 500
-          pressed: "#2563EB", // Blue 600
-          soft: "#EFF6FF", // Blue 50
+          DEFAULT: "#0071E3",
+          pressed: "#0066CC",
+          soft: "#EAF4FF",
         },
-        secondary: "#64748B", // Slate 500
-        background: "#F8FAFC", // Slate 50
+        secondary: "#515154",
+        background: "#F5F5F7",
         surface: {
           DEFAULT: "#FFFFFF",
           elevated: "#FFFFFF",
+          muted: "#FAFAFC",
         },
         text: {
-          primary: "#0F172A", // Slate 900
-          secondary: "#64748B", // Slate 500
-          disabled: "#94A3B8", // Slate 400
+          primary: "#1D1D1F",
+          secondary: "#515154",
+          disabled: "#8E8E93",
         },
         border: {
-          DEFAULT: "#E2E8F0", // Slate 200
-          strong: "#CBD5E1", // Slate 300
+          DEFAULT: "#E5E5EA",
+          strong: "#D1D1D6",
         },
         status: {
           success: "#16A34A", // Green 600
@@ -33,14 +34,14 @@ module.exports = {
         },
         // Bổ sung các màu sắc semantic theo đặc tả CoRide
         passenger: {
-          DEFAULT: "#3B82F6",
-          pressed: "#2563EB",
-          soft: "#EFF6FF",
+          DEFAULT: "#0071E3",
+          pressed: "#0066CC",
+          soft: "#EAF4FF",
         },
         driver: {
-          DEFAULT: "#F59E0B", // Amber 500
-          pressed: "#D97706", // Amber 600
-          soft: "#FEF3C7", // Amber 100
+          DEFAULT: "#34C759",
+          pressed: "#2DB34F",
+          soft: "#EAF9EE",
         },
         pending: "#F59E0B",
         confirmed: "#16A34A",

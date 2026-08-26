@@ -18,6 +18,7 @@ jest.mock('@repo/database', () => {
       findUnique: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
     booking: {
       create: jest.fn(),
@@ -25,6 +26,11 @@ jest.mock('@repo/database', () => {
       findFirst: jest.fn(),
       update: jest.fn(),
       findMany: jest.fn(),
+      aggregate: jest.fn(),
+      updateMany: jest.fn(),
+    },
+    pricingConfig: {
+      findUnique: jest.fn(),
     },
     user: {
       findUnique: jest.fn(),
@@ -89,6 +95,14 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
       if (args.where.id === driverId) return Promise.resolve({ id: driverId, role: 'USER' });
       return Promise.resolve(null);
     });
+    (prisma.ride.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (prisma.booking.aggregate as jest.Mock).mockResolvedValue({ _sum: { totalPrice: 0 } });
+    (prisma.booking.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (prisma.pricingConfig.findUnique as jest.Mock).mockResolvedValue({
+      vehicleType: 'CAR', isActive: true, fuelPrice: 20_000, fuelConsumption: 10,
+      vehicleOverheadRatio: 0.5, minimumDriverShare: 0.2, driverPriceAdjustment: 0.2,
+      roundingUnit: 1000, maxDetourKm: 5, maxDetourRatio: 0.25,
+    });
   });
 
   describe('5.1 Test API Đặt xe (POST /api/bookings)', () => {
@@ -101,6 +115,20 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
         status: 'SCHEDULED',
         availableSeats: 4,
         pricePerSeat: 100000,
+        offeredSeats: 4,
+        tollCost: 0,
+        distance: 16,
+        duration: 30,
+        departureTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        origin: 'A',
+        destination: 'B',
+        originLat: 21,
+        originLng: 105,
+        destinationLat: 21.1,
+        destinationLng: 105.1,
+        bookingPolicy: 'DRIVER_APPROVAL',
+        vehicle: { type: 'CAR' },
+        stops: [],
         driver: { id: driverId, firstName: 'Driver', lastName: 'A' },
         bookings: []
       });
@@ -314,6 +342,8 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
         passengerId,
         seats: 2,
         status: BookingStatus.CONFIRMED,
+        seatHeld: true,
+        rideId,
         ride: { id: rideId, status: 'SCHEDULED', driverId: driverId }
       });
       (prisma.booking.update as jest.Mock).mockResolvedValue({ status: BookingStatus.CANCELLED });
@@ -331,12 +361,14 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
       }));
     });
 
-    it('API_CCL_001_B: Hủy yêu cầu PENDING (không cần hoàn ghế)', async () => {
+    it('API_CCL_001_B: Hủy yêu cầu PENDING trả lại ghế đang giữ', async () => {
       (prisma.booking.findUnique as jest.Mock).mockResolvedValue({
         id: bookingId,
         passengerId,
         seats: 2,
         status: BookingStatus.PENDING,
+        seatHeld: true,
+        rideId,
         ride: { id: rideId, status: 'SCHEDULED', driverId: driverId }
       });
       (prisma.booking.update as jest.Mock).mockResolvedValue({ status: BookingStatus.CANCELLED });
@@ -347,6 +379,9 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
         .set('Authorization', `Bearer ${passengerToken}`);
 
       expect(response.status).toBe(200);
+      expect(prisma.ride.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: { availableSeats: { increment: 2 } }
+      }));
     });
 
     it('API_CCL_003: Business Rule - Không thể hủy khi xe đã chạy (ONGOING)', async () => {

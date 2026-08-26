@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-const GOONG_API_KEY = process.env.NEXT_PUBLIC_GOONG_API_KEY || '';
-const GOONG_BASE_URL = 'https://rsapi.goong.io';
+import { getDirections, getDistanceMatrix } from './goong';
 
 export interface Coordinate {
   id?: string;
@@ -31,20 +28,13 @@ export async function getOptimalWaypointOrderGoong(
   const pointsStr = allPoints.map((p) => `${p.lat},${p.lng}`).join('|');
 
   try {
-    const res = await axios.get(`${GOONG_BASE_URL}/distancematrix`, {
-      params: {
-        api_key: GOONG_API_KEY,
-        origins: pointsStr,
-        destinations: pointsStr,
-        vehicle: 'car',
-      },
-    });
+    const data = await getDistanceMatrix(pointsStr, pointsStr, 'car');
 
-    if (!res.data || !res.data.rows) {
+    if (!data?.rows) {
       throw new Error('Invalid Goong Distance Matrix response');
     }
 
-    const matrix = res.data.rows;
+    const matrix = data.rows;
 
     // Helper: Tính tổng quãng đường của 1 hoán vị (permutation)
     const getDistanceOfPath = (perm: number[]): number => {
@@ -110,18 +100,11 @@ export async function getGoongMultiStopRoute(
     const p2 = points[i + 1];
 
     try {
-      const res = await axios.get(`${GOONG_BASE_URL}/Direction`, {
-        params: {
-          api_key: GOONG_API_KEY,
-          origin: `${p1.lat},${p1.lng}`,
-          destination: `${p2.lat},${p2.lng}`,
-          vehicle: 'car',
-        },
-      });
+      const data = await getDirections(`${p1.lat},${p1.lng}`, `${p2.lat},${p2.lng}`, 'car');
 
-      if (res.data && res.data.routes && res.data.routes.length > 0) {
+      if (data && data.routes && data.routes.length > 0) {
         // Goong Direction trả về routes[0].overview_polyline.points (đã encode)
-        const encodedPolyline = res.data.routes[0].overview_polyline.points;
+        const encodedPolyline = data.routes[0].overview_polyline.points;
         const decoded = decodeGoongPolyline(encodedPolyline);
         finalRoute = finalRoute.concat(decoded);
       }

@@ -67,6 +67,18 @@ export interface CarpoolContribution {
   remainingContributionCap: number;
 }
 
+export interface CarpoolRouteEstimateInput {
+  originLat: number;
+  originLng: number;
+  destLat: number;
+  destLng: number;
+  vehicleType: VehicleType;
+  offeredSeats: number;
+  tollCost?: number;
+  waypoints?: Array<{ latitude: number; longitude: number }>;
+  routePolyline?: string;
+}
+
 export class PricingService {
   /**
    * Báo mức đóng góp cho một ghế carpool. Đây không phải giá taxi: không có
@@ -81,16 +93,51 @@ export class PricingService {
     offeredSeats: number,
     tollCost = 0
   ) {
-    const config = await this.getActiveConfig(vehicleType);
     const directions = await goongService.directions(
       `${originLat},${originLng}`,
       `${destLat},${destLng}`,
       vehicleType === 'CAR' ? 'car' : 'bike'
     );
-    const leg = directions?.routes?.[0]?.legs?.[0];
-    if (!leg) throw new AppError('Không thể tính toán lộ trình giữa 2 điểm này', 400);
+    const route = directions?.routes?.[0];
+    if (!route) throw new AppError('Không thể tính toán lộ trình giữa 2 điểm này', 400);
+    const distanceKm = route.legs.reduce((sum, leg) => sum + leg.distance.value, 0) / 1000;
+    const durationMinutes = route.legs.reduce((sum, leg) => sum + leg.duration.value, 0) / 60;
+    return this.estimateCarpoolForRoute(distanceKm, durationMinutes, vehicleType, offeredSeats, tollCost);
+  }
 
-    const distanceKm = leg.distance.value / 1000;
+  static async estimateCarpoolRoute(input: CarpoolRouteEstimateInput) {
+    const directions = await goongService.directions(
+      `${input.originLat},${input.originLng}`,
+      `${input.destLat},${input.destLng}`,
+      input.vehicleType === 'CAR' ? 'car' : 'bike',
+      !input.waypoints?.length,
+      (input.waypoints ?? []).map((point) => `${point.latitude},${point.longitude}`),
+    );
+    const routes = directions?.routes?.slice(0, 5) ?? [];
+    const route = routes.find((item) => item.overview_polyline.points === input.routePolyline) ?? routes[0];
+    if (!route) throw new AppError('Không thể xác thực lộ trình đã chọn', 400);
+    const distanceKm = route.legs.reduce((sum, leg) => sum + leg.distance.value, 0) / 1000;
+    const durationMinutes = route.legs.reduce((sum, leg) => sum + leg.duration.value, 0) / 60;
+    return {
+      ...(await this.estimateCarpoolForRoute(
+        distanceKm,
+        durationMinutes,
+        input.vehicleType,
+        input.offeredSeats,
+        input.tollCost ?? 0,
+      )),
+      routePolyline: route.overview_polyline.points,
+    };
+  }
+
+  static async estimateCarpoolForRoute(
+    distanceKm: number,
+    durationMinutes: number,
+    vehicleType: VehicleType,
+    offeredSeats: number,
+    tollCost = 0,
+  ) {
+    const config = await this.getActiveConfig(vehicleType);
     const contribution = this.calculateCarpoolContribution({
       sharedDistanceKm: distanceKm,
       originalDistanceKm: distanceKm,
@@ -102,7 +149,7 @@ export class PricingService {
     return {
       vehicleType,
       estimatedDistance: Math.round(distanceKm * 10) / 10,
-      estimatedDuration: Math.round(leg.duration.value / 60),
+      estimatedDuration: Math.round(durationMinutes),
       estimatedPrice: contribution.recommendedPricePerSeat,
       ...contribution,
     };
@@ -332,7 +379,7 @@ export class PricingService {
         fuelConsumption: data.fuelConsumption ?? 6.5,
         vehicleOverheadRatio: data.vehicleOverheadRatio ?? 0.5,
         minimumDriverShare: data.minimumDriverShare ?? 0.2,
-        driverPriceAdjustment: data.driverPriceAdjustment ?? 0.15,
+        driverPriceAdjustment: data.driverPriceAdjustment ?? 0.2,
         roundingUnit: data.roundingUnit ?? 1000,
         maxDetourKm: data.maxDetourKm ?? 5,
         maxDetourRatio: data.maxDetourRatio ?? 0.1,

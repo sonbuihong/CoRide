@@ -1,6 +1,6 @@
 import { extendedPrisma as prisma } from '@repo/database';
 import { Prisma } from '@repo/database';
-import { CreateRideInput, SearchRideInput, SocketEvents } from '@repo/shared';
+import { CreateRideInput, CreateRideScheduleInput, SearchRideInput, SocketEvents } from '@repo/shared';
 import { AppError } from '../../shared/errors/AppError';
 import { SocketEventService } from '../../socket/socket.events';
 import { RideMatchingService } from './ride-matching.service';
@@ -26,11 +26,27 @@ const DRIVER_SELECT = {
       color: true,
     },
   },
+  stops: { orderBy: { order: 'asc' as const } },
 } satisfies Prisma.RideInclude;
 
 export class RidesService {
-  static async createRide(driverId: string, data: CreateRideInput) {
-    // 1. KYC Guard — chỉ tài xế đã xác thực mới được tạo chuyến
+  private static validateRidePayload(data: Omit<CreateRideInput, 'departureTime'>) {
+    if (!data.origin?.trim() || !data.destination?.trim()) {
+      throw new AppError('Điểm đi và điểm đến là bắt buộc', 400);
+    }
+    if (data.originLat == null || data.originLng == null || data.destinationLat == null || data.destinationLng == null) {
+      throw new AppError('Tọa độ điểm đi và điểm đến là bắt buộc', 400);
+    }
+    if (data.originLat === data.destinationLat && data.originLng === data.destinationLng) {
+      throw new AppError('Điểm đi và điểm đến không được trùng nhau', 400);
+    }
+    if (!data.routePolyline || data.distance == null || data.distance <= 0 || data.duration == null || data.duration <= 0) {
+      throw new AppError('Lộ trình chuyến đi chưa hợp lệ', 400);
+    }
+    if (!data.vehicleId) throw new AppError('Phương tiện là bắt buộc', 400);
+  }
+
+  private static async getPublishingVehicle(driverId: string, vehicleId: string, departureTimes: Date[]) {
     const driver = await prisma.user.findUnique({
       where: { id: driverId },
       select: { isDriverVerified: true },
@@ -45,85 +61,63 @@ export class RidesService {
       );
     }
 
-    // 2. Kiểm tra không có chuyến đi nào đang hoạt động với vai trò tài xế
     const activeDriverRide = await prisma.ride.findFirst({
+      where: { driverId, status: 'ONGOING' },
+    });
+    if (activeDriverRide) {
+      throw new AppError('Bạn đang có một chuyến đi diễn ra. Hãy hoàn thành chuyến đó trước khi đăng lịch mới.', 400);
+    }
+    const conflictingRide = await prisma.ride.findFirst({
       where: {
         driverId,
-        status: { in: ['SCHEDULED', 'FULL', 'ONGOING'] },
+        status: { in: ['SCHEDULED', 'FULL'] },
+        departureTime: { in: departureTimes },
       },
     });
-
-    if (activeDriverRide) {
-      throw new AppError(
-        'Bạn đang có một chuyến đi chưa hoàn thành (vai trò tài xế). Vui lòng hoàn thành hoặc hủy chuyến đi hiện tại để đăng chuyến mới.',
-        400
-      );
-    }
-
-    // 3. Kiểm tra không có chuyến đi nào đang hoạt động với vai trò hành khách
-    const activePassengerBooking = await prisma.booking.findFirst({
+    if (conflictingRide) throw new AppError('Bạn đã có chuyến khác khởi hành vào một trong các thời điểm đã chọn.', 400);
+    const conflictingPassengerBooking = await prisma.booking.findFirst({
       where: {
         passengerId: driverId,
         status: { in: ['PENDING', 'CONFIRMED'] },
-        ride: {
-          status: { in: ['SCHEDULED', 'FULL', 'ONGOING'] },
-        },
+        ride: { departureTime: { in: departureTimes }, status: { in: ['SCHEDULED', 'FULL', 'ONGOING'] } },
       },
     });
-
-    if (activePassengerBooking) {
-      throw new AppError(
-        'Bạn đang có một chuyến đi chưa hoàn thành (vai trò hành khách). Vui lòng hoàn thành hoặc hủy chuyến đi hiện tại để đăng chuyến mới.',
-        400
-      );
+    if (conflictingPassengerBooking) {
+      throw new AppError('Bạn đang là hành khách của chuyến khác vào một trong các thời điểm đã chọn.', 400);
     }
-
-    // Backend kiểm tra lại các trường cốt lõi; không tin việc frontend đã đi đủ wizard.
-    if (!data.origin?.trim() || !data.destination?.trim()) {
-      throw new AppError('Điểm đi và điểm đến là bắt buộc', 400);
-    }
-    if (
-      data.originLat == null || data.originLng == null ||
-      data.destinationLat == null || data.destinationLng == null
-    ) {
-      throw new AppError('Tọa độ điểm đi và điểm đến là bắt buộc', 400);
-    }
-    if (data.originLat === data.destinationLat && data.originLng === data.destinationLng) {
-      throw new AppError('Điểm đi và điểm đến không được trùng nhau', 400);
-    }
-    if (!data.routePolyline || data.distance == null || data.distance <= 0 || data.duration == null || data.duration <= 0) {
-      throw new AppError('Lộ trình chuyến đi chưa hợp lệ', 400);
-    }
-    if (!data.vehicleId) {
-      throw new AppError('Phương tiện là bắt buộc', 400);
-    }
-
     const vehicle = await prisma.vehicle.findFirst({
-      where: { id: data.vehicleId, userId: driverId, status: 'ACTIVE' },
+      where: { id: vehicleId, userId: driverId, status: 'ACTIVE' },
       select: { type: true },
     });
     if (!vehicle) throw new AppError('Phương tiện không hợp lệ hoặc không thuộc tài xế', 400);
+    return vehicle;
+  }
 
-    const maximumSeats = vehicle.type === 'BIKE' ? 1 : 4;
+  private static async verifyRouteAndPrice(data: Omit<CreateRideInput, 'departureTime'>, vehicleType: 'BIKE' | 'CAR') {
+    const maximumSeats = vehicleType === 'BIKE' ? 1 : 4;
     if (data.availableSeats > maximumSeats) {
       throw new AppError(`Phương tiện này chỉ được mở tối đa ${maximumSeats} ghế`, 400);
     }
+    const estimate = await PricingService.estimateCarpoolRoute({
+      originLat: data.originLat!, originLng: data.originLng!, destLat: data.destinationLat!, destLng: data.destinationLng!,
+      vehicleType, offeredSeats: data.availableSeats, routePolyline: data.routePolyline,
+      waypoints: (data.stops ?? []).map((stop) => ({ latitude: stop.latitude, longitude: stop.longitude })),
+    });
+    const pricePerSeat = data.pricePerSeat || estimate.recommendedPricePerSeat;
+    if (pricePerSeat < estimate.minimumPricePerSeat || pricePerSeat > estimate.maximumPricePerSeat) {
+      throw new AppError(`Giá mỗi ghế phải từ ${estimate.minimumPricePerSeat.toLocaleString('vi-VN')}đ đến ${estimate.maximumPricePerSeat.toLocaleString('vi-VN')}đ`, 400);
+    }
+    return { estimate, pricePerSeat };
+  }
 
-    // Backend là nguồn giá chuẩn; không tin giá client gửi lên.
-    const estimate = await PricingService.estimateCarpool(
-      data.originLat,
-      data.originLng,
-      data.destinationLat,
-      data.destinationLng,
-      vehicle.type,
-      data.availableSeats
-    );
-    const systemPricePerSeat = estimate.recommendedPricePerSeat;
-
-    // 4. Tạo chuyến đi
-    const departureTime = new Date(data.departureTime);
-    const newRide = await prisma.ride.create({
-      data: {
+  private static buildRideData(
+    driverId: string,
+    data: Omit<CreateRideInput, 'departureTime'>,
+    departureTime: Date,
+    route: { estimate: Awaited<ReturnType<typeof PricingService.estimateCarpoolRoute>>; pricePerSeat: number },
+    scheduleId?: string,
+  ): Prisma.RideUncheckedCreateInput {
+    return {
         driverId,
         origin: data.origin || '',
         originLat: data.originLat ?? null,
@@ -131,13 +125,14 @@ export class RidesService {
         destination: data.destination || '',
         destinationLat: data.destinationLat ?? null,
         destinationLng: data.destinationLng ?? null,
-        distance: data.distance ?? null,
-        duration: data.duration ?? null,
-        routePolyline: data.routePolyline ?? null,
+        distance: route.estimate.estimatedDistance,
+        duration: route.estimate.estimatedDuration,
+        routePolyline: route.estimate.routePolyline,
         departureTime,
         availableSeats: data.availableSeats,
         offeredSeats: data.availableSeats,
-        pricePerSeat: systemPricePerSeat,
+        pricePerSeat: route.pricePerSeat,
+        bookingPolicy: data.bookingPolicy ?? 'DRIVER_APPROVAL',
         description: data.description ?? null,
         originHouseNumber: data.originHouseNumber ?? null,
         originStreet: data.originStreet ?? null,
@@ -159,11 +154,21 @@ export class RidesService {
         allowLuggage: data.allowLuggage ?? true,
         // Phương tiện (nullable — tài xế có thể không chọn)
         vehicleId: data.vehicleId ?? null,
-      },
-      include: {
-        ...DRIVER_SELECT,
-        vehicle: true,
-      },
+        scheduleId: scheduleId ?? null,
+    };
+  }
+
+  static async createRide(driverId: string, data: CreateRideInput) {
+    this.validateRidePayload(data);
+    const departureTime = new Date(data.departureTime);
+    const vehicle = await this.getPublishingVehicle(driverId, data.vehicleId!, [departureTime]);
+    const route = await this.verifyRouteAndPrice(data, vehicle.type);
+    const newRide = await prisma.$transaction(async (tx) => {
+      const ride = await tx.ride.create({ data: this.buildRideData(driverId, data, departureTime, route) });
+      if (data.stops?.length) {
+        await tx.rideStop.createMany({ data: data.stops.map((stop, order) => ({ ...stop, rideId: ride.id, order })) });
+      }
+      return tx.ride.findUniqueOrThrow({ where: { id: ride.id }, include: DRIVER_SELECT });
     });
 
     try {
@@ -173,6 +178,29 @@ export class RidesService {
     }
 
     return newRide;
+  }
+
+  static async createRideSchedule(driverId: string, data: CreateRideScheduleInput) {
+    this.validateRidePayload(data);
+    const departureTimes = data.departureTimes.map((value) => new Date(value)).sort((left, right) => left.getTime() - right.getTime());
+    const vehicle = await this.getPublishingVehicle(driverId, data.vehicleId!, departureTimes);
+    const route = await this.verifyRouteAndPrice(data, vehicle.type);
+    const result = await prisma.$transaction(async (tx) => {
+      const schedule = await tx.rideSchedule.create({ data: { driverId, timezone: data.timezone } });
+      const rides = [];
+      for (const departureTime of departureTimes) {
+        const ride = await tx.ride.create({ data: this.buildRideData(driverId, data, departureTime, route, schedule.id) });
+        if (data.stops?.length) {
+          await tx.rideStop.createMany({ data: data.stops.map((stop, order) => ({ ...stop, rideId: ride.id, order })) });
+        }
+        rides.push(await tx.ride.findUniqueOrThrow({ where: { id: ride.id }, include: DRIVER_SELECT }));
+      }
+      return { schedule, rides };
+    });
+    result.rides.forEach((ride) => {
+      try { SocketEventService.emitGlobal(SocketEvents.RIDE_CREATED, ride); } catch { /* socket không bắt buộc */ }
+    });
+    return result;
   }
 
   static async searchRides(filters: SearchRideInput) {
@@ -398,15 +426,20 @@ export class RidesService {
 
 
 
-    const updatedRide = await prisma.ride.update({
-      where: { id },
-      data: {
-        ...data,
-        ...(data.departureTime && {
-          departureTime: new Date(data.departureTime),
-        }),
-      },
-      include: DRIVER_SELECT,
+    const { stops, ...scalarData } = data;
+    const updateData: Prisma.RideUncheckedUpdateInput = {
+      ...scalarData,
+      ...(data.departureTime && { departureTime: new Date(data.departureTime) }),
+    };
+    const updatedRide = await prisma.$transaction(async (tx) => {
+      await tx.ride.update({ where: { id }, data: updateData });
+      if (stops) {
+        await tx.rideStop.deleteMany({ where: { rideId: id } });
+        if (stops.length) {
+          await tx.rideStop.createMany({ data: stops.map((stop, order) => ({ ...stop, rideId: id, order })) });
+        }
+      }
+      return tx.ride.findUniqueOrThrow({ where: { id }, include: DRIVER_SELECT });
     });
 
     try {
@@ -487,6 +520,8 @@ export class RidesService {
           data: {
             status: 'CANCELLED',
             cancelReason: 'Tài xế đã hủy chuyến đi',
+            expiresAt: null,
+            seatHeld: false,
           }
         });
       }

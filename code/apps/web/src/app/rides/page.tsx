@@ -463,6 +463,7 @@ export default function SearchPage() {
     <MapLocationPicker
       target={activeLocationField}
       initialCenter={mapInitialCenter}
+      selectedAddress={activeLocationField === 'origin' ? selectedOrigin : selectedDestination}
       onTargetChange={setActiveLocationField}
       onConfirm={handleMapLocationConfirm}
     />

@@ -31,8 +31,9 @@ interface RideRouteMapProps {
   onRouteCalculated?: (distanceKm: number, durationSeconds: number) => void;
 }
 
-const DRIVER_ROUTE_COLOR = '#0071e3';
-const PASSENGER_ROUTE_COLOR = '#f97316';
+const DRIVER_ROUTE_COLOR = '#0066cc';
+const PASSENGER_ROUTE_COLOR = '#e8590c';
+const ROUTE_OUTLINE_COLOR = '#ffffff';
 
 const isValidPoint = (point?: GeoPoint | null): point is GeoPoint =>
   Boolean(
@@ -227,13 +228,23 @@ const RideRouteMap = ({
 
         <div className="flex flex-wrap items-center gap-3" aria-label="Chú giải tuyến đường">
           <div className="flex items-center gap-2 text-[12px] font-semibold text-[#1d1d1f] dark:text-white">
-            <span className="block h-[4px] w-8 rounded-full bg-[#0071e3]" aria-hidden="true" />
+            <span className="block h-[4px] w-8 rounded-full bg-[#0066cc] ring-1 ring-white" aria-hidden="true" />
             Tuyến tài xế
           </div>
           {hasPassengerOrigin && (
             <div className="flex items-center gap-2 text-[12px] font-semibold text-[#1d1d1f] dark:text-white">
-              <span className="block h-3 w-3 rounded-full bg-[#f97316] ring-2 ring-[#f97316]/20" aria-hidden="true" />
-              {showPassengerRoute ? 'Vị trí & tuyến hành khách' : 'Vị trí hành khách'}
+              {showPassengerRoute ? (
+                <span
+                  className="block h-[4px] w-8 rounded-full"
+                  aria-hidden="true"
+                  style={{
+                    backgroundImage: `repeating-linear-gradient(90deg, ${PASSENGER_ROUTE_COLOR} 0 7px, transparent 7px 11px)`,
+                  }}
+                />
+              ) : (
+                <span className="block h-3 w-3 rounded-full bg-[#e8590c] ring-2 ring-[#e8590c]/20" aria-hidden="true" />
+              )}
+              {showPassengerRoute ? 'Tuyến hành khách' : 'Vị trí hành khách'}
             </div>
           )}
         </div>
@@ -245,14 +256,25 @@ const RideRouteMap = ({
         height="320px"
         markers={markers}
         polylines={[
-          { positions: driverPolyline, color: DRIVER_ROUTE_COLOR, width: 6, opacity: 0.9 },
+          {
+            positions: driverPolyline,
+            color: DRIVER_ROUTE_COLOR,
+            width: 6,
+            opacity: 0.95,
+            outlineColor: ROUTE_OUTLINE_COLOR,
+            outlineWidth: 9,
+            outlineOpacity: 0.88,
+          },
           ...(showPassengerRoute
             ? [{
                 positions: passengerPolyline,
                 color: PASSENGER_ROUTE_COLOR,
                 width: 5,
-                opacity: 0.95,
-                dashArray: [1.5, 1.2],
+                opacity: 1,
+                dashArray: [2, 1.5],
+                outlineColor: ROUTE_OUTLINE_COLOR,
+                outlineWidth: 8,
+                outlineOpacity: 0.88,
               }]
             : []),
         ]}

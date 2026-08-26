@@ -210,6 +210,7 @@ exports.Prisma.RideScalarFieldEnum = {
   offeredSeats: 'offeredSeats',
   pricePerSeat: 'pricePerSeat',
   tollCost: 'tollCost',
+  bookingPolicy: 'bookingPolicy',
   status: 'status',
   description: 'description',
   createdAt: 'createdAt',
@@ -229,10 +230,30 @@ exports.Prisma.RideScalarFieldEnum = {
   addressDetailLevel: 'addressDetailLevel',
   cancelReason: 'cancelReason',
   vehicleId: 'vehicleId',
+  scheduleId: 'scheduleId',
   allowRoutePickup: 'allowRoutePickup',
   allowSmoking: 'allowSmoking',
   allowPets: 'allowPets',
   allowLuggage: 'allowLuggage'
+};
+
+exports.Prisma.RideScheduleScalarFieldEnum = {
+  id: 'id',
+  driverId: 'driverId',
+  timezone: 'timezone',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RideStopScalarFieldEnum = {
+  id: 'id',
+  rideId: 'rideId',
+  address: 'address',
+  name: 'name',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  order: 'order',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.BookingScalarFieldEnum = {
@@ -245,10 +266,13 @@ exports.Prisma.BookingScalarFieldEnum = {
   detourKm: 'detourKm',
   priceBreakdown: 'priceBreakdown',
   status: 'status',
+  expiresAt: 'expiresAt',
+  seatHeld: 'seatHeld',
   paymentStatus: 'paymentStatus',
   passengerLat: 'passengerLat',
   passengerLng: 'passengerLng',
   pickupAddress: 'pickupAddress',
+  pickupStopId: 'pickupStopId',
   isPickedUp: 'isPickedUp',
   driverArrivedAt: 'driverArrivedAt',
   pickedUpAt: 'pickedUpAt',
@@ -440,6 +464,11 @@ exports.TransactionStatus = exports.$Enums.TransactionStatus = {
   FAILED: 'FAILED'
 };
 
+exports.BookingPolicy = exports.$Enums.BookingPolicy = {
+  INSTANT: 'INSTANT',
+  DRIVER_APPROVAL: 'DRIVER_APPROVAL'
+};
+
 exports.RideStatus = exports.$Enums.RideStatus = {
   FULL: 'FULL',
   SCHEDULED: 'SCHEDULED',
@@ -453,7 +482,8 @@ exports.BookingStatus = exports.$Enums.BookingStatus = {
   CONFIRMED: 'CONFIRMED',
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
-  REJECTED: 'REJECTED'
+  REJECTED: 'REJECTED',
+  EXPIRED: 'EXPIRED'
 };
 
 exports.PaymentStatus = exports.$Enums.PaymentStatus = {
@@ -516,6 +546,8 @@ exports.Prisma.ModelName = {
   RefreshToken: 'RefreshToken',
   Notification: 'Notification',
   Ride: 'Ride',
+  RideSchedule: 'RideSchedule',
+  RideStop: 'RideStop',
   Booking: 'Booking',
   Review: 'Review',
   DriverVerification: 'DriverVerification',

@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Image } from 'react-native';
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapPin, Navigation, Clock, ChevronRight, Car } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -14,7 +13,6 @@ import { StatusBadge } from '../../src/components/ui/StatusBadge';
 
 export default function MyRidesScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { activeBooking, isLoading: isActiveLoading } = useActiveRide();
 
   // Lấy lịch sử booking (của passenger hoặc driver)
@@ -25,10 +23,10 @@ export default function MyRidesScreen() {
     isRefetching,
   } = useQuery({
     queryKey: ['my-bookings'],
-    queryFn: () => bookingService.getMyBookings(),
+    queryFn: () => bookingService.getDriverBookings(),
   });
 
-  const bookings = bookingsData?.bookings || bookingsData || [];
+  const bookings = bookingsData?.bookings ?? [];
   const isLoading = isActiveLoading || isBookingsLoading;
 
   if (isLoading) {
@@ -40,10 +38,7 @@ export default function MyRidesScreen() {
   }
 
   return (
-    <View 
-      className="flex-1 bg-background" 
-      style={{ paddingTop: insets.top }}
-    >
+    <View className="flex-1 bg-background">
       {/* Header trang */}
       <View className="px-6 py-4 bg-background border-b border-border/30 mb-2">
         <AppText variant="h2" weight="bold" className="text-text-primary">Chuyến đi của tôi</AppText>

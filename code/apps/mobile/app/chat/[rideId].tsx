@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, 
-  Platform, FlatList, ActivityIndicator, SafeAreaView
+  Platform, FlatList, ActivityIndicator
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Send } from 'lucide-react-native';
@@ -105,9 +106,9 @@ export default function ChatScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-coride-background">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-200" style={{ paddingTop: Platform.OS === 'android' ? 40 : 12 }}>
+      <View className="flex-row items-center justify-between px-4 py-3 bg-coride-surface border-b border-coride-border">
         <TouchableOpacity 
           onPress={() => router.back()}
           className="w-10 h-10 items-center justify-center -ml-2"

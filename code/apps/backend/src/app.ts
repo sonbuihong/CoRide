@@ -76,6 +76,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Quá nhiều yêu cầu từ IP này, vui lòng thử lại sau 15 phút' },
+  skip: (req) => req.path.startsWith('/api/goong'),
 });
 app.use('/api/', apiLimiter);
 
@@ -95,9 +96,15 @@ app.use('/uploads', express.static(uploadsDir));
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
+    service: 'backend',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV ?? 'development',
   });
+});
+
+// Alias tối giản cho Docker/readiness tools; API public vẫn dùng /api/health.
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'backend' });
 });
 
 // ─── API Routes ───────────────────────────────────────────────────────────────

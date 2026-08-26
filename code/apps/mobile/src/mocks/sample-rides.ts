@@ -1,0 +1,207 @@
+import type { Ride } from '../services/ride.service';
+
+/**
+ * 10 mock rides covering all visual states and edge cases:
+ * - Normal vs Nearly full vs Sold out
+ * - New driver vs Rated driver
+ * - Short address vs Extra long address (2 lines clamp)
+ * - Standard price vs High price (125.000đ)
+ * - Short driver name vs Long driver name
+ * - With real avatar photo vs Avatar fallback
+ */
+export const MOCK_SAMPLE_RIDES: Ride[] = [
+  {
+    id: 'ride-01',
+    driverId: 'driver-01',
+    driver: {
+      firstName: 'Văn Hưng',
+      lastName: 'Trần',
+      rating: 4.9,
+      isVerified: true,
+      vehicle: { brand: 'Honda', model: 'Vision', licensePlate: '29A1-12345' },
+    },
+    departure: 'Đại học Phenikaa, Yên Nghĩa, Hà Đông',
+    destination: 'Keangnam Landmark 72, Phạm Hùng, Nam Từ Liêm',
+    departureTime: '2026-08-26T07:30:00.000Z',
+    availableSeats: 3,
+    totalSeats: 4,
+    price: 25000,
+    distance: 14.5,
+    duration: 35,
+    status: 'ACTIVE',
+  },
+  {
+    id: 'ride-02',
+    driverId: 'driver-02',
+    driver: {
+      firstName: 'Thảo Nhi',
+      lastName: 'Lê',
+      rating: 0, // New driver -> shows "Mới"
+      isVerified: false,
+    },
+    departure: '17 Tống Đản, Hoàn Kiếm, Hà Nội',
+    destination: '18 Coffee, Yên Nghĩa, Hà Đông, Hà Nội',
+    departureTime: '2026-08-26T08:00:00.000Z',
+    availableSeats: 1, // Nearly full -> warning badge
+    totalSeats: 2,
+    price: 17000,
+    distance: 16.0,
+    duration: 44,
+    status: 'ACTIVE',
+  },
+  {
+    id: 'ride-03',
+    driverId: 'driver-03',
+    driver: {
+      firstName: 'Hoàng Long',
+      lastName: 'Nguyễn',
+      rating: 5.0,
+      isVerified: true,
+    },
+    departure: 'Bến xe Mỹ Đình, Nam Từ Liêm',
+    destination: 'Hồ Hoàn Kiếm, Hoàn Kiếm, Hà Nội',
+    departureTime: '2026-08-26T09:15:00.000Z',
+    availableSeats: 0, // Sold out -> disabled state
+    totalSeats: 3,
+    price: 40000,
+    distance: 11.2,
+    duration: 28,
+    status: 'ACTIVE',
+  },
+  {
+    id: 'ride-04',
+    driverId: 'driver-04',
+    driver: {
+      firstName: 'Minh Quân',
+      lastName: 'Đỗ',
+      rating: 4.8,
+      isVerified: true,
+    },
+    // Extremely long addresses to test 2-line clamp and overflow prevention
+    departure: 'LK645 DV-26 Khu C, Khu đô thị mới Yên Nghĩa, Phường Yên Nghĩa, Quận Hà Đông, Hà Nội',
+    destination: 'Tòa nhà hỗn hợp Sông Đà - Hà Đông, 131 Trần Phú, Phường Văn Quán, Quận Hà Đông, Hà Nội',
+    departureTime: '2026-08-26T10:30:00.000Z',
+    availableSeats: 2,
+    totalSeats: 3,
+    price: 35000,
+    distance: 8.2,
+    duration: 20,
+    status: 'ACTIVE',
+  },
+  {
+    id: 'ride-05',
+    driverId: 'driver-05',
+    driver: {
+      firstName: 'Quốc Đạt',
+      lastName: 'Phạm',
+      rating: 4.75,
+      isVerified: true,
+    },
+    departure: 'Sân bay Quốc tế Nội Bài, Sóc Sơn, Hà Nội',
+    destination: 'Khu đô thị Vinhomes Ocean Park 1, Gia Lâm, Hà Nội',
+    departureTime: '2026-08-26T14:00:00.000Z',
+    availableSeats: 4,
+    totalSeats: 4,
+    price: 125000, // High price formatting test
+    distance: 38.0,
+    duration: 45,
+    status: 'ACTIVE',
+  },
+  {
+    id: 'ride-06',
+    driverId: 'driver-06',
+    driver: {
+      // Long name to test driver text truncation
+      firstName: 'Nguyễn Trương',
+      lastName: 'Hoàng Gia Bảo',
+      rating: 4.85,
+      isVerified: true,
+    },
+    departure: 'Royal City, 72A Nguyễn Trãi, Thanh Xuân',
+    destination: 'Times City, 458 Minh Khai, Hai Bà Trưng',
+    departureTime: '2026-08-26T16:45:00.000Z',
+    availableSeats: 2,
+    totalSeats: 4,
+    price: 30000,
+    distance: 9.8,
+    duration: 25,
+    status: 'ACTIVE',
+  },
+  {
+    id: 'ride-07',
+    driverId: 'driver-07',
+    driver: {
+      firstName: 'Anh Tuấn',
+      lastName: 'Vũ',
+      rating: undefined, // New driver (no rating field)
+      isVerified: false,
+    },
+    departure: 'Học viện Bưu chính Viễn thông',
+    destination: 'Đại học Kiến trúc Hà Nội',
+    departureTime: '2026-08-26T18:15:00.000Z',
+    availableSeats: 1, // Warning state
+    totalSeats: 1,
+    price: 12000,
+    distance: 1.8,
+    duration: 6,
+    status: 'ACTIVE',
+  },
+  {
+    id: 'ride-08',
+    driverId: 'driver-08',
+    driver: {
+      firstName: 'Mai Anh',
+      lastName: 'Hoàng',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
+      rating: 4.95,
+      isVerified: true,
+    },
+    departure: 'Tạ Hiện, Phố Cổ, Hoàn Kiếm',
+    destination: 'Khu đô thị Ecopark, Văn Giang, Hưng Yên',
+    departureTime: '2026-08-26T22:30:00.000Z',
+    availableSeats: 3,
+    totalSeats: 4,
+    price: 65000,
+    distance: 18.5,
+    duration: 32,
+    status: 'ACTIVE',
+  },
+  {
+    id: 'ride-09',
+    driverId: 'driver-09',
+    driver: {
+      firstName: 'Đức Thịnh',
+      lastName: 'Ngô',
+      rating: 4.6,
+      isVerified: false,
+    },
+    departure: 'Khu đô thị Xa La, Hà Đông',
+    destination: 'Bệnh viện Bạch Mai, Giải Phóng, Đống Đa',
+    departureTime: '2026-08-27T06:00:00.000Z',
+    availableSeats: 2,
+    totalSeats: 3,
+    price: 22000,
+    distance: 10.2,
+    duration: 24,
+    status: 'ACTIVE',
+  },
+  {
+    id: 'ride-10',
+    driverId: 'driver-10',
+    driver: {
+      firstName: 'Thanh Tùng',
+      lastName: 'Bùi',
+      rating: 5.0,
+      isVerified: true,
+    },
+    departure: 'Vincom Center Bà Triệu, Hai Bà Trưng',
+    destination: 'Công viên Cầu Giấy, Dịch Vọng, Cầu Giấy',
+    departureTime: '2026-08-27T19:00:00.000Z',
+    availableSeats: 0, // Sold out state
+    totalSeats: 4,
+    price: 50000,
+    distance: 7.5,
+    duration: 22,
+    status: 'ACTIVE',
+  },
+];

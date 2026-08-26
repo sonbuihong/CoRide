@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+export const bookingPolicySchema = z.enum(['INSTANT', 'DRIVER_APPROVAL']);
+
+export const rideStopInputSchema = z.object({
+  name: z.string().trim().max(200).optional(),
+  address: z.string().trim().min(2, 'Địa chỉ điểm dừng là bắt buộc').max(500),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
+const futureIsoDate = z.string().refine((value) => !Number.isNaN(Date.parse(value)), {
+  message: 'Thời gian khởi hành không hợp lệ',
+}).refine((value) => new Date(value) > new Date(), {
+  message: 'Thời gian khởi hành phải ở tương lai',
+});
+
 export const createRideSchema = z.object({
   // Structured origin address
   originHouseNumber: z.string().optional(),
@@ -34,13 +49,7 @@ export const createRideSchema = z.object({
   distance: z.number().optional(),
   duration: z.number().optional(),
   routePolyline: z.string().optional(),
-  departureTime: z.string({
-    required_error: "Thời gian khởi hành là bắt buộc",
-  }).refine((val) => !isNaN(Date.parse(val)), {
-    message: "Thời gian khởi hành không hợp lệ",
-  }).refine((val) => new Date(val) > new Date(), {
-    message: "Thời gian khởi hành phải ở tương lai",
-  }),
+  departureTime: futureIsoDate,
   availableSeats: z.coerce.number({
     required_error: "Số chỗ trống là bắt buộc",
   }).int().min(1, "Phải có ít nhất 1 chỗ trống"),
@@ -53,6 +62,8 @@ export const createRideSchema = z.object({
   allowSmoking: z.boolean().optional(),
   allowPets: z.boolean().optional(),
   allowLuggage: z.boolean().optional(),
+  bookingPolicy: bookingPolicySchema.optional(),
+  stops: z.array(rideStopInputSchema).max(3, 'Chỉ được thêm tối đa 3 điểm dừng').optional(),
   // Phương tiện — optional, tài xế có thể không chọn
   vehicleId: z.string().uuid("vehicleId không hợp lệ").optional(),
 });
@@ -72,6 +83,24 @@ export const searchRideSchema = z.object({
   driverId: z.string().optional().or(z.literal('')),
 });
 
+export const createRideScheduleSchema = createRideSchema.omit({ departureTime: true }).extend({
+  departureTimes: z.array(futureIsoDate).min(1, 'Chọn ít nhất một ngày khởi hành').max(30, 'Chỉ được chọn tối đa 30 ngày'),
+  timezone: z.literal('Asia/Ho_Chi_Minh').default('Asia/Ho_Chi_Minh'),
+}).superRefine((value, ctx) => {
+  const timestamps = value.departureTimes.map((item) => new Date(item).getTime());
+  if (new Set(timestamps).size !== timestamps.length) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['departureTimes'], message: 'Ngày khởi hành không được trùng nhau' });
+  }
+  const maximum = new Date();
+  maximum.setMonth(maximum.getMonth() + 6);
+  maximum.setHours(23, 59, 59, 999);
+  value.departureTimes.forEach((item, index) => {
+    if (new Date(item) > maximum) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['departureTimes', index], message: 'Ngày khởi hành không được quá 6 tháng' });
+    }
+  });
+});
+
 export const updateRideStatusSchema = z.object({
   status: z.enum(['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'], {
     required_error: "Trạng thái chuyến đi là bắt buộc",
@@ -80,6 +109,9 @@ export const updateRideStatusSchema = z.object({
 });
 
 export type CreateRideInput = z.infer<typeof createRideSchema>;
+export type CreateRideScheduleInput = z.infer<typeof createRideScheduleSchema>;
+export type RideStopInput = z.infer<typeof rideStopInputSchema>;
+export type BookingPolicy = z.infer<typeof bookingPolicySchema>;
 export type SearchRideInput = z.infer<typeof searchRideSchema>;
 export type UpdateRideStatusInput = z.infer<typeof updateRideStatusSchema>;
 

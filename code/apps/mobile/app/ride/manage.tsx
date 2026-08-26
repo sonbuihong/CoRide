@@ -57,7 +57,7 @@ export default function ManageRidesScreen() {
             <TouchableOpacity 
               key={ride.id}
               className="bg-white p-5 rounded-2xl mb-4 shadow-sm border border-gray-100"
-              onPress={() => router.push(`/ride/manage/${ride.id}`)}
+              onPress={() => router.push(`/ride/${ride.id}`)}
             >
               <View className="flex-row justify-between items-start mb-3">
                 <View className="flex-1">

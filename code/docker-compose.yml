@@ -1,134 +1,185 @@
+x-coride-app: &coride-app
+  image: coride-dev:local
+  init: true
+  restart: unless-stopped
+  stop_grace_period: 10s
+
 services:
-  # PostgreSQL Database
   postgres_db:
     image: postgres:15-alpine
-    container_name: coride_postgres
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: rootpassword
-      POSTGRES_DB: coride_db
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rootpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-coride_db}
     ports:
-      - "5432:5432"
+      # PostgreSQL Windows hiện hữu dùng 5432; Docker dùng 5433 trên host để
+      # hai database không tranh cổng. Container vẫn kết nối qua postgres:5432.
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root -d coride_db"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 12
+      start_period: 10s
     restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - postgres
 
-  # Redis Cache
   redis_cache:
-    image: redis:alpine
-    container_name: coride_redis
+    image: redis:7-alpine
     ports:
       - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
     restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - redis
 
-  # RabbitMQ Message Broker
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: coride_rabbitmq
-    ports:
-      - "5672:5672"   # AMQP protocol port
-      - "15672:15672" # Management UI port
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-coride}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-coride_dev_password}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     restart: unless-stopped
 
-  # Backend API Service
-  backend:
+  migrate:
+    <<: *coride-app
     build:
       context: .
-      dockerfile: apps/backend/Dockerfile
-    container_name: coride_backend
-    ports:
-      - "5002:5002"
+      dockerfile: Dockerfile.dev
+    restart: "no"
     environment:
-      - DATABASE_URL=postgresql://root:rootpassword@postgres_db:5432/coride_db?schema=public
-      - REDIS_URL=redis://redis_cache:6379
-      - JWT_SECRET=your_jwt_secret_key_here
-      - CLOUDINARY_URL=cloudinary://your_key
-      - PORT=5002
+      DATABASE_URL: postgresql://${POSTGRES_USER:-root}:${POSTGRES_PASSWORD:-rootpassword}@postgres:5432/${POSTGRES_DB:-coride_db}?schema=public
+    command:
+      - pnpm
+      - --filter
+      - "@repo/database"
+      - exec
+      - prisma
+      - migrate
+      - deploy
+      - --schema
+      - prisma/schema.prisma
     depends_on:
       postgres_db:
         condition: service_healthy
+
+  backend:
+    <<: *coride-app
+    working_dir: /app/apps/backend
+    command: ["node", "/app/apps/backend/node_modules/nodemon/bin/nodemon.js", "--legacy-watch", "--watch", "src", "--ext", "ts", "--exec", "/app/apps/backend/node_modules/.bin/tsx src/server.ts"]
+    environment:
+      NODE_ENV: development
+      PORT: "5101"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-root}:${POSTGRES_PASSWORD:-rootpassword}@postgres:5432/${POSTGRES_DB:-coride_db}?schema=public
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-coride}:${RABBITMQ_PASSWORD:-coride_dev_password}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET:-change_me_for_local_development}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      GOONG_MAPS_API_KEY: ${GOONG_MAPS_API_KEY:-}
+      GOONG_REST_API_KEY: ${GOONG_REST_API_KEY:-}
+      GOONG_GEOLOCATION_ENABLED: ${GOONG_GEOLOCATION_ENABLED:-false}
+      PAYMENT_BANK_ID: ${PAYMENT_BANK_ID:-}
+      PAYMENT_ACCOUNT_NO: ${PAYMENT_ACCOUNT_NO:-}
+      PAYMENT_ACCOUNT_NAME: ${PAYMENT_ACCOUNT_NAME:-}
+    ports:
+      - "5101:5101"
+    volumes:
+      - ./apps/backend/src:/app/apps/backend/src
+      - ./uploads:/app/apps/backend/uploads
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5101/api/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
       redis_cache:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    restart: unless-stopped
-
-  # Notification Service
-  notification-service:
-    build:
-      context: .
-      dockerfile: apps/notification-service/Dockerfile
-    container_name: coride_notification_service
-    ports:
-      - "5003:5003"
-    environment:
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-      - DATABASE_URL=postgresql://root:rootpassword@postgres_db:5432/coride_db?schema=public
-      - REDIS_URL=redis://redis_cache:6379
-      - PORT=5003
-    depends_on:
       rabbitmq:
         condition: service_healthy
-      postgres_db:
-        condition: service_healthy
+
+  notification-service:
+    <<: *coride-app
+    working_dir: /app/apps/notification-service
+    command: ["node", "/app/apps/backend/node_modules/nodemon/bin/nodemon.js", "--legacy-watch", "--watch", "src", "--ext", "ts", "--exec", "/app/apps/notification-service/node_modules/.bin/tsx src/server.ts"]
+    environment:
+      NODE_ENV: development
+      PORT: "5201"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-root}:${POSTGRES_PASSWORD:-rootpassword}@postgres:5432/${POSTGRES_DB:-coride_db}?schema=public
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-coride}:${RABBITMQ_PASSWORD:-coride_dev_password}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET:-change_me_for_local_development}
+    ports:
+      - "5201:5201"
+    volumes:
+      - ./apps/notification-service/src:/app/apps/notification-service/src
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5201/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
       redis_cache:
         condition: service_healthy
-    restart: unless-stopped
+      rabbitmq:
+        condition: service_healthy
 
-  # API Gateway
   api-gateway:
-    build:
-      context: .
-      dockerfile: apps/api-gateway/Dockerfile
-    container_name: coride_api_gateway
+    <<: *coride-app
+    working_dir: /app/apps/api-gateway
+    command: ["node", "/app/apps/backend/node_modules/nodemon/bin/nodemon.js", "--legacy-watch", "--watch", "src", "--ext", "ts", "--exec", "/app/apps/api-gateway/node_modules/.bin/tsx src/server.ts"]
+    environment:
+      NODE_ENV: development
+      PORT: "5001"
+      MONOLITH_URL: http://backend:5101
+      NOTIFICATION_SERVICE_URL: http://notification-service:5201
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "5001:5001"
-    environment:
-      - PORT=5001
-      - BACKEND_URL=http://backend:5002
-      - NOTIFICATION_SERVICE_URL=http://notification-service:5003
+    volumes:
+      - ./apps/api-gateway/src:/app/apps/api-gateway/src
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5001/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
     depends_on:
-      - backend
-      - notification-service
-    restart: unless-stopped
-
-  # Web Frontend Service
-  web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-      args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5001/api}
-    container_name: coride_web
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5001/api}
-    depends_on:
-      - api-gateway
-    restart: unless-stopped
+      backend:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
 
 volumes:
   postgres_data:
-
+  rabbitmq_data:

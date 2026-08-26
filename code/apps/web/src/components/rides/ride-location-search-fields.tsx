@@ -32,13 +32,15 @@ export function RideLocationSearchFields({
   activeLocationField = 'destination',
   isMapPicking = false,
   onActiveLocationFieldChange,
-  autocompleteVersion = 'v1',
+  autocompleteVersion = 'v2',
 }: RideLocationSearchFieldsProps) {
   const [isLocating, setIsLocating] = useState(false);
   const [gpsAddress, setGpsAddress] = useState('');
+  const [gpsCoordinates, setGpsCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [isOriginFocused, setIsOriginFocused] = useState(false);
   const [isDestinationSelected, setIsDestinationSelected] = useState(Boolean(initialDestination.trim()));
   const onOriginChangeRef = useRef(onOriginChange);
+  const reverseVersionRef = useRef(autocompleteVersion);
 
   useEffect(() => {
     onOriginChangeRef.current = onOriginChange;
@@ -55,7 +57,7 @@ export function RideLocationSearchFields({
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         try {
-          const result = await reverseGeocodeDetailed(coords.latitude, coords.longitude);
+          const result = await reverseGeocodeDetailed(coords.latitude, coords.longitude, autocompleteVersion);
           if (!result) return;
 
           const address = buildFullAddressFromDetail({
@@ -64,6 +66,8 @@ export function RideLocationSearchFields({
           }) || cleanAddressText(result.address);
 
           setGpsAddress(address);
+          setGpsCoordinates({ lat: coords.latitude, lng: coords.longitude });
+          reverseVersionRef.current = autocompleteVersion;
           onOriginChangeRef.current(address, {
             lat: coords.latitude,
             lng: coords.longitude,
@@ -77,7 +81,18 @@ export function RideLocationSearchFields({
       () => setIsLocating(false),
       { timeout: 10000, maximumAge: 60000 }
     );
-  }, [initialOrigin]);
+  }, [autocompleteVersion, initialOrigin]);
+
+  useEffect(() => {
+    if (!gpsCoordinates || reverseVersionRef.current === autocompleteVersion) return;
+    reverseVersionRef.current = autocompleteVersion;
+    reverseGeocodeDetailed(gpsCoordinates.lat, gpsCoordinates.lng, autocompleteVersion).then((result) => {
+      if (!result) return;
+      const address = buildFullAddressFromDetail({ name: result.name, formatted_address: result.address }) || cleanAddressText(result.address);
+      setGpsAddress(address);
+      onOriginChangeRef.current(address, gpsCoordinates);
+    });
+  }, [autocompleteVersion, gpsCoordinates]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -89,6 +104,7 @@ export function RideLocationSearchFields({
         )}
         <GoongAutocomplete
           apiVersion={autocompleteVersion}
+          biasLocation={gpsCoordinates || undefined}
           placeholder={isOriginFocused
             ? (gpsAddress || (isLocating ? 'Đang lấy địa chỉ hiện tại...' : 'Nhập điểm đi'))
             : 'Sử dụng vị trí hiện tại'}
@@ -115,6 +131,7 @@ export function RideLocationSearchFields({
         <MapPin className="h-5 w-5 shrink-0 text-[#ff3b30]" strokeWidth={2} />
         <GoongAutocomplete
           apiVersion={autocompleteVersion}
+          biasLocation={gpsCoordinates || undefined}
           placeholder="Bạn muốn đi đâu"
           defaultValue={initialDestination}
           onSelect={(address, coordinates) => {

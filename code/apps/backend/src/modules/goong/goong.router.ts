@@ -1,7 +1,16 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 import goongController from './goong.controller';
+import { validate } from '../../shared/middlewares/validate.middleware';
+import {
+  autocompleteQuerySchema, directionsBodySchema, distanceMatrixBodySchema, geocodeQuerySchema,
+  geolocationBodySchema, placeDetailQuerySchema, reverseGeocodeQuerySchema, staticMapQuerySchema,
+  tripBodySchema, placeSearchQuerySchema, reversePlacesQuerySchema,
+} from './goong.validation';
 
 const router = Router();
+const autocompleteLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300, standardHeaders: true, legacyHeaders: false });
+const heavyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60, standardHeaders: true, legacyHeaders: false });
 
 /**
  * Middleware đặt HTTP Cache-Control header cho response.
@@ -30,7 +39,10 @@ function cacheFor(maxAgeSeconds: number) {
  * @access  Public
  * @cache   60s — kết quả gợi ý thay đổi khi dữ liệu Goong cập nhật
  */
-router.get('/autocomplete', cacheFor(60), goongController.autocomplete);
+router.get('/autocomplete', autocompleteLimiter, validate(autocompleteQuerySchema, 'query'), cacheFor(60), goongController.autocomplete);
+
+router.get('/places/search', autocompleteLimiter, validate(placeSearchQuerySchema, 'query'), cacheFor(60), goongController.searchPlaces);
+router.get('/places/reverse', autocompleteLimiter, validate(reversePlacesQuerySchema, 'query'), cacheFor(300), goongController.reversePlaces);
 
 /**
  * @route   GET /api/goong/geocode-v2
@@ -46,7 +58,7 @@ router.get('/geocode-v2', cacheFor(300), goongController.geocodeV2);
  * @access  Public
  * @cache   300s — tọa độ địa chỉ gần như không thay đổi
  */
-router.get('/geocode', cacheFor(300), goongController.geocode);
+router.get('/geocode', validate(geocodeQuerySchema, 'query'), cacheFor(300), goongController.geocode);
 
 /**
  * @route   GET /api/goong/reverse-geocode
@@ -54,7 +66,7 @@ router.get('/geocode', cacheFor(300), goongController.geocode);
  * @access  Public
  * @cache   300s — địa chỉ tại một tọa độ cố định không thay đổi
  */
-router.get('/reverse-geocode', cacheFor(300), goongController.reverseGeocode);
+router.get('/reverse-geocode', validate(reverseGeocodeQuerySchema, 'query'), cacheFor(300), goongController.reverseGeocode);
 
 /**
  * @route   POST /api/goong/directions
@@ -63,7 +75,7 @@ router.get('/reverse-geocode', cacheFor(300), goongController.reverseGeocode);
  * @cache   Không cache — POST không cache theo HTTP spec
  *          (cân nhắc chuyển sang GET nếu muốn cache sau này)
  */
-router.post('/directions', goongController.directions);
+router.post('/directions', heavyLimiter, validate(directionsBodySchema), goongController.directions);
 
 /**
  * @route   GET /api/goong/place-detail
@@ -71,6 +83,11 @@ router.post('/directions', goongController.directions);
  * @access  Public
  * @cache   600s — thông tin địa điểm (tên, địa chỉ, tọa độ) rất ít thay đổi
  */
-router.get('/place-detail', cacheFor(600), goongController.getPlaceDetail);
+router.get('/place-detail', validate(placeDetailQuerySchema, 'query'), cacheFor(600), goongController.getPlaceDetail);
+
+router.post('/distance-matrix', heavyLimiter, validate(distanceMatrixBodySchema), goongController.distanceMatrix);
+router.post('/trip', heavyLimiter, validate(tripBodySchema), goongController.trip);
+router.get('/static-map', heavyLimiter, validate(staticMapQuerySchema, 'query'), goongController.staticMap);
+router.post('/geolocation', heavyLimiter, validate(geolocationBodySchema), goongController.geolocation);
 
 export default router;

@@ -9,3 +9,5 @@ allowBuilds:
   esbuild: true
   prisma: true
   unrs-resolver: true
+patchedDependencies:
+  react-native-css-interop@0.2.6: patches/react-native-css-interop@0.2.6.patch

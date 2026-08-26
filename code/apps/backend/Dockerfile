@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package management files
-COPY package.json package-lock.json turbo.json ./
+COPY package.json turbo.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/database/package.json ./packages/database/
 COPY packages/shared/package.json ./packages/shared/
@@ -39,6 +39,6 @@ COPY --from=builder /app/apps/backend/package.json ./apps/backend/package.json
 COPY --from=builder /app/packages/database ./packages/database
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
-EXPOSE 5001
+EXPOSE 5101
 CMD ["node", "apps/backend/dist/server.js"]
 

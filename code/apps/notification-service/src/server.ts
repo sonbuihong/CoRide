@@ -15,7 +15,7 @@ const server = http.createServer(app);
 // CORS được xử lý tại API Gateway
 app.use(express.json());
 
-const PORT = process.env.PORT || 5003;
+const PORT = Number(process.env.PORT ?? '5201');
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 const prisma = new PrismaClient();
@@ -23,7 +23,7 @@ const prisma = new PrismaClient();
 // /health phải đặt TRƯỚC notificationRoutes để không bị chặn bởi authenticate middleware
 // WHY: Express khớp route theo thứ tự khai báo — đặt sau sẽ bị router chặn trước
 app.get('/health', (req, res) => {
-  res.json({ status: 'Notification Service is running' });
+  res.json({ status: 'ok', service: 'notification-service' });
 });
 
 import notificationRoutes from './routes';
@@ -34,7 +34,10 @@ import { createClient } from 'redis';
 import { Emitter } from '@socket.io/redis-emitter';
 
 const redisClient = createClient({ url: REDIS_URL });
-redisClient.connect().catch((err) => console.error('[Notification Redis] Error:', err));
+redisClient.on('error', (err) => {
+  // Bắt lỗi kết nối Redis để tránh unhandled error spam khi Redis chưa khởi động
+});
+redisClient.connect().catch((err) => console.error('[Notification Redis] Connection failed:', err.message));
 const ioEmitter = new Emitter(redisClient);
 
 // RabbitMQ Connection and Consumer
@@ -76,14 +79,14 @@ async function connectRabbitMQ() {
         }
       }
     });
-  } catch (error) {
-    console.error('Failed to connect to RabbitMQ:', error);
+  } catch (error: any) {
+    console.warn(`[Notification RabbitMQ] Chưa kết nối được tới RabbitMQ (${error?.code || error?.message || error}). Sẽ thử lại sau 10 giây...`);
     // Retry connection
-    setTimeout(connectRabbitMQ, 5000);
+    setTimeout(connectRabbitMQ, 10000);
   }
 }
 
-server.listen(PORT, async () => {
+server.listen(PORT, '0.0.0.0', async () => {
   console.log(`🔔 Notification Service is running on port ${PORT}`);
   await connectRabbitMQ();
 });

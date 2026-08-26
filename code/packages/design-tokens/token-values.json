@@ -1,0 +1,66 @@
+{
+  "colors": {
+    "primary": "#0071E3",
+    "primaryPressed": "#0066CC",
+    "primarySoft": "#EAF4FF",
+    "secondary": "#515154",
+    "accent": "#0071E3",
+    "background": "#F5F5F7",
+    "surface": "#FFFFFF",
+    "surfaceSecondary": "#FAFAFC",
+    "textPrimary": "#1D1D1F",
+    "textSecondary": "#515154",
+    "textMuted": "#737377",
+    "border": "#E5E5EA",
+    "borderStrong": "#D1D1D6",
+    "success": "#15803D",
+    "successSoft": "#F0FDF4",
+    "warning": "#B45309",
+    "warningSoft": "#FFFBEB",
+    "danger": "#DC2626",
+    "dangerSoft": "#FEF2F2",
+    "info": "#2563EB",
+    "driverAccent": "#34C759",
+    "driverAccentSoft": "#EAF9EE",
+    "driverSurface": "#0A1E3C",
+    "mapRoute": "#0071E3",
+    "mapPickup": "#0F766E",
+    "mapDestination": "#DC2626",
+    "scrim": "rgba(15, 23, 42, 0.48)"
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "screen": 20,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius": {
+    "sm": 10,
+    "input": 14,
+    "button": 16,
+    "card": 18,
+    "sheet": 26,
+    "full": 999
+  },
+  "typography": {
+    "display": { "fontSize": 30, "lineHeight": 36, "fontWeight": "600" },
+    "heading1": { "fontSize": 24, "lineHeight": 30, "fontWeight": "600" },
+    "heading2": { "fontSize": 20, "lineHeight": 26, "fontWeight": "600" },
+    "heading3": { "fontSize": 18, "lineHeight": 24, "fontWeight": "600" },
+    "body": { "fontSize": 16, "lineHeight": 24, "fontWeight": "400" },
+    "bodySmall": { "fontSize": 14, "lineHeight": 20, "fontWeight": "400" },
+    "caption": { "fontSize": 12, "lineHeight": 16, "fontWeight": "400" }
+  },
+  "sizing": {
+    "touchTarget": 48,
+    "control": 48,
+    "tabBar": 64,
+    "maxMobileContent": 560
+  },
+  "zIndex": { "base": 0, "dropdown": 100, "overlay": 200, "modal": 300, "toast": 400 },
+  "motion": { "fast": 150, "standard": 220, "slow": 300 }
+}

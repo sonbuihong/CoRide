@@ -10,6 +10,7 @@ type LocationField = 'origin' | 'destination';
 interface MapLocationPickerProps {
   target: LocationField;
   initialCenter?: { lat: number; lng: number } | null;
+  selectedAddress?: string;
   onTargetChange: (target: LocationField) => void;
   onConfirm: (address: string, coordinates: { lat: number; lng: number }) => void;
 }
@@ -19,6 +20,7 @@ const DEFAULT_CENTER = { lat: 21.0285, lng: 105.8542 };
 export function MapLocationPicker({
   target,
   initialCenter,
+  selectedAddress = '',
   onTargetChange,
   onConfirm,
 }: MapLocationPickerProps) {
@@ -28,6 +30,7 @@ export function MapLocationPicker({
   const [isMapReady, setIsMapReady] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
+  const [resolvedAddress, setResolvedAddress] = useState(selectedAddress);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -71,6 +74,38 @@ export function MapLocationPicker({
   }, [initialCenter?.lat, initialCenter?.lng]);
 
   useEffect(() => {
+    setResolvedAddress(selectedAddress);
+  }, [selectedAddress, target]);
+
+  useEffect(() => {
+    if (!isMapReady || isMoving) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setIsResolving(true);
+      setError('');
+      try {
+        const address = await reverseGeocode(center.lat, center.lng);
+        if (!cancelled) {
+          setResolvedAddress(address || `${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}`);
+        }
+      } catch {
+        if (!cancelled) {
+          setResolvedAddress('');
+          setError('Không thể lấy địa chỉ tại vị trí này. Vui lòng thử lại.');
+        }
+      } finally {
+        if (!cancelled) setIsResolving(false);
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [center.lat, center.lng, isMapReady, isMoving]);
+
+  useEffect(() => {
     if (initialCenter || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
@@ -84,6 +119,11 @@ export function MapLocationPicker({
   }, [initialCenter]);
 
   const handleConfirm = async () => {
+    if (resolvedAddress) {
+      onConfirm(resolvedAddress, center);
+      return;
+    }
+
     setIsResolving(true);
     setError('');
     try {
@@ -145,7 +185,13 @@ export function MapLocationPicker({
           <div className="flex min-w-0 flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 items-center gap-2 text-[13px] text-gray-600 dark:text-gray-300">
             <Crosshair className="h-4 w-4 shrink-0 text-[#0071e3]" />
-            <span className="min-w-0 truncate">{isMoving ? 'Đang xác định tọa độ...' : `Sẵn sàng chọn làm ${target === 'origin' ? 'điểm đi' : 'điểm đến'}`}</span>
+            <span className="min-w-0 line-clamp-2">
+              {isMoving
+                ? 'Đang xác định vị trí...'
+                : isResolving
+                  ? 'Đang tìm địa chỉ...'
+                  : resolvedAddress || `Chọn vị trí làm ${target === 'origin' ? 'điểm đi' : 'điểm đến'}`}
+            </span>
             </div>
             <button
               type="button"
@@ -154,7 +200,7 @@ export function MapLocationPicker({
               className="inline-flex h-11 w-full min-w-0 shrink-0 items-center justify-center rounded-full bg-[#0071e3] px-4 text-[14px] font-semibold text-white shadow-sm transition-colors hover:bg-[#0077ed] disabled:cursor-not-allowed disabled:opacity-50 xl:w-auto xl:px-6"
             >
               {isResolving && <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" />}
-              <span className="truncate">Dùng làm {target === 'origin' ? 'điểm đi' : 'điểm đến'}</span>
+              <span className="truncate">Chọn {target === 'origin' ? 'điểm đi' : 'điểm đến'} này</span>
             </button>
           </div>
           {error && <p className="mt-2 break-words text-[12px] font-medium text-red-500">{error}</p>}

@@ -8,8 +8,8 @@ export const connectRabbitMQ = async () => {
     const connection = await amqp.connect(RABBITMQ_URL);
     channel = await connection.createChannel();
     console.log('🐰 Connected to RabbitMQ (Publisher)');
-  } catch (error) {
-    console.error('Failed to connect to RabbitMQ:', error);
+  } catch (error: any) {
+    console.warn(`[RabbitMQ] Chưa kết nối được tới RabbitMQ (${error?.code || error?.message || error}). Đảm bảo Docker (Redis & RabbitMQ) đã được bật.`);
   }
 };
 
