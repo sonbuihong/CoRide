@@ -1,6 +1,6 @@
 import React from 'react';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
 
@@ -35,9 +35,10 @@ export function getRoleTabColor(mode: NavigationMode) {
 
 export function RoleBottomTabBar({ mode, state, descriptors, navigation, insets }: BottomTabBarProps & { mode: NavigationMode }) {
   const visibleRoutes = state.routes.slice(0, 4);
+  const { width } = useWindowDimensions();
 
   return (
-    <View style={[styles.bottomBar, { height: layout.tabBarHeight + insets.bottom, paddingBottom: insets.bottom }]}>
+    <View style={[styles.bottomBar, width >= 768 && styles.bottomBarExpanded, { height: layout.tabBarHeight + insets.bottom, paddingBottom: insets.bottom }]}>
       {visibleRoutes.map((route) => {
         const index = state.routes.indexOf(route);
         const focused = state.index === index;
@@ -116,7 +117,7 @@ export function RoleTabLabel({ color, focused, label }: RoleTabLabelProps) {
   return (
     <Text
       allowFontScaling
-      maxFontSizeMultiplier={1}
+      maxFontSizeMultiplier={1.3}
       numberOfLines={1}
       style={[styles.label, { color }, focused && styles.labelFocused]}
     >
@@ -172,6 +173,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     width: '100%',
   },
+  // The brief keeps four bottom destinations on every target. Expanded layouts
+  // center and cap the bar rather than changing its navigation semantics.
+  bottomBarExpanded: { alignSelf: 'center', borderRadius: radius.card, marginBottom: spacing.xs, maxWidth: 720 },
   bottomButton: {
     alignItems: 'center',
     borderRadius: radius.button,

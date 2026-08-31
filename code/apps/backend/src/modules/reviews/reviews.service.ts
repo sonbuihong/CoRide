@@ -1,92 +1,133 @@
-import { extendedPrisma as prisma } from '@repo/database';
-import { ReviewType } from '@repo/database';
-import { CreateReviewInput } from '@repo/shared';
+import { extendedPrisma as prisma, ReviewType } from '@repo/database';
+import type { CreateReviewInput } from '@repo/shared';
+
 import { AppError } from '../../shared/errors/AppError';
 import { NotificationsService } from '../notifications/notifications.service';
 
+const isPrismaUniqueError = (error: unknown): boolean => (
+  typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002'
+);
+
 export class ReviewsService {
   static async createReview(reviewerId: string, data: CreateReviewInput) {
-    const { rideId, revieweeId, rating, comment } = data;
-
-    // 1. Không được tự đánh giá chính mình
+    const { rideId, tripRequestId, revieweeId, rating, comment } = data;
     if (reviewerId === revieweeId) {
       throw new AppError('Bạn không thể tự đánh giá chính mình', 400);
     }
 
-    // 2. Chuyến đi phải tồn tại và đã COMPLETED
-    const ride = await prisma.ride.findUnique({ where: { id: rideId } });
-    if (!ride) throw new AppError('Không tìm thấy chuyến đi', 404);
-    if (ride.status !== 'COMPLETED') {
-      throw new AppError('Chỉ có thể đánh giá sau khi chuyến đi kết thúc', 400);
-    }
+    let reviewType: ReviewType;
+    let notificationTarget: { type: 'RIDE' | 'TRIP'; id: string };
 
-    // 3. Kiểm tra người đánh giá có tham gia chuyến đi không
-    const isDriver = ride.driverId === reviewerId;
-    const passengerBooking = await prisma.booking.findFirst({
-      where: { rideId, passengerId: reviewerId, status: { in: ['CONFIRMED', 'COMPLETED'] } },
-    });
-
-    if (!isDriver && !passengerBooking) {
-      throw new AppError('Bạn không có quyền đánh giá chuyến đi này', 403);
-    }
-
-    if (!isDriver && revieweeId !== ride.driverId) {
-      throw new AppError('Hành khách chỉ có thể đánh giá tài xế của chuyến đi', 403);
-    }
-    if (isDriver) {
-      const reviewedPassenger = await prisma.booking.findFirst({
-        where: { rideId, passengerId: revieweeId, status: { in: ['CONFIRMED', 'COMPLETED'] } },
-      });
-      if (!reviewedPassenger) {
-        throw new AppError('Tài xế chỉ có thể đánh giá hành khách của chuyến đi', 403);
+    if (tripRequestId) {
+      const trip = await prisma.tripRequest.findUnique({ where: { id: tripRequestId } });
+      if (!trip) throw new AppError('Không tìm thấy chuyến đặt xe', 404);
+      if (trip.status !== 'COMPLETED') {
+        throw new AppError('Chỉ có thể đánh giá sau khi chuyến đi kết thúc', 400);
       }
+      const reviewerIsPassenger = trip.passengerId === reviewerId;
+      const reviewerIsDriver = trip.driverId === reviewerId;
+      if (!reviewerIsPassenger && !reviewerIsDriver) {
+        throw new AppError('Bạn không có quyền đánh giá chuyến đi này', 403);
+      }
+      const expectedRevieweeId = reviewerIsPassenger ? trip.driverId : trip.passengerId;
+      if (!expectedRevieweeId || revieweeId !== expectedRevieweeId) {
+        throw new AppError('Người được đánh giá không thuộc chuyến đi này', 403);
+      }
+      reviewType = reviewerIsPassenger ? ReviewType.DRIVER : ReviewType.PASSENGER;
+      notificationTarget = { type: 'TRIP', id: tripRequestId };
+    } else if (rideId) {
+      const ride = await prisma.ride.findUnique({ where: { id: rideId } });
+      if (!ride) throw new AppError('Không tìm thấy chuyến đi', 404);
+      if (ride.status !== 'COMPLETED') {
+        throw new AppError('Chỉ có thể đánh giá sau khi chuyến đi kết thúc', 400);
+      }
+
+      const reviewerIsDriver = ride.driverId === reviewerId;
+      const passengerBooking = await prisma.booking.findFirst({
+        where: {
+          rideId,
+          passengerId: reviewerId,
+          status: { in: ['CONFIRMED', 'COMPLETED'] },
+        },
+      });
+      if (!reviewerIsDriver && !passengerBooking) {
+        throw new AppError('Bạn không có quyền đánh giá chuyến đi này', 403);
+      }
+      if (!reviewerIsDriver && revieweeId !== ride.driverId) {
+        throw new AppError('Hành khách chỉ có thể đánh giá tài xế của chuyến đi', 403);
+      }
+      if (reviewerIsDriver) {
+        const reviewedPassenger = await prisma.booking.findFirst({
+          where: {
+            rideId,
+            passengerId: revieweeId,
+            status: { in: ['CONFIRMED', 'COMPLETED'] },
+          },
+        });
+        if (!reviewedPassenger) {
+          throw new AppError('Tài xế chỉ có thể đánh giá hành khách của chuyến đi', 403);
+        }
+      }
+      reviewType = reviewerIsDriver ? ReviewType.PASSENGER : ReviewType.DRIVER;
+      notificationTarget = { type: 'RIDE', id: rideId };
+    } else {
+      throw new AppError('Thiếu chuyến đi cần đánh giá', 400);
     }
 
-    // 4. Kiểm tra chưa đánh giá người này trong chuyến đi này
     const existingReview = await prisma.review.findFirst({
-      where: { rideId, reviewerId, revieweeId },
+      where: {
+        reviewerId,
+        revieweeId,
+        ...(tripRequestId ? { tripRequestId } : { rideId }),
+      },
+      select: { id: true },
     });
-
     if (existingReview) {
       throw new AppError(
-        'Bạn đã gửi đánh giá cho người này trong chuyến đi này rồi',
-        400
+        'Bạn đã gửi đánh giá cho người này trong chuyến đi rồi',
+        409,
+        true,
+        'REVIEW_ALREADY_EXISTS',
       );
     }
 
-    // 5. Tự động xác định ReviewType dựa trên vai trò reviewer
-    // Nếu reviewer là driver → đánh giá hành khách (PASSENGER)
-    // Nếu reviewer là passenger → đánh giá tài xế (DRIVER)
-    const reviewType: ReviewType = isDriver
-      ? ReviewType.PASSENGER
-      : ReviewType.DRIVER;
-
-    // 6. Tạo review — Prisma Extension tự cập nhật rating tương ứng
-    const review = await prisma.review.create({
-      data: {
-        rideId,
-        reviewerId,
-        revieweeId,
-        rating,
-        comment: comment ?? null,
-        type: reviewType,
-      },
-      include: {
-        reviewer: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+    try {
+      const review = await prisma.review.create({
+        data: {
+          rideId: rideId ?? null,
+          tripRequestId: tripRequestId ?? null,
+          reviewerId,
+          revieweeId,
+          rating,
+          comment: comment?.trim() || null,
+          type: reviewType,
         },
-      },
-    });
+        include: {
+          reviewer: {
+            select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          },
+        },
+      });
 
-    // 6. Thông báo người được đánh giá
-    NotificationsService.createNotification(
-      revieweeId,
-      'Bạn nhận được đánh giá mới',
-      `${review.reviewer.firstName} đã gửi cho bạn đánh giá ${rating} sao`,
-      'NEW_REVIEW'
-    ).catch((err) => console.error('[Notification Error]:', err));
-
-    return review;
+      void NotificationsService.createNotification(
+        revieweeId,
+        'Bạn nhận được đánh giá mới',
+        `${review.reviewer.firstName ?? 'Một người dùng'} đã gửi đánh giá ${rating} sao`,
+        'NEW_REVIEW',
+        notificationTarget,
+      ).catch((error) => console.error('[Notification Error]:', error));
+      return review;
+    } catch (error) {
+      if (isPrismaUniqueError(error)) {
+        throw new AppError(
+          'Bạn đã gửi đánh giá cho người này trong chuyến đi rồi',
+          409,
+          true,
+          'REVIEW_ALREADY_EXISTS',
+        );
+      }
+      throw error;
+    }
   }
 
   static async getUserReviews(userId: string) {
@@ -94,12 +135,7 @@ export class ReviewsService {
       where: { revieweeId: userId },
       include: {
         reviewer: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-          },
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
         },
       },
       orderBy: { createdAt: 'desc' },

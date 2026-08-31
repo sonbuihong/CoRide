@@ -1,299 +1,172 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Linking } from 'react-native';
-import { MapPin, Navigation, Car, Bike } from 'lucide-react-native';
-import { SocketEvents } from '@repo/shared';
+import { useState } from 'react';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { tripService } from '../../src/services/trip.service';
-import { socketService } from '../../src/services/socket.service';
-import { AppText } from '../../src/components/ui/AppText';
 import { AppButton } from '../../src/components/ui/AppButton';
-import { LocationPicker } from '../../src/components/LocationPicker';
+import { AppText } from '../../src/components/ui/AppText';
+import { PassengerActiveTrip } from '../../src/features/ride-hailing/PassengerActiveTrip';
+import { PassengerRideRequest } from '../../src/features/ride-hailing/PassengerRideRequest';
+import {
+  rideHailingKeys,
+  useRideHailingTrip,
+} from '../../src/features/ride-hailing/useRideHailingTrip';
 import { paymentService } from '../../src/services/payment.service';
-import { ActiveRideMap } from '../../src/components/ActiveRideMap';
-import { usePassengerTrackDriver } from '../../src/hooks/useDriverLocation';
+import { tripService, type RideHailingTrip } from '../../src/services/trip.service';
+import { colors, layout, spacing } from '../../src/theme/tokens';
+import { getApiErrorMessage } from '../../src/utils/api-error';
+import { showConfirmDialog, showInfoDialog } from '../../src/utils/dialog';
 
-export default function RideHailingScreen() {
-  const [pickup, setPickup] = useState('');
-  const [dropoff, setDropoff] = useState('');
-  const [pickupCoords, setPickupCoords] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [dropoffCoords, setDropoffCoords] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [vehicleType, setVehicleType] = useState<'BIKE' | 'CAR'>('BIKE');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPaying, setIsPaying] = useState(false);
-  const [activeTrip, setActiveTrip] = useState<any>(null);
-  const driverLocation = usePassengerTrackDriver(activeTrip?.id ?? null);
+export default function PassengerRideHailingScreen() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const active = useRideHailingTrip('passenger');
+  const [lastRequest, setLastRequest] = useState<RideHailingTrip | null>(null);
+  const [action, setAction] = useState<'cancel' | 'payment' | 'retry' | null>(null);
+  const [error, setError] = useState<string>();
 
-  useEffect(() => {
-    // Check if there is an active trip
-    socketService.connect();
-    tripService.getActiveTrip().then(res => {
-      if (res.data) {
-        setActiveTrip(res.data);
-      }
-    }).catch(err => console.log('No active trip'));
+  const setActiveTrip = (trip: RideHailingTrip) => {
+    active.clearTerminalTrip();
+    setLastRequest(null);
+    queryClient.setQueryData(rideHailingKeys.active('passenger'), trip);
+  };
 
-    // Socket events
-    const handleStatusUpdate = (data: any) => {
-      if (data.status === 'MATCHING') {
-        // Keep showing searching
-      } else if (data.status === 'NO_DRIVER') {
-        Alert.alert('Xin lỗi', 'Không tìm thấy tài xế nào gần đây.');
-        setActiveTrip(null);
-      } else {
-        // MATCHED, STARTED, etc.
-        setActiveTrip((prev: any) => ({ ...prev, status: data.status }));
-      }
-    };
+  const cancelTrip = () => {
+    const trip = active.trip;
+    if (!trip || action) return;
+    showConfirmDialog(
+      trip.driverId ? 'Hủy chuyến đã có tài xế?' : 'Hủy tìm tài xế?',
+      trip.driverId
+        ? 'Tài xế đã nhận và có thể đang di chuyển đến bạn.'
+        : 'Hệ thống sẽ dừng gửi yêu cầu tới các tài xế.',
+      () => {
+        setAction('cancel');
+        setError(undefined);
+        void tripService.cancelTrip(trip.id, 'Hành khách thay đổi kế hoạch')
+          .then(({ data }) => {
+            active.rememberTerminalTrip(data);
+            queryClient.setQueryData(rideHailingKeys.active('passenger'), null);
+          })
+          .catch((caught) => setError(getApiErrorMessage(caught, 'Không thể hủy chuyến lúc này.')))
+          .finally(() => setAction(null));
+      },
+      'Hủy chuyến',
+    );
+  };
 
-    const handleMatched = (data: any) => {
-      Alert.alert('Thành công', 'Đã tìm thấy tài xế!');
-      setActiveTrip((prev: any) => ({ ...prev, status: 'ACCEPTED', driver: data.driver }));
-    };
-    const handleNoDriver = () => {
-      Alert.alert('Xin lỗi', 'Không tìm thấy tài xế nào gần đây.');
-      setActiveTrip(null);
-    };
-    socketService.on(SocketEvents.TRIP_STATUS_UPDATE, handleStatusUpdate);
-    socketService.on(SocketEvents.TRIP_MATCHED, handleMatched);
-    socketService.on(SocketEvents.TRIP_NO_DRIVER, handleNoDriver);
-    
-    return () => {
-      socketService.off(SocketEvents.TRIP_STATUS_UPDATE, handleStatusUpdate);
-      socketService.off(SocketEvents.TRIP_MATCHED, handleMatched);
-      socketService.off(SocketEvents.TRIP_NO_DRIVER, handleNoDriver);
-    };
-  }, []);
-
-  const handleRequestRide = async () => {
-    if (!pickup || !dropoff || !pickupCoords || !dropoffCoords) {
-      Alert.alert('Lỗi', 'Vui lòng chọn điểm đón và điểm đến từ danh sách gợi ý.');
-      return;
-    }
-
-    setIsLoading(true);
+  const confirmPayment = async (trip: RideHailingTrip) => {
+    setAction('payment');
+    setError(undefined);
     try {
-      const payload = {
-        originAddress: pickup,
-        originLat: pickupCoords.latitude,
-        originLng: pickupCoords.longitude,
-        destAddress: dropoff,
-        destLat: dropoffCoords.latitude,
-        destLng: dropoffCoords.longitude,
-        vehicleType
-      };
-
-      const res = await tripService.createTrip(payload);
-      setActiveTrip(res.data);
-    } catch (error: any) {
-      Alert.alert('Lỗi', error?.response?.data?.message || 'Không thể tạo cuốc xe');
+      const result = await paymentService.confirmSimulatorPayment(trip.id);
+      const completedTrip = result?.data?.trip as RideHailingTrip | undefined;
+      active.rememberTerminalTrip(completedTrip ?? { ...trip, status: 'COMPLETED', paymentStatus: 'PAID' });
+      queryClient.setQueryData(rideHailingKeys.active('passenger'), null);
+      showInfoDialog('Thanh toán thành công', 'Chuyến đi đã hoàn tất. Hãy đánh giá tài xế của bạn.');
+    } catch (caught) {
+      setError(getApiErrorMessage(caught, 'Không thể xác nhận thanh toán. Vui lòng thử lại.'));
     } finally {
-      setIsLoading(false);
+      setAction(null);
     }
   };
 
-  const handleCancelTrip = async () => {
-    if (!activeTrip) return;
+  const payTrip = async () => {
+    const trip = active.trip;
+    if (!trip || action) return;
+    setAction('payment');
+    setError(undefined);
     try {
-      await tripService.cancelTrip(activeTrip.id, 'Hành khách đổi ý');
-      setActiveTrip(null);
-    } catch {
-      Alert.alert('Lỗi', 'Không thể hủy cuốc xe');
-    }
-  };
-
-  const handlePayment = async () => {
-    if (!activeTrip?.id) return;
-    try {
-      setIsPaying(true);
-      const qr = await paymentService.getSimulatorQr(activeTrip.id);
-      if (!qr?.data?.qrUrl) throw new Error('missing_qr');
+      const qr = await paymentService.getSimulatorQr(trip.id);
+      if (!qr?.data?.qrUrl) throw new Error('Không nhận được mã QR thanh toán');
       await Linking.openURL(qr.data.qrUrl);
-      Alert.alert('Thanh toán mô phỏng', 'Sau khi quét mã, hãy xác nhận thanh toán.', [
-        { text: 'Để sau', style: 'cancel', onPress: () => setIsPaying(false) },
-        {
-          text: 'Tôi đã thanh toán',
-          onPress: async () => {
-            try {
-              await paymentService.confirmSimulatorPayment(activeTrip.id);
-              setTimeout(() => {
-                setActiveTrip(null);
-                setIsPaying(false);
-                Alert.alert('Thành công', 'Thanh toán đã được xác nhận.');
-              }, 3500);
-            } catch {
-              setIsPaying(false);
-              Alert.alert('Lỗi', 'Không thể xác nhận thanh toán.');
-            }
-          },
-        },
-      ]);
-    } catch {
-      setIsPaying(false);
-      Alert.alert('Lỗi', 'Không thể tạo mã QR thanh toán.');
+      setAction(null);
+      showConfirmDialog(
+        'Xác nhận thanh toán',
+        `Xác nhận bạn đã thanh toán ${(trip.finalPrice ?? trip.estimatedPrice).toLocaleString('vi-VN')}đ.`,
+        () => void confirmPayment(trip),
+        'Tôi đã thanh toán',
+        'Để sau',
+      );
+    } catch (caught) {
+      setAction(null);
+      setError(getApiErrorMessage(caught, 'Không thể mở mã QR thanh toán.'));
     }
   };
 
-  if (activeTrip) {
-    const originCoords = {
-      latitude: Number(activeTrip.originLat),
-      longitude: Number(activeTrip.originLng),
-    };
-    const destinationCoords = {
-      latitude: Number(activeTrip.destLat),
-      longitude: Number(activeTrip.destLng),
-    };
-    const hasMapCoordinates = [
-      originCoords.latitude,
-      originCoords.longitude,
-      destinationCoords.latitude,
-      destinationCoords.longitude,
-    ].every(Number.isFinite);
+  const retryTrip = async () => {
+    const trip = active.trip;
+    if (!trip || action) return;
+    setAction('retry');
+    setError(undefined);
+    try {
+      const result = await tripService.createTrip({
+        originAddress: trip.originAddress,
+        originLat: trip.originLat,
+        originLng: trip.originLng,
+        destAddress: trip.destAddress,
+        destLat: trip.destLat,
+        destLng: trip.destLng,
+        vehicleType: trip.vehicleType,
+      });
+      setActiveTrip(result.data);
+    } catch (caught) {
+      setError(getApiErrorMessage(caught, 'Không thể tìm lại tài xế. Vui lòng thử lại.'));
+    } finally {
+      setAction(null);
+    }
+  };
 
+  const adjustPickup = () => {
+    if (!active.trip) return;
+    setLastRequest(active.trip);
+    active.clearTerminalTrip();
+    setError(undefined);
+  };
+
+  const finish = () => {
+    active.clearTerminalTrip();
+    setLastRequest(null);
+    setError(undefined);
+  };
+
+  if (active.isLoading && !active.trip) {
+    return <View style={styles.state}><ActivityIndicator size="large" color={colors.primary} /><AppText variant="bodySmall">Đang khôi phục chuyến đang diễn ra…</AppText></View>;
+  }
+
+  if (active.isError && !active.trip) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-        <View style={{ padding: 20, backgroundColor: 'white', borderBottomWidth: 1, borderColor: '#e2e8f0' }}>
-          <AppText style={{ fontSize: 20, fontWeight: 'bold' }}>Trạng thái chuyến đi</AppText>
-        </View>
-        {hasMapCoordinates && (
-          <View style={{ height: 260 }}>
-            <ActiveRideMap
-              originCoords={originCoords}
-              destinationCoords={destinationCoords}
-              routeCoords={[originCoords, destinationCoords]}
-              driverLocation={driverLocation}
-              originLabel={activeTrip.originAddress}
-              destinationLabel={activeTrip.destAddress}
-            />
-          </View>
-        )}
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
-          <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 16, marginBottom: 20, elevation: 2 }}>
-            <AppText style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#3b82f6' }}>
-              {activeTrip.status === 'MATCHING' && 'Đang tìm tài xế...'}
-              {activeTrip.status === 'PENDING' && 'Đang chờ xử lý...'}
-              {activeTrip.status === 'ACCEPTED' && 'Tài xế đang đến đón'}
-              {activeTrip.status === 'ARRIVING' && 'Tài xế đang đến điểm đón'}
-              {activeTrip.status === 'IN_PROGRESS' && 'Đang trong hành trình'}
-              {activeTrip.status === 'WAITING_PAYMENT' && 'Chờ thanh toán'}
-              {activeTrip.status === 'COMPLETED' && 'Chuyến đi đã hoàn thành'}
-            </AppText>
-            
-            {activeTrip.status === 'MATCHING' && (
-              <ActivityIndicator size="large" color="#3b82f6" style={{ marginVertical: 20 }} />
-            )}
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15 }}>
-              <MapPin size={24} color="#ef4444" />
-              <View style={{ marginLeft: 10, flex: 1 }}>
-                <AppText style={{ color: '#64748b' }}>Điểm đón</AppText>
-                <AppText style={{ fontWeight: '500' }}>{activeTrip.originAddress}</AppText>
-              </View>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Navigation size={24} color="#3b82f6" />
-              <View style={{ marginLeft: 10, flex: 1 }}>
-                <AppText style={{ color: '#64748b' }}>Điểm đến</AppText>
-                <AppText style={{ fontWeight: '500' }}>{activeTrip.destAddress}</AppText>
-              </View>
-            </View>
-          </View>
-
-          {activeTrip.driver && (
-            <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 16, marginBottom: 20, elevation: 2 }}>
-              <AppText style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>Thông tin tài xế</AppText>
-              <AppText>Tên: {activeTrip.driver.firstName} {activeTrip.driver.lastName}</AppText>
-              <AppText>SĐT: {activeTrip.driver.phone || 'Không có'}</AppText>
-            </View>
-          )}
-
-          {['PENDING', 'MATCHING', 'ACCEPTED'].includes(activeTrip.status) && (
-            <AppButton title="Hủy chuyến" variant="outline" onPress={handleCancelTrip} />
-          )}
-          {activeTrip.status === 'WAITING_PAYMENT' && (
-            <AppButton title="Thanh toán bằng QR" onPress={handlePayment} isLoading={isPaying} />
-          )}
-          {activeTrip.status === 'COMPLETED' && (
-            <AppButton title="Đặt chuyến mới" onPress={() => setActiveTrip(null)} />
-          )}
-        </ScrollView>
+      <View style={styles.state}>
+        <AppText variant="h3" weight="semibold">Không thể tải chuyến đang diễn ra</AppText>
+        <AppText variant="bodySmall" style={styles.secondary}>Kiểm tra kết nối để tránh tạo trùng một chuyến khác.</AppText>
+        <AppButton title="THỬ LẠI" variant="passenger" onPress={() => void active.syncLatest()} style={styles.stateButton} />
       </View>
     );
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-      <View style={{ padding: 20, backgroundColor: 'white', borderBottomWidth: 1, borderColor: '#e2e8f0' }}>
-        <AppText style={{ fontSize: 20, fontWeight: 'bold' }}>Gọi xe Nhanh</AppText>
-      </View>
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        
-        <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 16, marginBottom: 20, elevation: 2 }}>
-          <View style={{ marginBottom: 15 }}>
-            <AppText style={{ marginBottom: 5, fontWeight: '500' }}>Điểm đón</AppText>
-            <LocationPicker
-              label="Điểm đón"
-              value={pickup}
-              onChangeText={setPickup}
-              placeholder="Nhập điểm đón"
-              onSelectCoords={(latitude, longitude) => setPickupCoords({ latitude, longitude })}
-            />
-          </View>
-          
-          <View style={{ marginBottom: 20 }}>
-            <AppText style={{ marginBottom: 5, fontWeight: '500' }}>Điểm đến</AppText>
-            <LocationPicker
-              label="Điểm đến"
-              value={dropoff}
-              onChangeText={setDropoff}
-              placeholder="Nhập điểm đến"
-              onSelectCoords={(latitude, longitude) => setDropoffCoords({ latitude, longitude })}
-            />
-          </View>
+  if (active.trip) {
+    return (
+      <PassengerActiveTrip
+        trip={active.trip}
+        action={action}
+        error={error}
+        onCancel={cancelTrip}
+        onPayment={() => void payTrip()}
+        onRetry={() => void retryTrip()}
+        onAdjustPickup={adjustPickup}
+        onRate={() => router.push({
+          pathname: '/review-modal',
+          params: { tripRequestId: active.trip!.id, revieweeId: active.trip!.driverId! },
+        } as never)}
+        onDone={finish}
+      />
+    );
+  }
 
-          <AppText style={{ marginBottom: 10, fontWeight: '500' }}>Loại xe</AppText>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
-            <TouchableOpacity
-              onPress={() => setVehicleType('BIKE')}
-              style={{
-                flex: 1,
-                padding: 15,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: vehicleType === 'BIKE' ? '#3b82f6' : '#e2e8f0',
-                backgroundColor: vehicleType === 'BIKE' ? '#eff6ff' : 'white',
-                alignItems: 'center',
-                marginRight: 10
-              }}
-            >
-              <Bike size={32} color={vehicleType === 'BIKE' ? '#3b82f6' : '#64748b'} />
-              <AppText style={{ marginTop: 5, color: vehicleType === 'BIKE' ? '#3b82f6' : '#64748b' }}>Xe máy</AppText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setVehicleType('CAR')}
-              style={{
-                flex: 1,
-                padding: 15,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: vehicleType === 'CAR' ? '#3b82f6' : '#e2e8f0',
-                backgroundColor: vehicleType === 'CAR' ? '#eff6ff' : 'white',
-                alignItems: 'center'
-              }}
-            >
-              <Car size={32} color={vehicleType === 'CAR' ? '#3b82f6' : '#64748b'} />
-              <AppText style={{ marginTop: 5, color: vehicleType === 'CAR' ? '#3b82f6' : '#64748b' }}>Ô tô</AppText>
-            </TouchableOpacity>
-          </View>
-
-          <AppButton 
-            title="Tìm Tài Xế" 
-            onPress={handleRequestRide} 
-            isLoading={isLoading}
-          />
-        </View>
-
-      </ScrollView>
-    </View>
-  );
+  return <PassengerRideRequest initialTrip={lastRequest} onCreated={setActiveTrip} />;
 }
+
+const styles = StyleSheet.create({
+  state: { alignItems: 'center', backgroundColor: colors.background, flex: 1, gap: spacing.md, justifyContent: 'center', paddingHorizontal: layout.screenGutter },
+  secondary: { color: colors.textSecondary, textAlign: 'center' },
+  stateButton: { alignSelf: 'stretch' },
+});

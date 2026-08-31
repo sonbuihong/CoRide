@@ -48,8 +48,16 @@ export const registerLegacySocket = (io: Server, socket: Socket, userId: string)
     }
   });
 
-  socket.on('driver:update_location', async (data: { latitude: number; longitude: number }) => {
-    if (!data || typeof data.latitude !== 'number' || typeof data.longitude !== 'number') return;
+  socket.on('driver:update_location', async (data: { tripId?: string; latitude: number; longitude: number }) => {
+    // Active-trip payloads are authorized, persisted and broadcast by
+    // registerTripsSocket. Handling them here as well would double-write Redis
+    // and could overwrite the trip metadata with a legacy location record.
+    if (data?.tripId) return;
+    if (
+      !data || !Number.isFinite(data.latitude) || !Number.isFinite(data.longitude) ||
+      data.latitude < -90 || data.latitude > 90 ||
+      data.longitude < -180 || data.longitude > 180
+    ) return;
     try {
       await updateDriverLocation(userId, data.latitude, data.longitude);
       await refreshDriverOnline(userId);
@@ -75,7 +83,7 @@ export const registerLegacySocket = (io: Server, socket: Socket, userId: string)
     if (!data?.tripId) return;
     try {
       const { MatchingService } = await import('../modules/matching/matching.service');
-      MatchingService.handleDriverReject(data.tripId, userId);
+      await MatchingService.handleDriverReject(data.tripId, userId);
     } catch (error) {
       console.error('[Socket] trip:reject error:', error);
     }
@@ -150,4 +158,3 @@ export const registerLegacySocket = (io: Server, socket: Socket, userId: string)
     console.log(`[Socket] User ${userId} left ${roomName}`);
   });
 };
-

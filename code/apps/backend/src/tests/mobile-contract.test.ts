@@ -20,7 +20,9 @@ describe('Mobile shared contract', () => {
 
   it('keeps lifecycle and socket event names stable for mobile', () => {
     expect(tripStatusSchema.parse('WAITING_PAYMENT')).toBe('WAITING_PAYMENT');
+    expect(tripStatusSchema.parse('ARRIVED')).toBe('ARRIVED');
     expect(driverTripStatusSchema.parse('ARRIVING')).toBe('ARRIVING');
+    expect(driverTripStatusSchema.parse('ARRIVED')).toBe('ARRIVED');
     expect(() => driverTripStatusSchema.parse('COMPLETED')).toThrow();
     expect(SocketEvents.TRIP_LOCATION_UPDATED).toBe('trip:location_updated');
     expect(SocketEvents.NOTIFICATION_NEW).toBe('notification:new');

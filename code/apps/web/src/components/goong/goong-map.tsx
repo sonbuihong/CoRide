@@ -163,6 +163,8 @@ interface GoongMapProps {
   circleRadius?: number;
   /** Hiển thị thanh tìm kiếm + chọn kiểu bản đồ hay không */
   showControls?: boolean;
+  /** Báo tâm camera sau khi người dùng dừng kéo bản đồ. */
+  onMoveEnd?: (center: { lat: number; lng: number }) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -178,6 +180,7 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
   className = '',
   circleRadius = 0,
   showControls = false,
+  onMoveEnd,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -253,6 +256,26 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isMapReady || !onMoveEnd) return;
+    const handler = () => {
+      const next = map.getCenter();
+      onMoveEnd({ lat: next.lat, lng: next.lng });
+    };
+    map.on('moveend', handler);
+    return () => map.off('moveend', handler);
+  }, [isMapReady, onMoveEnd]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !isMapReady || polylines.length > 0) return;
+    const current = map.getCenter();
+    if (Math.abs(current.lat - center[0]) > 0.00001 || Math.abs(current.lng - center[1]) > 0.00001) {
+      map.easeTo({ center: [center[1], center[0]], duration: 350 });
+    }
+  }, [center, isMapReady, polylines.length]);
 
   // ── Cập nhật markers + vòng tròn + polyline khi props thay đổi ───────────
   useEffect(() => {

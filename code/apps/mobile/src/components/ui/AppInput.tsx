@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, TextInputProps } from 'react-native';
+import { Platform, StyleSheet, View, TextInput, TextInputProps } from 'react-native';
 import { colors } from '../../theme/tokens';
 import { AppText } from './AppText';
 
@@ -16,6 +16,7 @@ export const AppInput: React.FC<AppInputProps> = ({
   leftIcon,
   rightIcon,
   className = '',
+  style,
   onFocus,
   onBlur,
   ...props
@@ -36,6 +37,8 @@ export const AppInput: React.FC<AppInputProps> = ({
         <TextInput
           className="flex-1 text-text-primary text-[17px] py-2.5"
           placeholderTextColor={colors.textMuted}
+          selectionColor={colors.primary}
+          cursorColor={colors.primary}
           onFocus={(event) => {
             setIsFocused(true);
             onFocus?.(event);
@@ -46,6 +49,7 @@ export const AppInput: React.FC<AppInputProps> = ({
           }}
           accessibilityLabel={`${label || props.placeholder}${error ? `. Lỗi: ${error}` : ''}`}
           {...props}
+          style={[styles.input, style]}
         />
         {rightIcon && <View className="ml-3">{rightIcon}</View>}
       </View>
@@ -53,3 +57,10 @@ export const AppInput: React.FC<AppInputProps> = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  input: Platform.select({
+    web: { outlineStyle: 'none' } as any,
+    default: {},
+  }),
+});

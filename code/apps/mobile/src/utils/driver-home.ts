@@ -23,6 +23,7 @@ export interface DriverHomeActiveItem {
 const tripPriority: Record<string, number> = {
   ACCEPTED: 2,
   ARRIVING: 3,
+  ARRIVED: 4,
   IN_PROGRESS: 5,
   WAITING_PAYMENT: 6,
 };
@@ -33,7 +34,7 @@ const ridePriority: Record<string, number> = {
   ONGOING: 5,
 };
 
-const joinName = (person?: { firstName?: string; lastName?: string }) =>
+const joinName = (person?: { firstName?: string | null; lastName?: string | null }) =>
   [person?.firstName, person?.lastName].filter(Boolean).join(' ').trim();
 
 function normalizeTrip(trip: ActiveDriverTrip | null | undefined): DriverHomeActiveItem | null {
@@ -41,7 +42,8 @@ function normalizeTrip(trip: ActiveDriverTrip | null | undefined): DriverHomeAct
 
   const labels: Record<string, { status: string; cta: string }> = {
     ACCEPTED: { status: 'Đã nhận chuyến', cta: 'Đi đến điểm đón' },
-    ARRIVING: { status: 'Đang đến điểm đón', cta: 'Bắt đầu chuyến' },
+    ARRIVING: { status: 'Đang đến điểm đón', cta: 'Đã đến điểm đón' },
+    ARRIVED: { status: 'Đang chờ hành khách', cta: 'Bắt đầu chuyến' },
     IN_PROGRESS: { status: 'Đang thực hiện', cta: 'Hoàn thành chuyến' },
     WAITING_PAYMENT: { status: 'Chờ thanh toán', cta: 'Xem thanh toán' },
   };

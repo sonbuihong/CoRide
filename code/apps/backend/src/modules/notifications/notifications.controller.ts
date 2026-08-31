@@ -44,6 +44,20 @@ export const markAllAsRead = async (
   }
 };
 
+export const deleteNotification = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    await NotificationsService.deleteNotification(req.user!.id, req.params.id as string);
+    res.json({ message: 'Đã xóa thông báo' });
+  } catch (error) { next(error); }
+};
+
+export const restoreNotification = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    await NotificationsService.restoreNotification(req.user!.id, req.params.id as string);
+    res.json({ message: 'Đã khôi phục thông báo' });
+  } catch (error) { next(error); }
+};
+
 /**
  * SSE (Server-Sent Events) endpoint — giữ kết nối HTTP mở và push notification real-time.
  * Client kết nối bằng: const es = new EventSource('/api/notifications/subscribe')

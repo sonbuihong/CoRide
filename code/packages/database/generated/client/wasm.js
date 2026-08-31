@@ -132,22 +132,22 @@ exports.Prisma.UserScalarFieldEnum = {
   avatarUrl: 'avatarUrl',
   bio: 'bio',
   role: 'role',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
   driverRating: 'driverRating',
   driverRatingCount: 'driverRatingCount',
   passengerRating: 'passengerRating',
   passengerRatingCount: 'passengerRatingCount',
-  isDriverVerified: 'isDriverVerified',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  isDriverVerified: 'isDriverVerified'
 };
 
 exports.Prisma.WalletScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  rideBalance: 'rideBalance',
-  driverEarnings: 'driverEarnings',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  rideBalance: 'rideBalance',
+  driverEarnings: 'driverEarnings'
 };
 
 exports.Prisma.TransactionScalarFieldEnum = {
@@ -159,9 +159,9 @@ exports.Prisma.TransactionScalarFieldEnum = {
   description: 'description',
   externalId: 'externalId',
   bookingId: 'bookingId',
-  tripRequestId: 'tripRequestId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  tripRequestId: 'tripRequestId'
 };
 
 exports.Prisma.MessageScalarFieldEnum = {
@@ -190,51 +190,54 @@ exports.Prisma.NotificationScalarFieldEnum = {
   content: 'content',
   type: 'type',
   isRead: 'isRead',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  deletedAt: 'deletedAt',
+  targetType: 'targetType',
+  targetId: 'targetId'
 };
 
 exports.Prisma.RideScalarFieldEnum = {
   id: 'id',
   driverId: 'driverId',
   origin: 'origin',
-  originLat: 'originLat',
-  originLng: 'originLng',
   destination: 'destination',
-  destinationLat: 'destinationLat',
-  destinationLng: 'destinationLng',
-  distance: 'distance',
-  duration: 'duration',
-  routePolyline: 'routePolyline',
   departureTime: 'departureTime',
   availableSeats: 'availableSeats',
-  offeredSeats: 'offeredSeats',
   pricePerSeat: 'pricePerSeat',
-  tollCost: 'tollCost',
-  bookingPolicy: 'bookingPolicy',
   status: 'status',
   description: 'description',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  originHouseNumber: 'originHouseNumber',
-  originStreet: 'originStreet',
-  originWard: 'originWard',
-  originDistrict: 'originDistrict',
-  originProvince: 'originProvince',
-  originAddressType: 'originAddressType',
+  destinationLat: 'destinationLat',
+  destinationLng: 'destinationLng',
+  originLat: 'originLat',
+  originLng: 'originLng',
+  distance: 'distance',
+  duration: 'duration',
+  addressDetailLevel: 'addressDetailLevel',
+  destAddressType: 'destAddressType',
+  destDistrict: 'destDistrict',
   destHouseNumber: 'destHouseNumber',
+  destProvince: 'destProvince',
   destStreet: 'destStreet',
   destWard: 'destWard',
-  destDistrict: 'destDistrict',
-  destProvince: 'destProvince',
-  destAddressType: 'destAddressType',
-  addressDetailLevel: 'addressDetailLevel',
-  cancelReason: 'cancelReason',
-  vehicleId: 'vehicleId',
-  scheduleId: 'scheduleId',
+  originAddressType: 'originAddressType',
+  originDistrict: 'originDistrict',
+  originHouseNumber: 'originHouseNumber',
+  originProvince: 'originProvince',
+  originStreet: 'originStreet',
+  originWard: 'originWard',
+  routePolyline: 'routePolyline',
+  offeredSeats: 'offeredSeats',
+  tollCost: 'tollCost',
   allowRoutePickup: 'allowRoutePickup',
-  allowSmoking: 'allowSmoking',
+  bookingPolicy: 'bookingPolicy',
+  scheduleId: 'scheduleId',
+  allowLuggage: 'allowLuggage',
   allowPets: 'allowPets',
-  allowLuggage: 'allowLuggage'
+  allowSmoking: 'allowSmoking',
+  cancelReason: 'cancelReason',
+  vehicleId: 'vehicleId'
 };
 
 exports.Prisma.RideScheduleScalarFieldEnum = {
@@ -262,56 +265,59 @@ exports.Prisma.BookingScalarFieldEnum = {
   passengerId: 'passengerId',
   seats: 'seats',
   totalPrice: 'totalPrice',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  paymentStatus: 'paymentStatus',
   sharedDistanceKm: 'sharedDistanceKm',
   detourKm: 'detourKm',
   priceBreakdown: 'priceBreakdown',
-  status: 'status',
-  expiresAt: 'expiresAt',
-  seatHeld: 'seatHeld',
-  paymentStatus: 'paymentStatus',
-  passengerLat: 'passengerLat',
-  passengerLng: 'passengerLng',
-  pickupAddress: 'pickupAddress',
-  pickupStopId: 'pickupStopId',
-  isPickedUp: 'isPickedUp',
   driverArrivedAt: 'driverArrivedAt',
   pickedUpAt: 'pickedUpAt',
+  droppedOffAt: 'droppedOffAt',
+  expiresAt: 'expiresAt',
+  seatHeld: 'seatHeld',
+  pickupStopId: 'pickupStopId',
+  cancelReason: 'cancelReason',
+  dropoffAddress: 'dropoffAddress',
   dropoffLat: 'dropoffLat',
   dropoffLng: 'dropoffLng',
-  dropoffAddress: 'dropoffAddress',
   isDroppedOff: 'isDroppedOff',
-  droppedOffAt: 'droppedOffAt',
-  cancelReason: 'cancelReason',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  isPickedUp: 'isPickedUp',
+  passengerLat: 'passengerLat',
+  passengerLng: 'passengerLng',
+  pickupAddress: 'pickupAddress'
 };
 
 exports.Prisma.ReviewScalarFieldEnum = {
   id: 'id',
   rideId: 'rideId',
+  tripRequestId: 'tripRequestId',
   reviewerId: 'reviewerId',
   revieweeId: 'revieweeId',
   rating: 'rating',
   comment: 'comment',
-  type: 'type',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  type: 'type'
 };
 
 exports.Prisma.DriverVerificationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  licenseFrontImageUrl: 'licenseFrontImageUrl',
-  licenseBackImageUrl: 'licenseBackImageUrl',
-  registrationFrontImageUrl: 'registrationFrontImageUrl',
-  registrationBackImageUrl: 'registrationBackImageUrl',
+  licenseImageUrl: 'licenseImageUrl',
+  vehicleImageUrl: 'vehicleImageUrl',
   vehiclePlate: 'vehiclePlate',
   vehicleModel: 'vehicleModel',
-  vehicleType: 'vehicleType',
   status: 'status',
   rejectionReason: 'rejectionReason',
   reviewedAt: 'reviewedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  licenseBackImageUrl: 'licenseBackImageUrl',
+  licenseFrontImageUrl: 'licenseFrontImageUrl',
+  registrationBackImageUrl: 'registrationBackImageUrl',
+  registrationFrontImageUrl: 'registrationFrontImageUrl',
+  vehicleType: 'vehicleType'
 };
 
 exports.Prisma.ProvinceMappingScalarFieldEnum = {
@@ -357,6 +363,7 @@ exports.Prisma.TripRequestScalarFieldEnum = {
   maxAttempts: 'maxAttempts',
   matchRadius: 'matchRadius',
   matchedAt: 'matchedAt',
+  arrivedAt: 'arrivedAt',
   startedAt: 'startedAt',
   completedAt: 'completedAt',
   cancelledAt: 'cancelledAt',
@@ -373,6 +380,9 @@ exports.Prisma.PricingConfigScalarFieldEnum = {
   pricePerMinute: 'pricePerMinute',
   baseDistance: 'baseDistance',
   minFare: 'minFare',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
   fuelPrice: 'fuelPrice',
   fuelConsumption: 'fuelConsumption',
   vehicleOverheadRatio: 'vehicleOverheadRatio',
@@ -380,10 +390,7 @@ exports.Prisma.PricingConfigScalarFieldEnum = {
   driverPriceAdjustment: 'driverPriceAdjustment',
   roundingUnit: 'roundingUnit',
   maxDetourKm: 'maxDetourKm',
-  maxDetourRatio: 'maxDetourRatio',
-  isActive: 'isActive',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  maxDetourRatio: 'maxDetourRatio'
 };
 
 exports.Prisma.VehicleScalarFieldEnum = {
@@ -464,26 +471,26 @@ exports.TransactionStatus = exports.$Enums.TransactionStatus = {
   FAILED: 'FAILED'
 };
 
+exports.RideStatus = exports.$Enums.RideStatus = {
+  SCHEDULED: 'SCHEDULED',
+  ONGOING: 'ONGOING',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  FULL: 'FULL'
+};
+
 exports.BookingPolicy = exports.$Enums.BookingPolicy = {
   INSTANT: 'INSTANT',
   DRIVER_APPROVAL: 'DRIVER_APPROVAL'
 };
 
-exports.RideStatus = exports.$Enums.RideStatus = {
-  FULL: 'FULL',
-  SCHEDULED: 'SCHEDULED',
-  ONGOING: 'ONGOING',
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED'
-};
-
 exports.BookingStatus = exports.$Enums.BookingStatus = {
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
-  COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
   REJECTED: 'REJECTED',
-  EXPIRED: 'EXPIRED'
+  EXPIRED: 'EXPIRED',
+  COMPLETED: 'COMPLETED'
 };
 
 exports.PaymentStatus = exports.$Enums.PaymentStatus = {
@@ -520,6 +527,7 @@ exports.TripStatus = exports.$Enums.TripStatus = {
   MATCHING: 'MATCHING',
   ACCEPTED: 'ACCEPTED',
   ARRIVING: 'ARRIVING',
+  ARRIVED: 'ARRIVED',
   IN_PROGRESS: 'IN_PROGRESS',
   WAITING_PAYMENT: 'WAITING_PAYMENT',
   COMPLETED: 'COMPLETED',

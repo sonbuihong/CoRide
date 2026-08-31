@@ -65,13 +65,42 @@ const extrasFromDeparture = (departureTime: string): RideDraftExtras => {
   };
 };
 
+const localDateKey = (value: Date) =>
+  `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+
+export const sanitizeRideDraft = (
+  draft: RideDraft,
+  now = new Date(),
+): RideDraft => {
+  const today = localDateKey(now);
+  const fallbackDeparture = new Date(now.getTime() + 60 * 60 * 1000);
+  const selectedDates = draft.extras.selectedDates
+    .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= today)
+    .filter((date, index, dates) => dates.indexOf(date) === index)
+    .sort();
+
+  return {
+    ...draft,
+    extras: {
+      ...draft.extras,
+      selectedDates: selectedDates.length
+        ? selectedDates
+        : [localDateKey(fallbackDeparture)],
+      departureClock: selectedDates.length
+        ? draft.extras.departureClock
+        : `${String(fallbackDeparture.getHours()).padStart(2, "0")}:${String(fallbackDeparture.getMinutes()).padStart(2, "0")}`,
+    },
+  };
+};
+
 export const rideDraftService = {
   async load(): Promise<RideDraft | null> {
     try {
       const raw = await readValue(DRAFT_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as RideDraft;
-        if (parsed.version === 2 && parsed.form && parsed.extras) return parsed;
+        if (parsed.version === 2 && parsed.form && parsed.extras)
+          return sanitizeRideDraft(parsed);
       }
       const legacy = await readValue(LEGACY_DRAFT_KEY);
       if (!legacy) return null;
@@ -80,13 +109,13 @@ export const rideDraftService = {
         form?: CreateRideInput;
       };
       if (!parsed.form) return null;
-      return {
+      return sanitizeRideDraft({
         version: 2,
         savedAt: new Date().toISOString(),
         step: Math.min(parsed.step ?? 0, 6),
         form: parsed.form,
         extras: extrasFromDeparture(parsed.form.departureTime),
-      };
+      });
     } catch {
       return null;
     }

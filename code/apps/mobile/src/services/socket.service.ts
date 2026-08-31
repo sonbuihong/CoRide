@@ -6,16 +6,53 @@ class SocketService {
   private socket: Socket | null = null;
   private isConnecting: boolean = false;
   private pendingListeners: { event: string; listener: (...args: any[]) => void }[] = [];
+  private connectionListeners = new Set<() => void>();
+  private joinedRooms = new Map<string, { event: string; args: any[] }>();
+
+  private readonly roomJoinEvents = new Set(['trip:join_room', 'ride:join']);
+  private readonly leaveToJoinEvent = new Map([
+    ['trip:leave_room', 'trip:join_room'],
+    ['ride:leave', 'ride:join'],
+  ]);
 
   public get connected(): boolean {
     return this.socket?.connected || false;
   }
 
+  public getConnectionSnapshot = (): boolean => this.connected;
+
+  public subscribeConnection = (listener: () => void): (() => void) => {
+    this.connectionListeners.add(listener);
+    return () => {
+      this.connectionListeners.delete(listener);
+    };
+  };
+
+  private notifyConnectionChange(): void {
+    this.connectionListeners.forEach((listener) => listener());
+  }
+
   public async connect(): Promise<void> {
     if (this.socket?.connected || this.isConnecting) return;
 
+    // Reuse the existing Socket.IO instance after a failed reconnect. Creating
+    // another instance would keep the old listeners alive and duplicate events.
+    if (this.socket) {
+      this.isConnecting = true;
+      this.socket.connect();
+      return;
+    }
+
     this.isConnecting = true;
-    const token = await SecureStoreService.getAccessToken();
+    let token: string | null;
+    try {
+      token = await SecureStoreService.getAccessToken();
+    } catch (error) {
+      this.isConnecting = false;
+      console.error('SocketService: Không thể đọc phiên đăng nhập:', error);
+      this.notifyConnectionChange();
+      return;
+    }
 
     if (!token) {
       // Realtime hooks may mount while auth is hydrating or after logout.
@@ -42,25 +79,34 @@ class SocketService {
     this.socket.on('connect', () => {
       console.log('SocketService: Đã kết nối, socket ID:', this.socket?.id);
       this.isConnecting = false;
+      this.joinedRooms.forEach(({ event, args }) => this.socket?.emit(event, ...args));
+      this.notifyConnectionChange();
     });
 
     this.socket.on('disconnect', (reason) => {
       console.log('SocketService: Đã ngắt kết nối, lý do:', reason);
       this.isConnecting = false;
+      this.notifyConnectionChange();
     });
 
     this.socket.on('connect_error', (error) => {
       console.error('SocketService: Lỗi kết nối:', error.message);
       this.isConnecting = false;
+      this.notifyConnectionChange();
     });
   }
 
   public disconnect(): void {
+    this.isConnecting = false;
+    this.pendingListeners = [];
+    this.joinedRooms.clear();
     if (this.socket) {
       this.socket.disconnect();
+      this.socket.removeAllListeners();
       this.socket = null;
       console.log('SocketService: Đã chủ động ngắt kết nối.');
     }
+    this.notifyConnectionChange();
   }
 
   public on(event: string, listener: (...args: any[]) => void): void {
@@ -84,8 +130,17 @@ class SocketService {
   }
 
   public emit(event: string, ...args: any[]): void {
+    const roomId = args[0];
+    if (this.roomJoinEvents.has(event) && typeof roomId === 'string') {
+      this.joinedRooms.set(`${event}:${roomId}`, { event, args });
+    } else {
+      const joinEvent = this.leaveToJoinEvent.get(event);
+      if (joinEvent && typeof roomId === 'string') this.joinedRooms.delete(`${joinEvent}:${roomId}`);
+    }
     if (!this.socket) {
-      console.warn(`SocketService: Không thể emit sự kiện '${event}' vì socket chưa khởi tạo.`);
+      if (!this.roomJoinEvents.has(event)) {
+        console.warn(`SocketService: Không thể emit sự kiện '${event}' vì socket chưa khởi tạo.`);
+      }
       return;
     }
     // Socket.IO tự xếp hàng event trong lúc đang reconnect.

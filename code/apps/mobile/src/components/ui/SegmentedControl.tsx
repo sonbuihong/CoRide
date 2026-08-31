@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { AppText } from './AppText';
+import { colors, radius, spacing } from '../../theme/tokens';
 
 export interface SegmentedControlProps {
   segments: string[];
   selectedIndex: number;
   onChange: (index: number) => void;
-  className?: string;
+  style?: StyleProp<ViewStyle>;
   activeColor?: 'passenger' | 'driver' | 'primary';
 }
 
@@ -14,43 +15,68 @@ export const SegmentedControl: React.FC<SegmentedControlProps> = ({
   segments,
   selectedIndex,
   onChange,
-  className = '',
+  style,
   activeColor = 'primary',
 }) => {
   const activeTextColors = {
-    primary: 'text-passenger font-semibold',
-    passenger: 'text-passenger font-semibold',
-    driver: 'text-driver font-semibold',
+    primary: colors.navigationPassenger,
+    passenger: colors.navigationPassenger,
+    driver: colors.navigationDriver,
   };
 
   return (
-    <View 
-      className={`flex-row bg-slate-100 p-1 rounded-xl ${className}`}
-      accessibilityRole="tablist"
-    >
+    <View style={[styles.container, style]} accessibilityRole="tablist">
       {segments.map((segment, index) => {
         const isSelected = selectedIndex === index;
         return (
-          <TouchableOpacity
-            key={index}
+          <Pressable
+            key={`${segment}-${index}`}
             onPress={() => onChange(index)}
             accessibilityRole="tab"
             accessibilityState={{ selected: isSelected }}
             accessibilityLabel={segment}
-            className={`flex-1 min-h-11 px-2 rounded-lg items-center justify-center ${
-              isSelected ? 'bg-surface shadow-sm' : 'bg-transparent'
-            }`}
+            style={({ pressed }) => [
+              styles.segment,
+              isSelected && styles.segmentSelected,
+              pressed && styles.segmentPressed,
+            ]}
           >
             <AppText 
               variant="bodySmall" 
               weight={isSelected ? 'semibold' : 'medium'}
-              className={isSelected ? activeTextColors[activeColor] : 'text-text-secondary'}
+              style={{ color: isSelected ? activeTextColors[activeColor] : colors.textSecondary }}
             >
               {segment}
             </AppText>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.input,
+    flexDirection: 'row',
+    padding: spacing.xs,
+  },
+  segment: {
+    alignItems: 'center',
+    borderRadius: radius.input,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 48,
+    paddingHorizontal: spacing.xs,
+  },
+  segmentSelected: {
+    backgroundColor: colors.surface,
+    elevation: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  segmentPressed: { opacity: 0.72 },
+});

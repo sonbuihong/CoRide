@@ -212,7 +212,8 @@ export class BookingsService {
       instant
         ? `${booking.passenger.firstName} ${booking.passenger.lastName} đã đặt ${seats} ghế — ${ride.origin} → ${ride.destination}`
         : `${booking.passenger.firstName} ${booking.passenger.lastName} muốn đặt ${seats} ghế — ${ride.origin} → ${ride.destination}`,
-      instant ? 'BOOKING_STATUS' : 'BOOKING_REQUEST'
+      instant ? 'BOOKING_STATUS' : 'BOOKING_REQUEST',
+      { type: 'BOOKING', id: booking.id }
     ).catch((err) => console.error('[Notification Error]:', err));
 
     return booking;
@@ -495,7 +496,8 @@ export class BookingsService {
       updatedBooking.passenger.id,
       'Yêu cầu đặt chỗ được xác nhận',
       `Tài xế đã xác nhận ${booking.seats} ghế — ${booking.ride.origin} → ${booking.ride.destination}`,
-      'BOOKING_STATUS'
+      'BOOKING_STATUS',
+      { type: 'BOOKING', id: booking.id }
     ).catch((err) => console.error('[Notification Error]:', err));
 
     return updatedBooking;
@@ -550,7 +552,8 @@ export class BookingsService {
       booking.passenger.id,
       'Yêu cầu đặt chỗ bị từ chối',
       `Rất tiếc, tài xế đã từ chối yêu cầu — ${booking.ride.origin} → ${booking.ride.destination}`,
-      'BOOKING_STATUS'
+      'BOOKING_STATUS',
+      { type: 'BOOKING', id: booking.id }
     ).catch((err) => console.error('[Notification Error]:', err));
 
     return updatedBooking;
@@ -653,7 +656,8 @@ export class BookingsService {
         booking.passengerId,
         'Yêu cầu đặt chỗ được xác nhận',
         `Tài xế đã xác nhận ${booking.seats} ghế — ${booking.ride.origin} → ${booking.ride.destination}`,
-        'BOOKING_STATUS'
+        'BOOKING_STATUS',
+        { type: 'BOOKING', id: booking.id }
       ).catch((err) => console.error('[Notification Error]:', err));
 
       return updatedBooking;
@@ -693,7 +697,8 @@ export class BookingsService {
         booking.passengerId,
         'Yêu cầu đặt chỗ bị từ chối',
         `Rất tiếc, tài xế đã từ chối yêu cầu — ${booking.ride.origin} → ${booking.ride.destination}`,
-        'BOOKING_STATUS'
+        'BOOKING_STATUS',
+        { type: 'BOOKING', id: booking.id }
       ).catch((err) => console.error('[Notification Error]:', err));
 
       return updatedBooking;
@@ -722,13 +727,16 @@ export class BookingsService {
       throw new AppError('Hành khách này đã được đón', 400);
     }
 
-    if (!booking.driverArrivedAt) {
-      throw new AppError('Vui lòng xác nhận đã tới điểm đón trước khi đón khách', 400);
-    }
+    // Nếu chưa đánh dấu tài xế tới điểm đón, tự động cập nhật driverArrivedAt cùng lúc
+    const driverArrivedAt = booking.driverArrivedAt ?? new Date();
 
     const updatedBooking = await prisma.booking.update({
       where: { id: bookingId },
-      data: { isPickedUp: true, pickedUpAt: new Date() },
+      data: {
+        isPickedUp: true,
+        pickedUpAt: new Date(),
+        driverArrivedAt,
+      },
       include: { passenger: { select: { id: true } } }
     });
 
@@ -797,7 +805,8 @@ export class BookingsService {
       booking.passengerId,
       'Tài xế đã tới điểm đón',
       `Tài xế đang chờ bạn tại ${booking.pickupAddress ?? booking.ride.origin}`,
-      'BOOKING_STATUS'
+      'BOOKING_STATUS',
+      { type: 'BOOKING', id: booking.id }
     ).catch((error) => console.error('[Notification Error]:', error));
 
     return updatedBooking;
@@ -978,6 +987,7 @@ export class BookingsService {
         'Yêu cầu đặt chỗ đã hết hạn',
         `${booking.ride.origin} → ${booking.ride.destination}`,
         'BOOKING_STATUS',
+        { type: 'BOOKING', id: booking.id },
       ).catch(() => undefined);
     }
     return results;
@@ -1196,89 +1206,107 @@ export class BookingsService {
    * Ưu tiên: ride ONGOING > ride SCHEDULED
    * Trả về null nếu không có booking active nào.
    */
-  static async getActiveBooking(userId: string) {
-    // 1. Kiểm tra user có phải passenger đang có booking CONFIRMED
-    // Ưu tiên tìm ride ONGOING trước
-    let passengerBooking = await prisma.booking.findFirst({
-      where: {
-        passengerId: userId,
-        status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
-        ride: {
+  static async getActiveBooking(userId: string, requestedRole?: string) {
+    const isDriverRequested = requestedRole?.toLowerCase() === 'driver';
+
+    const findPassengerBooking = async () => {
+      return prisma.booking.findFirst({
+        where: {
+          passengerId: userId,
+          status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] },
+          ride: {
+            status: { in: ['ONGOING', 'SCHEDULED', 'FULL'] },
+          },
+        },
+        include: {
+          ride: {
+            include: {
+              driver: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  phone: true,
+                  avatarUrl: true,
+                  driverRating: true,
+                  driverRatingCount: true,
+                },
+              },
+            },
+          },
+          passenger: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              avatarUrl: true,
+            },
+          },
+        },
+        orderBy: { ride: { departureTime: 'asc' } },
+      });
+    };
+
+    const findDriverRide = async () => {
+      return prisma.ride.findFirst({
+        where: {
+          driverId: userId,
           status: { in: ['ONGOING', 'SCHEDULED', 'FULL'] },
         },
-      },
-      include: {
-        ride: {
-          include: {
-            driver: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                phone: true,
-                avatarUrl: true,
-                driverRating: true,
-                driverRatingCount: true,
+        include: {
+          driver: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              avatarUrl: true,
+              driverRating: true,
+              driverRatingCount: true,
+            },
+          },
+          bookings: {
+            where: { status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.COMPLETED] } },
+            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+            include: {
+              passenger: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  phone: true,
+                  avatarUrl: true,
+                  passengerRating: true,
+                  passengerRatingCount: true,
+                },
               },
             },
           },
         },
-        passenger: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            phone: true,
-            avatarUrl: true,
-          },
-        },
-      },
-      // Ưu tiên ride ONGOING (đang chạy) trước SCHEDULED (chưa bắt đầu)
-      orderBy: { ride: { departureTime: 'asc' } },
-    });
+        orderBy: { departureTime: 'asc' },
+      });
+    };
 
+    if (isDriverRequested) {
+      const driverRide = await findDriverRide();
+      if (driverRide) {
+        return { ride: driverRide, userRole: 'DRIVER' as const };
+      }
+      const passengerBooking = await findPassengerBooking();
+      if (passengerBooking) {
+        return { ...passengerBooking, userRole: 'PASSENGER' as const };
+      }
+      return null;
+    }
+
+    // Default: Check passenger booking first, then driver ride
+    const passengerBooking = await findPassengerBooking();
     if (passengerBooking) {
       return { ...passengerBooking, userRole: 'PASSENGER' as const };
     }
 
-    // 2. Kiểm tra user có phải driver có ride đang active hay không
-    const driverRide = await prisma.ride.findFirst({
-      where: {
-        driverId: userId,
-        status: { in: ['ONGOING', 'SCHEDULED', 'FULL'] },
-      },
-      include: {
-        driver: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            phone: true,
-            avatarUrl: true,
-            driverRating: true,
-            driverRatingCount: true,
-          },
-        },
-        bookings: {
-          where: { status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.COMPLETED] } },
-          include: {
-            passenger: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                phone: true,
-                avatarUrl: true,
-                passengerRating: true,
-                passengerRatingCount: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { departureTime: 'asc' },
-    });
-
+    const driverRide = await findDriverRide();
     if (driverRide) {
       return { ride: driverRide, userRole: 'DRIVER' as const };
     }

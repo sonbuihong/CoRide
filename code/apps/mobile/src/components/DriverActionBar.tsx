@@ -1,14 +1,15 @@
-      // Thanh action cho driver trên màn hình active ride
+// Thanh action cho driver trên màn hình active ride
 // 3 trạng thái:
-//   SCHEDULED → "Bắt đầu chuyến đi"
-//   ONGOING + đang đón khách → "Đã đến điểm đón [Tên khách]"
-//   ONGOING + đã đón hết → "Hoàn thành chuyến đi"
+//   SCHEDULED / FULL → "Bắt đầu chuyến đi"
+//   ONGOING + đang đón khách → "Đã đến điểm đón [Tên khách]" + Nút kết thúc sớm
+//   ONGOING + đã đón hết / IDLE → "Hoàn thành chuyến đi"
 
 import React from 'react';
-import { View, Text, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Play, CheckCircle, MapPin } from 'lucide-react-native';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { rideService } from '../services/ride.service';
+import { showInfoDialog } from '../utils/dialog';
 
 interface BookingInfo {
   id: string;
@@ -54,7 +55,7 @@ export const DriverActionBar: React.FC<DriverActionBarProps> = ({
       onStatusChange?.('ONGOING');
     },
     onError: (error: any) => {
-      Alert.alert(
+      showInfoDialog(
         'Lỗi',
         error.response?.data?.message || 'Không thể bắt đầu chuyến đi'
       );
@@ -66,10 +67,9 @@ export const DriverActionBar: React.FC<DriverActionBarProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['active-booking'] });
       onStatusChange?.('COMPLETED');
-      Alert.alert('Hoàn thành', 'Chuyến đi đã hoàn thành. Cảm ơn bạn!');
     },
     onError: (error: any) => {
-      Alert.alert(
+      showInfoDialog(
         'Lỗi',
         error.response?.data?.message || 'Không thể hoàn thành chuyến đi'
       );
@@ -77,32 +77,11 @@ export const DriverActionBar: React.FC<DriverActionBarProps> = ({
   });
 
   const handleStartRide = () => {
-    Alert.alert(
-      'Xác nhận bắt đầu',
-      'Bạn đã sẵn sàng khởi hành?',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Bắt đầu',
-          onPress: () => startRideMutation.mutate(),
-        },
-      ]
-    );
+    startRideMutation.mutate();
   };
 
   const handleCompleteRide = () => {
-    Alert.alert(
-      'Xác nhận hoàn thành',
-      'Bạn đã đến điểm đến và muốn kết thúc chuyến đi?',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Hoàn thành',
-          style: 'default',
-          onPress: () => completeRideMutation.mutate(),
-        },
-      ]
-    );
+    completeRideMutation.mutate();
   };
 
   const handlePickup = () => {
@@ -116,8 +95,11 @@ export const DriverActionBar: React.FC<DriverActionBarProps> = ({
     completeRideMutation.isPending ||
     isPickingUp;
 
-  // Chỉ hiển thị khi ride đang SCHEDULED hoặc ONGOING
-  if (rideStatus !== 'SCHEDULED' && rideStatus !== 'ONGOING') {
+  // Chỉ hiển thị khi ride đang SCHEDULED, FULL hoặc ONGOING
+  const isStartable = rideStatus === 'SCHEDULED' || rideStatus === 'FULL';
+  const isOngoing = rideStatus === 'ONGOING';
+
+  if (!isStartable && !isOngoing) {
     return null;
   }
 
@@ -127,14 +109,14 @@ export const DriverActionBar: React.FC<DriverActionBarProps> = ({
     : '';
 
   return (
-    <View className="px-5 pb-5">
-      {/* SCHEDULED: Nút bắt đầu chuyến đi */}
-      {rideStatus === 'SCHEDULED' && (
+    <View className="px-5 pb-5 pt-1">
+      {/* SCHEDULED hoặc FULL: Nút bắt đầu chuyến đi */}
+      {isStartable && (
         <TouchableOpacity
           onPress={handleStartRide}
           disabled={isPending}
           className={`flex-row items-center justify-center p-4 rounded-2xl ${
-            isPending ? 'bg-blue-400' : 'bg-blue-600'
+            isPending ? 'bg-blue-400' : 'bg-blue-600 active:bg-blue-700'
           }`}
         >
           {isPending ? (
@@ -150,65 +132,57 @@ export const DriverActionBar: React.FC<DriverActionBarProps> = ({
         </TouchableOpacity>
       )}
 
-      {/* ONGOING + đang đón khách: Nút "Đã đến điểm đón" */}
-      {rideStatus === 'ONGOING' && currentTargetType === 'PICKUP' && currentBooking && (
-        <TouchableOpacity
-          onPress={handlePickup}
-          disabled={isPending}
-          className={`flex-row items-center justify-center p-4 rounded-2xl ${
-            isPending ? 'bg-orange-400' : 'bg-orange-500'
-          }`}
-        >
-          {isPending ? (
-            <ActivityIndicator color="white" size="small" />
-          ) : (
-            <>
-              <MapPin size={22} color="white" />
-              <View className="ml-3">
-                <Text className="text-white font-bold text-lg">
-                  Đã đến điểm đón
-                </Text>
-                {passengerName ? (
-                  <Text className="text-white text-xs opacity-80">
-                    {passengerName}
-                    {pendingPickupsCount > 1 && ` (còn ${pendingPickupsCount - 1} khách)`}
+      {/* ONGOING + đang đón khách: Nút "Đã đến điểm đón" và nút kết thúc sớm */}
+      {isOngoing && currentTargetType === 'PICKUP' && currentBooking && (
+        <View className="space-y-2.5">
+          <TouchableOpacity
+            onPress={handlePickup}
+            disabled={isPending}
+            className={`flex-row items-center justify-center p-4 rounded-2xl ${
+              isPending ? 'bg-orange-400' : 'bg-orange-500 active:bg-orange-600'
+            }`}
+          >
+            {isPending ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <>
+                <MapPin size={22} color="white" />
+                <View className="ml-3">
+                  <Text className="text-white font-bold text-lg">
+                    Đã đến điểm đón
                   </Text>
-                ) : null}
-              </View>
-            </>
-          )}
-        </TouchableOpacity>
+                  {passengerName ? (
+                    <Text className="text-white text-xs opacity-90">
+                      {passengerName}
+                      {pendingPickupsCount > 1 && ` (còn ${pendingPickupsCount - 1} khách)`}
+                    </Text>
+                  ) : null}
+                </View>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Lối thoát cho tài xế nếu muốn hoàn thành chuyến khi chưa kịp đón hết */}
+          <TouchableOpacity
+            onPress={handleCompleteRide}
+            disabled={isPending}
+            className="flex-row items-center justify-center p-3 rounded-2xl border border-green-600 bg-green-50 active:bg-green-100"
+          >
+            <CheckCircle size={18} color="#16A34A" />
+            <Text className="text-green-700 font-semibold text-base ml-2">
+              Kết thúc chuyến đi ngay
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
 
-      {/* ONGOING + đã đón hết: Nút hoàn thành chuyến */}
-      {rideStatus === 'ONGOING' && currentTargetType === 'DESTINATION' && (
+      {/* ONGOING + đã đón hết hoặc IDLE: Nút hoàn thành chuyến */}
+      {isOngoing && (currentTargetType === 'DESTINATION' || currentTargetType === 'IDLE') && (
         <TouchableOpacity
           onPress={handleCompleteRide}
           disabled={isPending}
           className={`flex-row items-center justify-center p-4 rounded-2xl ${
-            isPending ? 'bg-green-400' : 'bg-green-600'
-          }`}
-        >
-          {isPending ? (
-            <ActivityIndicator color="white" size="small" />
-          ) : (
-            <>
-              <CheckCircle size={22} color="white" />
-              <Text className="text-white font-bold text-lg ml-3">
-                Hoàn thành chuyến đi
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
-      )}
-
-      {/* ONGOING nhưng IDLE (chưa có booking confirmed nào): Nút hoàn thành */}
-      {rideStatus === 'ONGOING' && currentTargetType === 'IDLE' && (
-        <TouchableOpacity
-          onPress={handleCompleteRide}
-          disabled={isPending}
-          className={`flex-row items-center justify-center p-4 rounded-2xl ${
-            isPending ? 'bg-green-400' : 'bg-green-600'
+            isPending ? 'bg-green-400' : 'bg-green-600 active:bg-green-700'
           }`}
         >
           {isPending ? (

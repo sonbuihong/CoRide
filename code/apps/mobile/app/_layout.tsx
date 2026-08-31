@@ -94,8 +94,13 @@ function RootLayoutNav() {
       <Stack.Screen name="ride/create" options={{ headerShown: false }} />
       <Stack.Screen name="dev/mode-prototype" options={{ headerShown: true, title: 'Dev Prototype' }} />
       <Stack.Screen name="ride/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="ride/passenger/[bookingId]" options={{ headerShown: false }} />
+      <Stack.Screen name="ride/route-detail" options={{ headerShown: false }} />
+      <Stack.Screen name="ride/completed" options={{ headerShown: false, gestureEnabled: false }} />
+      <Stack.Screen name="ride/history" options={{ headerShown: false }} />
+      <Stack.Screen name="ride/history/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="ride/active-ride" options={{ headerShown: false, title: 'Chuyến đi' }} />
-      <Stack.Screen name="booking/[id]" options={{ title: 'Chi tiết đặt chỗ' }} />
+      <Stack.Screen name="booking/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="search" options={{ headerShown: false }} />
       <Stack.Screen name="search-results" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />

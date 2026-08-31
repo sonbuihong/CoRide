@@ -131,7 +131,7 @@ export const getPlaceDetailMobile = async (placeId: string, version: GoongApiVer
 export const getReverseGeocodeMobile = async (
   lat: number,
   lng: number,
-  version: GoongApiVersion = 'v2',
+  version: GoongApiVersion = 'v1',
 ): Promise<GoongReverseGeocodeResult | null> => {
   try {
     const params = new URLSearchParams({ lat: String(lat), lng: String(lng), version });
@@ -139,13 +139,11 @@ export const getReverseGeocodeMobile = async (
       headers: { 'Content-Type': 'application/json' },
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: Không thể xác định địa chỉ hiện tại`);
-    }
+    if (!response.ok) return null;
 
     return await response.json() as GoongReverseGeocodeResult;
   } catch (error) {
-    console.error('[Mobile] Goong Reverse Geocode error:', error);
+    if (__DEV__) console.warn('[Mobile] Không thể reverse geocode; cho phép nhập địa chỉ thủ công.', error);
     return null;
   }
 };

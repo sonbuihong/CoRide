@@ -3,8 +3,8 @@ import { extendedPrisma as prisma } from '@repo/database';
 import { AppError } from '../../shared/errors/AppError';
 import { WalletService } from './wallet.service';
 import { TransactionType, TransactionStatus, PaymentStatus, PaymentMethod, TripStatus } from '@repo/database';
-import { SocketEventService } from '../../socket/socket.events';
-import { SocketEvents } from '@repo/shared';
+import { clearDriverBusy } from '../../shared/lib/redis';
+import { emitTripUpdated } from '../trips/trip-realtime.service';
 
 export class PaymentsController {
   /**
@@ -165,6 +165,71 @@ export class PaymentsController {
         throw new AppError('Không tìm thấy chuyến đi hoặc đặt chỗ', 404);
       }
 
+      // Ride-Hailing payment is completed synchronously and idempotently. The
+      // conditional update serializes concurrent confirmations; realtime is
+      // emitted only after the database transaction commits.
+      if (isTrip && trip) {
+        const wallet = await WalletService.getOrCreateWallet(userId);
+        const result = await prisma.$transaction(async (tx) => {
+          const claimed = await tx.tripRequest.updateMany({
+            where: {
+              id,
+              passengerId: userId,
+              status: TripStatus.WAITING_PAYMENT,
+              paymentStatus: PaymentStatus.UNPAID,
+            },
+            data: {
+              paymentStatus: PaymentStatus.PAID,
+              paymentMethod: PaymentMethod.QR,
+              status: TripStatus.COMPLETED,
+              completedAt: new Date(),
+            },
+          });
+          if (claimed.count !== 1) {
+            throw new AppError(
+              'Thanh toán đã được xử lý hoặc trạng thái chuyến đã thay đổi',
+              409,
+              true,
+              'PAYMENT_ALREADY_PROCESSED',
+            );
+          }
+
+          const transaction = await tx.transaction.create({
+            data: {
+              walletId: wallet.id,
+              amount,
+              type: TransactionType.PAYMENT,
+              status: TransactionStatus.SUCCESS,
+              description: `Thanh toán mô phỏng #${id.slice(0, 8)}`,
+              tripRequestId: id,
+            },
+          });
+          const updatedTrip = await tx.tripRequest.findUnique({ where: { id } });
+          if (!updatedTrip) throw new AppError('Không tìm thấy chuyến đi', 404);
+          return { transaction, updatedTrip };
+        });
+
+        emitTripUpdated(result.updatedTrip, {
+          previousStatus: TripStatus.WAITING_PAYMENT,
+          message: 'Thanh toán thành công. Chuyến đi đã hoàn tất.',
+        });
+        if (result.updatedTrip.driverId) {
+          await clearDriverBusy(result.updatedTrip.driverId);
+        }
+
+        res.status(200).json({
+          success: true,
+          message: 'Thanh toán thành công',
+          data: {
+            transactionId: result.transaction.id,
+            trip: result.updatedTrip,
+          },
+        });
+        return;
+      }
+
+      if (!booking) throw new AppError('Không tìm thấy đặt chỗ', 404);
+
       // 1. Lấy ví của hành khách
       const wallet = await WalletService.getOrCreateWallet(userId);
 
@@ -176,7 +241,7 @@ export class PaymentsController {
           type: TransactionType.PAYMENT,
           status: TransactionStatus.PENDING,
           description: `Thanh toán mô phỏng #${id.slice(0, 8)}`,
-          ...(isTrip ? { tripRequestId: id } : { bookingId: id }),
+          bookingId: id,
         }
       });
 
@@ -197,30 +262,14 @@ export class PaymentsController {
               data: { status: TransactionStatus.SUCCESS },
             });
 
-            if (isTrip && trip) {
-              const updatedTrip = await tx.tripRequest.update({
-                where: { id },
-                data: {
-                  paymentStatus: PaymentStatus.PAID,
-                  paymentMethod: PaymentMethod.QR,
-                  status: TripStatus.COMPLETED,
-                  completedAt: new Date(),
-                }
-              });
-              SocketEventService.emitToUser(updatedTrip.passengerId, SocketEvents.TRIP_UPDATED, updatedTrip);
-              if (updatedTrip.driverId) SocketEventService.emitToUser(updatedTrip.driverId, SocketEvents.TRIP_UPDATED, updatedTrip);
-            } else if (!isTrip && booking) {
-              const updatedBooking = await tx.booking.update({
-                where: { id },
-                data: {
-                  paymentStatus: PaymentStatus.PAID,
-                  // Tự động set isDroppedOff nếu tài xế cấu hình
-                  isDroppedOff: true,
-                }
-              });
-              // Thông báo cho tài xế và hành khách
-              // Không có BookingEvents spec nào ở đây, nên cứ emit chung hoặc bỏ qua
-            }
+            await tx.booking.update({
+              where: { id },
+              data: {
+                paymentStatus: PaymentStatus.PAID,
+                // Tự động set isDroppedOff nếu tài xế cấu hình
+                isDroppedOff: true,
+              },
+            });
           });
           console.log(`[Simulator] Thanh toán thành công cho #${id}`);
         } catch (err) {

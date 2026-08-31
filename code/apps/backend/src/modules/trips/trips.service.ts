@@ -1,236 +1,198 @@
-import { extendedPrisma as prisma } from '@repo/database';
-import { VehicleType } from '@repo/database';
+import { extendedPrisma as prisma, type VehicleType } from '@repo/database';
+import type {
+  CompleteTripInput,
+  CreateTripRequestInput,
+  DriverTripStatus,
+  TripStatus,
+} from '@repo/shared';
+
 import { AppError } from '../../shared/errors/AppError';
+import {
+  clearDriverBusy,
+  clearTripOffers,
+  getDriverLocation,
+} from '../../shared/lib/redis';
 import { PricingService } from '../pricing/pricing.service';
-import type { CreateTripRequestInput, DriverTripStatus } from '@repo/shared';
+import { RideMatchingService } from '../rides/ride-matching.service';
+import { RIDE_HAILING_CONFIG } from '../matching/matching.config';
+import {
+  ACTIVE_DRIVER_TRIP_STATUSES,
+  ACTIVE_PASSENGER_TRIP_STATUSES,
+  isTripTransitionAllowed,
+  type TripTransitionActor,
+} from './trip-state-machine';
 
-/**
- * TripsService — Business logic cho luồng Ride-Hailing (TripRequest).
- *
- * Phân biệt với RidesService (Carpooling):
- * - RidesService: Tài xế chủ động tạo lịch trình → Hành khách đặt chỗ
- * - TripsService: Hành khách chủ động gọi xe → Hệ thống tìm tài xế tự động
- */
+const isPrismaUniqueError = (error: unknown): boolean => (
+  typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002'
+);
+
 export class TripsService {
-  /**
-   * Tạo yêu cầu đặt xe mới.
-   *
-   * Luồng:
-   * 1. Kiểm tra hành khách không có trip nào đang active
-   * 2. Gọi PricingService để tính giá ước tính
-   * 3. Tạo TripRequest với status PENDING
-   * 4. Trả về trip — caller (controller/socket) sẽ trigger MatchingService
-   */
   static async createTrip(passengerId: string, data: CreateTripRequestInput) {
-    // 1. Guard: hành khách chỉ được có 1 trip active tại mỗi thời điểm
     const activeTrip = await prisma.tripRequest.findFirst({
-      where: {
-        passengerId,
-        status: { in: ['PENDING', 'MATCHING', 'ACCEPTED', 'ARRIVING', 'IN_PROGRESS', 'WAITING_PAYMENT'] },
-      },
+      where: { passengerId, status: { in: ACTIVE_PASSENGER_TRIP_STATUSES } },
+      select: { id: true },
     });
-
     if (activeTrip) {
       throw new AppError(
-        'Bạn đang có một chuyến xe chưa hoàn thành. Vui lòng hủy hoặc chờ hoàn thành trước.',
-        400
+        'Bạn đang có một chuyến xe chưa hoàn thành',
+        409,
+        true,
+        'PASSENGER_HAS_ACTIVE_TRIP',
+        { tripId: activeTrip.id },
       );
     }
 
-    // 2. Tính giá ước tính qua Goong API + PricingConfig
     const estimate = await PricingService.estimate(
       data.originLat,
       data.originLng,
       data.destLat,
       data.destLng,
-      data.vehicleType as VehicleType
+      data.vehicleType as VehicleType,
     );
 
-    // 3. Tạo TripRequest
-    const trip = await prisma.tripRequest.create({
-      data: {
-        passengerId,
-        originAddress: data.originAddress,
-        originLat: data.originLat,
-        originLng: data.originLng,
-        destAddress: data.destAddress,
-        destLat: data.destLat,
-        destLng: data.destLng,
-        vehicleType: data.vehicleType as VehicleType,
-        estimatedDistance: estimate.estimatedDistance,
-        estimatedDuration: estimate.estimatedDuration,
-        estimatedPrice: estimate.estimatedPrice,
-        status: 'PENDING',
-      },
-      include: {
-        passenger: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            phone: true,
-            avatarUrl: true,
-            passengerRating: true,
+    try {
+      return await prisma.tripRequest.create({
+        data: {
+          passengerId,
+          originAddress: data.originAddress,
+          originLat: data.originLat,
+          originLng: data.originLng,
+          destAddress: data.destAddress,
+          destLat: data.destLat,
+          destLng: data.destLng,
+          vehicleType: data.vehicleType as VehicleType,
+          estimatedDistance: estimate.estimatedDistance,
+          estimatedDuration: estimate.estimatedDuration,
+          estimatedPrice: estimate.estimatedPrice,
+          status: 'PENDING',
+        },
+        include: {
+          passenger: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              avatarUrl: true,
+              passengerRating: true,
+            },
           },
         },
-      },
-    });
-
-    return trip;
+      });
+    } catch (error) {
+      if (isPrismaUniqueError(error)) {
+        throw new AppError(
+          'Bạn đang có một chuyến xe chưa hoàn thành',
+          409,
+          true,
+          'PASSENGER_HAS_ACTIVE_TRIP',
+        );
+      }
+      throw error;
+    }
   }
 
-  /**
-   * Hủy yêu cầu đặt xe — chỉ hành khách mới được hủy, và chỉ trước khi IN_PROGRESS.
-   */
   static async cancelTrip(tripId: string, userId: string, reason?: string) {
-    const trip = await prisma.tripRequest.findUnique({
-      where: { id: tripId },
-    });
+    const trip = await prisma.tripRequest.findUnique({ where: { id: tripId } });
+    if (!trip) throw new AppError('Không tìm thấy chuyến xe', 404);
 
-    if (!trip) {
-      throw new AppError('Không tìm thấy chuyến xe', 404);
-    }
+    const actor: TripTransitionActor = trip.passengerId === userId
+      ? 'PASSENGER'
+      : trip.driverId === userId
+        ? 'DRIVER'
+        : (() => { throw new AppError('Bạn không có quyền hủy chuyến xe này', 403); })();
 
-    // Chỉ hành khách hoặc tài xế của trip mới được hủy
-    if (trip.passengerId !== userId && trip.driverId !== userId) {
-      throw new AppError('Bạn không có quyền hủy chuyến xe này', 403);
-    }
-
-    // Chỉ hủy được ở trạng thái trước IN_PROGRESS
-    const cancellableStatuses = ['PENDING', 'MATCHING', 'ACCEPTED', 'ARRIVING'];
-    if (!cancellableStatuses.includes(trip.status)) {
+    if (!isTripTransitionAllowed(trip.status as TripStatus, 'CANCELLED', actor)) {
       throw new AppError(
         `Không thể hủy chuyến xe ở trạng thái ${trip.status}`,
-        400
+        409,
+        true,
+        'INVALID_TRIP_TRANSITION',
       );
     }
 
-    return prisma.tripRequest.update({
-      where: { id: tripId },
+    const changed = await prisma.tripRequest.updateMany({
+      where: { id: tripId, status: trip.status },
       data: {
         status: 'CANCELLED',
         cancelledAt: new Date(),
-        cancelReason: reason ?? null,
+        cancelReason: reason?.trim() || (actor === 'PASSENGER'
+          ? 'Hành khách hủy chuyến'
+          : 'Tài xế hủy chuyến'),
       },
     });
-  }
-
-  /**
-   * Tài xế nhận cuốc — cập nhật driverId và status.
-   */
-  static async acceptTrip(tripId: string, driverId: string) {
-    const trip = await prisma.tripRequest.findUnique({
-      where: { id: tripId },
-    });
-
-    if (!trip) {
-      throw new AppError('Không tìm thấy chuyến xe', 404);
-    }
-
-    if (trip.status !== 'MATCHING') {
+    if (changed.count !== 1) {
       throw new AppError(
-        'Chuyến xe này không còn ở trạng thái đang tìm tài xế',
-        400
+        'Trạng thái chuyến đã thay đổi. Vui lòng tải lại.',
+        409,
+        true,
+        'TRIP_STATE_CONFLICT',
       );
     }
 
-    return prisma.tripRequest.update({
-      where: { id: tripId },
-      data: {
-        driverId,
-        status: 'ACCEPTED',
-        matchedAt: new Date(),
-      },
-      include: {
-        passenger: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            phone: true,
-            avatarUrl: true,
-            passengerRating: true,
-          },
-        },
-        driver: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            phone: true,
-            avatarUrl: true,
-            driverRating: true,
-            driverRatingCount: true,
-          },
-        },
-      },
-    });
+    await clearTripOffers(tripId);
+    if (trip.driverId) await clearDriverBusy(trip.driverId);
+    const updated = await prisma.tripRequest.findUnique({ where: { id: tripId } });
+    if (!updated) throw new AppError('Không tìm thấy chuyến xe', 404);
+    return { trip: updated, previousStatus: trip.status, cancelledBy: actor };
   }
 
-  /**
-   * Cập nhật trạng thái trip — dùng cho các chuyển đổi lifecycle.
-   */
   static async updateTripStatus(
     tripId: string,
     driverId: string,
-    status: DriverTripStatus
+    status: DriverTripStatus,
+    options?: CompleteTripInput,
   ) {
-    const trip = await prisma.tripRequest.findUnique({
-      where: { id: tripId },
-    });
-
+    const trip = await prisma.tripRequest.findUnique({ where: { id: tripId } });
     if (!trip) throw new AppError('Không tìm thấy chuyến xe', 404);
     if (trip.driverId !== driverId) {
       throw new AppError('Bạn không phải tài xế của chuyến xe này', 403);
     }
-
-    // Validate state transitions — đảm bảo chuyển trạng thái hợp lệ
-    const validTransitions: Record<string, string[]> = {
-      ACCEPTED: ['ARRIVING'],
-      ARRIVING: ['IN_PROGRESS'],
-      IN_PROGRESS: ['WAITING_PAYMENT'],
-    };
-
-    const allowed = validTransitions[trip.status];
-    if (!allowed || !allowed.includes(status)) {
+    if (!isTripTransitionAllowed(trip.status as TripStatus, status, 'DRIVER')) {
       throw new AppError(
         `Không thể chuyển từ ${trip.status} sang ${status}`,
-        400
+        409,
+        true,
+        'INVALID_TRIP_TRANSITION',
+        { currentStatus: trip.status, requestedStatus: status },
       );
     }
 
-    // Thêm timestamp tương ứng
-    const timestamps: Record<string, object> = {
-      IN_PROGRESS: { startedAt: new Date() },
-      COMPLETED: { completedAt: new Date(), finalPrice: trip.estimatedPrice },
-    };
+    if (status === 'WAITING_PAYMENT') {
+      await this.validateCompletionDistance(trip, driverId, options?.confirmFarFromDestination);
+    }
 
-    return prisma.tripRequest.update({
-      where: { id: tripId },
-      data: {
-        status,
-        ...(timestamps[status] ?? {}),
-      },
-      include: {
-        passenger: {
-          select: { id: true, firstName: true, lastName: true, phone: true },
-        },
-        driver: {
-          select: { id: true, firstName: true, lastName: true, phone: true },
-        },
-      },
+    const now = new Date();
+    const timestampData = status === 'ARRIVED'
+      ? { arrivedAt: now }
+      : status === 'IN_PROGRESS'
+        ? { startedAt: now }
+        : status === 'WAITING_PAYMENT'
+          ? { finalPrice: trip.estimatedPrice }
+          : {};
+
+    const changed = await prisma.tripRequest.updateMany({
+      where: { id: tripId, driverId, status: trip.status },
+      data: { status, ...timestampData },
     });
+    if (changed.count !== 1) {
+      throw new AppError(
+        'Trạng thái chuyến đã thay đổi. Vui lòng tải lại.',
+        409,
+        true,
+        'TRIP_STATE_CONFLICT',
+      );
+    }
+
+    return {
+      trip: await this.getTripWithParticipants(tripId),
+      previousStatus: trip.status,
+    };
   }
 
-  /**
-   * Lấy trip đang active của hành khách.
-   */
   static async getActiveTrip(passengerId: string) {
     return prisma.tripRequest.findFirst({
-      where: {
-        passengerId,
-        status: { in: ['PENDING', 'MATCHING', 'ACCEPTED', 'ARRIVING', 'IN_PROGRESS', 'WAITING_PAYMENT'] },
-      },
+      where: { passengerId, status: { in: ACTIVE_PASSENGER_TRIP_STATUSES } },
       include: {
         driver: {
           select: {
@@ -241,21 +203,21 @@ export class TripsService {
             avatarUrl: true,
             driverRating: true,
             driverRatingCount: true,
+            vehicles: {
+              where: { status: 'ACTIVE' },
+              take: 1,
+              select: { id: true, type: true, licensePlate: true, color: true, imageUrl: true },
+            },
           },
         },
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  /**
-   * Lấy trip đang active của tài xế.
-   */
   static async getActiveDriverTrip(driverId: string) {
     return prisma.tripRequest.findFirst({
-      where: {
-        driverId,
-        status: { in: ['ACCEPTED', 'ARRIVING', 'IN_PROGRESS', 'WAITING_PAYMENT'] },
-      },
+      where: { driverId, status: { in: ACTIVE_DRIVER_TRIP_STATUSES } },
       include: {
         passenger: {
           select: {
@@ -268,24 +230,19 @@ export class TripsService {
           },
         },
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  /**
-   * Lấy lịch sử chuyến đi (phân trang).
-   */
-  static async getTripHistory(userId: string, page: number = 1, limit: number = 10) {
+  static async getTripHistory(userId: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
-
+    const where = {
+      OR: [{ passengerId: userId }, { driverId: userId }],
+      status: { in: ['COMPLETED', 'CANCELLED', 'NO_DRIVER'] as TripStatus[] },
+    };
     const [trips, total] = await Promise.all([
       prisma.tripRequest.findMany({
-        where: {
-          OR: [
-            { passengerId: userId },
-            { driverId: userId },
-          ],
-          status: { in: ['COMPLETED', 'CANCELLED', 'NO_DRIVER'] },
-        },
+        where,
         include: {
           passenger: {
             select: { id: true, firstName: true, lastName: true, avatarUrl: true },
@@ -298,22 +255,123 @@ export class TripsService {
         skip,
         take: limit,
       }),
-      prisma.tripRequest.count({
-        where: {
-          OR: [
-            { passengerId: userId },
-            { driverId: userId },
-          ],
-          status: { in: ['COMPLETED', 'CANCELLED', 'NO_DRIVER'] },
-        },
-      }),
+      prisma.tripRequest.count({ where }),
     ]);
+    return { trips, total, page, totalPages: Math.ceil(total / limit) };
+  }
 
-    return {
-      trips,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-    };
+  static async getTripById(tripId: string, userId: string) {
+    const trip = await prisma.tripRequest.findUnique({
+      where: { id: tripId },
+      include: {
+        passenger: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+            passengerRating: true,
+          },
+        },
+        driver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+            driverRating: true,
+            driverRatingCount: true,
+            vehicles: {
+              where: { status: 'ACTIVE' },
+              take: 1,
+              select: { id: true, type: true, licensePlate: true, color: true, imageUrl: true },
+            },
+          },
+        },
+        transactions: {
+          select: { id: true, amount: true, status: true, type: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+        },
+        reviews: {
+          where: { reviewerId: userId },
+          select: { id: true, revieweeId: true, rating: true },
+        },
+      },
+    });
+    if (!trip) throw new AppError('Không tìm thấy chuyến xe', 404);
+    if (trip.passengerId !== userId && trip.driverId !== userId) {
+      throw new AppError('Bạn không có quyền xem chuyến xe này', 403);
+    }
+    return trip;
+  }
+
+  private static async getTripWithParticipants(tripId: string) {
+    const trip = await prisma.tripRequest.findUnique({
+      where: { id: tripId },
+      include: {
+        passenger: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+            passengerRating: true,
+          },
+        },
+        driver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+            driverRating: true,
+            driverRatingCount: true,
+            vehicles: {
+              where: { status: 'ACTIVE' },
+              take: 1,
+              select: { id: true, type: true, licensePlate: true, color: true, imageUrl: true },
+            },
+          },
+        },
+      },
+    });
+    if (!trip) throw new AppError('Không tìm thấy chuyến xe', 404);
+    return trip;
+  }
+
+  private static async validateCompletionDistance(
+    trip: { destLat: number; destLng: number },
+    driverId: string,
+    confirmed = false,
+  ): Promise<void> {
+    const location = await getDriverLocation(driverId);
+    const distanceMeters = location
+      ? Math.round(RideMatchingService.haversine(
+        { lat: location.latitude, lng: location.longitude },
+        { lat: trip.destLat, lng: trip.destLng },
+      ) * 1000)
+      : null;
+    const tooFar = distanceMeters === null ||
+      distanceMeters > RIDE_HAILING_CONFIG.TRIP_COMPLETION_RADIUS_METERS;
+
+    if (tooFar && !confirmed) {
+      throw new AppError(
+        distanceMeters === null
+          ? 'Không xác định được vị trí hiện tại. Hãy kiểm tra GPS trước khi hoàn thành chuyến.'
+          : `Bạn vẫn còn cách điểm đến ${(distanceMeters / 1000).toFixed(1)} km.`,
+        409,
+        true,
+        'TRIP_TOO_FAR_FROM_DESTINATION',
+        {
+          distanceMeters,
+          thresholdMeters: RIDE_HAILING_CONFIG.TRIP_COMPLETION_RADIUS_METERS,
+          canConfirm: true,
+        },
+      );
+    }
   }
 }

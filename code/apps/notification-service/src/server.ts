@@ -64,6 +64,8 @@ async function connectRabbitMQ() {
               title: data.title,
               content: data.content,
               type: data.type,
+              targetType: data.targetType ?? null,
+              targetId: data.targetId ?? null,
             },
           });
 

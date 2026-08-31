@@ -274,6 +274,13 @@ The color story is starkly binary. Product sections alternate between pure black
 - Section backgrounds: maintain full-width color blocks at all breakpoints — the cinematic rhythm never breaks
 - Image sizing: products scale proportionally, never crop — the product silhouette is sacred
 
+### Driver Home (Adaptive Native)
+- Compose the home screen as a two-second operational scan: utility header and availability, greeting/road hero, dominant publish-trip CTA, active trip when present, booking requests, upcoming trip, today's overview, then quick tools. Preserve this action-first order instead of presenting equal-weight dashboard cards.
+- Below 390px, compact the hero artwork and copy; below 370px, collapse header status text to an icon-sized control. Below 360px, or when font scale exceeds 1.15, wrap overview statistics and quick tools into two columns so labels remain readable.
+- Empty states must describe the real absence and offer the next truthful action: no requests says requests will appear when available; no upcoming trip invites publishing one. Never fabricate ratings or operational totals—use an em dash for missing values and zero only for measured empty collections.
+- Every primary or secondary tap target is at least 48px high on Android and 44pt on iOS; compact icon controls remain 48×48, and adjacent controls retain visible spacing.
+- At widths of 768px and above, center the bottom navigation in a rounded container capped at 720px rather than stretching a phone navigation bar edge to edge.
+
 ### Image Behavior
 - Product photography maintains aspect ratio at all breakpoints
 - Hero product images scale down but stay centered

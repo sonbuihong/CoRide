@@ -1,0 +1,3 @@
+interface:
+  display_name: "CoRide Database"
+  short_description: "Change CoRide PostgreSQL and Prisma safely"

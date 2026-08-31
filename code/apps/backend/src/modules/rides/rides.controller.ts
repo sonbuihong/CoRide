@@ -93,7 +93,7 @@ export const deleteRide = async (
 ): Promise<void> => {
   try {
     await RidesService.deleteRide((req.params.id as string), req.user!.id);
-    res.json({ message: 'Xóa chuyến đi thành công' });
+    res.json({ message: 'Đã hủy chuyến đi thành công' });
   } catch (error) {
     next(error);
   }

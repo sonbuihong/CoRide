@@ -1,0 +1,3 @@
+interface:
+  display_name: "CoRide Architecture"
+  short_description: "Navigate and change the CoRide monorepo safely"

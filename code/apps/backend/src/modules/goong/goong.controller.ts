@@ -133,7 +133,7 @@ class GoongController {
     try {
       const { lat, lng, version } = (res.locals.validatedQuery ?? req.query) as any;
 
-      if (!lat || !lng) {
+      if (lat == null || lng == null) {
         return res.status(400).json({ message: 'Lat and Lng parameters are required' });
       }
 
@@ -154,7 +154,7 @@ class GoongController {
       res.json(result);
     } catch (error) {
       console.error('Reverse geocode controller error:', error);
-      res.status(500).json({ message: 'Không thể tìm thấy địa chỉ cho tọa độ này' });
+      res.status(502).json({ message: 'Dịch vụ địa chỉ tạm thời không khả dụng' });
     }
   }
 

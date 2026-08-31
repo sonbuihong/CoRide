@@ -69,7 +69,8 @@ export const decodePolyline = (encoded: string): LatLng[] => {
 export const getDirections = async (
   origin: LatLng,
   destination: LatLng,
-  vehicle: string = 'car'
+  vehicle: string = 'car',
+  waypoints: LatLng[] = [],
 ): Promise<DirectionsResult | null> => {
   try {
     const originStr = `${origin.latitude},${origin.longitude}`;
@@ -80,6 +81,7 @@ export const getDirections = async (
       origin: originStr,
       destination: destinationStr,
       vehicle,
+      waypoints: waypoints.map((point) => `${point.latitude},${point.longitude}`),
     });
 
     // Goong trả về routes[0].legs[0] chứa distance, duration
@@ -90,7 +92,7 @@ export const getDirections = async (
     }
 
     const route = data.routes[0];
-    const leg = route.legs[0];
+    const legs = route.legs || [];
     const encodedPolyline = route.overview_polyline?.points;
 
     if (!encodedPolyline) {
@@ -99,12 +101,39 @@ export const getDirections = async (
     }
 
     return {
-      distance: leg.distance?.value || 0,
-      duration: leg.duration?.value || 0,
+      distance: legs.reduce((sum: number, leg: any) => sum + (leg.distance?.value || 0), 0),
+      duration: legs.reduce((sum: number, leg: any) => sum + (leg.duration?.value || 0), 0),
       polylineCoords: decodePolyline(encodedPolyline),
     };
   } catch (error) {
     console.error('[Direction Service] Error:', error);
     return null;
   }
+};
+
+/**
+ * Tạo một polyline xuyên suốt nhiều điểm dừng mà vẫn tôn trọng giới hạn
+ * tối đa 3 waypoint mỗi request của proxy Goong hiện tại.
+ */
+export const getDirectionsThroughStops = async (
+  points: LatLng[],
+  vehicle: string = 'car',
+): Promise<DirectionsResult | null> => {
+  if (points.length < 2) return null;
+  const chunks: LatLng[][] = [];
+  for (let cursor = 0; cursor < points.length - 1; cursor += 4) {
+    const chunk = points.slice(cursor, cursor + 5);
+    if (chunk.length >= 2) chunks.push(chunk);
+  }
+
+  const results = await Promise.all(chunks.map((chunk) =>
+    getDirections(chunk[0], chunk[chunk.length - 1], vehicle, chunk.slice(1, -1)),
+  ));
+  const valid = results.filter((result): result is DirectionsResult => Boolean(result));
+  if (!valid.length) return null;
+  return {
+    distance: valid.reduce((sum, result) => sum + result.distance, 0),
+    duration: valid.reduce((sum, result) => sum + result.duration, 0),
+    polylineCoords: valid.flatMap((result, index) => index === 0 ? result.polylineCoords : result.polylineCoords.slice(1)),
+  };
 };

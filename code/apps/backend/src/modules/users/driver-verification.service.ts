@@ -40,6 +40,8 @@ export class DriverVerificationService {
       where: { userId },
       create: {
         userId,
+        licenseImageUrl: data.licenseFrontImageUrl,
+        vehicleImageUrl: data.registrationFrontImageUrl,
         licenseFrontImageUrl: data.licenseFrontImageUrl,
         licenseBackImageUrl: data.licenseBackImageUrl,
         registrationFrontImageUrl: data.registrationFrontImageUrl,
@@ -50,6 +52,8 @@ export class DriverVerificationService {
         status: VerificationStatus.PENDING,
       },
       update: {
+        licenseImageUrl: data.licenseFrontImageUrl,
+        vehicleImageUrl: data.registrationFrontImageUrl,
         licenseFrontImageUrl: data.licenseFrontImageUrl,
         licenseBackImageUrl: data.licenseBackImageUrl,
         registrationFrontImageUrl: data.registrationFrontImageUrl,

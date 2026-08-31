@@ -23,6 +23,7 @@ export interface DriverBookingRide {
   destinationLat?: number | null;
   destinationLng?: number | null;
   routePolyline?: string | null;
+  updatedAt?: string;
 }
 
 export interface DriverBookingMatching {
@@ -44,6 +45,14 @@ export interface DriverBookingSummary {
   passengerLng?: number | null;
   pickupAddress?: string | null;
   dropoffAddress?: string | null;
+  dropoffLat?: number | null;
+  dropoffLng?: number | null;
+  driverArrivedAt?: string | null;
+  pickedUpAt?: string | null;
+  droppedOffAt?: string | null;
+  paymentStatus?: string | null;
+  paymentMethod?: string | null;
+  priceBreakdown?: unknown;
   isPickedUp: boolean;
   isDroppedOff: boolean;
   createdAt?: string;
@@ -99,13 +108,20 @@ export const bookingService = {
     return response.data;
   },
 
-  async getActiveBooking(): Promise<ActiveDriverBooking | null> {
-    const response = await api.get('/bookings/active');
+  async getActiveBooking(role?: string): Promise<ActiveDriverBooking | null> {
+    const response = await api.get('/bookings/active', {
+      params: role ? { role } : undefined,
+    });
     return response.data.activeBooking;
   },
 
   async confirmPickup(bookingId: string) {
     const response = await api.patch(`/bookings/${bookingId}/pickup`);
+    return response.data;
+  },
+
+  async markDriverArrived(bookingId: string) {
+    const response = await api.patch(`/bookings/${bookingId}/arrived`);
     return response.data;
   },
 

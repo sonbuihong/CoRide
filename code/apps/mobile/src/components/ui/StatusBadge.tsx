@@ -44,6 +44,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       case 'PICKING_UP':
       case 'ARRIVING':
         return { text: 'Tài xế đang đến', bg: 'bg-passenger-soft', color: 'text-passenger' };
+      case 'ARRIVED':
+        return { text: 'Tài xế đã đến', bg: 'bg-confirmed/10', color: 'text-confirmed' };
       case 'ACCEPTED':
         return { text: 'Tài xế đã xác nhận', bg: 'bg-confirmed/10', color: 'text-confirmed' };
       case 'IN_PROGRESS':

@@ -38,6 +38,7 @@ import { socketService } from '../../../src/services/socket.service';
 import { colors, radius, spacing, typography } from '../../../src/theme/tokens';
 import { getDirections } from '../../../src/services/direction.service';
 import { SocketEvents } from '@repo/shared';
+import { showInfoDialog } from '../../../src/utils/dialog';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -169,14 +170,14 @@ export default function DriverTripDetailScreen() {
       void queryClient.invalidateQueries({ queryKey: ['driver-bookings'] });
     };
 
-    socketService.on(SocketEvents.TRIP_STATUS_UPDATE, handleUpdate);
-    socketService.on(SocketEvents.BOOKING_UPDATED, handleUpdate);
-    socketService.on(SocketEvents.TRIP_CANCELLED, handleUpdate);
+    socketService.on(SocketEvents.RIDE_STATUS_UPDATED, handleUpdate);
+    socketService.on(SocketEvents.BOOKING_PICKED_UP, handleUpdate);
+    socketService.on(SocketEvents.RIDE_UPDATED, handleUpdate);
 
     return () => {
-      socketService.off(SocketEvents.TRIP_STATUS_UPDATE, handleUpdate);
-      socketService.off(SocketEvents.BOOKING_UPDATED, handleUpdate);
-      socketService.off(SocketEvents.TRIP_CANCELLED, handleUpdate);
+      socketService.off(SocketEvents.RIDE_STATUS_UPDATED, handleUpdate);
+      socketService.off(SocketEvents.BOOKING_PICKED_UP, handleUpdate);
+      socketService.off(SocketEvents.RIDE_UPDATED, handleUpdate);
     };
   }, [id, queryClient]);
 
@@ -200,25 +201,11 @@ export default function DriverTripDetailScreen() {
 
   // Handlers
   const handleStartRide = () => {
-    Alert.alert(
-      'Bắt đầu hành trình?',
-      'Hành trình sẽ được chuyển sang trạng thái Đang diễn ra. Hành khách sẽ nhận được thông báo.',
-      [
-        { text: 'Để sau', style: 'cancel' },
-        { text: 'Bắt đầu ngay', onPress: () => statusMutation.mutate('ONGOING') },
-      ],
-    );
+    statusMutation.mutate('ONGOING');
   };
 
   const handleCompleteRide = () => {
-    Alert.alert(
-      'Hoàn thành chuyến đi?',
-      'Xác nhận kết thúc chuyến đi này.',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        { text: 'Hoàn thành', onPress: () => statusMutation.mutate('COMPLETED') },
-      ],
-    );
+    statusMutation.mutate('COMPLETED');
   };
 
   const handleCancelRide = () => {

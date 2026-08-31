@@ -1,41 +1,200 @@
 import { extendedPrisma as prisma } from '@repo/database';
-import {
-  findNearbyDrivers,
-  isDriverOnline,
-  isDriverBusy,
-  setDriverBusy,
-} from '../../shared/lib/redis';
-import { SocketEvents } from '@repo/shared';
+import { SocketEvents, type TripOfferPayload } from '@repo/shared';
+
 import { SocketEventService } from '../../socket/socket.events';
 import { AppError } from '../../shared/errors/AppError';
+import {
+  clearDriverBusy,
+  clearTripOffer,
+  clearTripOffers,
+  findNearbyDrivers,
+  getDriverLocation,
+  hasTripOffer,
+  isDriverBusy,
+  isDriverOnline,
+  offerTripToDrivers,
+  setDriverBusy,
+} from '../../shared/lib/redis';
+import { NotificationsService } from '../notifications/notifications.service';
+import { emitTripUpdated } from '../trips/trip-realtime.service';
+import { ACTIVE_DRIVER_TRIP_STATUSES } from '../trips/trip-state-machine';
+import { RIDE_HAILING_CONFIG } from './matching.config';
+import {
+  buildDispatchWaves,
+  dispatchWavesSequentially,
+  rankRideHailingCandidates,
+  type DriverRouteCandidate,
+  type ScoredDriverCandidate,
+} from './ride-hailing-matcher';
 
-/**
- * MatchingService — Thuật toán Waterfall tìm tài xế cho Ride-Hailing.
- *
- * Luồng:
- * 1. Query Redis (GEOSEARCH) để lấy danh sách tài xế trong bán kính, sắp xếp từ gần → xa.
- * 2. Lọc: chỉ giữ tài xế đang online VÀ không bận (không đang trong cuốc khác).
- * 3. Phát tuần tự: gửi Socket event "trip:new_request" cho tài xế gần nhất.
- * 4. Đợi 10 giây: nếu tài xế accept → kết thúc. Nếu không → chuyển sang tài xế tiếp theo.
- * 5. Nếu hết danh sách → cập nhật trip thành NO_DRIVER.
- *
- * Trade-off:
- * - Waterfall (tuần tự) vs Broadcast (đồng loạt):
- *   + Waterfall: Tài xế gần nhất luôn được ưu tiên, tránh race condition nhiều tài xế nhận cùng lúc.
- *   + Broadcast: Nhanh hơn nhưng cần giải quyết conflict khi 2+ tài xế accept đồng thời.
- *   → Chọn Waterfall vì đơn giản hơn cho DATN, trải nghiệm tốt cho hành khách.
- */
+interface MatchingTrip {
+  id: string;
+  passengerId: string;
+  originAddress: string;
+  originLat: number;
+  originLng: number;
+  destAddress: string;
+  destLat: number;
+  destLng: number;
+  vehicleType: 'BIKE' | 'CAR';
+  estimatedDistance: number;
+  estimatedDuration: number;
+  estimatedPrice: number;
+  maxAttempts: number;
+  matchRadius: number;
+  passenger: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatarUrl: string | null;
+    passengerRating: number;
+  };
+}
 
-const MATCH_TIMEOUT_MS = 10_000; // 10 giây chờ mỗi tài xế
+const isPrismaUniqueError = (error: unknown): boolean => (
+  typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002'
+);
 
 export class MatchingService {
-  /**
-   * Bắt đầu quá trình matching cho 1 TripRequest.
-   * Chạy bất đồng bộ — không block API response.
-   */
   static async startMatching(tripId: string): Promise<void> {
-    // 1. Lấy thông tin trip
-    const trip = await prisma.tripRequest.findUnique({
+    const initialTrip = await this.getMatchingTrip(tripId);
+    if (!initialTrip) return;
+
+    if (initialTrip.status === 'PENDING') {
+      const started = await prisma.tripRequest.updateMany({
+        where: { id: tripId, status: 'PENDING' },
+        data: { status: 'MATCHING' },
+      });
+      if (started.count === 0) return;
+    } else if (initialTrip.status !== 'MATCHING') {
+      return;
+    }
+
+    const trip = await this.getMatchingTrip(tripId);
+    if (!trip || trip.status !== 'MATCHING') return;
+
+    emitTripUpdated(trip, {
+      previousStatus: initialTrip.status,
+      message: 'Đang tìm tài xế phù hợp với tuyến đường của bạn.',
+    });
+
+    const searchStartedAt = Date.now();
+    const attemptedDriverIds = new Set<string>();
+    let attempts = trip.matchAttempts;
+    const radii = [...new Set([
+      trip.matchRadius,
+      ...RIDE_HAILING_CONFIG.SEARCH_RADII_KM,
+    ])].sort((a, b) => a - b);
+
+    for (const radiusKm of radii) {
+      if (
+        attempts >= trip.maxAttempts ||
+        Date.now() - searchStartedAt >= RIDE_HAILING_CONFIG.SEARCH_TIMEOUT_MS
+      ) break;
+
+      const nearbyDrivers = await findNearbyDrivers(trip.originLat, trip.originLng, radiusKm);
+      const candidates = await this.loadAndRankCandidates(
+        trip,
+        nearbyDrivers.filter(({ driverId }) => !attemptedDriverIds.has(driverId)),
+      );
+      const remaining = Math.max(0, trip.maxAttempts - attempts);
+      const waves = buildDispatchWaves(
+        candidates.slice(0, remaining),
+        RIDE_HAILING_CONFIG.DISPATCH_BATCH_SIZE,
+      );
+
+      const accepted = await dispatchWavesSequentially(
+        waves,
+        async (wave) => {
+          wave.forEach(({ driverId }) => attemptedDriverIds.add(driverId));
+          attempts += wave.length;
+          return this.dispatchWave(trip, wave, attempts, searchStartedAt);
+        },
+        () => Date.now() - searchStartedAt < RIDE_HAILING_CONFIG.SEARCH_TIMEOUT_MS,
+      );
+      if (accepted) return;
+    }
+
+    await this.noDriverFound(tripId);
+  }
+
+  static async handleDriverAccept(tripId: string, driverId: string) {
+    const offered = await hasTripOffer(tripId, driverId);
+    if (!offered) {
+      throw new AppError(
+        'Yêu cầu chuyến không còn hiệu lực hoặc chưa được gửi tới bạn',
+        403,
+        true,
+        'TRIP_NOT_OFFERED',
+      );
+    }
+
+    const [driver, activeTrip] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: driverId },
+        select: {
+          isDriverVerified: true,
+          vehicles: {
+            where: { status: 'ACTIVE' },
+            select: { id: true, type: true },
+          },
+        },
+      }),
+      prisma.tripRequest.findFirst({
+        where: { driverId, status: { in: ACTIVE_DRIVER_TRIP_STATUSES } },
+        select: { id: true },
+      }),
+    ]);
+
+    if (!driver?.isDriverVerified) {
+      throw new AppError('Bạn cần xác thực tài xế trước khi nhận chuyến', 403);
+    }
+    if (activeTrip) {
+      throw new AppError(
+        'Bạn đang có một chuyến chưa hoàn thành',
+        409,
+        true,
+        'DRIVER_HAS_ACTIVE_TRIP',
+      );
+    }
+
+    const tripSnapshot = await prisma.tripRequest.findUnique({
+      where: { id: tripId },
+      select: { passengerId: true, status: true, vehicleType: true },
+    });
+    if (!tripSnapshot) throw new AppError('Không tìm thấy chuyến xe', 404);
+    if (!driver.vehicles.some(({ type }) => type === tripSnapshot.vehicleType)) {
+      throw new AppError('Bạn không có phương tiện phù hợp với chuyến này', 403);
+    }
+
+    let claimed: { count: number };
+    try {
+      claimed = await prisma.tripRequest.updateMany({
+        where: { id: tripId, status: 'MATCHING', driverId: null },
+        data: { driverId, status: 'ACCEPTED', matchedAt: new Date() },
+      });
+    } catch (error) {
+      if (isPrismaUniqueError(error)) {
+        throw new AppError(
+          'Bạn hoặc chuyến xe này đã được gán cho một hành trình khác',
+          409,
+          true,
+          'TRIP_ALREADY_ACCEPTED',
+        );
+      }
+      throw error;
+    }
+
+    if (claimed.count !== 1) {
+      throw new AppError(
+        'Chuyến đi đã được tài xế khác nhận',
+        409,
+        true,
+        'TRIP_ALREADY_ACCEPTED',
+      );
+    }
+
+    const updatedTrip = await prisma.tripRequest.findUnique({
       where: { id: tripId },
       include: {
         passenger: {
@@ -48,124 +207,232 @@ export class MatchingService {
             passengerRating: true,
           },
         },
+        driver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            avatarUrl: true,
+            driverRating: true,
+            driverRatingCount: true,
+            vehicles: {
+              where: { status: 'ACTIVE' },
+              take: 1,
+              select: { id: true, type: true, licensePlate: true, color: true, imageUrl: true },
+            },
+          },
+        },
       },
     });
+    if (!updatedTrip) throw new AppError('Không tìm thấy chuyến xe sau khi nhận', 404);
 
-    if (!trip) {
-      console.error(`[Matching] Trip ${tripId} not found`);
-      return;
-    }
-
-    // 2. Chuyển status sang MATCHING
-    await prisma.tripRequest.update({
+    await setDriverBusy(driverId, tripId);
+    const assignment = await prisma.tripRequest.findUnique({
       where: { id: tripId },
-      data: { status: 'MATCHING' },
+      select: { driverId: true, status: true },
     });
-
-    // Thông báo passenger rằng hệ thống đang tìm tài xế
-    this.emitToPassenger(trip.passengerId, SocketEvents.TRIP_STATUS_UPDATE, {
-      tripId,
-      status: 'MATCHING',
-      message: 'Đang tìm tài xế cho bạn...',
-    });
-
-    // 3. Tìm tài xế gần điểm đón
-    const nearbyDrivers = await findNearbyDrivers(
-      trip.originLat,
-      trip.originLng,
-      trip.matchRadius
-    );
-
-    if (nearbyDrivers.length === 0) {
-      await this.noDriverFound(tripId, trip.passengerId);
-      return;
-    }
-
-    // 4. Lọc tài xế hợp lệ (online + không bận + không phải chính hành khách)
-    const eligibleDrivers = await this.filterEligibleDrivers(
-      nearbyDrivers,
-      trip.passengerId
-    );
-
-    if (eligibleDrivers.length === 0) {
-      await this.noDriverFound(tripId, trip.passengerId);
-      return;
-    }
-
-    // 5. Bắt đầu Waterfall — phát lần lượt
-    await this.waterfallMatch(tripId, trip, eligibleDrivers);
-  }
-
-  /**
-   * Lọc danh sách tài xế: chỉ giữ những tài xế đang online và không bận.
-   */
-  private static async filterEligibleDrivers(
-    nearbyDrivers: Array<{ driverId: string; distance: number }>,
-    passengerId: string
-  ): Promise<Array<{ driverId: string; distance: number }>> {
-    const eligible: Array<{ driverId: string; distance: number }> = [];
-
-    for (const driver of nearbyDrivers) {
-      // Skip nếu tài xế chính là hành khách (tự gọi xe cho mình)
-      if (driver.driverId === passengerId) continue;
-
-      const [online, busy] = await Promise.all([
-        isDriverOnline(driver.driverId),
-        isDriverBusy(driver.driverId),
-      ]);
-
-      if (online && !busy) {
-        eligible.push(driver);
-      }
-    }
-
-    return eligible;
-  }
-
-  /**
-   * Waterfall matching: phát yêu cầu lần lượt từ tài xế gần nhất.
-   *
-   * Cơ chế timeout:
-   * - Gửi Socket event "trip:new_request" tới tài xế
-   * - Đợi tối đa 10 giây
-   * - Nếu tài xế accept: MatchingService.handleDriverAccept() được gọi từ Socket handler
-   *   → resolve Promise, kết thúc matching
-   * - Nếu timeout hoặc reject: chuyển sang tài xế tiếp theo
-   */
-  private static async waterfallMatch(
-    tripId: string,
-    trip: any,
-    drivers: Array<{ driverId: string; distance: number }>
-  ): Promise<void> {
-    const maxAttempts = Math.min(drivers.length, trip.maxAttempts);
-
-    for (let i = 0; i < maxAttempts; i++) {
-      // Kiểm tra trip vẫn đang MATCHING (chưa bị hủy bởi hành khách)
-      const currentTrip = await prisma.tripRequest.findUnique({
-        where: { id: tripId },
-        select: { status: true },
-      });
-
-      if (!currentTrip || currentTrip.status !== 'MATCHING') {
-        console.log(`[Matching] Trip ${tripId} no longer matching (status: ${currentTrip?.status})`);
-        return;
-      }
-
-      const driver = drivers[i];
-
-      // Cập nhật matchAttempts
-      await prisma.tripRequest.update({
-        where: { id: tripId },
-        data: { matchAttempts: i + 1 },
-      });
-
-      console.log(
-        `[Matching] Trip ${tripId}: Sending to driver ${driver.driverId} (${driver.distance.toFixed(1)}km away, attempt ${i + 1}/${maxAttempts})`
+    if (assignment?.driverId !== driverId || assignment.status !== 'ACCEPTED') {
+      await clearDriverBusy(driverId);
+      throw new AppError(
+        'Trạng thái chuyến đã thay đổi trong khi nhận chuyến',
+        409,
+        true,
+        'TRIP_STATE_CONFLICT',
       );
+    }
+    const offeredDriverIds = await clearTripOffers(tripId);
+    offeredDriverIds
+      .filter((offeredDriverId) => offeredDriverId !== driverId)
+      .forEach((offeredDriverId) => this.emitToDriver(
+        offeredDriverId,
+        SocketEvents.TRIP_REQUEST_EXPIRED,
+        { tripId, reason: 'accepted_by_another_driver' },
+      ));
 
-      // Gửi thông báo cuốc xe cho tài xế
-      this.emitToDriver(driver.driverId, SocketEvents.TRIP_NEW_REQUEST, {
-        tripId,
+    emitTripUpdated(updatedTrip, {
+      previousStatus: 'MATCHING',
+      message: 'Đã tìm được tài xế phù hợp.',
+    });
+    void NotificationsService.createNotification(
+      tripSnapshot.passengerId,
+      'Đã tìm được tài xế',
+      'Tài xế đang chuẩn bị đến điểm đón của bạn.',
+      'TRIP_MATCHED',
+      { type: 'TRIP', id: tripId },
+    ).catch((error) => console.error('[Matching] Notification error:', error));
+
+    return updatedTrip;
+  }
+
+  static async handleDriverReject(tripId: string, driverId: string): Promise<void> {
+    if (!(await hasTripOffer(tripId, driverId))) {
+      throw new AppError('Yêu cầu chuyến không còn hiệu lực', 403, true, 'TRIP_NOT_OFFERED');
+    }
+    await clearTripOffer(tripId, driverId);
+  }
+
+  private static async getMatchingTrip(tripId: string) {
+    return prisma.tripRequest.findUnique({
+      where: { id: tripId },
+      include: {
+        passenger: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            passengerRating: true,
+          },
+        },
+      },
+    });
+  }
+
+  private static async loadAndRankCandidates(
+    trip: MatchingTrip,
+    nearbyDrivers: Array<{ driverId: string; distance: number }>,
+  ): Promise<ScoredDriverCandidate[]> {
+    const presence = await Promise.all(nearbyDrivers.map(async (driver) => ({
+      ...driver,
+      online: await isDriverOnline(driver.driverId),
+      busy: await isDriverBusy(driver.driverId),
+    })));
+    const present = presence.filter(({ driverId, online, busy }) => (
+      driverId !== trip.passengerId && online && !busy
+    ));
+    if (present.length === 0) return [];
+
+    const driverIds = present.map(({ driverId }) => driverId);
+    const now = Date.now();
+    const [drivers, activeTrips, rides] = await Promise.all([
+      prisma.user.findMany({
+        where: {
+          id: { in: driverIds },
+          isDriverVerified: true,
+          vehicles: { some: { status: 'ACTIVE', type: trip.vehicleType } },
+        },
+        select: { id: true, driverRating: true },
+      }),
+      prisma.tripRequest.findMany({
+        where: { driverId: { in: driverIds }, status: { in: ACTIVE_DRIVER_TRIP_STATUSES } },
+        select: { driverId: true },
+      }),
+      prisma.ride.findMany({
+        where: {
+          driverId: { in: driverIds },
+          availableSeats: { gt: 0 },
+          OR: [
+            { status: 'ONGOING' },
+            {
+              status: 'SCHEDULED',
+              departureTime: {
+                gte: new Date(now - 30 * 60_000),
+                lte: new Date(now + 2 * 60 * 60_000),
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          driverId: true,
+          originLat: true,
+          originLng: true,
+          destinationLat: true,
+          destinationLng: true,
+          routePolyline: true,
+          distance: true,
+          duration: true,
+          departureTime: true,
+          allowRoutePickup: true,
+          availableSeats: true,
+          status: true,
+        },
+        orderBy: { departureTime: 'asc' },
+      }),
+    ]);
+
+    const verified = new Map(drivers.map((driver) => [driver.id, driver]));
+    const busyDriverIds = new Set(activeTrips.map(({ driverId }) => driverId).filter(Boolean));
+    const routeByDriver = new Map<string, typeof rides[number]>();
+    rides.forEach((ride) => {
+      const current = routeByDriver.get(ride.driverId);
+      if (!current || ride.status === 'ONGOING') routeByDriver.set(ride.driverId, ride);
+    });
+
+    const candidates = await Promise.all(present.map(async ({ driverId, distance }) => {
+      const driver = verified.get(driverId);
+      if (!driver || busyDriverIds.has(driverId)) return null;
+      const location = await getDriverLocation(driverId);
+      const ride = routeByDriver.get(driverId);
+      const candidate: DriverRouteCandidate = {
+        driverId,
+        distanceKm: distance,
+        driverRating: driver.driverRating,
+        availableSeats: ride?.availableSeats ?? (trip.vehicleType === 'CAR' ? 3 : 1),
+        currentLocation: location
+          ? { lat: location.latitude, lng: location.longitude }
+          : undefined,
+        route: ride ? {
+          id: ride.id,
+          originLat: ride.originLat,
+          originLng: ride.originLng,
+          destinationLat: ride.destinationLat,
+          destinationLng: ride.destinationLng,
+          routePolyline: ride.routePolyline,
+          distance: ride.distance,
+          duration: ride.duration,
+          departureTime: ride.departureTime,
+          allowRoutePickup: ride.allowRoutePickup,
+        } : undefined,
+      };
+      return candidate;
+    }));
+
+    return rankRideHailingCandidates(
+      candidates.filter((candidate): candidate is DriverRouteCandidate => candidate !== null),
+      {
+        origin: { lat: trip.originLat, lng: trip.originLng },
+        destination: { lat: trip.destLat, lng: trip.destLng },
+        vehicleType: trip.vehicleType,
+      },
+    );
+  }
+
+  private static async dispatchWave(
+    trip: MatchingTrip,
+    wave: ScoredDriverCandidate[],
+    attempts: number,
+    searchStartedAt: number,
+  ): Promise<boolean> {
+    const currentTrip = await prisma.tripRequest.findUnique({
+      where: { id: trip.id },
+      select: { status: true },
+    });
+    if (!currentTrip || currentTrip.status !== 'MATCHING') return currentTrip?.status === 'ACCEPTED';
+
+    await prisma.tripRequest.updateMany({
+      where: { id: trip.id, status: 'MATCHING' },
+      data: { matchAttempts: attempts },
+    });
+
+    const remainingSearchMs = Math.max(
+      0,
+      RIDE_HAILING_CONFIG.SEARCH_TIMEOUT_MS - (Date.now() - searchStartedAt),
+    );
+    const offerDurationMs = Math.min(
+      RIDE_HAILING_CONFIG.DRIVER_ACCEPT_TIMEOUT_MS,
+      remainingSearchMs,
+    );
+    if (offerDurationMs <= 0) return false;
+
+    const expiresAt = new Date(Date.now() + offerDurationMs).toISOString();
+    const driverIds = wave.map(({ driverId }) => driverId);
+    await offerTripToDrivers(trip.id, driverIds, Math.ceil(offerDurationMs / 1000) + 2);
+
+    wave.forEach((candidate) => {
+      const payload: TripOfferPayload = {
+        tripId: trip.id,
         passenger: trip.passenger,
         originAddress: trip.originAddress,
         originLat: trip.originLat,
@@ -177,173 +444,73 @@ export class MatchingService {
         estimatedDistance: trip.estimatedDistance,
         estimatedDuration: trip.estimatedDuration,
         estimatedPrice: trip.estimatedPrice,
-        driverDistance: driver.distance, // Khoảng cách từ tài xế đến điểm đón
-      });
+        driverDistance: candidate.distanceKm,
+        pickupEtaMinutes: candidate.pickupEtaMinutes,
+        matchScore: candidate.matchScore,
+        matchType: candidate.matchType,
+        expiresAt,
+      };
+      this.emitToDriver(candidate.driverId, SocketEvents.TRIP_NEW_REQUEST, payload);
+    });
 
-      // Đợi phản hồi hoặc timeout
-      const accepted = await this.waitForDriverResponse(tripId, driver.driverId);
-
-      if (accepted) {
-        console.log(`[Matching] Trip ${tripId}: Driver ${driver.driverId} accepted!`);
-        return; // Matching thành công, kết thúc
-      }
-
-      // Tài xế không nhận → thông báo hết hạn
-      this.emitToDriver(driver.driverId, SocketEvents.TRIP_REQUEST_EXPIRED, { tripId });
-
-      console.log(
-        `[Matching] Trip ${tripId}: Driver ${driver.driverId} timed out/rejected. Trying next...`
-      );
+    const accepted = await this.waitForWaveResponse(trip.id, driverIds, offerDurationMs);
+    if (!accepted) {
+      await Promise.all(driverIds.map((driverId) => clearTripOffer(trip.id, driverId)));
+      driverIds.forEach((driverId) => this.emitToDriver(
+        driverId,
+        SocketEvents.TRIP_REQUEST_EXPIRED,
+        { tripId: trip.id, reason: 'timeout_or_rejected' },
+      ));
     }
-
-    // Hết danh sách tài xế — không ai nhận
-    await this.noDriverFound(tripId, trip.passengerId);
+    return accepted;
   }
 
-  /**
-   * Đợi phản hồi từ tài xế trong 10 giây.
-   * Trả true nếu tài xế accept, false nếu timeout hoặc reject.
-   *
-   * Cơ chế: Poll DB mỗi giây để check xem trip đã được accept chưa.
-   * Trade-off: Polling đơn giản hơn Promise-based event system,
-   * nhưng tốn query DB hơn. Chấp nhận được cho DATN scale nhỏ.
-   */
-  private static async waitForDriverResponse(
+  private static async waitForWaveResponse(
     tripId: string,
-    driverId: string
+    driverIds: string[],
+    timeoutMs: number,
   ): Promise<boolean> {
-    const pollIntervalMs = 1000; // Poll mỗi giây
-    const maxPolls = MATCH_TIMEOUT_MS / pollIntervalMs; // 10 lần poll
-
-    for (let i = 0; i < maxPolls; i++) {
-      await this.sleep(pollIntervalMs);
-
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      await this.sleep(Math.min(
+        RIDE_HAILING_CONFIG.DISPATCH_POLL_INTERVAL_MS,
+        Math.max(1, deadline - Date.now()),
+      ));
       const trip = await prisma.tripRequest.findUnique({
         where: { id: tripId },
-        select: { status: true, driverId: true },
+        select: { status: true },
       });
+      if (!trip) return false;
+      if (trip.status === 'ACCEPTED') return true;
+      if (trip.status !== 'MATCHING') return false;
 
-      if (!trip) return false; // Trip bị xoá
-
-      // Tài xế đã accept
-      if (trip.status === 'ACCEPTED' && trip.driverId === driverId) {
-        return true;
-      }
-
-      // Trip bị hủy bởi hành khách
-      if (trip.status === 'CANCELLED') {
-        return false;
-      }
-
-      // Tài xế reject (status vẫn MATCHING nhưng matchAttempts tăng)
-      // → tiếp tục poll cho đến hết timeout
+      const activeOffers = await Promise.all(
+        driverIds.map((driverId) => hasTripOffer(tripId, driverId)),
+      );
+      if (activeOffers.every((active) => !active)) return false;
     }
-
-    return false; // Timeout
+    return false;
   }
 
-  /**
-   * Xử lý khi tài xế accept cuốc — gọi từ Socket handler.
-   * Đây là entry point duy nhất để cập nhật trip thành ACCEPTED.
-   */
-  static async handleDriverAccept(tripId: string, driverId: string) {
-    // Kiểm tra tài xế đã verified KYC chưa
-    const driver = await prisma.user.findUnique({
-      where: { id: driverId },
-      select: { isDriverVerified: true },
-    });
-
-    if (!driver?.isDriverVerified) {
-      throw new AppError('Bạn cần xác thực tài xế trước khi nhận cuốc', 403);
-    }
-
-    // Atomic update — tránh race condition 2 tài xế accept cùng lúc
-    const trip = await prisma.tripRequest.findUnique({
-      where: { id: tripId },
-      select: { status: true, passengerId: true },
-    });
-
-    if (!trip || trip.status !== 'MATCHING') {
-      throw new AppError('Chuyến xe này không còn ở trạng thái đang tìm tài xế', 400);
-    }
-
-    // Cập nhật trip
-    const updatedTrip = await prisma.tripRequest.update({
-      where: { id: tripId },
-      data: {
-        driverId,
-        status: 'ACCEPTED',
-        matchedAt: new Date(),
-      },
-      include: {
-        passenger: {
-          select: { id: true, firstName: true, lastName: true, phone: true, avatarUrl: true },
-        },
-        driver: {
-          select: {
-            id: true, firstName: true, lastName: true, phone: true,
-            avatarUrl: true, driverRating: true, driverRatingCount: true,
-          },
-        },
-      },
-    });
-
-    // Đánh dấu tài xế đang bận
-    await setDriverBusy(driverId, tripId);
-
-    // Thông báo hành khách: đã tìm được tài xế!
-    this.emitToPassenger(trip.passengerId, SocketEvents.TRIP_MATCHED, {
-      tripId,
-      driver: updatedTrip.driver,
-      status: 'ACCEPTED',
-      message: 'Đã tìm được tài xế cho bạn!',
-    });
-
-    return updatedTrip;
-  }
-
-  /**
-   * Xử lý khi tài xế reject cuốc — gọi từ Socket handler.
-   * Không cần update DB, Waterfall sẽ tự timeout và chuyển tài xế tiếp.
-   */
-  static handleDriverReject(tripId: string, driverId: string): void {
-    console.log(`[Matching] Driver ${driverId} rejected trip ${tripId}`);
-    // Waterfall loop sẽ tự chuyển sang tài xế tiếp theo khi timeout
-  }
-
-  /**
-   * Xử lý khi không tìm được tài xế nào.
-   */
-  private static async noDriverFound(tripId: string, passengerId: string): Promise<void> {
-    await prisma.tripRequest.update({
-      where: { id: tripId },
+  private static async noDriverFound(tripId: string): Promise<void> {
+    await clearTripOffers(tripId);
+    const changed = await prisma.tripRequest.updateMany({
+      where: { id: tripId, status: 'MATCHING' },
       data: { status: 'NO_DRIVER' },
     });
+    if (changed.count === 0) return;
 
-    this.emitToPassenger(passengerId, SocketEvents.TRIP_NO_DRIVER, {
-      tripId,
-      message: 'Không tìm được tài xế trong khu vực. Vui lòng thử lại sau.',
-    });
-
-    console.log(`[Matching] Trip ${tripId}: No eligible drivers found`);
-  }
-
-  // ─── Socket Helpers ──────────────────────────────────────────────────
-
-  private static emitToPassenger(passengerId: string, event: string, data: any): void {
-    try {
-      SocketEventService.emitToUser(passengerId, event, data);
-    } catch (error) {
-      console.warn(`[Matching] Socket emit to passenger ${passengerId} failed:`, error);
+    const trip = await prisma.tripRequest.findUnique({ where: { id: tripId } });
+    if (trip) {
+      emitTripUpdated(trip, {
+        previousStatus: 'MATCHING',
+        message: 'Không tìm thấy tài xế phù hợp. Bạn có thể thử lại hoặc đổi điểm đón.',
+      });
     }
   }
 
-  private static emitToDriver(driverId: string, event: string, data: any): void {
-    try {
-      SocketEventService.emitToUser(driverId, event, data);
-    } catch (error) {
-      console.warn(`[Matching] Socket emit to driver ${driverId} failed:`, error);
-    }
+  private static emitToDriver(driverId: string, event: SocketEvents, data: unknown): void {
+    SocketEventService.emitToUser(driverId, event, data);
   }
 
   private static sleep(ms: number): Promise<void> {

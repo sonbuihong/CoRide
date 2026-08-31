@@ -8,7 +8,7 @@ import React, {
   useCallback,
   ReactNode,
 } from 'react';
-import apiClient from '@/lib/api-client';
+import apiClient, { refreshAccessToken } from '@/lib/api-client';
 
 // Kiểu dữ liệu user trả về từ API (không có password)
 interface User {
@@ -56,8 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!token) {
         if (hasSession) {
           try {
-            const refreshRes = await apiClient.post('/auth/refresh');
-            token = refreshRes.data.accessToken;
+            token = await refreshAccessToken();
             if (token) {
               sessionStorage.setItem('accessToken', token);
             }
@@ -111,33 +110,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let token = sessionStorage.getItem('accessToken');
         const hasSession = localStorage.getItem('hasSession') === 'true';
 
-        if (!token) {
-          if (hasSession) {
-            try {
-              const refreshRes = await apiClient.post('/auth/refresh');
-              if (cancelled) return;
-              token = refreshRes.data.accessToken;
-              if (token) {
-                sessionStorage.setItem('accessToken', token);
-              }
-            } catch {
-              if (cancelled) return;
-              try {
-                await apiClient.post('/auth/logout');
-              } catch {
-                // Ignore logout error
-              }
-              if (cancelled) return;
-              localStorage.removeItem('hasSession');
-              setUser(null);
-              setLoading(false);
-              return;
-            }
-          } else {
+        // Bootstrap luôn đổi cookie refresh thành access token mới. Hai mount
+        // của React Strict Mode dùng chung refreshPromise trong api-client.
+        if (hasSession) {
+          try {
+            token = await refreshAccessToken();
+            if (cancelled) return;
+          } catch {
+            if (cancelled) return;
+            localStorage.removeItem('hasSession');
+            sessionStorage.removeItem('accessToken');
             setUser(null);
             setLoading(false);
             return;
           }
+        } else if (!token) {
+          setUser(null);
+          setLoading(false);
+          return;
         }
 
         const res = await Promise.race([

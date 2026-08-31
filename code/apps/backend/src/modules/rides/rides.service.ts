@@ -461,15 +461,21 @@ export class RidesService {
       throw new AppError('Không thể xóa chuyến đang diễn ra', 400);
     }
 
-    const deletedRide = await prisma.ride.delete({ where: { id } });
+    const cancelledRide = await prisma.ride.update({
+      where: { id },
+      data: {
+        status: 'CANCELLED',
+        cancelReason: ride.cancelReason || 'Tài xế đã hủy chuyến',
+      },
+    });
 
     try {
-      SocketEventService.emitGlobal(SocketEvents.RIDE_DELETED, { id });
+      SocketEventService.emitGlobal(SocketEvents.RIDE_UPDATED, cancelledRide);
     } catch (e) {
       console.warn('[RidesService] Socket emit skipped:', e);
     }
 
-    return deletedRide;
+    return cancelledRide;
   }
 
   static async updateRideStatus(id: string, driverId: string, status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED', cancelReason?: string) {
@@ -477,6 +483,15 @@ export class RidesService {
     if (!ride) throw new AppError('Không tìm thấy chuyến đi', 404);
     if (ride.driverId !== driverId) {
       throw new AppError('Bạn không có quyền cập nhật trạng thái chuyến đi này', 403);
+    }
+
+    // Retry, double-click hoặc socket chậm có thể gửi lại cùng một command.
+    // Trả trạng thái hiện tại để endpoint giữ tính idempotent.
+    if (ride.status === status) {
+      return prisma.ride.findUniqueOrThrow({
+        where: { id },
+        include: DRIVER_SELECT,
+      });
     }
 
     // Logic kiểm tra chuyển đổi trạng thái hợp lệ
@@ -487,6 +502,19 @@ export class RidesService {
     } else if (status === 'COMPLETED') {
       if (ride.status !== 'ONGOING') {
         throw new AppError('Chỉ có thể hoàn thành chuyến đi đang ở trạng thái Đang diễn ra (ONGOING)', 400);
+      }
+      const pendingDropoffs = await prisma.booking.count({
+        where: {
+          rideId: id,
+          status: 'CONFIRMED',
+          isDroppedOff: false,
+        },
+      });
+      if (pendingDropoffs > 0) {
+        throw new AppError(
+          `Không thể hoàn thành chuyến. Vẫn còn ${pendingDropoffs} hành khách chưa được trả tại điểm đến.`,
+          400,
+        );
       }
     } else if (status === 'CANCELLED') {
       if (ride.status !== 'SCHEDULED') {
@@ -523,18 +551,6 @@ export class RidesService {
             expiresAt: null,
             seatHeld: false,
           }
-        });
-      }
-
-      // Nếu hoàn thành chuyến, hoàn thành toàn bộ booking CONFIRMED đã đón
-      if (status === 'COMPLETED') {
-        await tx.booking.updateMany({
-          where: {
-            rideId: id,
-            status: 'CONFIRMED',
-            isPickedUp: true,
-          },
-          data: { status: 'COMPLETED' },
         });
       }
 

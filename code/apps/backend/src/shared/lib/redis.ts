@@ -21,6 +21,8 @@ const REDIS_KEYS = {
   DRIVER_LOCATIONS: 'driver_locations',       // Sorted Set (Geo) chứa toạ độ tài xế
   DRIVER_ONLINE_PREFIX: 'driver:online:',     // Key per driver: "driver:online:{driverId}"
   DRIVER_BUSY_PREFIX: 'driver:busy:',         // Driver đang trong cuốc xe
+  TRIP_OFFER_PREFIX: 'trip:offer:',
+  TRIP_OFFER_DRIVERS_PREFIX: 'trip:offer_drivers:',
 } as const;
 
 export const redisClient = createClient({ url: REDIS_URL });
@@ -203,6 +205,57 @@ export const isDriverBusy = async (driverId: string): Promise<boolean> => {
 
   const result = await redisClient.get(`${REDIS_KEYS.DRIVER_BUSY_PREFIX}${driverId}`);
   return result !== null;
+};
+
+/**
+ * Offers are ephemeral and live next to online/location state. The accept API
+ * checks this key before attempting the atomic database claim.
+ */
+export const offerTripToDrivers = async (
+  tripId: string,
+  driverIds: string[],
+  ttlSeconds: number,
+): Promise<void> => {
+  if (!redisClient.isOpen || driverIds.length === 0) return;
+
+  const offerSetKey = `${REDIS_KEYS.TRIP_OFFER_DRIVERS_PREFIX}${tripId}`;
+  await Promise.all([
+    ...driverIds.map((driverId) => redisClient.set(
+      `${REDIS_KEYS.TRIP_OFFER_PREFIX}${tripId}:${driverId}`,
+      'offered',
+      { EX: ttlSeconds },
+    )),
+    redisClient.sAdd(offerSetKey, driverIds),
+  ]);
+  await redisClient.expire(offerSetKey, ttlSeconds + 5);
+};
+
+export const hasTripOffer = async (tripId: string, driverId: string): Promise<boolean> => {
+  if (!redisClient.isOpen) return false;
+  return (await redisClient.exists(
+    `${REDIS_KEYS.TRIP_OFFER_PREFIX}${tripId}:${driverId}`,
+  )) === 1;
+};
+
+export const clearTripOffer = async (tripId: string, driverId: string): Promise<void> => {
+  if (!redisClient.isOpen) return;
+  await Promise.all([
+    redisClient.del(`${REDIS_KEYS.TRIP_OFFER_PREFIX}${tripId}:${driverId}`),
+    redisClient.sRem(`${REDIS_KEYS.TRIP_OFFER_DRIVERS_PREFIX}${tripId}`, driverId),
+  ]);
+};
+
+export const clearTripOffers = async (tripId: string): Promise<string[]> => {
+  if (!redisClient.isOpen) return [];
+  const offerSetKey = `${REDIS_KEYS.TRIP_OFFER_DRIVERS_PREFIX}${tripId}`;
+  const driverIds = await redisClient.sMembers(offerSetKey);
+  await Promise.all([
+    ...driverIds.map((driverId) => redisClient.del(
+      `${REDIS_KEYS.TRIP_OFFER_PREFIX}${tripId}:${driverId}`,
+    )),
+    redisClient.del(offerSetKey),
+  ]);
+  return driverIds;
 };
 
 /**

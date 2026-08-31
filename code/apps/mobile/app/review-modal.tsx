@@ -6,19 +6,33 @@ import { Star, X } from 'lucide-react-native';
 import { reviewService } from '../src/services/review.service';
 import { AppText } from '../src/components/ui/AppText';
 import { AppButton } from '../src/components/ui/AppButton';
+import { getApiErrorMessage } from '../src/utils/api-error';
 
 export default function ReviewModal() {
   const router = useRouter();
-  const { rideId, revieweeId } = useLocalSearchParams<{ rideId: string; revieweeId: string }>();
+  const { rideId, tripRequestId, revieweeId } = useLocalSearchParams<{
+    rideId?: string;
+    tripRequestId?: string;
+    revieweeId: string;
+  }>();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const mutation = useMutation({
-    mutationFn: () => reviewService.createReview({ rideId, revieweeId, rating, comment }),
+    mutationFn: () => reviewService.createReview({
+      ...(tripRequestId ? { tripRequestId } : { rideId: rideId! }),
+      revieweeId,
+      rating,
+      comment,
+    }),
     onSuccess: () => {
       Alert.alert('Cảm ơn bạn', 'Đánh giá đã được ghi nhận.');
-      router.back();
+      if (tripRequestId) router.replace('/(passenger-tabs)' as never);
+      else router.back();
     },
-    onError: (error: { message?: string }) => Alert.alert('Không thể gửi đánh giá', error.message || 'Vui lòng thử lại.'),
+    onError: (error) => Alert.alert(
+      'Không thể gửi đánh giá',
+      getApiErrorMessage(error, 'Vui lòng thử lại.'),
+    ),
   });
 
   return (

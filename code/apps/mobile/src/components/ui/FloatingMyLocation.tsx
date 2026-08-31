@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { useAnimatedStyle, interpolate, Extrapolation } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, interpolate, Extrapolation, type SharedValue } from 'react-native-reanimated';
 import { Locate, LocateFixed } from 'lucide-react-native';
 import { colors, radius, spacing } from '../../theme/tokens';
 import * as Location from 'expo-location';
@@ -8,7 +8,7 @@ import * as Location from 'expo-location';
 interface FloatingMyLocationProps {
   onRecenter: (location: Location.LocationObjectCoords) => void;
   isCentered?: boolean;
-  animatedPosition: Animated.SharedValue<number>;
+  animatedPosition: SharedValue<number>;
 }
 
 export function FloatingMyLocation({ onRecenter, isCentered = false, animatedPosition }: FloatingMyLocationProps) {

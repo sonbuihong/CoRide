@@ -21,7 +21,7 @@ export const AppText: React.FC<AppTextProps> = ({
   const baseStyle = flatStyle.color || /\btext-/.test(className) ? undefined : styles.base;
 
   return (
-    <Text className={className} {...props} maxFontSizeMultiplier={props.maxFontSizeMultiplier ?? 1.5} style={[baseStyle, variantStyles[variant], weightStyles[weight], style]}>
+    <Text className={className} {...props} maxFontSizeMultiplier={props.maxFontSizeMultiplier} style={[baseStyle, variantStyles[variant], weightStyles[weight], style]}>
       {children}
     </Text>
   );

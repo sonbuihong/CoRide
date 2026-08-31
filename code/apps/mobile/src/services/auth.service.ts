@@ -11,6 +11,8 @@ export interface User {
   avatarUrl?: string; // Đồng bộ với schema backend
   bio?: string;
   role: string;
+  driverRating?: number;
+  driverRatingCount?: number;
   isDriverVerified?: boolean; // Tên chuẩn trong schema
   driverVerification?: {
     status: 'PENDING' | 'APPROVED' | 'REJECTED';

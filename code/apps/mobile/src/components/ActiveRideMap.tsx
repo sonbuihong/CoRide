@@ -1,81 +1,78 @@
-// Bản đồ fullscreen hiển thị route chuyến đi đang active
-// Gồm: Polyline đường đi, Marker điểm đi (xanh), điểm đến (đỏ), vị trí driver (realtime)
-// Marker pickup points cho các hành khách cần đón (cam = chưa đón, xanh lá đậm = đang đón)
-
-import React, { useRef, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { forwardRef, memo, useEffect, useImperativeHandle, useRef } from 'react';
+import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { Navigation } from 'lucide-react-native';
 
-interface LatLng {
+import { colors } from '../theme/tokens';
+
+export interface ActiveRideLatLng {
   latitude: number;
   longitude: number;
 }
 
-interface PickupMarker {
-  coordinate: LatLng;
+export interface ActiveRideStopMarker {
+  coordinate: ActiveRideLatLng;
   label: string;
-  /** Khách đang được navigate đến (highlight) */
   isActive: boolean;
   bookingId: string;
+  kind?: 'PICKUP' | 'DROPOFF';
+}
+
+export interface ActiveRideMapHandle {
+  recenter: (coordinate?: ActiveRideLatLng | null) => void;
 }
 
 interface ActiveRideMapProps {
-  originCoords: LatLng;
-  destinationCoords: LatLng;
-  routeCoords: LatLng[];
-  driverLocation?: LatLng | null;
+  originCoords: ActiveRideLatLng;
+  destinationCoords: ActiveRideLatLng;
+  routeCoords: ActiveRideLatLng[];
+  driverLocation?: ActiveRideLatLng | null;
   originLabel?: string;
   destinationLabel?: string;
-  /** Marker vị trí đón của từng hành khách — chỉ hiện khi ride ONGOING */
-  pickupMarkers?: PickupMarker[];
+  pickupMarkers?: ActiveRideStopMarker[];
+  onUserPan?: () => void;
 }
 
-export const ActiveRideMap: React.FC<ActiveRideMapProps> = ({
-  originCoords,
-  destinationCoords,
-  routeCoords,
-  driverLocation,
-  originLabel = 'Điểm đi',
-  destinationLabel = 'Điểm đến',
-  pickupMarkers = [],
-}) => {
+const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function ActiveRideMap(
+  {
+    originCoords,
+    destinationCoords,
+    routeCoords,
+    driverLocation,
+    originLabel = 'Điểm đi',
+    destinationLabel = 'Điểm đến',
+    pickupMarkers = [],
+    onUserPan,
+  },
+  forwardedRef,
+) {
   const mapRef = useRef<MapView>(null);
-  // Flag tránh fit lại liên tục mỗi khi driver location thay đổi (mỗi 5s)
   const hasInitialDriverFit = useRef(false);
 
-  // Fit bản đồ khi route data sẵn sàng
-  useEffect(() => {
-    if (routeCoords.length > 0 && mapRef.current) {
-      // Gom tất cả điểm cần fit: route + pickup markers
-      const allCoords = [
-        ...routeCoords,
-        ...pickupMarkers.map((m) => m.coordinate),
-      ];
+  useImperativeHandle(forwardedRef, () => ({
+    recenter: (coordinate) => {
+      const target = coordinate || driverLocation || originCoords;
+      mapRef.current?.animateCamera({ center: target, zoom: 16 }, { duration: 280 });
+    },
+  }), [driverLocation, originCoords]);
 
-      mapRef.current.fitToCoordinates(allCoords, {
-        edgePadding: { top: 80, right: 50, bottom: 200, left: 50 },
-        animated: true,
-      });
-      // Reset flag để fit lại khi nhận driver location lần đầu
-      hasInitialDriverFit.current = false;
-    }
-  }, [routeCoords, pickupMarkers]);
-
-  // Fit lại 1 lần khi nhận driver location lần đầu (marker có thể nằm ngoài viewport)
   useEffect(() => {
-    if (driverLocation && routeCoords.length > 0 && !hasInitialDriverFit.current && mapRef.current) {
-      hasInitialDriverFit.current = true;
-      const allCoords = [
-        ...routeCoords,
-        driverLocation,
-        ...pickupMarkers.map((m) => m.coordinate),
-      ];
-      mapRef.current.fitToCoordinates(allCoords, {
-        edgePadding: { top: 80, right: 50, bottom: 200, left: 50 },
-        animated: true,
-      });
-    }
-  }, [driverLocation, routeCoords, pickupMarkers]);
+    if (!mapRef.current || routeCoords.length < 2) return;
+    mapRef.current.fitToCoordinates(
+      [...routeCoords, ...pickupMarkers.map((marker) => marker.coordinate)],
+      { edgePadding: { top: 88, right: 42, bottom: 230, left: 42 }, animated: true },
+    );
+    hasInitialDriverFit.current = false;
+  }, [pickupMarkers, routeCoords]);
+
+  useEffect(() => {
+    if (!driverLocation || routeCoords.length < 2 || hasInitialDriverFit.current || !mapRef.current) return;
+    hasInitialDriverFit.current = true;
+    mapRef.current.fitToCoordinates(
+      [...routeCoords, driverLocation, ...pickupMarkers.map((marker) => marker.coordinate)],
+      { edgePadding: { top: 88, right: 42, bottom: 230, left: 42 }, animated: true },
+    );
+  }, [driverLocation, pickupMarkers, routeCoords]);
 
   return (
     <View style={styles.container}>
@@ -83,65 +80,50 @@ export const ActiveRideMap: React.FC<ActiveRideMapProps> = ({
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={StyleSheet.absoluteFillObject}
-        initialRegion={{
-          ...originCoords,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}
-        showsUserLocation
+        initialRegion={{ ...originCoords, latitudeDelta: 0.05, longitudeDelta: 0.05 }}
+        showsUserLocation={false}
         showsMyLocationButton={false}
+        toolbarEnabled={false}
+        moveOnMarkerPress={false}
+        onPanDrag={onUserPan}
+        accessibilityLabel="Bản đồ hành trình đang diễn ra"
       >
-        {/* Route polyline */}
-        {routeCoords.length > 0 && (
-          <Polyline
-            coordinates={routeCoords}
-            strokeColor="#3B82F6"
-            strokeWidth={4}
-            lineDashPattern={[0]}
-          />
-        )}
+        {routeCoords.length > 1 ? (
+          <Polyline coordinates={routeCoords} strokeColor={colors.mapRoute} strokeWidth={5} />
+        ) : null}
 
-        {/* Marker điểm đi — màu xanh */}
-        <Marker
-          coordinate={originCoords}
-          title={originLabel}
-          pinColor="#22C55E"
-        />
+        <Marker coordinate={originCoords} title={originLabel} pinColor={colors.success} />
+        <Marker coordinate={destinationCoords} title={destinationLabel} pinColor={colors.danger} />
 
-        {/* Marker điểm đến — màu đỏ */}
-        <Marker
-          coordinate={destinationCoords}
-          title={destinationLabel}
-          pinColor="#EF4444"
-        />
+        {driverLocation ? (
+          <Marker coordinate={driverLocation} title="Vị trí tài xế" anchor={{ x: 0.5, y: 0.5 }} flat>
+            <View style={styles.driverMarker}>
+              <Navigation size={18} color={colors.surface} fill={colors.surface} style={{ transform: [{ rotate: '-45deg' }] }} />
+            </View>
+          </Marker>
+        ) : null}
 
-        {/* Marker vị trí driver realtime */}
-        {driverLocation && (
-          <Marker
-            coordinate={driverLocation}
-            title="Tài xế"
-            pinColor="#3B82F6"
-          />
-        )}
-
-        {/* Marker vị trí đón hành khách */}
         {pickupMarkers.map((marker) => (
           <Marker
-            key={marker.bookingId}
+            key={`${marker.kind || 'PICKUP'}-${marker.bookingId}`}
             coordinate={marker.coordinate}
             title={marker.label}
-            // Khách đang đón: xanh đậm (highlight), khách chờ: cam
-            pinColor={marker.isActive ? '#15803D' : '#F97316'}
+            pinColor={marker.kind === 'DROPOFF' ? colors.danger : marker.isActive ? colors.success : colors.mapPickup}
           />
         ))}
       </MapView>
     </View>
   );
-};
+});
+
+export const ActiveRideMap = memo(MapContent);
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
+  container: { flex: 1, width: '100%' },
+  driverMarker: {
+    alignItems: 'center', backgroundColor: colors.info, borderColor: colors.surface,
+    borderRadius: 18, borderWidth: 3, height: 36, justifyContent: 'center',
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.22,
+    shadowRadius: 5, transform: [{ rotate: '45deg' }], width: 36,
   },
 });

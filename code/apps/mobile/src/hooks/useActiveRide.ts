@@ -3,6 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { bookingService } from '../services/booking.service';
+import { getRealtimeRefetchInterval, useSocketConnection } from './useSocketConnection';
 
 /**
  * Query booking đang active cho user hiện tại.
@@ -13,14 +14,15 @@ import { bookingService } from '../services/booking.service';
  * - userRole: 'DRIVER' | 'PASSENGER'
  * - isLoading, refetch, etc.
  *
- * Tự refetch mỗi 10 giây để catch trường hợp driver accept booking.
+ * Socket cập nhật realtime; polling 30 giây chỉ dùng khi socket mất kết nối.
  */
 export const useActiveRide = () => {
+  const isSocketConnected = useSocketConnection();
   const query = useQuery({
     queryKey: ['active-booking'],
     queryFn: () => bookingService.getActiveBooking(),
-    // Refetch mỗi 10s để cập nhật trạng thái (driver accept, ride status change)
-    refetchInterval: 10000,
+    // Poll slowly only while realtime updates are unavailable.
+    refetchInterval: getRealtimeRefetchInterval(isSocketConnected),
     // Không retry quá nhiều nếu lỗi mạng
     retry: 2,
   });

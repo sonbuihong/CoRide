@@ -986,7 +986,7 @@ function PassengerRideView() {
                   {ride.stops.map(stop => (
                     <PickupChoice
                       key={stop.id}
-                      title={stop.name}
+                      title={stop.name || 'Điểm dừng'}
                       address={(stop.address ?? '') as string}
                       selected={pickupStopId === stop.id}
                       onPress={() => setPickupStopId(stop.id)}
@@ -1126,7 +1126,6 @@ const styles = StyleSheet.create({
   flex1: { flex: 1 },
   w100: { width: '100%' },
   mt4: { marginTop: spacing.md },
-  divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: spacing.md },
 
   // ── Driver View
   driverContainer: { flex: 1, backgroundColor: colors.background },

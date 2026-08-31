@@ -1,0 +1,3 @@
+interface:
+  display_name: "CoRide Carpooling"
+  short_description: "Work with Ride, Booking, seats, and routes"

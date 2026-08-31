@@ -22,7 +22,30 @@ export interface CarpoolPriceParams {
   routePolyline?: string;
 }
 
+export interface RideHailingPriceEstimate {
+  vehicleType: "BIKE" | "CAR";
+  estimatedDistance: number;
+  estimatedDuration: number;
+  estimatedPrice: number;
+  baseFare: number;
+  pricePerKm: number;
+  pricePerMinute: number;
+}
+
 export const pricingService = {
+  async estimateRideHailing(params: {
+    originLat: number;
+    originLng: number;
+    destLat: number;
+    destLng: number;
+    vehicleType: "BIKE" | "CAR";
+  }): Promise<RideHailingPriceEstimate> {
+    const response = await apiClient.get<{ success: boolean; data: RideHailingPriceEstimate }>(
+      "/pricing/estimate",
+      { params },
+    );
+    return response.data.data;
+  },
   async estimateCarpool(
     params: CarpoolPriceParams,
   ): Promise<CarpoolPriceEstimate> {

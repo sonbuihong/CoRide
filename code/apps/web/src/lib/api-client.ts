@@ -8,6 +8,28 @@ const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// Refresh token được rotate sau mỗi lần dùng. Mọi request 401 đồng thời phải
+// dùng chung một promise, nếu không request thứ hai sẽ gửi cookie vừa bị revoke.
+let refreshPromise: Promise<string> | null = null;
+
+export function refreshAccessToken(): Promise<string> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = axios
+    .post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true })
+    .then((response) => {
+      const token = response.data.accessToken as string;
+      if (!token) throw new Error('Refresh response does not contain an access token');
+      if (typeof window !== 'undefined') sessionStorage.setItem('accessToken', token);
+      return token;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
+}
+
 // ─── Request Interceptor ───────────────────────────────────────────────────────
 // Tự động gắn accessToken vào header Authorization trước mỗi request
 apiClient.interceptors.request.use((config) => {
@@ -41,14 +63,7 @@ apiClient.interceptors.response.use(
 
       try {
         // refreshToken được gửi tự động qua cookie (withCredentials: true)
-        const refreshRes = await axios.post(
-          `${BASE_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
-
-        const newToken = refreshRes.data.accessToken as string;
-        sessionStorage.setItem('accessToken', newToken);
+        const newToken = await refreshAccessToken();
 
         // Retry request gốc với token mới
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -58,6 +73,7 @@ apiClient.interceptors.response.use(
         sessionStorage.removeItem('accessToken');
         if (typeof window !== 'undefined') {
           localStorage.removeItem('token'); // Fallback clear
+          localStorage.removeItem('hasSession');
           const currentPath = window.location.pathname;
           if (currentPath !== '/login' && currentPath !== '/register') {
             window.location.href = '/login';

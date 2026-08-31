@@ -442,7 +442,7 @@ export default function PostRidePage() {
       try {
         const [vehicleResponse, ridesResponse] = await Promise.all([
           apiClient.get('/vehicles'),
-          apiClient.get('/rides', { params: { driverId: user.id } }),
+          apiClient.get('/rides/mine'),
         ]);
         if (cancelled) return;
 
@@ -450,7 +450,7 @@ export default function PostRidePage() {
         const rideList = (ridesResponse.data?.rides || ridesResponse.data || []) as ActiveRide[];
         setVehicles(vehicleList);
         setActiveRide(
-          rideList.find((ride) => ride.status === 'SCHEDULED' || ride.status === 'ONGOING') || null
+          rideList.find((ride) => ride.status === 'ONGOING') || null
         );
 
         const saved = localStorage.getItem('coRide_lastRideSetup');

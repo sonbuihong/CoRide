@@ -12,8 +12,8 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
+    "declarationMap": false,
     "typeRoots": [
       "./node_modules/@types",
       "../../node_modules/@types"

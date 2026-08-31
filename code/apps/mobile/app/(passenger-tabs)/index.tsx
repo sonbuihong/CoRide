@@ -1,14 +1,19 @@
 import React, { useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { ArrowRight, RefreshCw, Search } from 'lucide-react-native';
+import { ArrowRight, Navigation, RefreshCw, Search } from 'lucide-react-native';
 import { Animated, Easing, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { SocketEvents } from '@repo/shared';
 
 import { RideCard, RideCardSkeleton } from '../../src/components/RideCard';
 import { AppText } from '../../src/components/ui/AppText';
 import { EmptyState } from '../../src/components/ui/EmptyState';
+import { useAuth } from '../../src/hooks/useAuth';
+import { getRealtimeRefetchInterval, useSocketConnection } from '../../src/hooks/useSocketConnection';
 import { rideService } from '../../src/services/ride.service';
 import { socketService } from '../../src/services/socket.service';
+import { tripService } from '../../src/services/trip.service';
+import { useAppStore } from '../../src/stores/useAppStore';
 import { colors, layout, radius, spacing } from '../../src/theme/tokens';
 
 const QUERY_KEY = ['rides'];
@@ -16,12 +21,25 @@ const QUERY_KEY = ['rides'];
 export default function PassengerHomeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
+  const appMode = useAppStore((state) => state.appMode);
+  const queryEnabled = isAuthenticated && appMode === 'passenger';
+  const socketConnected = useSocketConnection();
   const spinValue = useRef(new Animated.Value(0)).current;
 
   const { data: rides = [], isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: QUERY_KEY,
     queryFn: () => rideService.getRides({}),
+    enabled: queryEnabled,
   });
+  const activeTripQuery = useQuery({
+    queryKey: ['ride-hailing', 'active', 'passenger'],
+    queryFn: async () => (await tripService.getActiveTrip()).data,
+    enabled: queryEnabled,
+    refetchInterval: getRealtimeRefetchInterval(socketConnected),
+  });
+  const activeTrip = activeTripQuery.data;
+  const refetchActiveTrip = activeTripQuery.refetch;
 
   useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
@@ -51,6 +69,8 @@ export default function PassengerHomeScreen() {
   });
 
   useEffect(() => {
+    if (!queryEnabled) return;
+
     let active = true;
     const refresh = () => { if (active) refetch(); };
     const remove = ({ id }: { id: string }) => {
@@ -67,6 +87,7 @@ export default function PassengerHomeScreen() {
       socketService.on('ride:updated', refresh);
       socketService.on('ride:deleted', remove);
       socketService.on('ride:status', updateStatus);
+      socketService.on(SocketEvents.TRIP_UPDATED, refetchActiveTrip);
     });
     return () => {
       active = false;
@@ -74,8 +95,9 @@ export default function PassengerHomeScreen() {
       socketService.off('ride:updated', refresh);
       socketService.off('ride:deleted', remove);
       socketService.off('ride:status', updateStatus);
+      socketService.off(SocketEvents.TRIP_UPDATED, refetchActiveTrip);
     };
-  }, [queryClient, refetch]);
+  }, [queryClient, queryEnabled, refetch, refetchActiveTrip]);
 
   return (
     <ScrollView
@@ -127,6 +149,22 @@ export default function PassengerHomeScreen() {
           </View>
         </View>
       </View>
+
+      {activeTrip ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Xem chuyến đặt xe đang diễn ra"
+          onPress={() => router.push('/(passenger-tabs)/ride-hailing' as never)}
+          style={({ pressed }) => [styles.activeTripBanner, pressed && styles.activeTripPressed]}
+        >
+          <View style={styles.activeTripIcon}><Navigation size={20} color={colors.surface} /></View>
+          <View style={styles.activeTripCopy}>
+            <AppText weight="semibold" style={styles.activeTripTitle}>Bạn đang có một chuyến đang diễn ra</AppText>
+            <AppText variant="caption" numberOfLines={1} style={styles.activeTripSubtitle}>{activeTrip.destAddress}</AppText>
+          </View>
+          <ArrowRight size={20} color={colors.surface} />
+        </Pressable>
+      ) : null}
 
       {/* Ride list section */}
       <View style={styles.content}>
@@ -210,6 +248,12 @@ const styles = StyleSheet.create({
   heroSearchIcon: { alignItems: 'center', flexShrink: 0, height: 24, justifyContent: 'center', width: 24 },
   heroSearchText: { color: colors.textSecondary, flex: 1, flexShrink: 1, fontSize: 16, fontWeight: '400', letterSpacing: -0.2, lineHeight: 22, minWidth: 0, textAlignVertical: 'center' },
   heroSearchAction: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius.input, flexShrink: 0, height: 44, justifyContent: 'center', width: 44 },
+  activeTripBanner: { alignItems: 'center', alignSelf: 'center', backgroundColor: colors.primary, borderRadius: radius.card, flexDirection: 'row', gap: spacing.sm, marginHorizontal: spacing.lg, marginTop: spacing.md, maxWidth: layout.maxContentWidth, minHeight: 68, paddingHorizontal: spacing.md, width: '90%' },
+  activeTripPressed: { opacity: 0.82 },
+  activeTripIcon: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: radius.full, height: 42, justifyContent: 'center', width: 42 },
+  activeTripCopy: { flex: 1, minWidth: 0 },
+  activeTripTitle: { color: colors.surface },
+  activeTripSubtitle: { color: 'rgba(255,255,255,0.78)', marginTop: 2 },
   content: { alignSelf: 'center', maxWidth: layout.maxContentWidth, paddingHorizontal: spacing.lg, paddingTop: spacing.xl, width: '100%' },
   resultsHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between', marginBottom: 24, paddingHorizontal: 4 },
   titleGroup: { alignItems: 'center', flexDirection: 'row', flex: 1, gap: 8 },

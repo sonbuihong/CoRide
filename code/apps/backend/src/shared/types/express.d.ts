@@ -1,10 +1,9 @@
-// Augment Express Request interface để req.user có type đầy đủ
-// Dùng module augmentation (không phải global namespace) để tương thích với tsconfig strict
-import 'express-serve-static-core';
+import 'express';
 
-declare module 'express-serve-static-core' {
-  interface Request {
-    user?: {
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
       id: string;
       email: string;
       firstName: string | null;
@@ -13,6 +12,9 @@ declare module 'express-serve-static-core' {
       role: string;
       createdAt: Date;
       updatedAt: Date;
-    };
+      };
+    }
   }
 }
+
+export {};

@@ -4,7 +4,7 @@ import BottomSheet, { BottomSheetFooter, BottomSheetScrollView } from '@gorhom/b
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '../../theme/tokens';
 
-import Animated from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 
 export interface DraggableBottomSheetRef {
   snapToIndex: (index: number) => void;
@@ -16,7 +16,7 @@ interface DraggableBottomSheetProps {
   onSnapChange?: (index: number, fraction: number) => void;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  animatedPosition?: Animated.SharedValue<number>;
+  animatedPosition?: SharedValue<number>;
 }
 
 export const DraggableBottomSheet = forwardRef<
@@ -35,6 +35,7 @@ export const DraggableBottomSheet = forwardRef<
 ) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const insets = useSafeAreaInsets();
+  const [activeIndex, setActiveIndex] = useState(initialSnapIndex);
   
   // Transform percentage to string for @gorhom/bottom-sheet (e.g., [0.34, 0.62, 1] -> ['34%', '62%', '100%'])
   const gorhomSnapPoints = useMemo(() => {
@@ -66,10 +67,16 @@ export const DraggableBottomSheet = forwardRef<
       ref={bottomSheetRef}
       index={initialSnapIndex}
       snapPoints={gorhomSnapPoints}
+      enableDynamicSizing={false}
+      enableOverDrag={false}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
       animatedPosition={animatedPosition}
       onChange={(index) => {
+        setActiveIndex(index);
         if (onSnapChange && index >= 0) {
-          onSnapChange(index, snapPoints[index]);
+          const selected = snapPoints[index];
+          onSnapChange(index, typeof selected === 'number' ? selected : Number.parseFloat(selected) / 100);
         }
       }}
       footerComponent={footer ? renderFooter : undefined}
@@ -82,6 +89,7 @@ export const DraggableBottomSheet = forwardRef<
           { paddingBottom: footer ? 140 : insets.bottom + spacing.xxl },
         ]}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={activeIndex > 0}
         keyboardShouldPersistTaps="handled"
       >
         {children}

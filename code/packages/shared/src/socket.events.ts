@@ -1,3 +1,5 @@
+import type { TripStatus, VehicleType } from './trip.schema';
+
 export enum SocketEvents {
   // Server gửi cho client — Ride-Hailing (TripRequest)
   TRIP_CREATED = 'trip:created',
@@ -14,8 +16,11 @@ export enum SocketEvents {
   TRIP_DELETED = 'trip:deleted',
   TRIP_NEW_REQUEST = 'trip:new_request',
   TRIP_REQUEST_EXPIRED = 'trip:request_expired',
+  /** @deprecated Ride-Hailing state changes use TRIP_UPDATED. */
   TRIP_MATCHED = 'trip:matched',
+  /** @deprecated Ride-Hailing state changes use TRIP_UPDATED. */
   TRIP_NO_DRIVER = 'trip:no_driver',
+  /** @deprecated Ride-Hailing state changes use TRIP_UPDATED. */
   TRIP_STATUS_UPDATE = 'trip:status_update',
   MESSAGE_CREATED = 'message:created',
   NOTIFICATION_CREATED = 'notification:created',
@@ -70,6 +75,42 @@ export interface TripStatusChangedPayload extends BaseEventPayload {
   tripId: string;
   previousStatus: string;
   currentStatus: string;
+}
+
+/** Canonical low-frequency Ride-Hailing state event. Clients refetch the trip. */
+export interface TripUpdatedPayload extends BaseEventPayload {
+  tripId: string;
+  status: TripStatus;
+  previousStatus?: TripStatus;
+  driverId: string | null;
+  passengerId: string;
+  message?: string;
+}
+
+export interface TripOfferPayload {
+  tripId: string;
+  passenger: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    avatarUrl?: string | null;
+    passengerRating?: number;
+  };
+  originAddress: string;
+  originLat: number;
+  originLng: number;
+  destAddress: string;
+  destLat: number;
+  destLng: number;
+  vehicleType: VehicleType;
+  estimatedDistance: number;
+  estimatedDuration: number;
+  estimatedPrice: number;
+  driverDistance: number;
+  pickupEtaMinutes: number;
+  matchScore: number;
+  matchType: 'DIRECT' | 'NEARBY' | 'ON_ROUTE' | 'NEARBY_ACTIVE';
+  expiresAt: string;
 }
 
 export interface TripLocationUpdatedPayload extends BaseEventPayload {

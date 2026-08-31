@@ -89,6 +89,8 @@ services:
     <<: *coride-app
     working_dir: /app/apps/backend
     command: ["node", "/app/apps/backend/node_modules/nodemon/bin/nodemon.js", "--legacy-watch", "--watch", "src", "--ext", "ts", "--exec", "/app/apps/backend/node_modules/.bin/tsx src/server.ts"]
+    env_file:
+      - ./apps/backend/.env
     environment:
       NODE_ENV: development
       PORT: "5101"
@@ -100,9 +102,6 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
-      GOONG_MAPS_API_KEY: ${GOONG_MAPS_API_KEY:-}
-      GOONG_REST_API_KEY: ${GOONG_REST_API_KEY:-}
-      GOONG_GEOLOCATION_ENABLED: ${GOONG_GEOLOCATION_ENABLED:-false}
       PAYMENT_BANK_ID: ${PAYMENT_BANK_ID:-}
       PAYMENT_ACCOUNT_NO: ${PAYMENT_ACCOUNT_NO:-}
       PAYMENT_ACCOUNT_NAME: ${PAYMENT_ACCOUNT_NAME:-}

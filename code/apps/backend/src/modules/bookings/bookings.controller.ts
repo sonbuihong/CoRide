@@ -126,7 +126,8 @@ export const getActiveBooking = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const result = await BookingsService.getActiveBooking(req.user!.id);
+    const role = typeof req.query.role === 'string' ? req.query.role : undefined;
+    const result = await BookingsService.getActiveBooking(req.user!.id, role);
     res.json({ activeBooking: result });
   } catch (error) {
     next(error);

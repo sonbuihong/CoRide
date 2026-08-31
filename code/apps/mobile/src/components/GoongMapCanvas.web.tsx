@@ -62,10 +62,19 @@ function loadGoongJs() {
   return loader;
 }
 
-interface GoongMapCanvasProps {
+export interface PickupPoint {
+  coordinate: Coordinates;
+  label?: string;
+  isActive?: boolean;
+  kind?: 'PICKUP' | 'DROPOFF';
+}
+
+export interface GoongMapCanvasProps {
   center: Coordinates;
   origin?: Coordinates;
   destination?: Coordinates;
+  driver?: Coordinates | null;
+  pickupPoints?: PickupPoint[];
   routeLines?: Coordinates[][];
   selectedRouteIndex?: number;
   onCenterChange?: (coordinates: Coordinates) => void;
@@ -74,7 +83,7 @@ interface GoongMapCanvasProps {
   zoom?: number;
 }
 
-export function GoongMapCanvas({ center, origin, destination, routeLines = EMPTY_ROUTE_LINES, selectedRouteIndex = 0, onCenterChange, cameraTarget, onMovingChange, zoom = 16 }: GoongMapCanvasProps) {
+export function GoongMapCanvas({ center, origin, destination, driver, pickupPoints, routeLines = EMPTY_ROUTE_LINES, selectedRouteIndex = 0, onCenterChange, cameraTarget, onMovingChange, zoom = 16 }: GoongMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoongMapInstance | null>(null);
   const centerChangeRef = useRef(onCenterChange);
@@ -141,9 +150,15 @@ export function GoongMapCanvas({ center, origin, destination, routeLines = EMPTY
     features: [
       ...(origin ? [{ type: "Feature" as const, properties: { role: "origin" }, geometry: { type: "Point" as const, coordinates: [origin.longitude, origin.latitude] } }] : []),
       ...(destination ? [{ type: "Feature" as const, properties: { role: "destination" }, geometry: { type: "Point" as const, coordinates: [destination.longitude, destination.latitude] } }] : []),
+      ...(driver ? [{ type: "Feature" as const, properties: { role: "driver" }, geometry: { type: "Point" as const, coordinates: [driver.longitude, driver.latitude] } }] : []),
+      ...(pickupPoints || []).map((p) => ({
+        type: "Feature" as const,
+        properties: { role: p.kind === "DROPOFF" ? "dropoff" : p.isActive ? "pickup-active" : "pickup" },
+        geometry: { type: "Point" as const, coordinates: [p.coordinate.longitude, p.coordinate.latitude] },
+      })),
       ...(userLocation ? [{ type: "Feature" as const, properties: { role: "user" }, geometry: { type: "Point" as const, coordinates: [userLocation.longitude, userLocation.latitude] } }] : []),
     ],
-  }), [destination, origin, userLocation]);
+  }), [destination, driver, origin, pickupPoints, userLocation]);
   const routeData = useMemo<GeoJsonFeatureCollection>(() => ({
     type: "FeatureCollection",
     features: routeLines.map((line, index) => ({ line, index }))
@@ -157,7 +172,41 @@ export function GoongMapCanvas({ center, origin, destination, routeLines = EMPTY
     if (!map.getSource("coride-points")) {
       map.addSource("coride-points", { type: "geojson", data: pointData });
       map.addLayer({ id: "coride-user-location-halo", type: "circle", source: "coride-points", filter: ["==", ["get", "role"], "user"], paint: { "circle-color": "rgba(0,113,227,0.18)", "circle-radius": 18 } });
-      map.addLayer({ id: "coride-points", type: "circle", source: "coride-points", paint: { "circle-color": ["match", ["get", "role"], "destination", colors.mapDestination, "user", colors.primary, colors.mapPickup], "circle-radius": ["case", ["==", ["get", "role"], "user"], 8, 7], "circle-stroke-color": colors.surface, "circle-stroke-width": 3 } });
+      map.addLayer({
+        id: "coride-points",
+        type: "circle",
+        source: "coride-points",
+        paint: {
+          "circle-color": [
+            "match",
+            ["get", "role"],
+            "destination",
+            colors.mapDestination,
+            "user",
+            colors.primary,
+            "driver",
+            "#3B82F6",
+            "pickup-active",
+            "#15803D",
+            "pickup",
+            colors.mapPickup,
+            "dropoff",
+            colors.mapDestination,
+            colors.mapPickup,
+          ],
+          "circle-radius": [
+            "match",
+            ["get", "role"],
+            "user",
+            8,
+            "driver",
+            9,
+            7,
+          ],
+          "circle-stroke-color": colors.surface,
+          "circle-stroke-width": 3,
+        },
+      });
     } else map.getSource("coride-points")?.setData(pointData);
     if (!map.getSource("coride-routes")) {
       map.addSource("coride-routes", { type: "geojson", data: routeData });
@@ -170,12 +219,35 @@ export function GoongMapCanvas({ center, origin, destination, routeLines = EMPTY
     syncMapData();
     const map = mapRef.current;
     if (!map) return;
-    if (!routeLines.length) { map.jumpTo({ center: [center.longitude, center.latitude], zoom }); return; }
-    const points = routeLines.flat();
+    if (!routeLines.length) {
+      const allPoints = [
+        origin,
+        destination,
+        driver,
+        ...(pickupPoints?.map((p) => p.coordinate) || []),
+      ].filter((p): p is Coordinates => Boolean(p));
+
+      if (allPoints.length > 1) {
+        const lngs = allPoints.map((point) => point.longitude);
+        const lats = allPoints.map((point) => point.latitude);
+        map.fitBounds(
+          [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+          { padding: { top: 56, right: 36, bottom: 80, left: 36 }, duration: 300 }
+        );
+      } else {
+        map.jumpTo({ center: [center.longitude, center.latitude], zoom });
+      }
+      return;
+    }
+    const points = [
+      ...routeLines.flat(),
+      ...(driver ? [driver] : []),
+      ...(pickupPoints?.map((p) => p.coordinate) || []),
+    ];
     const lngs = points.map((point) => point.longitude);
     const lats = points.map((point) => point.latitude);
     map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: { top: 56, right: 36, bottom: 220, left: 36 }, duration: 300 });
-  }, [center.latitude, center.longitude, ready, routeLines, syncMapData, zoom]);
+  }, [center.latitude, center.longitude, destination, driver, origin, pickupPoints, ready, routeLines, syncMapData, zoom]);
 
   return (
     <View style={styles.root}>

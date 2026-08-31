@@ -73,6 +73,24 @@ describe('RideMatchingService', () => {
     expect(result).toBeNull();
   });
 
+  it('rejects a reverse direct match on a short route', () => {
+    const shortRide = {
+      ...ride,
+      destinationLng: 105.808,
+      distance: 0.83,
+      routePolyline: JSON.stringify({
+        coordinates: [[105.8, 21], [105.808, 21]],
+      }),
+    };
+
+    const result = RideMatchingService.match(shortRide, {
+      origin: { lat: 21, lng: 105.8078 },
+      destination: { lat: 21, lng: 105.8002 },
+    });
+
+    expect(result).toBeNull();
+  });
+
   it('loại điểm đón và trả nằm quá xa hành lang tuyến', () => {
     const result = RideMatchingService.match(ride, {
       origin: { lat: 21.05, lng: 105.825 },

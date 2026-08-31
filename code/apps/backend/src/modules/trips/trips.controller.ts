@@ -1,14 +1,74 @@
-import { Request, Response, NextFunction } from 'express';
-import { TripsService } from './trips.service';
+import type { NextFunction, Request, Response } from 'express';
+import {
+  cancelTripSchema,
+  completeTripSchema,
+  createTripRequestSchema,
+  driverTripStatusSchema,
+  type CompleteTripInput,
+  type DriverTripStatus,
+} from '@repo/shared';
+
 import { MatchingService } from '../matching/matching.service';
-import { createTripRequestSchema, driverTripStatusSchema } from '@repo/shared';
-import { SocketEventService } from '../../socket/socket.events';
-import { SocketEvents } from '@repo/shared';
+import { NotificationsService } from '../notifications/notifications.service';
+import { emitTripUpdated } from './trip-realtime.service';
+import { TripsService } from './trips.service';
+
+const transitionTrip = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+  status: DriverTripStatus,
+  options?: CompleteTripInput,
+): Promise<void> => {
+  try {
+    const result = await TripsService.updateTripStatus(
+      req.params.id as string,
+      req.user!.id,
+      status,
+      options,
+    );
+    emitTripUpdated(result.trip, { previousStatus: result.previousStatus });
+
+    if (status === 'ARRIVED') {
+      void NotificationsService.createNotification(
+        result.trip.passengerId,
+        'Tài xế đã đến',
+        'Tài xế đang chờ bạn tại điểm đón.',
+        'TRIP_DRIVER_ARRIVED',
+        { type: 'TRIP', id: result.trip.id },
+      ).catch((error) => console.error('[Trip] Notification error:', error));
+    }
+    res.json({ success: true, data: result.trip });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export class TripsController {
+  static async createTrip(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user!.id;
+      const trip = await TripsService.createTrip(
+        userId,
+        createTripRequestSchema.parse(req.body),
+      );
+
+      emitTripUpdated(trip, { message: 'Yêu cầu chuyến đã được tạo.' });
+      void MatchingService.startMatching(trip.id).catch((error) => {
+        console.error(`[Matching] Error for trip ${trip.id}:`, error);
+      });
+      res.status(201).json({ success: true, data: trip });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async acceptTrip(req: Request, res: Response, next: NextFunction) {
     try {
-      const trip = await MatchingService.handleDriverAccept(req.params.id as string, req.user!.id);
+      const trip = await MatchingService.handleDriverAccept(
+        req.params.id as string,
+        req.user!.id,
+      );
       res.json({ success: true, data: trip });
     } catch (error) {
       next(error);
@@ -24,118 +84,111 @@ export class TripsController {
     }
   }
 
-  /**
-   * POST /api/trips — Tạo yêu cầu đặt xe mới.
-   * Sau khi tạo xong, tự động trigger MatchingService (Waterfall).
-   */
-  static async createTrip(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.user!.id;
-      const parsed = createTripRequestSchema.parse(req.body);
-
-      // 1. Tạo TripRequest (status: PENDING)
-      const trip = await TripsService.createTrip(userId, parsed);
-
-      // 2. Trigger Waterfall Matching bất đồng bộ
-      // Không await — trả response cho client ngay, matching chạy ngầm
-      MatchingService.startMatching(trip.id).catch((err) => {
-        console.error(`[Matching] Error for trip ${trip.id}:`, err);
-      });
-
-      // 3. Phát event realtime cho Frontend
-      SocketEventService.emitToUser(userId, SocketEvents.TRIP_CREATED, trip);
-
-      res.status(201).json({ success: true, data: trip });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * PATCH /api/trips/:id/cancel — Hủy yêu cầu đặt xe.
-   */
   static async cancelTrip(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.user!.id;
-      const { id } = req.params;
-      const reason = req.body?.cancelReason ?? req.body?.reason;
+      const input = cancelTripSchema.parse(req.body ?? {});
+      const result = await TripsService.cancelTrip(
+        req.params.id as string,
+        req.user!.id,
+        input.cancelReason ?? input.reason,
+      );
+      emitTripUpdated(result.trip, {
+        previousStatus: result.previousStatus,
+        message: result.cancelledBy === 'PASSENGER'
+          ? 'Hành khách đã hủy chuyến.'
+          : 'Tài xế đã hủy chuyến.',
+      });
 
-      const trip = await TripsService.cancelTrip(id as string, userId, reason as string);
-
-      // Emit ID để Frontend xóa khỏi danh sách
-      SocketEventService.emitToUser(trip.passengerId, SocketEvents.TRIP_DELETED, { id: trip.id });
-      if (trip.driverId) {
-        SocketEventService.emitToUser(trip.driverId, SocketEvents.TRIP_DELETED, { id: trip.id });
+      const oppositeUserId = result.cancelledBy === 'PASSENGER'
+        ? result.trip.driverId
+        : result.trip.passengerId;
+      if (oppositeUserId) {
+        void NotificationsService.createNotification(
+          oppositeUserId,
+          'Chuyến đi đã bị hủy',
+          result.cancelledBy === 'PASSENGER'
+            ? 'Hành khách đã hủy chuyến đi.'
+            : 'Tài xế đã hủy chuyến đi.',
+          'TRIP_CANCELLED',
+          { type: 'TRIP', id: result.trip.id },
+        ).catch((error) => console.error('[Trip] Notification error:', error));
       }
 
-      res.json({ success: true, data: trip });
+      res.json({ success: true, data: result.trip });
     } catch (error) {
       next(error);
     }
   }
 
-  /**
-   * GET /api/trips/active — Lấy trip đang active của hành khách hiện tại.
-   */
-  static async getActiveTrip(req: Request, res: Response, next: NextFunction) {
+  static async setEnRoute(req: Request, res: Response, next: NextFunction) {
+    await transitionTrip(req, res, next, 'ARRIVING');
+  }
+
+  static async markArrived(req: Request, res: Response, next: NextFunction) {
+    await transitionTrip(req, res, next, 'ARRIVED');
+  }
+
+  static async startTrip(req: Request, res: Response, next: NextFunction) {
+    await transitionTrip(req, res, next, 'IN_PROGRESS');
+  }
+
+  static async completeTrip(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.user!.id;
-      const trip = await TripsService.getActiveTrip(userId);
-
-      res.json({ success: true, data: trip });
+      const options = completeTripSchema.parse(req.body ?? {});
+      await transitionTrip(req, res, next, 'WAITING_PAYMENT', options);
     } catch (error) {
       next(error);
     }
   }
 
-  /**
-   * GET /api/trips/active-driver — Lấy trip đang active của tài xế hiện tại.
-   */
-  static async getActiveDriverTrip(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = req.user!.id;
-      const trip = await TripsService.getActiveDriverTrip(userId);
-
-      res.json({ success: true, data: trip });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * PATCH /api/trips/:id/status — Tài xế cập nhật trạng thái trip.
-   */
+  /** Backward-compatible endpoint; transition validation still runs centrally. */
   static async updateTripStatus(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.user!.id;
-      const { id } = req.params;
       const status = driverTripStatusSchema.parse(req.body?.status);
+      const options = status === 'WAITING_PAYMENT'
+        ? completeTripSchema.parse(req.body ?? {})
+        : undefined;
+      await transitionTrip(req, res, next, status, options);
+    } catch (error) {
+      next(error);
+    }
+  }
 
-      const trip = await TripsService.updateTripStatus(id as string, userId, status);
-
-      SocketEventService.emitToUser(userId, SocketEvents.TRIP_UPDATED, trip);
-      if (trip.passengerId && trip.passengerId !== userId) {
-        SocketEventService.emitToUser(trip.passengerId, SocketEvents.TRIP_UPDATED, trip);
-      }
-
+  static async getActiveTrip(req: Request, res: Response, next: NextFunction) {
+    try {
+      const trip = await TripsService.getActiveTrip(req.user!.id);
       res.json({ success: true, data: trip });
     } catch (error) {
       next(error);
     }
   }
 
-  /**
-   * GET /api/trips/history — Lấy lịch sử chuyến đi (phân trang).
-   */
+  static async getActiveDriverTrip(req: Request, res: Response, next: NextFunction) {
+    try {
+      const trip = await TripsService.getActiveDriverTrip(req.user!.id);
+      res.json({ success: true, data: trip });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async getTripHistory(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.user!.id;
-      const page = Number(req.query.page) || 1;
-      const limit = Number(req.query.limit) || 10;
-
-      const result = await TripsService.getTripHistory(userId, page, limit);
-
+      const result = await TripsService.getTripHistory(
+        req.user!.id,
+        Number(req.query.page) || 1,
+        Number(req.query.limit) || 10,
+      );
       res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getTripById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const trip = await TripsService.getTripById(req.params.id as string, req.user!.id);
+      res.json({ success: true, data: trip });
     } catch (error) {
       next(error);
     }

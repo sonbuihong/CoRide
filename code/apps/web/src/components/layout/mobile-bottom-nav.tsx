@@ -13,9 +13,6 @@ export function MobileBottomNav() {
   const pathname = usePathname();
 
   // Ẩn thanh bottom nav trên trang ongoing (đang trong chuyến đi)
-  const isOngoingPage = pathname === '/ongoing';
-  if (isOngoingPage) return null;
-
   const isAdmin = user?.role === 'ADMIN';
   const isDriverMode = !!user && mode === 'driver' && !isAdmin;
 

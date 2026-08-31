@@ -4,14 +4,13 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Car, User, LogOut, Search, PlusSquare, Bookmark, MapPin, LayoutDashboard, Users, BookOpen, CreditCard, ShieldAlert, CalendarCheck, Menu } from 'lucide-react';
+import { Car, User, LogOut, Search, PlusSquare, Bookmark, MapPin, LayoutDashboard, Users, CreditCard, ShieldAlert, Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { NotificationCenter } from './notification-center';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useRoleMode } from '@/components/providers/role-mode-provider';
 import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
-import { useActiveRideLock } from '@/hooks/useActiveRideLock';
 
 // ==========================================
 // THIẾT KẾ APPLE: Utilities CSS — Passenger Mode (Light)
@@ -74,10 +73,6 @@ export const Header: React.FC = () => {
   const [rolePopupContent, setRolePopupContent] = useState<{title: string, desc: string} | null>(null);
 
   // Hook khóa trang nếu có chuyến đi active
-  useActiveRideLock();
-
-  const isOngoingPage = pathname === '/ongoing';
-
   const handleModeSwitch = (newMode: 'passenger' | 'driver') => {
     setMode(newMode);
     if (newMode === 'passenger') {
@@ -140,7 +135,7 @@ export const Header: React.FC = () => {
         </Link>
 
         {/* ROLE SWITCH TABS — chỉ hiện khi đã đăng nhập, không phải ADMIN và KHÔNG Ở trang ongoing */}
-        {user && !isAdmin && !isOngoingPage && (
+        {user && !isAdmin && (
           <div className={`hidden md:flex items-center rounded-[980px] p-0.5 mr-6 ${isDriverMode ? 'bg-[rgba(255,255,255,0.08)]' : 'bg-[rgba(0,0,0,0.04)]'}`}>
             <button
               onClick={() => handleModeSwitch('passenger')}
@@ -160,8 +155,8 @@ export const Header: React.FC = () => {
         )}
 
         {/* CONTEXTUAL NAVIGATION (DESKTOP) */}
-        <nav className={`hidden lg:flex items-center gap-1 ${isOngoingPage ? 'opacity-50 pointer-events-none' : ''}`}>
-          {!isOngoingPage && (
+        <nav className="hidden lg:flex items-center gap-1">
+          {
             isAdmin ? (
               <>
                 <Link href="/admin" className={getLinkClass('/admin')}>
@@ -211,7 +206,7 @@ export const Header: React.FC = () => {
                 </Link>
               )
             )
-          )}
+          }
         </nav>
 
         {/* RIGHT ACTION ICONS */}
@@ -281,7 +276,7 @@ export const Header: React.FC = () => {
                     </SheetTitle>
                   </SheetHeader>
                   <nav className="flex flex-col gap-2">
-                    {!isOngoingPage && (
+                    {
                       isAdmin ? (
                         <>
                           <Link href="/admin" className={getLinkClass('/admin')}>
@@ -331,7 +326,7 @@ export const Header: React.FC = () => {
                           </Link>
                         )
                       )
-                    )}
+                    }
 
                     {/* Tiện ích cá nhân trên Mobile Menu */}
                     {user && (
@@ -347,7 +342,7 @@ export const Header: React.FC = () => {
 
                         <Link href="/profile" className={getLinkClass('/profile') + " justify-start"}>
                           <div className={`h-5 w-5 rounded-full overflow-hidden mr-0.5 flex items-center justify-center ${isDriverMode || isAdmin ? 'bg-[rgba(255,255,255,0.1)]' : 'bg-[rgba(0,0,0,0.04)]'}`}>
-                            {user.avatarUrl ? <img src={user.avatarUrl} className="w-full h-full object-cover" /> : <User className="h-3 w-3" />}
+                            {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : <User className="h-3 w-3" />}
                           </div>
                           Hồ sơ cá nhân
                         </Link>

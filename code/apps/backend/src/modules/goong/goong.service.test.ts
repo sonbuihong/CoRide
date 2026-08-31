@@ -29,6 +29,28 @@ describe('Goong service facade', () => {
     await expect(goongService.autocomplete('unique-empty-response', 5, undefined, undefined, true, 'v2')).resolves.toEqual([]);
   });
 
+  it('uses the documented geocode endpoint for reverse geocoding in both address modes', async () => {
+    mockedGet.mockResolvedValue({
+      data: {
+        results: [{
+          formatted_address: '17 Tống Đản, Hoàn Kiếm, Hà Nội',
+          geometry: { location: { lat: 21.025, lng: 105.856 } },
+          place_id: 'reverse-id',
+        }],
+      },
+    } as any);
+
+    await goongService.reverseGeocode(21.025, 105.856, 'v2');
+    await goongService.reverseGeocodeCandidates(21.026, 105.857, 'v2');
+
+    expect(mockedGet).toHaveBeenNthCalledWith(1, 'https://rsapi.goong.io/geocode', expect.objectContaining({
+      params: expect.objectContaining({ latlng: '21.025,105.856', api_key: 'test-rest-key' }),
+    }));
+    expect(mockedGet).toHaveBeenNthCalledWith(2, 'https://rsapi.goong.io/geocode', expect.objectContaining({
+      params: expect.objectContaining({ latlng: '21.026,105.857', api_key: 'test-rest-key' }),
+    }));
+  });
+
   it('retries a timeout and then fails gracefully', async () => {
     mockedGet.mockRejectedValue({ code: 'ECONNABORTED' });
     await expect(goongService.autocomplete('unique-timeout-response', 5, undefined, undefined, true, 'v2')).rejects.toThrow('Không thể tìm kiếm địa điểm');

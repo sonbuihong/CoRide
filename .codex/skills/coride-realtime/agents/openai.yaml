@@ -1,0 +1,3 @@
+interface:
+  display_name: "CoRide Realtime"
+  short_description: "Debug Socket.IO, Redis, RabbitMQ, and events"

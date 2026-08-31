@@ -23,12 +23,13 @@ export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
   const [isSwitching, setIsSwitching] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false);
   const isDriver = mode === 'driver';
-  const foreground = isDriver ? colors.surface : colors.textPrimary;
+  const foreground = colors.textPrimary;
   const avatarUri = user?.avatarUrl || user?.avatar;
   const compact = width < 340;
   const nextModeLabel = isDriver ? 'Hành khách' : 'Tài xế';
-  const modeActionLabel = compact ? nextModeLabel : `Sang ${nextModeLabel}`;
-  const initials = `${user?.firstName?.charAt(0) || ''}${user?.lastName?.charAt(0) || ''}`.toUpperCase() || 'C';
+  const modeActionLabel = `Sang ${nextModeLabel}`;
+  const userInitials = `${user?.firstName?.charAt(0) || ''}${user?.lastName?.charAt(0) || ''}`.toUpperCase();
+  const initials = isDriver ? 'TC' : userInitials || 'C';
 
   useEffect(() => {
     setAvatarFailed(false);
@@ -74,8 +75,8 @@ export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
   };
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safeArea, isDriver && styles.driverSafeArea]}>
-      <View style={[styles.header, compact && styles.compactHeader, isDriver && styles.driverHeader]}>
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <View style={[styles.header, compact && styles.compactHeader]}>
         <Pressable
           onPress={goHome}
           accessibilityRole="button"
@@ -83,8 +84,11 @@ export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
           style={({ pressed }) => [styles.brand, pressed && styles.brandPressed]}
         >
           <View style={styles.brandContent}>
-            <Car size={18} color={foreground} strokeWidth={2.1} />
-            <AppText numberOfLines={1} maxFontSizeMultiplier={1} style={[styles.brandText, { color: foreground }]}>CoRide</AppText>
+            <Car size={18} color={colors.textPrimary} strokeWidth={2.1} />
+            <View style={styles.brandWordmark}>
+              <AppText maxFontSizeMultiplier={1} style={[styles.brandText, styles.brandCo]}>Co</AppText>
+              <AppText maxFontSizeMultiplier={1} style={[styles.brandText, styles.brandRide]}>Ride</AppText>
+            </View>
           </View>
         </Pressable>
 
@@ -98,7 +102,7 @@ export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
             accessibilityState={{ busy: isSwitching, disabled: isSwitching }}
             style={({ pressed }) => [styles.modeTouchTarget, pressed && styles.controlPressed, isSwitching && styles.controlDisabled]}
           >
-            <View style={[styles.modePill, compact && styles.compactModePill, isDriver && styles.driverModePill]}>
+            <View style={[styles.modePill, compact && styles.compactModePill]}>
               {isSwitching
                 ? <ActivityIndicator size="small" color={colors.surface} />
                 : <ArrowLeftRight size={16} color={colors.surface} strokeWidth={2.2} />}
@@ -115,11 +119,11 @@ export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
             accessibilityHint="Chuyển đến tab Hồ sơ"
             style={({ pressed }) => [styles.avatarTouchTarget, pressed && styles.controlPressed]}
           >
-            <View style={[styles.avatarFrame, isDriver && styles.driverAvatarFrame]}>
+            <View style={styles.avatarFrame}>
               {avatarUri && !avatarFailed ? (
                 <Image source={{ uri: avatarUri }} onError={() => setAvatarFailed(true)} style={styles.avatarImage} accessibilityIgnoresInvertColors />
               ) : initials ? (
-                <AppText maxFontSizeMultiplier={1} weight="semibold" style={[styles.initials, isDriver && styles.driverInitials]}>{initials}</AppText>
+                <AppText maxFontSizeMultiplier={1} weight="semibold" style={styles.initials}>{initials}</AppText>
               ) : (
                 <User size={18} color={foreground} />
               )}
@@ -133,7 +137,6 @@ export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
 
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: colors.surface },
-  driverSafeArea: { backgroundColor: colors.driverSurface },
   header: {
     alignItems: 'center',
     backgroundColor: colors.surface,
@@ -146,16 +149,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxs,
   },
   compactHeader: { paddingHorizontal: spacing.md },
-  driverHeader: {
-    backgroundColor: colors.driverSurface,
-    borderBottomColor: 'rgba(255,255,255,0.10)',
-  },
   brand: {
     borderRadius: radius.sm,
     minHeight: layout.minTouchTarget,
     paddingHorizontal: spacing.xxs,
   },
-  brandContent: { alignItems: 'flex-start', gap: 1, justifyContent: 'center' },
+  brandContent: { alignItems: 'flex-start', gap: 0, justifyContent: 'center' },
+  brandWordmark: { alignItems: 'baseline', flexDirection: 'row' },
   brandPressed: { opacity: 0.58 },
   brandText: {
     fontSize: 15,
@@ -163,6 +163,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     lineHeight: 19,
   },
+  brandCo: { color: colors.textPrimary },
+  brandRide: { color: colors.navigationDriver },
   actions: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
   modeTouchTarget: {
     alignItems: 'center',
@@ -185,7 +187,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
   compactModePill: { minWidth: 92, paddingHorizontal: spacing.sm },
-  driverModePill: { backgroundColor: colors.driverAccent },
   modeText: { color: colors.surface, letterSpacing: -0.1 },
   avatarTouchTarget: {
     alignItems: 'center',
@@ -205,8 +206,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: 32,
   },
-  driverAvatarFrame: { backgroundColor: 'rgba(255,255,255,0.12)', borderColor: 'rgba(255,255,255,0.24)' },
   avatarImage: { height: '100%', width: '100%' },
   initials: { color: colors.primary, fontSize: 13, letterSpacing: 0.2 },
-  driverInitials: { color: colors.surface },
 });

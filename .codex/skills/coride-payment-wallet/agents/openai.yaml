@@ -1,0 +1,3 @@
+interface:
+  display_name: "CoRide Payment & Wallet"
+  short_description: "Audit wallet ledger and payment transitions"

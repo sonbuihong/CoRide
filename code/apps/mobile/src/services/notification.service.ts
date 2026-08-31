@@ -5,8 +5,9 @@ export interface Notification {
   userId: string;
   title: string;
   message: string;
-  type: 'BOOKING_REQUEST' | 'BOOKING_ACCEPTED' | 'BOOKING_REJECTED' | 'RIDE_CANCELLED' | 'REVIEW_RECEIVED';
-  relatedId?: string;
+  type: string;
+  targetType?: 'BOOKING' | 'RIDE' | 'TRIP' | null;
+  targetId?: string | null;
   isRead: boolean;
   createdAt: string;
 }
@@ -28,6 +29,16 @@ export const notificationService = {
 
   async markAllAsRead() {
     const response = await api.patch('/notifications/read-all');
+    return response.data;
+  },
+
+  async deleteNotification(id: string) {
+    const response = await api.delete(`/notifications/${id}`);
+    return response.data;
+  },
+
+  async restoreNotification(id: string) {
+    const response = await api.patch(`/notifications/${id}/restore`);
     return response.data;
   },
 };

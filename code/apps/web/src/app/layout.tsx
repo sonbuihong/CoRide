@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 import { Header } from "@/components/layout/header";
@@ -13,14 +12,9 @@ import { BookingRequestPopup } from "@/components/booking/booking-request-popup"
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
-const inter = Inter({
-  subsets: ["latin", "vietnamese"],
-  variable: "--font-sans",
-});
-
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
+  variable: "--font-sans",
   weight: "100 900",
 });
 const geistMono = localFont({
@@ -41,9 +35,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={cn("font-sans", inter.variable)} suppressHydrationWarning>
+    <html lang="vi" className={cn("font-sans", geistSans.variable)} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background`}
+        className={`${geistMono.variable} antialiased min-h-screen bg-background`}
       >
         <ReactQueryProvider>
           {/* AuthProvider bọc toàn bộ app để Header và mọi page đều có user context */}

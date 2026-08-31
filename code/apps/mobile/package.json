@@ -20,6 +20,7 @@
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native/normalize-colors": "0.74.1",
     "@react-native/virtualized-lists": "^0.86.0",
+    "@react-navigation/bottom-tabs": "^7.18.7",
     "@react-navigation/native": "^7.3.7",
     "@repo/shared": "workspace:*",
     "@tanstack/react-query": "^5.97.0",
@@ -46,7 +47,6 @@
     "react-native": "0.81.5",
     "react-native-css-interop": "^0.2.6",
     "@gorhom/bottom-sheet": "^5.0.0",
-    "expo-location": "~19.0.8",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-maps": "1.20.1",
     "react-native-reanimated": "~4.1.1",
@@ -62,7 +62,9 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "^7.29.7",
     "@types/react": "~19.1.0",
+    "babel-preset-expo": "~54.0.11",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~10.0.0",
     "react-test-renderer": "19.1.0",

@@ -43,8 +43,14 @@ router.get('/active-driver', TripsController.getActiveDriverTrip);
  */
 router.get('/history', TripsController.getTripHistory);
 
+router.get('/:id', TripsController.getTripById);
+
 router.post('/:id/accept', TripsController.acceptTrip);
 router.post('/:id/reject', TripsController.rejectTrip);
+router.post('/:id/en-route', TripsController.setEnRoute);
+router.post('/:id/arrive', TripsController.markArrived);
+router.post('/:id/start', TripsController.startTrip);
+router.post('/:id/complete', TripsController.completeTrip);
 
 /**
  * @swagger

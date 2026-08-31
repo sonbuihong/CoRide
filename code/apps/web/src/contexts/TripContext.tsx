@@ -1,16 +1,18 @@
 "use client";
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { SocketEvents } from '@repo/shared';
+import { SocketEvents, type TripUpdatedPayload } from '@repo/shared';
 
 // Generic Trip Type based on Prisma Schema
 export type Trip = {
   id: string;
   pickup: string;
   destination: string;
+  originAddress?: string;
+  destAddress?: string;
   status: string;
   driverId?: string;
   passengerId?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 interface TripContextProps {
@@ -36,9 +38,17 @@ export const TripProvider = ({ children }: { children: ReactNode }) => {
       });
     };
 
-    const handleTripUpdated = (updatedTrip: Trip) => {
+    const handleTripUpdated = (updatedTrip: TripUpdatedPayload) => {
       setTrips((prevTrips) => 
-        prevTrips.map(t => t.id === updatedTrip.id ? updatedTrip : t)
+        prevTrips.map((trip) => trip.id === updatedTrip.tripId
+          ? {
+              ...trip,
+              status: updatedTrip.status,
+              driverId: updatedTrip.driverId ?? undefined,
+              passengerId: updatedTrip.passengerId,
+              updatedAt: updatedTrip.updatedAt,
+            }
+          : trip)
       );
     };
 
@@ -55,7 +65,7 @@ export const TripProvider = ({ children }: { children: ReactNode }) => {
       socket.off(SocketEvents.TRIP_UPDATED, handleTripUpdated);
       socket.off(SocketEvents.TRIP_DELETED, handleTripDeleted);
     };
-  }, []);
+  }, [socket]);
 
   return (
     <TripContext.Provider value={{ trips, setTrips }}>

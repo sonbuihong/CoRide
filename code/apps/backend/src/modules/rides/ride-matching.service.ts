@@ -94,14 +94,19 @@ export class RideMatchingService {
 
     if (ride.allowRoutePickup === false && !isDirect) return null;
 
-    if (!isDirect) {
-      if (
+    // Direction is mandatory for every match type. On short routes both
+    // reversed endpoints may still fall inside the direct-radius threshold.
+    if (pickupProjection.routePosition >= dropoffProjection.routePosition) {
+      return null;
+    }
+
+    if (
+      !isDirect && (
         pickupProjection.distanceKm > MATCH_CONFIG.PICKUP_RADIUS_KM ||
-        dropoffProjection.distanceKm > MATCH_CONFIG.DROPOFF_RADIUS_KM ||
-        pickupProjection.routePosition >= dropoffProjection.routePosition
-      ) {
-        return null;
-      }
+        dropoffProjection.distanceKm > MATCH_CONFIG.DROPOFF_RADIUS_KM
+      )
+    ) {
+      return null;
     }
 
     const routeDistanceKm = Math.max(

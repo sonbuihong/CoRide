@@ -8,16 +8,26 @@
  */
 export class AppError extends Error {
   public readonly statusCode: number;
+  public readonly code?: string;
+  public readonly details?: unknown;
 
   // isOperational = true  → lỗi có chủ ý (business logic): 400, 401, 403, 404...
   // isOperational = false → lỗi không mong đợi (bug/crash): cần log và không expose detail
   public readonly isOperational: boolean;
 
-  constructor(message: string, statusCode: number, isOperational = true) {
+  constructor(
+    message: string,
+    statusCode: number,
+    isOperational = true,
+    code?: string,
+    details?: unknown,
+  ) {
     super(message);
     this.name = 'AppError';
     this.statusCode = statusCode;
     this.isOperational = isOperational;
+    this.code = code;
+    this.details = details;
 
     // Giúp stack trace trỏ đúng nơi throw lỗi, không trỏ vào dòng constructor này
     Error.captureStackTrace(this, this.constructor);

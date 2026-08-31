@@ -4,8 +4,8 @@
 
 import { useMemo, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Alert } from 'react-native';
 import { bookingService } from '../services/booking.service';
+import { showInfoDialog } from '../utils/dialog';
 
 interface LatLng {
   latitude: number;
@@ -101,7 +101,7 @@ export const usePickupNavigation = (
       queryClient.invalidateQueries({ queryKey: ['active-booking'] });
     },
     onError: (error: any) => {
-      Alert.alert(
+      showInfoDialog(
         'Lỗi',
         error.response?.data?.message || 'Không thể xác nhận đón khách'
       );
@@ -188,24 +188,9 @@ export const usePickupNavigation = (
   // Handler khi tài xế nhấn "Đã đến điểm đón"
   const handlePickedUp = useCallback(
     (bookingId: string) => {
-      const booking = confirmedBookings.find((b) => b.id === bookingId);
-      const passengerName = booking?.passenger
-        ? `${booking.passenger.firstName} ${booking.passenger.lastName}`
-        : 'hành khách';
-
-      Alert.alert(
-        'Xác nhận đã đến điểm đón',
-        `Bạn đã đến điểm đón ${passengerName}?`,
-        [
-          { text: 'Hủy', style: 'cancel' },
-          {
-            text: 'Xác nhận',
-            onPress: () => pickupMutation.mutate(bookingId),
-          },
-        ]
-      );
+      pickupMutation.mutate(bookingId);
     },
-    [confirmedBookings, pickupMutation]
+    [pickupMutation]
   );
 
   return {

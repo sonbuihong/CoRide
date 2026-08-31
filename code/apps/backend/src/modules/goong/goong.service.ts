@@ -312,8 +312,11 @@ class GoongService {
     if (cached) return cached;
 
     try {
-      const endpoint = version === 'v2' ? '/v2/geocode' : '/geocode';
-      const response = await this.getFromGoong<any>(endpoint, { latlng: `${lat},${lng}` });
+      // Goong documents reverse geocoding on /Geocode. The V2 geocode endpoint
+      // supports forward-geocoding data, but rejects latlng on some accounts.
+      // Keep the requested version in the cache key while using the supported
+      // reverse endpoint for both client address-display modes.
+      const response = await this.getFromGoong<any>('/geocode', { latlng: `${lat},${lng}` });
 
       if (response.results && response.results.length > 0) {
         const result = response.results[0];
@@ -342,8 +345,8 @@ class GoongService {
   }
 
   async reverseGeocodeCandidates(lat: number, lng: number, version: GoongApiVersion = 'v2'): Promise<GeocodeV2Result[]> {
-    const endpoint = version === 'v2' ? '/v2/geocode' : '/geocode';
-    const response = await this.getFromGoong<{ results?: GeocodeV2Result[] }>(endpoint, {
+    void version;
+    const response = await this.getFromGoong<{ results?: GeocodeV2Result[] }>('/geocode', {
       latlng: `${lat},${lng}`,
     });
     return response.results ?? [];

@@ -275,26 +275,28 @@ export const RideCard: React.FC<RideCardProps> = memo(({ ride, showMatch = false
           pressed && Platform.OS !== 'android' && styles.cardPressed,
         ]}
       >
-        <RideHeader
-          departureTime={ride.departureTime}
-          price={ride.price}
-          availableSeats={ride.availableSeats}
-          matchType={ride.matchType}
-          showMatch={showMatch}
-        />
+        <View style={styles.cardContent}>
+          <RideHeader
+            departureTime={ride.departureTime}
+            price={ride.price}
+            availableSeats={ride.availableSeats}
+            matchType={ride.matchType}
+            showMatch={showMatch}
+          />
 
-        <RideRoute
-          departure={ride.departure}
-          destination={ride.destination}
-        />
+          <RideRoute
+            departure={ride.departure}
+            destination={ride.destination}
+          />
 
-        <DriverSummary driver={ride.driver} />
+          <DriverSummary driver={ride.driver} />
 
-        <RideMetadata
-          availableSeats={ride.availableSeats}
-          distance={ride.distance}
-          duration={ride.duration}
-        />
+          <RideMetadata
+            availableSeats={ride.availableSeats}
+            distance={ride.distance}
+            duration={ride.duration}
+          />
+        </View>
       </Pressable>
     </View>
   );
@@ -306,7 +308,8 @@ RideCard.displayName = 'RideCard';
 export const RideCardSkeleton: React.FC = memo(() => (
   <View style={styles.cardContainer}>
     <View style={styles.cardPressable}>
-      <View style={styles.skeletonHeader}>
+      <View style={styles.cardContent}>
+        <View style={styles.skeletonHeader}>
         <View style={styles.skeletonSchedule}>
           <SkeletonLoader height={22} width={64} borderRadius={5} />
           <SkeletonLoader height={13} width={92} borderRadius={4} />
@@ -339,6 +342,7 @@ export const RideCardSkeleton: React.FC = memo(() => (
         <SkeletonLoader height={13} width={50} borderRadius={4} />
         <SkeletonLoader height={13} width={50} borderRadius={4} />
       </View>
+      </View>
     </View>
   </View>
 ));
@@ -367,11 +371,12 @@ const styles = StyleSheet.create({
   cardPressable: {
     borderRadius: 20,
     overflow: 'hidden',
-    // Tăng padding bên trong để các số/chữ không bao giờ bị dính sát mép bo tròn
+    width: '100%',
+  },
+  cardContent: {
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 18,
-    width: '100%',
   },
   cardPressed: {
     backgroundColor: '#F8F9FA',

@@ -2,13 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import * as jose from 'jose';
 import prisma from '../lib/prisma';
 
-// Mở rộng giao diện Request của Express để chứa thông tin user
-declare module 'express-serve-static-core' {
-  interface Request {
-    user?: any;
-  }
-}
-
 const getSecret = () =>
   new TextEncoder().encode(
     process.env.JWT_SECRET || 'super-secret-fallback-key'

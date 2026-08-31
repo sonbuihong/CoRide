@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -112,6 +112,7 @@ export default function DriverRideDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [action, setAction] = useState<'start' | 'cancel' | null>(null);
+  const actionInFlightRef = useRef(false);
   const [chatBooking, setChatBooking] = useState<DriverBooking | null>(null);
 
   const fetchDetail = useCallback(async () => {
@@ -173,9 +174,10 @@ export default function DriverRideDetailPage() {
   }), [confirmedBookings]);
 
   const handleRideAction = async (type: 'start' | 'cancel') => {
-    if (!ride) return;
+    if (!ride || actionInFlightRef.current) return;
     const promptText = type === 'start' ? 'Bắt đầu chuyến đi ngay bây giờ?' : 'Hủy chuyến sẽ đồng thời hủy các đặt chỗ đang hoạt động. Bạn có chắc không?';
     if (!confirm(promptText)) return;
+    actionInFlightRef.current = true;
     setAction(type);
     try {
       await apiClient.patch(`/rides/${ride.id}/status`, {
@@ -189,6 +191,7 @@ export default function DriverRideDetailPage() {
       const message = (requestError as { response?: { data?: { message?: string } } }).response?.data?.message;
       toast.error(message || 'Không thể cập nhật chuyến đi.');
     } finally {
+      actionInFlightRef.current = false;
       setAction(null);
     }
   };

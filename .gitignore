@@ -2,4 +2,8 @@
 docs/
 tasks-manager/
 node_modules/
+.codex/.cache/
+code/.pnpm-store/
+code/apps/mobile/.expo-verify-android/
+code/apps/web/.next-broken-*/
 .env

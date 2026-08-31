@@ -30,6 +30,8 @@ export const spacing = {
   xl: sharedSpacing.xl,
   xxl: sharedSpacing['2xl'],
   xxxl: 40,
+  screen: sharedSpacing.screen,
+  '2xl': sharedSpacing['2xl'],
 } as const;
 
 export const radius = {

@@ -1,0 +1,3 @@
+interface:
+  display_name: "CoRide Ride-Hailing"
+  short_description: "Work with TripRequest matching and lifecycle"

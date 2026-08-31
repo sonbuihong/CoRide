@@ -1,62 +1,66 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { forwardRef, memo, useImperativeHandle, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-interface LatLng {
-  latitude: number;
-  longitude: number;
-}
+import { GoongMapCanvas, PickupPoint } from './GoongMapCanvas.web';
 
-interface PickupMarker {
-  coordinate: LatLng;
+export interface ActiveRideLatLng { latitude: number; longitude: number }
+export interface ActiveRideMapHandle { recenter: (coordinate?: ActiveRideLatLng | null) => void }
+export interface ActiveRideStopMarker {
+  coordinate: ActiveRideLatLng;
   label: string;
   isActive: boolean;
   bookingId: string;
+  kind?: 'PICKUP' | 'DROPOFF';
 }
 
 interface ActiveRideMapProps {
-  originCoords: LatLng;
-  destinationCoords: LatLng;
-  routeCoords: LatLng[];
-  driverLocation?: LatLng | null;
+  originCoords: ActiveRideLatLng;
+  destinationCoords: ActiveRideLatLng;
+  routeCoords: ActiveRideLatLng[];
+  driverLocation?: ActiveRideLatLng | null;
   originLabel?: string;
   destinationLabel?: string;
-  pickupMarkers?: PickupMarker[];
+  pickupMarkers?: ActiveRideStopMarker[];
+  onUserPan?: () => void;
 }
 
-export const ActiveRideMap: React.FC<ActiveRideMapProps> = ({
-  originCoords,
-  driverLocation
-}) => {
-  // Lấy vị trí trung tâm là tài xế (nếu có) hoặc điểm xuất phát
-  const centerLat = driverLocation?.latitude || originCoords.latitude;
-  const centerLng = driverLocation?.longitude || originCoords.longitude;
-  
-  // Google Maps embed URL đáng tin cậy hơn trên localhost và web view
-  const mapUrl = `https://maps.google.com/maps?q=${centerLat},${centerLng}&z=15&output=embed`;
+const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function ActiveRideMap(
+  { originCoords, destinationCoords, routeCoords = [], driverLocation, pickupMarkers = [], onUserPan },
+  forwardedRef,
+) {
+  const [cameraTarget, setCameraTarget] = useState<ActiveRideLatLng>();
+  const center = driverLocation || originCoords;
+  const routeLines = useMemo(() => routeCoords.length >= 2 ? [routeCoords] : [], [routeCoords]);
+  const pickupPoints = useMemo<PickupPoint[]>(() => pickupMarkers.map((marker) => ({
+    coordinate: marker.coordinate,
+    label: marker.label,
+    isActive: marker.isActive,
+    kind: marker.kind,
+  })), [pickupMarkers]);
+
+  useImperativeHandle(forwardedRef, () => ({
+    recenter: (coordinate) => setCameraTarget({ ...(coordinate || driverLocation || originCoords) }),
+  }), [driverLocation, originCoords]);
 
   return (
     <View style={styles.container}>
-      {/* Sử dụng div bọc iframe để tương thích tốt nhất với React Native Web */}
-      <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
-        <iframe 
-          title="Bản đồ hành trình"
-          width="100%" 
-          height="100%" 
-          frameBorder="0" 
-          scrolling="no" 
-          src={mapUrl} 
-          style={{ border: 0 }}
-        />
-      </div>
+      <GoongMapCanvas
+        center={center}
+        origin={originCoords}
+        destination={destinationCoords}
+        driver={driverLocation}
+        pickupPoints={pickupPoints}
+        routeLines={routeLines}
+        cameraTarget={cameraTarget}
+        onCenterChange={onUserPan ? () => onUserPan() : undefined}
+        zoom={14}
+      />
     </View>
   );
-};
+});
+
+export const ActiveRideMap = memo(MapContent);
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    position: 'relative',
-    backgroundColor: '#E5E7EB',
-  },
+  container: { backgroundColor: '#E5E7EB', flex: 1, position: 'relative', width: '100%' },
 });

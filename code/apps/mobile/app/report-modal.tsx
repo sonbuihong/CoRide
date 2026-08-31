@@ -1,108 +1,103 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Circle, CircleDot } from 'lucide-react-native';
+
 import { apiClient as api } from '../src/api/client';
-import { ShieldAlert, X } from 'lucide-react-native';
+import { AppButton } from '../src/components/ui/AppButton';
+import { AppText } from '../src/components/ui/AppText';
+import { TripScreen, TripScreenHeader, TripScrollView } from '../src/features/trip-flow/TripScreen';
+import { colors, radius, spacing } from '../src/theme/tokens';
+import { showInfoDialog } from '../src/utils/dialog';
+
+const driverTripReasons = [
+  'Không tìm thấy hành khách',
+  'Hành khách không đến điểm hẹn',
+  'Sai điểm đón',
+  'Sai điểm trả',
+  'Vấn đề thanh toán',
+  'Hành vi không phù hợp',
+  'Khác',
+];
 
 export default function ReportModalScreen() {
   const { reportedId, rideId } = useLocalSearchParams<{ reportedId: string; rideId?: string }>();
   const router = useRouter();
-
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const predefinedReasons = [
-    'Tài xế lái xe không an toàn',
-    'Thái độ không phù hợp',
-    'Chuyến đi không đúng lộ trình',
-    'Thu thêm phí ngoài hệ thống',
-    'Khác'
-  ];
-
-  const handleSubmit = async () => {
-    if (!reason) {
-      Alert.alert('Lỗi', 'Vui lòng chọn hoặc nhập lý do báo cáo');
-      return;
-    }
-
+  const submit = async () => {
+    if (!reason) return showInfoDialog('Chưa chọn vấn đề', 'Vui lòng chọn vấn đề bạn đang gặp phải.');
     setLoading(true);
     try {
-      await api.post('/reports', {
-        reportedId,
-        rideId,
-        reason,
-        description,
-      });
-      Alert.alert('Thành công', 'Cảm ơn bạn đã gửi báo cáo. Chúng tôi sẽ xử lý sớm nhất có thể.', [
-        { text: 'Đóng', onPress: () => router.back() }
-      ]);
-    } catch (err: any) {
-      Alert.alert('Lỗi', err.response?.data?.message || 'Không thể gửi báo cáo');
+      await api.post('/reports', { reportedId, rideId, reason, description: description.trim() || undefined });
+      showInfoDialog('Đã gửi báo cáo', 'CoRide đã ghi nhận và sẽ phản hồi sớm nhất có thể.', () => router.back());
+    } catch (error: any) {
+      showInfoDialog('Không thể gửi báo cáo', error?.response?.data?.message || 'Kiểm tra kết nối và thử lại.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
-    >
-      <View className="flex-row justify-between items-center p-4 border-b border-gray-100">
-        <Text className="text-lg font-bold text-gray-900">Báo cáo vi phạm</Text>
-        <TouchableOpacity onPress={() => router.back()} className="p-2 bg-gray-100 rounded-full">
-          <X size={20} color="#374151" />
-        </TouchableOpacity>
-      </View>
+    <TripScreen>
+      <Stack.Screen options={{ headerShown: false }} />
+      <TripScreenHeader title="Báo cáo sự cố" onBack={() => router.back()} />
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <TripScrollView contentContainerStyle={styles.content}>
+          <AppText variant="h2" weight="bold">Bạn đang gặp vấn đề gì?</AppText>
+          <AppText style={styles.intro}>Chọn một vấn đề để đội ngũ CoRide hỗ trợ đúng và nhanh hơn.</AppText>
 
-      <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
-        <View className="items-center mb-6">
-          <View className="w-16 h-16 bg-red-100 rounded-full items-center justify-center mb-4">
-            <ShieldAlert size={32} color="#dc2626" />
+          <View style={styles.reasonList} accessibilityRole="radiogroup">
+            {driverTripReasons.map((item) => {
+              const selected = item === reason;
+              return (
+                <Pressable
+                  key={item}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selected }}
+                  onPress={() => setReason(item)}
+                  style={({ pressed }) => [styles.reasonRow, selected && styles.reasonSelected, pressed && styles.pressed]}
+                >
+                  {selected ? <CircleDot size={22} color={colors.success} /> : <Circle size={22} color={colors.borderStrong} />}
+                  <AppText weight={selected ? 'semibold' : 'normal'} style={styles.reasonText}>{item}</AppText>
+                </Pressable>
+              );
+            })}
           </View>
-          <Text className="text-center text-gray-600">
-            Hệ thống sẽ ghi nhận và xử lý nghiêm các trường hợp vi phạm quy định cộng đồng của CoRide.
-          </Text>
-        </View>
 
-        <Text className="font-semibold text-gray-800 mb-3 text-base">Lý do báo cáo</Text>
-        <View className="flex-row flex-wrap gap-2 mb-6">
-          {predefinedReasons.map((r, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => setReason(r)}
-              className={`px-4 py-2 rounded-full border ${reason === r ? 'bg-red-50 border-red-500' : 'bg-white border-gray-300'}`}
-            >
-              <Text className={reason === r ? 'text-red-600 font-medium' : 'text-gray-600'}>
-                {r}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text className="font-semibold text-gray-800 mb-3 text-base">Chi tiết thêm (tùy chọn)</Text>
-        <TextInput
-          className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800 mb-6 h-32"
-          placeholder="Mô tả chi tiết sự việc..."
-          multiline
-          textAlignVertical="top"
-          value={description}
-          onChangeText={setDescription}
-        />
-
-        <TouchableOpacity 
-          className="bg-red-600 rounded-full p-4 flex-row justify-center items-center shadow-md"
-          onPress={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white font-bold text-lg">Gửi báo cáo</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <AppText weight="semibold" style={styles.label}>Mô tả thêm</AppText>
+          <TextInput
+            accessibilityLabel="Mô tả thêm về sự cố"
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Mô tả thêm..."
+            placeholderTextColor={colors.textMuted}
+            multiline
+            maxLength={800}
+            textAlignVertical="top"
+            style={styles.input}
+          />
+          <AppText variant="caption" style={styles.counter}>{description.length}/800</AppText>
+          <AppButton variant="driver" title="Gửi báo cáo" onPress={() => void submit()} isLoading={loading} style={styles.submit} />
+        </TripScrollView>
+      </KeyboardAvoidingView>
+    </TripScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  content: { paddingBottom: spacing['2xl'] },
+  intro: { color: colors.textSecondary, marginTop: spacing.xs },
+  reasonList: { backgroundColor: colors.surface, borderRadius: radius.card, marginTop: spacing.xl, overflow: 'hidden' },
+  reasonRow: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 56, paddingHorizontal: spacing.lg },
+  reasonSelected: { backgroundColor: colors.driverAccentSoft },
+  reasonText: { flex: 1, marginLeft: spacing.md },
+  label: { marginBottom: spacing.sm, marginTop: spacing.xl },
+  input: { backgroundColor: colors.surface, borderColor: colors.borderStrong, borderRadius: radius.input, borderWidth: 1, color: colors.textPrimary, fontSize: 16, minHeight: 132, padding: spacing.md },
+  counter: { alignSelf: 'flex-end', marginTop: spacing.xs },
+  submit: { marginTop: spacing.xl },
+  pressed: { opacity: 0.72 },
+});

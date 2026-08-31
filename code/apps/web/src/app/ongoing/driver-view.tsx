@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { User, Phone, MapPin, Navigation, CheckCircle, XCircle, Loader2, MessageSquare, MoreHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
@@ -101,6 +101,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
   const { user } = useAuth();
 
   const [loadingPrimary, setLoadingPrimary] = useState(false);
+  const primaryActionInFlightRef = useRef(false);
   const [loadingBooking, setLoadingBooking] = useState<Record<string, boolean>>({});
   const [loadingPickup, setLoadingPickup] = useState<Record<string, boolean>>({});
   const [loadingCancel, setLoadingCancel] = useState(false);
@@ -112,8 +113,9 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
 
   const handlePrimaryAction = async () => {
     const action = getDriverPrimaryAction(ride);
-    if (!action || loadingPrimary) return;
+    if (!action || primaryActionInFlightRef.current) return;
 
+    primaryActionInFlightRef.current = true;
     setLoadingPrimary(true);
     try {
       await action.apiCall();
@@ -127,6 +129,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || 'Không thể cập nhật trạng thái. Vui lòng thử lại.');
     } finally {
+      primaryActionInFlightRef.current = false;
       setLoadingPrimary(false);
     }
   };
