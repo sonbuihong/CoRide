@@ -34,6 +34,7 @@ export enum SocketEvents {
   BOOKING_NEW_REQUEST = 'booking:new_request',      // Driver nhận yêu cầu đặt chỗ mới
   BOOKING_CONFIRMED = 'booking:confirmed',           // Passenger nhận xác nhận
   BOOKING_REJECTED = 'booking:rejected',             // Passenger nhận từ chối
+  BOOKING_CANCELLED = 'booking:cancelled',           // Driver/passenger nhận hủy đặt chỗ
   BOOKING_DRIVER_ARRIVED = 'booking:driver_arrived', // Passenger được báo tài xế đã tới điểm đón
   BOOKING_PICKED_UP = 'booking:picked_up',           // Passenger được thông báo đã đón
   BOOKING_COMPLETED = 'booking:completed',           // Passenger nhận thông báo trả khách

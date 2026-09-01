@@ -2,300 +2,194 @@ import React, { memo } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
-import {
-  CheckCircle2,
-  ChevronRight,
-  Clock,
-  Navigation,
-  Star,
-  User,
-  Users,
-} from 'lucide-react-native';
+import { CheckCircle2, Navigation, Star, User, Users } from 'lucide-react-native';
 import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import type { Ride } from '../services/ride.service';
-import { colors } from '../theme/tokens';
+import { colors, layout, radius, spacing } from '../theme/tokens';
+import { MatchExplanation } from './MatchExplanation';
 import { AppText } from './ui/AppText';
 import { SkeletonLoader } from './ui/SkeletonLoader';
+
+export interface PassengerRouteContext {
+  origin: string;
+  destination: string;
+  originLat?: number;
+  originLng?: number;
+  destinationLat?: number;
+  destinationLng?: number;
+  date?: string;
+  seats?: number;
+}
 
 export interface RideCardProps {
   ride: Ride;
   showMatch?: boolean;
+  featured?: boolean;
+  passengerRoute?: PassengerRouteContext;
 }
 
-// ─── Format Utilities ────────────────────────────────────────────────────────
 const formatDistance = (distance?: number) => {
-  if (distance == null || !Number.isFinite(distance)) return '— km';
-  return `${distance < 10 ? distance.toFixed(1) : Math.round(distance)} km`;
+  if (distance == null || !Number.isFinite(distance)) return undefined;
+  return `${distance < 10 ? distance.toFixed(1).replace('.', ',') : Math.round(distance)} km`;
 };
 
 const formatDuration = (duration?: number) => {
-  if (duration == null || !Number.isFinite(duration)) return '— phút';
+  if (duration == null || !Number.isFinite(duration)) return undefined;
   return `${Math.max(1, Math.round(duration))} phút`;
 };
 
-const formatRideDate = (dateStr: string) => {
-  try {
-    const d = new Date(dateStr);
-    const dayOfWeek = format(d, 'EEEE', { locale: vi });
-    const dateFormatted = format(d, 'dd/MM');
-    const capitalized = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-    return `${capitalized}, ${dateFormatted}`;
-  } catch {
-    return '';
-  }
+const rideDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : format(date, 'EEEE, dd/MM', { locale: vi });
 };
 
-// ─── Subcomponent: RideHeader ────────────────────────────────────────────────
-interface RideHeaderProps {
-  departureTime: string;
-  price: number;
-  availableSeats: number;
-  matchType?: string;
-  showMatch?: boolean;
-}
-
-const RideHeader: React.FC<RideHeaderProps> = memo(({
-  departureTime,
-  price,
-  availableSeats,
-  matchType,
-  showMatch,
-}) => {
-  const formattedTime = format(new Date(departureTime), 'HH:mm');
-  const formattedDate = formatRideDate(departureTime);
-  const isSoldOut = availableSeats <= 0;
-
+function RouteSummary({ origin, destination }: { origin: string; destination: string }) {
   return (
-    <View style={styles.header}>
-      <View style={styles.scheduleBlock}>
-        <AppText style={styles.timeText}>{formattedTime}</AppText>
-        <AppText style={styles.dateText}>{formattedDate}</AppText>
-      </View>
-
-      <View style={styles.priceBlock}>
-        <AppText style={styles.priceText}>{price.toLocaleString('vi-VN')}đ</AppText>
-        {isSoldOut ? (
-          <View style={styles.soldOutBadge}>
-            <AppText style={styles.soldOutBadgeText}>Hết chỗ</AppText>
-          </View>
-        ) : showMatch && matchType ? (
-          <View style={styles.matchBadge}>
-            <AppText style={styles.matchBadgeText}>
-              {matchType === 'DIRECT' ? 'Đúng tuyến' : 'Tiện đường'}
-            </AppText>
-          </View>
-        ) : null}
-      </View>
-    </View>
-  );
-});
-RideHeader.displayName = 'RideHeader';
-
-// ─── Subcomponent: RideRoute ─────────────────────────────────────────────────
-interface RideRouteProps {
-  departure: string;
-  destination: string;
-}
-
-const RideRoute: React.FC<RideRouteProps> = memo(({ departure, destination }) => {
-  return (
-    <View style={styles.routeContainer}>
+    <View style={styles.route}>
       <View style={styles.routeRail}>
         <View style={styles.pickupMarker} />
         <View style={styles.routeLine} />
-        <View style={styles.destinationMarker} />
+        <View style={styles.dropoffMarker} />
       </View>
-
-      <View style={styles.routeLocations}>
-        <View style={styles.locationRow}>
-          <AppText numberOfLines={2} ellipsizeMode="tail" style={styles.locationText}>
-            {departure}
-          </AppText>
-        </View>
-
-        <View style={styles.locationRow}>
-          <AppText numberOfLines={2} ellipsizeMode="tail" style={styles.locationText}>
-            {destination}
-          </AppText>
-        </View>
+      <View style={styles.routeCopy}>
+        <AppText variant="bodySmall" weight="semibold" numberOfLines={2}>{origin}</AppText>
+        <AppText variant="bodySmall" weight="semibold" numberOfLines={2}>{destination}</AppText>
       </View>
     </View>
   );
-});
-RideRoute.displayName = 'RideRoute';
-
-// ─── Subcomponent: DriverSummary ─────────────────────────────────────────────
-interface DriverSummaryProps {
-  driver?: Ride['driver'];
 }
 
-const DriverSummary: React.FC<DriverSummaryProps> = memo(({ driver }) => {
-  const driverName = [driver?.firstName, driver?.lastName].filter(Boolean).join(' ') || 'Tài xế CoRide';
-  const rating = driver?.rating;
-  const isVerified = driver?.isVerified;
-  const hasRating = typeof rating === 'number' && rating > 0;
+function DriverSummary({ ride }: { ride: Ride }) {
+  const driver = ride.driver;
+  const name = [driver?.firstName, driver?.lastName].filter(Boolean).join(' ') || 'Tài xế CoRide';
+  const vehicle = driver?.vehicle ?? ride.vehicle ?? undefined;
+  const vehicleText = [vehicle?.type === 'CAR' ? 'Ô tô' : vehicle?.type === 'BIKE' ? 'Xe máy' : undefined, vehicle?.color, vehicle?.licensePlate]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <View style={styles.driverRow}>
       {driver?.avatar ? (
-        <Image
-          source={{ uri: driver.avatar }}
-          style={styles.driverAvatar}
-          accessibilityLabel={`Ảnh đại diện ${driverName}`}
-        />
+        <Image source={{ uri: driver.avatar }} style={styles.avatar} accessibilityLabel={`Ảnh đại diện ${name}`} />
       ) : (
-        <View style={styles.avatarFallback}>
-          <User size={18} color={colors.primary} />
-        </View>
+        <View style={styles.avatarFallback}><User size={19} color={colors.primary} /></View>
       )}
-
-      <View style={styles.driverMeta}>
+      <View style={styles.driverCopy}>
         <View style={styles.driverNameRow}>
-          <AppText numberOfLines={1} style={styles.driverName}>
-            {driverName}
-          </AppText>
-          {isVerified && (
-            <CheckCircle2
-              size={14}
-              color={colors.primary}
-              fill="rgba(0, 113, 227, 0.12)"
-              style={styles.verifiedIcon}
-            />
-          )}
-        </View>
-
-        <View style={styles.driverSubRow}>
-          {hasRating ? (
-            <View style={styles.starRow}>
-              <Star size={11} color="#F59E0B" fill="#F59E0B" />
-              <AppText style={styles.ratingText}>{rating.toFixed(1)}</AppText>
+          <AppText variant="bodySmall" weight="semibold" numberOfLines={1}>{name}</AppText>
+          {driver?.isVerified ? <CheckCircle2 size={15} color={colors.primary} /> : null}
+          {typeof driver?.rating === 'number' && driver.rating > 0 ? (
+            <View style={styles.rating}>
+              <Star size={12} color="#D97706" fill="#D97706" />
+              <AppText variant="caption" weight="semibold">{driver.rating.toFixed(1)}</AppText>
             </View>
-          ) : (
-            <AppText style={styles.newDriverText}>Mới</AppText>
-          )}
+          ) : null}
         </View>
+        {vehicleText ? <AppText variant="caption" numberOfLines={1}>{vehicleText}</AppText> : null}
       </View>
-
-      <ChevronRight size={18} color="#9CA3AF" style={styles.chevron} strokeWidth={2} />
     </View>
   );
-});
-DriverSummary.displayName = 'DriverSummary';
-
-// ─── Subcomponent: RideMetadata ──────────────────────────────────────────────
-interface RideMetadataProps {
-  availableSeats: number;
-  distance?: number;
-  duration?: number;
 }
 
-const RideMetadata: React.FC<RideMetadataProps> = memo(({
-  availableSeats,
-  distance,
-  duration,
+export const RideCard: React.FC<RideCardProps> = memo(({
+  ride,
+  showMatch = false,
+  featured = false,
+  passengerRoute,
 }) => {
-  const isSoldOut = availableSeats <= 0;
-  const isNearlyFull = availableSeats === 1;
-
-  const seatsColor = isSoldOut
-    ? colors.textTertiary
-    : isNearlyFull
-      ? '#D97706' // amber-600 warning nhẹ, dễ chịu
-      : colors.textSecondary;
-
-  const seatsText = isSoldOut
-    ? 'Hết chỗ'
-    : `Còn ${availableSeats} chỗ`;
-
-  return (
-    <View style={styles.metadataContainer}>
-      <View style={styles.metaItem}>
-        <Users size={13} color={seatsColor} strokeWidth={2} />
-        <AppText
-          style={[
-            styles.metaText,
-            isNearlyFull && styles.metaTextWarning,
-            isSoldOut && styles.metaTextSoldOut,
-          ]}
-        >
-          {seatsText}
-        </AppText>
-      </View>
-
-      <AppText style={styles.metaDot}>·</AppText>
-
-      <View style={styles.metaItem}>
-        <Navigation size={12} color={colors.textSecondary} strokeWidth={2} />
-        <AppText style={styles.metaText}>{formatDistance(distance)}</AppText>
-      </View>
-
-      <AppText style={styles.metaDot}>·</AppText>
-
-      <View style={styles.metaItem}>
-        <Clock size={12} color={colors.textSecondary} strokeWidth={2} />
-        <AppText style={styles.metaText}>{formatDuration(duration)}</AppText>
-      </View>
-    </View>
-  );
-});
-RideMetadata.displayName = 'RideMetadata';
-
-// ─── Main Component: RideCard ────────────────────────────────────────────────
-export const RideCard: React.FC<RideCardProps> = memo(({ ride, showMatch = false }) => {
   const router = useRouter();
-  const formattedTime = format(new Date(ride.departureTime), 'HH:mm');
-  const formattedDate = formatRideDate(ride.departureTime);
   const isSoldOut = ride.availableSeats <= 0;
+  const primaryOrigin = showMatch && passengerRoute?.origin ? passengerRoute.origin : ride.departure;
+  const primaryDestination = showMatch && passengerRoute?.destination ? passengerRoute.destination : ride.destination;
+  const fare = ride.passengerFare ?? ride.price;
+  const details = [formatDistance(ride.distance), formatDuration(ride.duration)].filter(Boolean);
 
-  const handlePress = () => {
+  const openDetail = () => {
     router.push({
       pathname: '/ride/[id]',
       params: {
         id: ride.id,
+        context: showMatch ? 'search' : undefined,
+        passengerOrigin: passengerRoute?.origin,
+        passengerDestination: passengerRoute?.destination,
+        passengerOriginLat: passengerRoute?.originLat?.toString(),
+        passengerOriginLng: passengerRoute?.originLng?.toString(),
+        passengerDestinationLat: passengerRoute?.destinationLat?.toString(),
+        passengerDestinationLng: passengerRoute?.destinationLng?.toString(),
+        passengerDate: passengerRoute?.date,
+        seats: passengerRoute?.seats?.toString(),
         matchType: ride.matchType,
         matchScore: ride.matchScore?.toString(),
         pickupDistanceKm: ride.pickupDistanceKm?.toString(),
+        dropoffDistanceKm: ride.dropoffDistanceKm?.toString(),
         detourKm: ride.detourKm?.toString(),
         routeOverlap: ride.routeOverlap?.toString(),
+        sharedDistanceKm: ride.sharedDistanceKm?.toString(),
+        pickupRoutePosition: ride.pickupRoutePosition?.toString(),
+        dropoffRoutePosition: ride.dropoffRoutePosition?.toString(),
+        expectedPickupTime: ride.expectedPickupTime,
+        estimatedDetourMinutes: ride.estimatedDetourMinutes?.toString(),
+        passengerFare: ride.passengerFare?.toString(),
+        passengerPricePerSeat: ride.passengerPricePerSeat?.toString(),
       },
     } as any);
   };
 
   return (
-    <View style={[styles.cardContainer, isSoldOut && styles.cardDisabled]}>
+    <View style={[styles.card, featured && styles.featuredCard, isSoldOut && styles.disabledCard]}>
       <Pressable
-        onPress={handlePress}
         accessibilityRole="button"
-        accessibilityLabel={`Chuyến đi lúc ${formattedTime} ngày ${formattedDate}, từ ${ride.departure} đến ${ride.destination}, giá ${ride.price.toLocaleString('vi-VN')} đồng`}
+        accessibilityLabel={`Chuyến ${format(new Date(ride.departureTime), 'HH:mm')}, từ ${primaryOrigin} đến ${primaryDestination}, ${fare.toLocaleString('vi-VN')} đồng, còn ${ride.availableSeats} chỗ`}
         accessibilityHint="Nhấn để xem chi tiết chuyến đi"
-        android_ripple={{ color: 'rgba(0, 0, 0, 0.05)', borderless: false }}
-        style={({ pressed }) => [
-          styles.cardPressable,
-          pressed && Platform.OS !== 'android' && styles.cardPressed,
-        ]}
+        onPress={openDetail}
+        style={({ pressed }) => [styles.pressable, pressed && styles.pressed, Platform.OS === 'web' && ({ cursor: 'pointer' } as any)]}
       >
-        <View style={styles.cardContent}>
-          <RideHeader
-            departureTime={ride.departureTime}
-            price={ride.price}
-            availableSeats={ride.availableSeats}
-            matchType={ride.matchType}
-            showMatch={showMatch}
-          />
+        <View style={styles.content}>
+          {featured && ride.matchScore != null ? (
+            <View style={styles.bestRow}>
+              <Star size={14} color="#B45309" fill="#FBBF24" />
+              <AppText variant="caption" weight="semibold" style={styles.bestText}>PHÙ HỢP NHẤT</AppText>
+              <AppText variant="caption" weight="semibold" style={styles.bestScore}>{ride.matchScore}%</AppText>
+            </View>
+          ) : null}
 
-          <RideRoute
-            departure={ride.departure}
-            destination={ride.destination}
-          />
+          <View style={styles.header}>
+            <View>
+              <AppText variant="h2" weight="semibold" style={styles.time}>{format(new Date(ride.departureTime), 'HH:mm')}</AppText>
+              <AppText variant="caption" style={styles.date}>{rideDate(ride.departureTime)}</AppText>
+            </View>
+            <View style={styles.priceBlock}>
+              <AppText variant="h2" weight="semibold" style={styles.price}>{fare.toLocaleString('vi-VN')}đ</AppText>
+              {showMatch && ride.passengerFare != null ? <AppText variant="caption">chi phí của bạn</AppText> : null}
+            </View>
+          </View>
 
-          <DriverSummary driver={ride.driver} />
+          <RouteSummary origin={primaryOrigin} destination={primaryDestination} />
+          {showMatch && passengerRoute ? (
+            <AppText variant="caption" numberOfLines={2} style={styles.driverRoute}>
+              Tài xế đi: {ride.departure} → {ride.destination}
+            </AppText>
+          ) : null}
 
-          <RideMetadata
-            availableSeats={ride.availableSeats}
-            distance={ride.distance}
-            duration={ride.duration}
-          />
+          {showMatch ? <MatchExplanation ride={ride} compact={!featured} featured={featured} /> : null}
+
+          <DriverSummary ride={ride} />
+
+          <View style={styles.footer}>
+            <View style={styles.metaItem}>
+              <Users size={15} color={ride.availableSeats === 1 ? colors.warning : colors.textSecondary} />
+              <AppText variant="caption" weight="semibold" style={ride.availableSeats === 1 ? styles.warning : undefined}>
+                {isSoldOut ? 'Hết chỗ' : `Còn ${ride.availableSeats} chỗ`}
+              </AppText>
+            </View>
+            {!showMatch && details.length ? (
+              <View style={styles.metaItem}>
+                <Navigation size={14} color={colors.textSecondary} />
+                <AppText variant="caption">{details.join(' · ')}</AppText>
+              </View>
+            ) : null}
+          </View>
         </View>
       </Pressable>
     </View>
@@ -304,356 +198,51 @@ export const RideCard: React.FC<RideCardProps> = memo(({ ride, showMatch = false
 
 RideCard.displayName = 'RideCard';
 
-// ─── Skeleton Component: RideCardSkeleton ────────────────────────────────────
-export const RideCardSkeleton: React.FC = memo(() => (
-  <View style={styles.cardContainer}>
-    <View style={styles.cardPressable}>
-      <View style={styles.cardContent}>
-        <View style={styles.skeletonHeader}>
-        <View style={styles.skeletonSchedule}>
-          <SkeletonLoader height={22} width={64} borderRadius={5} />
-          <SkeletonLoader height={13} width={92} borderRadius={4} />
-        </View>
-        <SkeletonLoader height={22} width={76} borderRadius={5} />
-      </View>
-
-      <View style={styles.skeletonRoute}>
-        <View style={styles.skeletonRail}>
-          <View style={styles.skeletonDot} />
-          <View style={styles.skeletonLine} />
-          <View style={styles.skeletonDot} />
-        </View>
-        <View style={styles.skeletonAddresses}>
-          <SkeletonLoader height={15} width="85%" borderRadius={4} />
-          <SkeletonLoader height={15} width="68%" borderRadius={4} />
-        </View>
-      </View>
-
-      <View style={styles.skeletonDriver}>
-        <SkeletonLoader height={38} width={38} borderRadius={19} />
-        <View style={styles.skeletonDriverMeta}>
-          <SkeletonLoader height={14} width={110} borderRadius={4} />
-          <SkeletonLoader height={12} width={45} borderRadius={3} />
-        </View>
-      </View>
-
-      <View style={styles.skeletonMetadata}>
-        <SkeletonLoader height={13} width={70} borderRadius={4} />
-        <SkeletonLoader height={13} width={50} borderRadius={4} />
-        <SkeletonLoader height={13} width={50} borderRadius={4} />
-      </View>
-      </View>
+export const RideCardSkeleton = memo(() => (
+  <View style={styles.card} accessibilityRole="progressbar" accessibilityLabel="Đang tải chuyến đi">
+    <View style={styles.content}>
+      <View style={styles.skeletonHeader}><SkeletonLoader height={26} width={70} /><SkeletonLoader height={26} width={90} /></View>
+      <View style={styles.skeletonRoute}><SkeletonLoader height={18} width="82%" /><SkeletonLoader height={18} width="66%" /></View>
+      <SkeletonLoader height={52} width="100%" borderRadius={radius.card} />
+      <View style={styles.skeletonDriver}><SkeletonLoader height={42} width={42} borderRadius={21} /><SkeletonLoader height={18} width={150} /></View>
     </View>
   </View>
 ));
+
 RideCardSkeleton.displayName = 'RideCardSkeleton';
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  cardContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E5E7EB', // Viền xám neutral rất nhẹ nhàng (gray-200)
-    marginBottom: 20, // Tăng mạnh khoảng cách giữa các card
-    marginHorizontal: 4, // Thêm khoảng lề nhỏ hai bên để thoát khỏi mép màn hình nếu padding không đủ
-    // Đổ bóng nhẹ nhàng, tự nhiên trên Android và iOS
-    elevation: 3,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-  },
-  cardDisabled: {
-    opacity: 0.65,
-    backgroundColor: '#FAFAFC',
-  },
-  cardPressable: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  cardContent: {
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 18,
-  },
-  cardPressed: {
-    backgroundColor: '#F8F9FA',
-    opacity: 0.96,
-    transform: [{ scale: 0.995 }],
-  },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16, // Khoảng cách thoáng từ Header xuống Route
-  },
-  scheduleBlock: {
-    flexDirection: 'column',
-  },
-  timeText: {
-    fontSize: 21,
-    fontWeight: '700',
-    color: '#111827', // text đậm nét, nổi bật
-    letterSpacing: -0.4,
-    fontVariant: ['tabular-nums'],
-    lineHeight: 26,
-  },
-  dateText: {
-    fontSize: 12.5,
-    fontWeight: '400',
-    color: '#6B7280',
-    marginTop: 2,
-    lineHeight: 17,
-  },
-  priceBlock: {
-    alignItems: 'flex-end',
-  },
-  priceText: {
-    fontSize: 21,
-    fontWeight: '700',
-    color: colors.primary, // Màu xanh chủ đạo CoRide
-    letterSpacing: -0.3,
-    fontVariant: ['tabular-nums'],
-    lineHeight: 26,
-  },
-  soldOutBadge: {
-    marginTop: 4,
-    backgroundColor: 'rgba(115, 115, 119, 0.1)',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 4,
-  },
-  soldOutBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textTertiary,
-    lineHeight: 14,
-  },
-  matchBadge: {
-    marginTop: 4,
-    backgroundColor: 'rgba(0, 113, 227, 0.08)',
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 4,
-  },
-  matchBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.primary,
-    lineHeight: 14,
-  },
-
-  // Route - Hiển thị trực tiếp, KHÔNG dùng khung viền xám lồng bên trong
-  routeContainer: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    marginBottom: 16, // Khoảng cách thoáng từ Route xuống Driver
-    paddingVertical: 2,
-  },
-  routeRail: {
-    width: 14,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-    marginRight: 12,
-  },
-  pickupMarker: {
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
-    borderWidth: 2,
-    borderColor: '#0F766E', // teal trang nhã
-    backgroundColor: '#FFFFFF',
-  },
-  routeLine: {
-    width: 1.5,
-    flex: 1,
-    minHeight: 16,
-    backgroundColor: '#E5E7EB',
-    marginVertical: 3,
-  },
-  destinationMarker: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#DC2626', // red
-  },
-  routeLocations: {
-    flex: 1,
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  locationRow: {
-    justifyContent: 'center',
-    minHeight: 20,
-  },
-  locationText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-    letterSpacing: -0.2,
-    lineHeight: 20,
-  },
-
-  // Driver
-  driverRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14, // Khoảng cách từ Driver xuống Metadata
-  },
-  driverAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.surfaceMuted,
-  },
-  avatarFallback: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(0, 113, 227, 0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  driverMeta: {
-    flex: 1,
-    justifyContent: 'center',
-    marginLeft: 12,
-    marginRight: 8,
-    gap: 2,
-  },
-  driverNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  driverName: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: '#111827',
-    letterSpacing: -0.2,
-  },
-  verifiedIcon: {
-    marginTop: 0.5,
-  },
-  driverSubRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  starRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  ratingText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#111827',
-    fontVariant: ['tabular-nums'],
-    lineHeight: 16,
-  },
-  newDriverText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#6B7280',
-    lineHeight: 16,
-  },
-  chevron: {
-    marginLeft: 'auto',
-  },
-
-  // Metadata
-  metadataContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    rowGap: 4,
-    paddingTop: 2,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  metaText: {
-    fontSize: 12.5,
-    fontWeight: '500',
-    color: '#4B5563',
-    lineHeight: 17,
-  },
-  metaTextWarning: {
-    color: '#D97706',
-    fontWeight: '600',
-  },
-  metaTextSoldOut: {
-    color: colors.textTertiary,
-    fontWeight: '600',
-  },
-  metaDot: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#9CA3AF',
-    marginHorizontal: 8,
-  },
-
-  // Skeleton
-  skeletonHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  skeletonSchedule: {
-    gap: 4,
-  },
-  skeletonRoute: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    marginBottom: 16,
-    paddingVertical: 2,
-  },
-  skeletonRail: {
-    width: 14,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-    marginRight: 12,
-  },
-  skeletonDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.08)',
-  },
-  skeletonLine: {
-    width: 1.5,
-    flex: 1,
-    minHeight: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.06)',
-    marginVertical: 3,
-  },
-  skeletonAddresses: {
-    flex: 1,
-    gap: 12,
-  },
-  skeletonDriver: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  skeletonDriverMeta: {
-    flex: 1,
-    marginLeft: 12,
-    gap: 4,
-  },
-  skeletonMetadata: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    paddingTop: 2,
-  },
+  card: { backgroundColor: colors.surface, borderRadius: radius.card, elevation: 2, marginBottom: spacing.lg, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.07, shadowRadius: 14 },
+  featuredCard: { elevation: 4, shadowOpacity: 0.11, shadowRadius: 18 },
+  disabledCard: { opacity: 0.6 },
+  pressable: { borderRadius: radius.card, overflow: 'hidden' },
+  pressed: { backgroundColor: colors.navigationPressed, opacity: 0.86 },
+  content: { gap: spacing.md, padding: spacing.lg },
+  bestRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
+  bestText: { color: '#92400E', letterSpacing: 0.35 },
+  bestScore: { color: colors.primary, marginLeft: 'auto' },
+  header: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },
+  time: { fontVariant: ['tabular-nums'] },
+  date: { marginTop: 1, textTransform: 'capitalize' },
+  priceBlock: { alignItems: 'flex-end' },
+  price: { color: colors.primary, fontVariant: ['tabular-nums'] },
+  route: { flexDirection: 'row', minHeight: 58 },
+  routeRail: { alignItems: 'center', marginRight: spacing.sm, paddingVertical: 5, width: 14 },
+  pickupMarker: { backgroundColor: colors.surface, borderColor: colors.mapPickup, borderRadius: radius.pill, borderWidth: 2, height: 11, width: 11 },
+  routeLine: { backgroundColor: colors.borderStrong, flex: 1, marginVertical: 3, width: 2 },
+  dropoffMarker: { backgroundColor: colors.mapDestination, borderRadius: radius.pill, height: 10, width: 10 },
+  routeCopy: { flex: 1, gap: spacing.md, justifyContent: 'space-between' },
+  driverRoute: { color: colors.textSecondary },
+  driverRow: { alignItems: 'center', borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', paddingTop: spacing.md },
+  avatar: { backgroundColor: colors.surfaceMuted, borderRadius: 21, height: 42, width: 42 },
+  avatarFallback: { alignItems: 'center', backgroundColor: colors.primarySoft, borderRadius: 21, height: 42, justifyContent: 'center', width: 42 },
+  driverCopy: { flex: 1, gap: 2, marginLeft: spacing.sm, minWidth: 0 },
+  driverNameRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
+  rating: { alignItems: 'center', flexDirection: 'row', gap: 3, marginLeft: 'auto' },
+  footer: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, minHeight: layout.minTouchTarget - 12 },
+  metaItem: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
+  warning: { color: colors.warning },
+  skeletonHeader: { flexDirection: 'row', justifyContent: 'space-between' },
+  skeletonRoute: { gap: spacing.md, paddingVertical: spacing.sm },
+  skeletonDriver: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
 });

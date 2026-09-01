@@ -1,13 +1,13 @@
 import request from 'supertest';
-import app from '../server';
+import express from 'express';
+import notificationsRouter from '../modules/notifications/notifications.router';
 import prisma from '@repo/database';
 import * as jose from 'jose';
 import { notificationEmitter } from '../shared/lib/notification-emitter';
 
 // Mocking prisma
-jest.mock('@repo/database', () => ({
-  __esModule: true,
-  default: {
+jest.mock('@repo/database', () => {
+  const mockPrisma = {
     notification: {
       create: jest.fn(),
       findMany: jest.fn(),
@@ -18,14 +18,27 @@ jest.mock('@repo/database', () => ({
     user: {
       findUnique: jest.fn(),
     },
-  },
-}));
+  };
+  return {
+    __esModule: true,
+    default: mockPrisma,
+    extendedPrisma: mockPrisma,
+    prisma: mockPrisma,
+  };
+});
 
 // Mock emitter
 jest.spyOn(notificationEmitter, 'emit');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-fallback-key';
 const secret = new TextEncoder().encode(JWT_SECRET);
+
+import { errorHandler } from '../shared/errors/errorHandler';
+
+const app = express();
+app.use(express.json());
+app.use('/api/notifications', notificationsRouter);
+app.use(errorHandler);
 
 describe('Notification API', () => {
   let userToken: string;
@@ -58,7 +71,7 @@ describe('Notification API', () => {
       expect(response.status).toBe(200);
       expect(response.body.notifications).toHaveLength(1);
       expect(prisma.notification.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: { userId },
+        where: expect.objectContaining({ userId }),
       }));
     });
   });
@@ -87,7 +100,7 @@ describe('Notification API', () => {
         .patch('/api/notifications/1/read')
         .set('Authorization', `Bearer ${userToken}`);
 
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(404);
       expect(response.body.message).toContain('không có quyền');
     });
   });

@@ -5140,7 +5140,7 @@ export namespace Prisma {
     readonly rideBalance: FieldRef<"Wallet", 'Float'>
     readonly driverEarnings: FieldRef<"Wallet", 'Float'>
   }
-    
+
 
   // Custom InputTypes
   /**

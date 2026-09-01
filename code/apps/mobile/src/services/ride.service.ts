@@ -10,10 +10,12 @@ export interface Ride {
     lastName: string;
     avatar?: string;
     rating?: number;
+    ratingCount?: number;
     isVerified?: boolean;
     vehicle?: {
       brand?: string;
       model?: string;
+      type?: string;
       licensePlate?: string;
       color?: string;
     };
@@ -41,9 +43,26 @@ export interface Ride {
   detourKm?: number;
   detourRatio?: number;
   routeOverlap?: number;
+  sharedDistanceKm?: number;
+  pickupRoutePosition?: number;
+  dropoffRoutePosition?: number;
   expectedPickupTime?: string;
+  estimatedDetourMinutes?: number;
   timeDifferenceMinutes?: number;
+  passengerFare?: number;
+  passengerPricePerSeat?: number;
   bookingPolicy?: BookingPolicy;
+  routePolyline?: string | null;
+  allowRoutePickup?: boolean;
+  allowSmoking?: boolean;
+  allowPets?: boolean;
+  allowLuggage?: boolean;
+  description?: string | null;
+  vehicle?: {
+    type?: string;
+    licensePlate?: string;
+    color?: string;
+  } | null;
   scheduleId?: string | null;
   stops?: RideStop[];
 }
@@ -71,7 +90,7 @@ export interface RideSearchParams {
 const normalizeRide = (ride: any): Ride => ({
   ...ride,
   departure: ride.departure ?? ride.origin,
-  price: ride.price ?? ride.pricePerSeat,
+  price: ride.passengerFare ?? ride.price ?? ride.pricePerSeat,
   totalSeats: ride.totalSeats ?? ride.offeredSeats ?? ride.availableSeats,
   departureCoords: ride.departureCoords ?? (ride.originLat != null && ride.originLng != null
     ? { latitude: ride.originLat, longitude: ride.originLng }
@@ -83,7 +102,9 @@ const normalizeRide = (ride: any): Ride => ({
     ...ride.driver,
     avatar: ride.driver?.avatar ?? ride.driver?.avatarUrl,
     rating: ride.driver?.rating ?? ride.driver?.driverRating,
+    ratingCount: ride.driver?.ratingCount ?? ride.driver?.driverRatingCount,
     isVerified: ride.driver?.isVerified ?? ride.driver?.isDriverVerified ?? false,
+    vehicle: ride.driver?.vehicle ?? ride.vehicle,
   },
 });
 

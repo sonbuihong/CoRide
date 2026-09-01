@@ -44,11 +44,27 @@ export default function BookingManageScreen() {
     }
   });
 
+  const cancelBookingMutation = useMutation({
+    mutationFn: () => bookingService.cancelBooking(id as string, 'Hành khách chủ động hủy đặt chỗ'),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['booking', id] }),
+        queryClient.invalidateQueries({ queryKey: ['active-booking'] }),
+        queryClient.invalidateQueries({ queryKey: ['my-bookings'] }),
+        queryClient.invalidateQueries({ queryKey: ['rides'] }),
+      ]);
+      Alert.alert('Đã hủy đặt chỗ', 'Ghế đã được trả lại cho chuyến đi.');
+    },
+    onError: (error: any) => {
+      Alert.alert('Không thể hủy', error.response?.data?.message || 'Vui lòng thử lại sau.');
+    },
+  });
+
   const confirmPaymentMutation = useMutation({
     mutationFn: () => paymentService.confirmSimulatorPayment(id as string),
-    onSuccess: (data) => {
-      Alert.alert('Đang xử lý', data.message || 'Thanh toán đang được xác nhận.');
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['booking', id] }), 3500);
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({ queryKey: ['booking', id] });
+      Alert.alert('Thanh toán thành công', data.message || 'Bạn có thể đánh giá chuyến đi.');
     },
     onError: (error: any) => {
       Alert.alert('Lỗi', error.response?.data?.message || 'Có lỗi xảy ra khi tạo thanh toán.');
@@ -253,7 +269,7 @@ export default function BookingManageScreen() {
         </View>
       )}
 
-      {isPassenger && booking.status === 'CONFIRMED' && booking.paymentStatus === 'UNPAID' && (
+      {isPassenger && booking.status === 'COMPLETED' && booking.paymentStatus === 'UNPAID' && (
         <View className="p-6 bg-surface border-t border-border/40">
           <AppButton 
             title="Thanh toán chuyến đi"
@@ -267,7 +283,27 @@ export default function BookingManageScreen() {
         </View>
       )}
 
-      {booking.status === 'COMPLETED' && displayUser?.id && (
+      {isPassenger && ['PENDING', 'CONFIRMED'].includes(booking.status) && ['SCHEDULED', 'FULL'].includes(booking.ride.status) && (
+        <View className="px-6 pb-4 bg-surface border-t border-border/40">
+          <AppButton
+            title="Hủy đặt chỗ"
+            variant="outline"
+            onPress={() => Alert.alert(
+              'Hủy đặt chỗ?',
+              'Ghế của bạn sẽ được trả lại để hành khách khác có thể đặt.',
+              [
+                { text: 'Quay lại', style: 'cancel' },
+                { text: 'Hủy đặt chỗ', style: 'destructive', onPress: () => cancelBookingMutation.mutate() },
+              ],
+            )}
+            disabled={cancelBookingMutation.isPending}
+            textClassName="text-rejected"
+            accessibilityLabel="Hủy đặt chỗ này"
+          />
+        </View>
+      )}
+
+      {booking.status === 'COMPLETED' && booking.paymentStatus === 'PAID' && displayUser?.id && (
         <View className="p-6 bg-surface border-t border-border/40">
           <AppButton
             title="Đánh giá chuyến đi"

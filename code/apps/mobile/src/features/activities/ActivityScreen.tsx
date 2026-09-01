@@ -14,17 +14,21 @@ import { ActivitySegmentedControl } from './ActivitySegmentedControl';
 import type { ActivityAction, ActivityItem, ActivityRole, ActivitySegment } from './activity.types';
 import { emptyStateCopy, formatActivityMonth, segmentCountLabel } from './activity.utils';
 
-interface Props { role: ActivityRole }
+interface Props {
+  role: ActivityRole;
+  initialSegment?: ActivitySegment;
+  navigationKey?: string;
+}
 
 type ListRow = { type: 'month'; id: string; label: string } | { type: 'activity'; item: ActivityItem };
 
-export function ActivityScreen({ role }: Props) {
+export function ActivityScreen({ role, initialSegment = 'ACTIVE', navigationKey }: Props) {
   const router = useRouter();
   const listRef = useRef<FlatList<ListRow>>(null);
   const { fontScale, width } = useWindowDimensions();
   const compactLayout = width < 390 || fontScale > 1.15;
   const veryCompactLayout = width < 350 || fontScale > 1.25;
-  const [segment, setSegment] = useState<ActivitySegment>('ACTIVE');
+  const [segment, setSegment] = useState<ActivitySegment>(initialSegment);
   const [now, setNow] = useState(() => new Date());
   const socketConnected = useActivityRealtime();
   const isOffline = useAppStore((state) => state.isOffline);
@@ -52,6 +56,11 @@ export function ActivityScreen({ role }: Props) {
     return result;
   }, [activities, segment]);
   const count = query.data?.pages[0]?.counts?.[segment] ?? 0;
+
+  useEffect(() => {
+    setSegment(initialSegment);
+    requestAnimationFrame(() => listRef.current?.scrollToOffset({ offset: 0, animated: false }));
+  }, [initialSegment, navigationKey]);
 
   useEffect(() => {
     if (segment !== 'UPCOMING') return;

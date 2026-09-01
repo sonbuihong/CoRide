@@ -77,9 +77,19 @@ export interface DriverBookingsResponse {
   bookings: DriverBookingSummary[];
 }
 
+export interface CreateBookingOptions {
+  pickupStopId?: string;
+  passengerLat?: number;
+  passengerLng?: number;
+  pickupAddress?: string;
+  dropoffLat?: number;
+  dropoffLng?: number;
+  dropoffAddress?: string;
+}
+
 export const bookingService = {
-  async createBooking(rideId: string, seats: number, pickupStopId?: string) {
-    const response = await api.post('/bookings', { rideId, seats, pickupStopId });
+  async createBooking(rideId: string, seats: number, options: CreateBookingOptions = {}) {
+    const response = await api.post('/bookings', { rideId, seats, ...options });
     return response.data;
   },
 
@@ -103,8 +113,8 @@ export const bookingService = {
     return response.data;
   },
 
-  async cancelBooking(id: string) {
-    const response = await api.patch(`/bookings/${id}/cancel`);
+  async cancelBooking(id: string, cancelReason: string) {
+    const response = await api.patch(`/bookings/${id}/cancel`, { cancelReason });
     return response.data;
   },
 

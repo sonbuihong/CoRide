@@ -87,6 +87,7 @@ export default function ActiveRideScreen() {
       SocketEvents.BOOKING_PICKED_UP,
       SocketEvents.BOOKING_COMPLETED,
       SocketEvents.BOOKING_CONFIRMED,
+      SocketEvents.BOOKING_CANCELLED,
       SocketEvents.RIDE_UPDATED,
     ].forEach((event) => socketService.on(event, refresh));
 
@@ -98,6 +99,7 @@ export default function ActiveRideScreen() {
         SocketEvents.BOOKING_PICKED_UP,
         SocketEvents.BOOKING_COMPLETED,
         SocketEvents.BOOKING_CONFIRMED,
+        SocketEvents.BOOKING_CANCELLED,
         SocketEvents.RIDE_UPDATED,
       ].forEach((event) => socketService.off(event, refresh));
     };

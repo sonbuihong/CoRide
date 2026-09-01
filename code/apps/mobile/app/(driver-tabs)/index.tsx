@@ -52,7 +52,7 @@ const RIDE_EVENTS = [
 const BOOKING_EVENTS = [
   SocketEvents.BOOKING_NEW_REQUEST, SocketEvents.BOOKING_CONFIRMED,
   SocketEvents.BOOKING_REJECTED, SocketEvents.BOOKING_PICKED_UP,
-  SocketEvents.BOOKING_COMPLETED,
+  SocketEvents.BOOKING_COMPLETED, SocketEvents.BOOKING_CANCELLED,
 ] as const;
 
 const TRIP_EVENTS = [

@@ -22,6 +22,14 @@ export default function ManageRidesScreen() {
     );
   }
 
+  const statusPresentation: Record<string, { label: string; className: string }> = {
+    SCHEDULED: { label: 'Sắp khởi hành', className: 'bg-blue-100 text-blue-700' },
+    FULL: { label: 'Đã đủ chỗ', className: 'bg-amber-100 text-amber-700' },
+    ONGOING: { label: 'Đang chạy', className: 'bg-green-100 text-green-700' },
+    COMPLETED: { label: 'Đã hoàn thành', className: 'bg-slate-100 text-slate-600' },
+    CANCELLED: { label: 'Đã hủy', className: 'bg-red-100 text-red-700' },
+  };
+
   return (
     <View className="flex-1 bg-gray-50">
       <ScrollView 
@@ -53,7 +61,10 @@ export default function ManageRidesScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          myRides.map((ride: any) => (
+          myRides.map((ride: any) => {
+            const status = statusPresentation[ride.status] ?? { label: ride.status, className: 'bg-gray-100 text-gray-600' };
+            const bookedSeats = Math.max(0, (ride.totalSeats ?? ride.offeredSeats ?? 0) - (ride.availableSeats ?? 0));
+            return (
             <TouchableOpacity 
               key={ride.id}
               className="bg-white p-5 rounded-2xl mb-4 shadow-sm border border-gray-100"
@@ -64,9 +75,9 @@ export default function ManageRidesScreen() {
                   <Text className="text-gray-800 font-bold text-lg" numberOfLines={1}>{ride.destination}</Text>
                   <Text className="text-gray-500 text-sm">Từ: {ride.departure}</Text>
                 </View>
-                <View className={`px-2 py-1 rounded-md ${ride.status === 'ACTIVE' ? 'bg-green-100' : 'bg-gray-100'}`}>
-                  <Text className={`text-xs font-bold ${ride.status === 'ACTIVE' ? 'text-green-700' : 'text-gray-600'}`}>
-                    {ride.status === 'ACTIVE' ? 'Đang chạy' : 'Đã kết thúc'}
+                <View className={`px-2 py-1 rounded-md ${status.className.split(' ')[0]}`}>
+                  <Text className={`text-xs font-bold ${status.className.split(' ')[1]}`}>
+                    {status.label}
                   </Text>
                 </View>
               </View>
@@ -81,7 +92,7 @@ export default function ManageRidesScreen() {
                 <View className="flex-row items-center">
                   <Users size={14} color="#6B7280" />
                   <Text className="ml-1 text-gray-500 text-xs">
-                    {ride.bookedSeats}/{ride.totalSeats} ghế
+                    {bookedSeats}/{ride.totalSeats} ghế
                   </Text>
                 </View>
               </View>
@@ -97,7 +108,8 @@ export default function ManageRidesScreen() {
                 </View>
               )}
             </TouchableOpacity>
-          ))
+          );
+          })
         )}
       </ScrollView>
     </View>

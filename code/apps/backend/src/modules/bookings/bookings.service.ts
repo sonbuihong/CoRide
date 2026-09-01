@@ -17,6 +17,76 @@ const MAX_DEST_DEVIATION_KM = 5;
 const SCHEDULED_APPROVAL_TIMEOUT_MS = 15 * 60_000;
 
 export class BookingsService {
+  private static async assertPassengerCanReserve(
+    tx: Pick<typeof prisma, 'ride' | 'booking' | '$queryRaw'>,
+    passengerId: string,
+  ) {
+    // Serialize booking attempts for one passenger without changing the schema.
+    // The lock is transaction-scoped and released automatically on commit/rollback.
+    // PostgreSQL returns `void` for pg_advisory_xact_lock. Cast it so Prisma
+    // can deserialize the result while the transaction-scoped lock remains
+    // held until commit/rollback.
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`coride:booking:${passengerId}`}))::text AS lock_result`;
+
+    const activeDriverRide = await tx.ride.findFirst({
+      where: { driverId: passengerId, status: { in: ['SCHEDULED', 'FULL', 'ONGOING'] } },
+      select: { id: true },
+    });
+    if (activeDriverRide) {
+      throw new AppError('Bạn đang có một chuyến chưa hoàn thành với vai trò tài xế', 409);
+    }
+
+    const activePassengerBooking = await tx.booking.findFirst({
+      where: {
+        passengerId,
+        status: { in: ['PENDING', 'CONFIRMED'] },
+        ride: { status: { in: ['SCHEDULED', 'FULL', 'ONGOING'] } },
+      },
+      select: { id: true },
+    });
+    if (activePassengerBooking) {
+      throw new AppError('Bạn đã có một chuyến đang hoạt động hoặc chờ xác nhận', 409);
+    }
+  }
+
+  /**
+   * `availableSeats` is the capacity source of truth. `FULL` is a searchable
+   * lifecycle projection of that value for scheduled rides, so keep it in the
+   * same database transaction as every reserve/release operation.
+   */
+  private static async syncScheduledRideAvailability(
+    tx: Pick<typeof prisma, 'ride'>,
+    rideId: string,
+  ) {
+    await tx.ride.updateMany({
+      where: { id: rideId, status: 'SCHEDULED', availableSeats: 0 },
+      data: { status: 'FULL' },
+    });
+    await tx.ride.updateMany({
+      where: { id: rideId, status: 'FULL', availableSeats: { gt: 0 } },
+      data: { status: 'SCHEDULED' },
+    });
+  }
+
+  private static async emitRideAvailability(rideId: string) {
+    const ride = await prisma.ride.findUnique({
+      where: { id: rideId },
+      select: { id: true, status: true, availableSeats: true, updatedAt: true },
+    });
+    if (!ride) return;
+
+    SocketEventService.emitGlobal(SocketEvents.RIDE_SEATS_UPDATED, {
+      rideId: ride.id,
+      availableSeats: ride.availableSeats,
+      status: ride.status,
+      updatedAt: ride.updatedAt.toISOString(),
+    });
+    SocketEventService.emitGlobal(SocketEvents.RIDE_UPDATED, ride);
+    if (ride.availableSeats === 0) {
+      SocketEventService.emitGlobal(SocketEvents.RIDE_FULL, { rideId: ride.id });
+    }
+  }
+
   static async createBooking(passengerId: string, data: CreateBookingInput) {
     const { rideId, seats } = data;
 
@@ -108,12 +178,14 @@ export class BookingsService {
     // ─── Nhánh ONGOING: kiểm tra "thuận đường" ──────────────────────────────
     if (ride.status === 'ONGOING') {
       const booking = await BookingsService.createOngoingBooking(passengerId, normalizedData, ride, seats);
+      await this.emitRideAvailability(rideId);
       RideRouteOptimizerService.refreshInBackground(rideId);
       return booking;
     }
 
     // ─── Nhánh SCHEDULED: logic cũ với kiểm tra trùng lịch ─────────────────
     const booking = await BookingsService.createScheduledBooking(passengerId, normalizedData, ride, seats);
+    await this.emitRideAvailability(rideId);
     RideRouteOptimizerService.refreshInBackground(rideId);
     return booking;
   }
@@ -139,17 +211,28 @@ export class BookingsService {
     if (pickup.lat == null || pickup.lng == null || dropoff.lat == null || dropoff.lng == null) {
       throw new AppError('Chuyến đi thiếu tọa độ để tính mức đóng góp carpool', 400);
     }
+
+    if (ride.status === 'SCHEDULED' && ride.departureTime <= new Date()) {
+      throw new AppError('Chuyến đi này đã đến giờ khởi hành', 409);
+    }
     const routeMatch = RideMatchingService.match(ride, { origin: pickup, destination: dropoff });
     if (!routeMatch) throw new AppError('Điểm đón/trả không thỏa giới hạn lệch tuyến carpool', 400);
     const pricing = await this.calculateBookingContribution(data, ride, seats, routeMatch.detourKm);
 
     const instant = ride.bookingPolicy === 'INSTANT';
     const booking = await prisma.$transaction(async (tx) => {
+      await this.assertPassengerCanReserve(tx, passengerId);
       const reserved = await tx.ride.updateMany({
-        where: { id: rideId, availableSeats: { gte: seats } },
+        where: {
+          id: rideId,
+          status: 'SCHEDULED',
+          departureTime: { gt: new Date() },
+          availableSeats: { gte: seats },
+        },
         data: { availableSeats: { decrement: seats } },
       });
       if (reserved.count !== 1) throw new AppError('Chuyến đi không còn đủ ghế để giữ chỗ', 409);
+      await this.syncScheduledRideAvailability(tx, rideId);
       return tx.booking.create({
         data: {
           rideId, passengerId, seats,
@@ -295,11 +378,13 @@ export class BookingsService {
 
     const instant = ride.bookingPolicy === 'INSTANT';
     const booking = await prisma.$transaction(async (tx) => {
+      await this.assertPassengerCanReserve(tx, passengerId);
       const reserved = await tx.ride.updateMany({
-        where: { id: rideId, availableSeats: { gte: seats } },
+        where: { id: rideId, status: 'ONGOING', availableSeats: { gte: seats } },
         data: { availableSeats: { decrement: seats } },
       });
       if (reserved.count !== 1) throw new AppError('Chuyến đi không còn đủ ghế để giữ chỗ', 409);
+      await this.syncScheduledRideAvailability(tx, rideId);
       return tx.booking.create({
         data: {
           rideId, passengerId, seats,
@@ -442,16 +527,24 @@ export class BookingsService {
         where: { id: booking.rideId },
       });
 
-      if (!currentRide || (!booking.seatHeld && currentRide.availableSeats < booking.seats)) {
+      if (
+        !currentRide ||
+        !['SCHEDULED', 'FULL', 'ONGOING'].includes(currentRide.status) ||
+        (!booking.seatHeld && currentRide.availableSeats < booking.seats)
+      ) {
         throw new AppError('Không đủ số ghế trống để xác nhận', 400);
       }
 
-      const rideAfterUpdate = booking.seatHeld
-        ? currentRide
-        : await tx.ride.update({
-            where: { id: booking.rideId },
-            data: { availableSeats: { decrement: booking.seats } },
-          });
+      let rideAfterUpdate = currentRide;
+      if (!booking.seatHeld) {
+        const reserved = await tx.ride.updateMany({
+          where: { id: booking.rideId, availableSeats: { gte: booking.seats } },
+          data: { availableSeats: { decrement: booking.seats } },
+        });
+        if (reserved.count !== 1) throw new AppError('Không đủ số ghế trống để xác nhận', 409);
+        rideAfterUpdate = await tx.ride.findUniqueOrThrow({ where: { id: booking.rideId } });
+      }
+      await this.syncScheduledRideAvailability(tx, booking.rideId);
 
       const confirmedBooking = await tx.booking.update({
         where: { id: bookingId },
@@ -531,6 +624,7 @@ export class BookingsService {
       if (claimed.count !== 1) throw new AppError('Yêu cầu này đã được xử lý', 409);
       if (booking.seatHeld) {
         await tx.ride.update({ where: { id: booking.rideId }, data: { availableSeats: { increment: booking.seats } } });
+        await this.syncScheduledRideAvailability(tx, booking.rideId);
       }
       return tx.booking.update({
         where: { id: bookingId },
@@ -604,16 +698,24 @@ export class BookingsService {
           where: { id: booking.rideId },
         });
 
-        if (!currentRide || (!booking.seatHeld && currentRide.availableSeats < booking.seats)) {
+        if (
+          !currentRide ||
+          !['SCHEDULED', 'FULL', 'ONGOING'].includes(currentRide.status) ||
+          (!booking.seatHeld && currentRide.availableSeats < booking.seats)
+        ) {
           throw new AppError('Không đủ số ghế trống để xác nhận', 400);
         }
 
-        const rideAfterUpdate = booking.seatHeld
-          ? currentRide
-          : await tx.ride.update({
-              where: { id: booking.rideId },
-              data: { availableSeats: { decrement: booking.seats } },
-            });
+        let rideAfterUpdate = currentRide;
+        if (!booking.seatHeld) {
+          const reserved = await tx.ride.updateMany({
+            where: { id: booking.rideId, availableSeats: { gte: booking.seats } },
+            data: { availableSeats: { decrement: booking.seats } },
+          });
+          if (reserved.count !== 1) throw new AppError('Không đủ số ghế trống để xác nhận', 409);
+          rideAfterUpdate = await tx.ride.findUniqueOrThrow({ where: { id: booking.rideId } });
+        }
+        await this.syncScheduledRideAvailability(tx, booking.rideId);
 
         const confirmedBooking = await tx.booking.update({
           where: { id: bookingId },
@@ -676,6 +778,7 @@ export class BookingsService {
         if (claimed.count !== 1) throw new AppError('Yêu cầu này đã được xử lý', 409);
         if (booking.seatHeld) {
           await tx.ride.update({ where: { id: booking.rideId }, data: { availableSeats: { increment: booking.seats } } });
+          await this.syncScheduledRideAvailability(tx, booking.rideId);
         }
         return tx.booking.update({
           where: { id: bookingId },
@@ -924,6 +1027,7 @@ export class BookingsService {
           data: { availableSeats: { increment: booking.seats } },
           select: { id: true, availableSeats: true },
         });
+        await this.syncScheduledRideAvailability(tx, booking.rideId);
         const cancelled = await tx.booking.update({
           where: { id: bookingId },
           data: { status: BookingStatus.CANCELLED, cancelReason, expiresAt: null, seatHeld: false },
@@ -937,11 +1041,28 @@ export class BookingsService {
           rideId: booking.rideId,
           availableSeats: restoredRide.availableSeats,
         });
+        SocketEventService.emitToUser(booking.ride.driverId, SocketEvents.BOOKING_CANCELLED, {
+          bookingId,
+          rideId: booking.rideId,
+          reason: cancelReason,
+        });
+        SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.BOOKING_CANCELLED, {
+          bookingId,
+          rideId: booking.rideId,
+          reason: cancelReason,
+        });
       } catch (socketErr) {
         console.warn('[BookingsService] Socket emit ride:seats_updated (cancel) failed:', socketErr);
       }
 
       RideRouteOptimizerService.refreshInBackground(booking.rideId);
+      NotificationsService.createNotification(
+        booking.ride.driverId,
+        'Hành khách đã hủy đặt chỗ',
+        `${booking.seats} ghế trên tuyến ${booking.ride.origin} → ${booking.ride.destination} đã được trả lại.`,
+        'BOOKING_CANCELLED',
+        { type: 'BOOKING', id: booking.id },
+      ).catch((error) => console.error('[Notification Error]:', error));
       return cancelledBooking;
     }
 
@@ -970,6 +1091,7 @@ export class BookingsService {
         if (claimed.count !== 1) return null;
         if (booking.seatHeld) {
           await tx.ride.update({ where: { id: booking.rideId }, data: { availableSeats: { increment: booking.seats } } });
+          await this.syncScheduledRideAvailability(tx, booking.rideId);
         }
         return tx.booking.findUnique({ where: { id: booking.id } });
       });

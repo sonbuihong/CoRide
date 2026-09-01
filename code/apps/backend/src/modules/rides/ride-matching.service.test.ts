@@ -43,6 +43,7 @@ describe('RideMatchingService', () => {
     expect(result?.matchType).toBe('ON_ROUTE');
     expect(result?.matchScore).toBeGreaterThanOrEqual(90);
     expect(result?.pickupDistanceKm).toBeLessThan(0.01);
+    expect(result?.sharedDistanceKm).toBeGreaterThan(5);
   });
 
   it('không ghép khách giữa tuyến khi tài xế tắt đón dọc đường', () => {
@@ -121,7 +122,7 @@ describe('RideMatchingService', () => {
     expect(result).toBeNull();
   });
 
-  it('không loại Direct Match chỉ vì tỷ lệ vòng ước tính vượt ngưỡng', () => {
+  it('vẫn nhận Direct Match khi hai đầu hành trình thực sự gần nhau', () => {
     const shortRide = {
       ...ride,
       distance: 2,
@@ -135,29 +136,29 @@ describe('RideMatchingService', () => {
     };
 
     const result = RideMatchingService.match(shortRide, {
-      origin: { lat: 21.008, lng: 105.8 },
-      destination: { lat: 21.008, lng: 105.82 },
+      origin: { lat: 21.0005, lng: 105.8 },
+      destination: { lat: 21.0005, lng: 105.82 },
     });
 
     expect(result?.matchType).toBe('DIRECT');
-    expect(result?.matchScore).toBeGreaterThanOrEqual(90);
+    expect(result?.matchScore).toBeGreaterThanOrEqual(MATCH_CONFIG.MIN_MATCH_SCORE);
   });
 
-  it('giữ Nearby Match khi chỉ một ngưỡng detour bị vượt', () => {
+  it('ghép Nearby khi điểm đón/trả gần hai đầu tuyến và detour trong giới hạn', () => {
     const result = RideMatchingService.match(ride, {
-      origin: { lat: 21.0105, lng: 105.8 },
-      destination: { lat: 21, lng: 105.9 },
+      origin: { lat: 21, lng: 105.812 },
+      destination: { lat: 21, lng: 105.888 },
     });
 
     expect(result?.matchType).toBe('NEARBY');
     expect(result?.detourKm).toBeLessThanOrEqual(MATCH_CONFIG.MAX_DETOUR_KM);
-    expect(result?.detourRatio).toBeGreaterThan(MATCH_CONFIG.MAX_DETOUR_RATIO);
+    expect(result?.detourRatio).toBeLessThanOrEqual(MATCH_CONFIG.MAX_DETOUR_RATIO);
   });
 
-  it('loại chuyến khi cả quãng đường vòng và tỷ lệ vòng đều vượt ngưỡng', () => {
+  it('loại chuyến khi một trong hai ngưỡng detour bị vượt', () => {
     const result = RideMatchingService.match(ride, {
-      origin: { lat: 21.013, lng: 105.82 },
-      destination: { lat: 21.013, lng: 105.88 },
+      origin: { lat: 21.0105, lng: 105.8 },
+      destination: { lat: 21, lng: 105.9 },
     });
 
     expect(result).toBeNull();
@@ -180,5 +181,6 @@ describe('RideMatchingService', () => {
 
     expect(result).not.toBeNull();
     expect(result?.originDistanceKm).toBeGreaterThan(0);
+    expect(result?.pickupRoutePosition).toBeGreaterThan(0.6);
   });
 });

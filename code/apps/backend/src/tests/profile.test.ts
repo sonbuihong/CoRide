@@ -6,26 +6,25 @@ import path from 'path';
 import fs from 'fs';
 
 // Mocking prisma
-jest.mock('@repo/database', () => ({
-  __esModule: true,
-  default: {
+jest.mock('@repo/database', () => {
+  const mockPrisma = {
     user: {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
-  },
-}));
+  };
+  return {
+    __esModule: true,
+    default: mockPrisma,
+    extendedPrisma: mockPrisma,
+    prisma: mockPrisma,
+  };
+});
 
 // Mocking cloudinary
-jest.mock('../config/cloudinary', () => ({
-  uploader: {
-    upload: jest.fn(),
-  },
-  upload: {
-    single: jest.fn((fieldName) => (req: any, res: any, next: Function) => {
-      // If we are attaching a file in supertest, we should probably just let it be or mock it.
-      // To keep it simple, if we're testing the 'success' case, we ensure req.file is there.
-      // We can use a custom header to trigger 'no file' in mock if needed, or just check req.headers
+jest.mock('../config/cloudinary', () => {
+  const mockMulter = {
+    single: jest.fn((_fieldName) => (req: any, _res: any, next: Function) => {
       if (req.headers['x-test-no-file']) {
         req.file = undefined;
       } else {
@@ -33,10 +32,17 @@ jest.mock('../config/cloudinary', () => ({
       }
       next();
     }),
-  },
-}));
+  };
+  return {
+    uploader: {
+      upload: jest.fn(),
+    },
+    upload: mockMulter,
+    uploadKycImage: mockMulter,
+  };
+});
 
-const JWT_SECRET = process.env.JWT_ACCESS_SECRET || 'super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-fallback-key';
 const secret = new TextEncoder().encode(JWT_SECRET);
 
 describe('Profile API', () => {
@@ -61,7 +67,7 @@ describe('Profile API', () => {
     });
   });
 
-  describe('PATCH /api/users/profile', () => {
+  describe('PATCH /api/users/me', () => {
     const updateData = {
       firstName: 'New',
       lastName: 'Name',
@@ -77,16 +83,17 @@ describe('Profile API', () => {
       });
 
       const response = await request(app)
-        .patch('/api/users/profile')
+        .patch('/api/users/me')
         .set('Authorization', `Bearer ${accessToken}`)
         .send(updateData);
 
       expect(response.status).toBe(200);
-      expect(response.body.firstName).toBe(updateData.firstName);
-      expect(response.body.phone).toBe(updateData.phone);
+      expect(response.body.user.firstName).toBe(updateData.firstName);
+      expect(response.body.user.phone).toBe(updateData.phone);
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: userId },
         data: updateData,
+        select: expect.any(Object),
       });
     });
 
@@ -94,7 +101,7 @@ describe('Profile API', () => {
       const invalidData = { ...updateData, phone: '123' };
 
       const response = await request(app)
-        .patch('/api/users/profile')
+        .patch('/api/users/me')
         .set('Authorization', `Bearer ${accessToken}`)
         .send(invalidData);
 
@@ -104,14 +111,14 @@ describe('Profile API', () => {
 
     it('should return 401 if not authenticated', async () => {
       const response = await request(app)
-        .patch('/api/users/profile')
+        .patch('/api/users/me')
         .send(updateData);
 
       expect(response.status).toBe(401);
     });
   });
 
-  describe('POST /api/users/profile/avatar', () => {
+  describe('POST /api/users/me/avatar', () => {
     it('should upload avatar successfully (200)', async () => {
       const mockAvatarUrl = 'http://cloudinary.com/avatar.jpg';
       
@@ -121,20 +128,21 @@ describe('Profile API', () => {
       });
 
       const response = await request(app)
-        .post('/api/users/profile/avatar')
+        .post('/api/users/me/avatar')
         .set('Authorization', `Bearer ${accessToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.avatarUrl).toBe(mockAvatarUrl);
+      expect(response.body.user.avatarUrl).toBe(mockAvatarUrl);
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: userId },
         data: { avatarUrl: mockAvatarUrl },
+        select: expect.any(Object),
       });
     });
 
     it('should return 400 if no file is uploaded', async () => {
       const response = await request(app)
-        .post('/api/users/profile/avatar')
+        .post('/api/users/me/avatar')
         .set('Authorization', `Bearer ${accessToken}`)
         .set('x-test-no-file', 'true');
 
@@ -144,7 +152,7 @@ describe('Profile API', () => {
 
     it('should return 401 if not authenticated', async () => {
       const response = await request(app)
-        .post('/api/users/profile/avatar');
+        .post('/api/users/me/avatar');
 
       expect(response.status).toBe(401);
     });

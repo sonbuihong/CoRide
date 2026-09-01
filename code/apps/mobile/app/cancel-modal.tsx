@@ -33,9 +33,9 @@ export default function CancelModalScreen() {
     setLoading(true);
     try {
       if (type === 'ride') {
-        await rideService.updateRideStatus(id, 'CANCELLED');
+        await rideService.updateRideStatus(id, 'CANCELLED', reason);
       } else {
-        await bookingService.cancelBooking(id);
+        await bookingService.cancelBooking(id, reason);
       }
       
       Alert.alert('Thành công', 'Đã hủy thành công', [

@@ -2,9 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 import { extendedPrisma as prisma } from '@repo/database';
 import { AppError } from '../../shared/errors/AppError';
 import { WalletService } from './wallet.service';
-import { TransactionType, TransactionStatus, PaymentStatus, PaymentMethod, TripStatus } from '@repo/database';
+import { BookingStatus, TransactionType, TransactionStatus, PaymentStatus, PaymentMethod, TripStatus } from '@repo/database';
 import { clearDriverBusy } from '../../shared/lib/redis';
 import { emitTripUpdated } from '../trips/trip-realtime.service';
+import { SocketEventService } from '../../socket/socket.events';
+import { SocketEvents } from '@repo/shared';
 
 export class PaymentsController {
   /**
@@ -104,7 +106,13 @@ export class PaymentsController {
         if (!booking) {
           throw new AppError('Không tìm thấy chuyến đi hoặc đặt chỗ', 404);
         }
-        isAllowed = booking.passengerId === userId || booking.ride.driverId === userId;
+        if (booking.status !== BookingStatus.COMPLETED) {
+          throw new AppError('Chỉ có thể thanh toán sau khi đã hoàn thành điểm trả khách', 400);
+        }
+        if (booking.paymentStatus === PaymentStatus.PAID) {
+          throw new AppError('Đặt chỗ này đã được thanh toán', 400);
+        }
+        isAllowed = booking.passengerId === userId;
         amount = booking.totalPrice;
         description = `Thanh toan dat cho ${booking.id.substring(0, 8)}`;
       }
@@ -158,6 +166,7 @@ export class PaymentsController {
         isTrip = true;
       } else if (booking) {
         if (booking.passengerId !== userId) throw new AppError('Chỉ hành khách mới có thể xác nhận thanh toán', 403);
+        if (booking.status !== BookingStatus.COMPLETED) throw new AppError('Chỉ có thể thanh toán sau khi đã hoàn thành điểm trả khách', 400);
         if (booking.paymentStatus === PaymentStatus.PAID) throw new AppError('Đặt chỗ này đã được thanh toán', 400);
         amount = booking.totalPrice;
         isTrip = false;
@@ -230,56 +239,46 @@ export class PaymentsController {
 
       if (!booking) throw new AppError('Không tìm thấy đặt chỗ', 404);
 
-      // 1. Lấy ví của hành khách
+      // A conditional update makes repeated taps or duplicate requests safe:
+      // exactly one payment can claim the completed booking.
       const wallet = await WalletService.getOrCreateWallet(userId);
-
-      // 2. Tạo Transaction PENDING
-      const transaction = await prisma.transaction.create({
-        data: {
-          walletId: wallet.id,
-          amount: amount,
-          type: TransactionType.PAYMENT,
-          status: TransactionStatus.PENDING,
-          description: `Thanh toán mô phỏng #${id.slice(0, 8)}`,
-          bookingId: id,
+      const result = await prisma.$transaction(async (tx) => {
+        const claimed = await tx.booking.updateMany({
+          where: {
+            id,
+            passengerId: userId,
+            status: BookingStatus.COMPLETED,
+            paymentStatus: PaymentStatus.UNPAID,
+          },
+          data: { paymentStatus: PaymentStatus.PAID },
+        });
+        if (claimed.count !== 1) {
+          throw new AppError('Thanh toán đã được xử lý hoặc trạng thái đặt chỗ đã thay đổi', 409, true, 'PAYMENT_ALREADY_PROCESSED');
         }
+        const transaction = await tx.transaction.create({
+          data: {
+            walletId: wallet.id,
+            amount,
+            type: TransactionType.PAYMENT,
+            status: TransactionStatus.SUCCESS,
+            description: `Thanh toán mô phỏng #${id.slice(0, 8)}`,
+            bookingId: id,
+          },
+        });
+        return { transaction };
       });
 
-      // 3. Trả về cho client trước để hiển thị màn hình Processing
+      SocketEventService.emitToRooms(
+        [`user:${booking.passengerId}`, `user:${booking.ride.driverId}`, `ride:${booking.rideId}`],
+        SocketEvents.PAYMENT_STATUS_CHANGED,
+        { bookingId: id, rideId: booking.rideId, paymentStatus: PaymentStatus.PAID },
+      );
+
       res.status(200).json({
         success: true,
-        message: 'Đang xử lý thanh toán...',
-        data: { transactionId: transaction.id }
+        message: 'Thanh toán thành công',
+        data: { transactionId: result.transaction.id },
       });
-
-      // 4. Bắt đầu Background job để mô phỏng delay ngân hàng (3 giây)
-      setTimeout(async () => {
-        try {
-          await prisma.$transaction(async (tx) => {
-            // Cập nhật Transaction
-            await tx.transaction.update({
-              where: { id: transaction.id },
-              data: { status: TransactionStatus.SUCCESS },
-            });
-
-            await tx.booking.update({
-              where: { id },
-              data: {
-                paymentStatus: PaymentStatus.PAID,
-                // Tự động set isDroppedOff nếu tài xế cấu hình
-                isDroppedOff: true,
-              },
-            });
-          });
-          console.log(`[Simulator] Thanh toán thành công cho #${id}`);
-        } catch (err) {
-          console.error(`[Simulator] Lỗi khi xử lý background payment cho #${id}`, err);
-          await prisma.transaction.update({
-             where: { id: transaction.id },
-             data: { status: TransactionStatus.FAILED }
-          }).catch(e => console.error(e));
-        }
-      }, 3000);
 
     } catch (error) {
       next(error);

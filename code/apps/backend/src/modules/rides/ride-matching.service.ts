@@ -43,7 +43,11 @@ export interface RideMatchMetadata {
   detourKm: number;
   detourRatio: number;
   routeOverlap: number;
-  expectedPickupTime: string;
+  sharedDistanceKm: number;
+  pickupRoutePosition: number;
+  dropoffRoutePosition: number;
+  expectedPickupTime?: string;
+  estimatedDetourMinutes?: number;
   timeDifferenceMinutes: number;
 }
 
@@ -82,6 +86,15 @@ export class RideMatchingService {
       : fullRoute;
     const pickupProjection = this.projectPointToRoute(passenger.origin, route);
     const dropoffProjection = this.projectPointToRoute(passenger.destination, route);
+    // UI renders the persisted full route, while ONGOING matching uses only
+    // the remaining route. Expose positions in the full-route coordinate
+    // system so the highlighted passenger segment is never shifted forward.
+    const pickupFullRoutePosition = driverCurrentLocation
+      ? this.projectPointToRoute(passenger.origin, fullRoute).routePosition
+      : pickupProjection.routePosition;
+    const dropoffFullRoutePosition = driverCurrentLocation
+      ? this.projectPointToRoute(passenger.destination, fullRoute).routePosition
+      : dropoffProjection.routePosition;
 
     const originEndpointDistance = this.haversine(passenger.origin, driverOrigin);
     const destinationEndpointDistance = this.haversine(passenger.destination, driverDestination);
@@ -118,13 +131,13 @@ export class RideMatchingService {
     const detourKm = 2 * (pickupProjection.distanceKm + dropoffProjection.distanceKm);
     const detourRatio = detourKm / routeDistanceKm;
 
-    // Theo tài liệu thuật toán, chỉ loại khi CẢ quãng đường vòng và tỷ lệ
-    // vòng đều vượt ngưỡng. Bọc toàn bộ điều kiện trong !isDirect để Direct
-    // Match không bị loại bởi sai số chiếu điểm lên polyline.
+    // Cả giới hạn tuyệt đối và giới hạn theo tỷ lệ đều là ràng buộc an toàn:
+    // vượt một trong hai thì loại. Direct Match vẫn được miễn sai số chiếu
+    // điểm lên polyline ở đoạn rất ngắn.
     if (
       !isDirect &&
-      detourKm > MATCH_CONFIG.MAX_DETOUR_KM &&
-      detourRatio > MATCH_CONFIG.MAX_DETOUR_RATIO
+      (detourKm > MATCH_CONFIG.MAX_DETOUR_KM ||
+        detourRatio > MATCH_CONFIG.MAX_DETOUR_RATIO)
     ) {
       return null;
     }
@@ -137,11 +150,11 @@ export class RideMatchingService {
       0
     );
     const estimateStartTime = driverCurrentLocation ? new Date() : ride.departureTime;
-    const expectedPickup = new Date(
-      estimateStartTime.getTime() + durationMinutes * pickupProjection.routePosition * 60_000
-    );
+    const expectedPickup = durationMinutes > 0
+      ? new Date(estimateStartTime.getTime() + durationMinutes * pickupProjection.routePosition * 60_000)
+      : undefined;
     const timeDifferenceMinutes = passenger.desiredTime
-      ? Math.abs(expectedPickup.getTime() - passenger.desiredTime.getTime()) / 60_000
+      ? Math.abs((expectedPickup ?? estimateStartTime).getTime() - passenger.desiredTime.getTime()) / 60_000
       : 0;
 
     if (
@@ -171,7 +184,7 @@ export class RideMatchingService {
       ? Math.max(0, 1 - timeDifferenceMinutes / MATCH_CONFIG.TIME_TOLERANCE_MINUTES)
       : 1;
 
-    let matchScore = Math.round(100 * (
+    const matchScore = Math.round(100 * (
       0.25 * originScore +
       0.25 * destinationScore +
       0.20 * routeOverlap +
@@ -180,9 +193,11 @@ export class RideMatchingService {
     ));
 
     const matchType: RideMatchType = isDirect ? 'DIRECT' : isNearby ? 'NEARBY' : 'ON_ROUTE';
-    if (matchType === 'DIRECT') matchScore = Math.max(matchScore, 90);
-    if (matchType === 'NEARBY') matchScore = Math.max(matchScore, 75);
     if (matchScore < MATCH_CONFIG.MIN_MATCH_SCORE) return null;
+
+    const estimatedDetourMinutes = detourKm > 0 && ride.distance && ride.duration
+      ? Math.max(1, Math.round(detourKm * ride.duration / ride.distance))
+      : undefined;
 
     return {
       matchType,
@@ -193,7 +208,11 @@ export class RideMatchingService {
       detourKm: this.round(detourKm),
       detourRatio: this.round(detourRatio, 3),
       routeOverlap: Math.round(routeOverlap * 100),
-      expectedPickupTime: expectedPickup.toISOString(),
+      sharedDistanceKm: this.round(sharedRouteDistance),
+      pickupRoutePosition: this.round(pickupFullRoutePosition, 4),
+      dropoffRoutePosition: this.round(dropoffFullRoutePosition, 4),
+      expectedPickupTime: expectedPickup?.toISOString(),
+      estimatedDetourMinutes,
       timeDifferenceMinutes: Math.round(timeDifferenceMinutes),
     };
   }
@@ -240,10 +259,8 @@ export class RideMatchingService {
       1 - projection.distanceKm / MATCH_CONFIG.DROPOFF_RADIUS_KM
     );
     const routeProgressScore = 0.5 + 0.5 * projection.routePosition;
-    let matchScore = Math.round(100 * (0.8 * distanceScore + 0.2 * routeProgressScore));
+    const matchScore = Math.round(100 * (0.8 * distanceScore + 0.2 * routeProgressScore));
 
-    if (matchType === 'DIRECT') matchScore = Math.max(matchScore, 90);
-    if (matchType === 'NEARBY') matchScore = Math.max(matchScore, 75);
     if (matchScore < MATCH_CONFIG.MIN_MATCH_SCORE) return null;
 
     return {

@@ -16,6 +16,7 @@ jest.mock('@repo/database', () => {
   const mockPrisma = {
     ride: {
       findUnique: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
@@ -35,6 +36,7 @@ jest.mock('@repo/database', () => {
     user: {
       findUnique: jest.fn(),
     },
+    $queryRaw: jest.fn(),
     $transaction: jest.fn(),
   };
 
@@ -96,6 +98,7 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
       return Promise.resolve(null);
     });
     (prisma.ride.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+    (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ pg_advisory_xact_lock: null }]);
     (prisma.booking.aggregate as jest.Mock).mockResolvedValue({ _sum: { totalPrice: 0 } });
     (prisma.booking.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
     (prisma.pricingConfig.findUnique as jest.Mock).mockResolvedValue({
@@ -120,6 +123,7 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
         distance: 16,
         duration: 30,
         departureTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
         origin: 'A',
         destination: 'B',
         originLat: 21,
@@ -272,15 +276,17 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
   });
 
   describe('5.2 Test API Nhận chuyến / Xác nhận (PATCH /api/bookings/:id/status)', () => {
-    it('API_CFM_001: Happy Case - Tài xế xác nhận đặt chỗ thành công và giảm ghế', async () => {
+    it('API_CFM_001: Happy Case - Tài xế xác nhận booking đã giữ ghế thành công', async () => {
       const mockBooking = {
         id: bookingId,
         rideId,
         passengerId,
         seats: 2,
         status: BookingStatus.PENDING,
+        seatHeld: true,
+        expiresAt: new Date(Date.now() + 10 * 60_000),
         passenger: { id: passengerId, firstName: 'Pass', lastName: 'A' },
-        ride: { driverId: driverId, availableSeats: 4, origin: 'A', destination: 'B' }
+        ride: { driverId: driverId, availableSeats: 2, status: 'SCHEDULED', origin: 'A', destination: 'B' }
       };
       (prisma.booking.findUnique as jest.Mock).mockResolvedValue(mockBooking);
       (prisma.ride.findUnique as jest.Mock).mockResolvedValue(mockBooking.ride); // Thêm findUnique cho update status
@@ -293,8 +299,8 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
         .set('Authorization', `Bearer ${driverToken}`);
 
       expect(response.status).toBe(200);
-      expect(prisma.ride.update).toHaveBeenCalledWith(expect.objectContaining({
-        data: { availableSeats: { decrement: 2 } }
+      expect(prisma.ride.update).not.toHaveBeenCalledWith(expect.objectContaining({
+        data: { availableSeats: { decrement: 2 } },
       }));
     });
 

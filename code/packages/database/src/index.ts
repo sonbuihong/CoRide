@@ -23,28 +23,28 @@ export const extendedPrisma = prisma.$extends({
 
         if (revieweeId && typeof rating === 'number' && type) {
           const isDriverReview = type === 'DRIVER';
-          
-          const ratingField = isDriverReview ? 'driverRating' : 'passengerRating';
-          const countField = isDriverReview ? 'driverRatingCount' : 'passengerRatingCount';
 
-          const reviewee = await prisma.user.findUnique({
-            where: { id: revieweeId },
-            select: { [ratingField]: true, [countField]: true }
-          });
-
-          if (reviewee) {
-            const currentRating = (reviewee as any)[ratingField] as number;
-            const currentCount = (reviewee as any)[countField] as number;
-            const newCount = currentCount + 1;
-            const newRating = (currentRating * currentCount + rating) / newCount;
-            
-            await prisma.user.update({
-              where: { id: revieweeId },
-              data: {
-                [ratingField]: newRating,
-                [countField]: { increment: 1 }
-              }
-            });
+          // One SQL statement keeps the rolling average correct when multiple
+          // reviews arrive concurrently. A driver's initial 5.0 is not counted
+          // as a fake review because driverRatingCount starts at zero.
+          if (isDriverReview) {
+            await prisma.$executeRaw`
+              UPDATE "User"
+              SET "driverRating" = (
+                    "driverRating" * "driverRatingCount" + ${rating}
+                  ) / ("driverRatingCount" + 1),
+                  "driverRatingCount" = "driverRatingCount" + 1
+              WHERE "id" = ${revieweeId}
+            `;
+          } else {
+            await prisma.$executeRaw`
+              UPDATE "User"
+              SET "passengerRating" = (
+                    "passengerRating" * "passengerRatingCount" + ${rating}
+                  ) / ("passengerRatingCount" + 1),
+                  "passengerRatingCount" = "passengerRatingCount" + 1
+              WHERE "id" = ${revieweeId}
+            `;
           }
         }
 

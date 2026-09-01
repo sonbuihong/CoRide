@@ -6,6 +6,7 @@ import { SocketEventService } from '../../socket/socket.events';
 import { RideMatchingService } from './ride-matching.service';
 import { PricingService } from '../pricing/pricing.service';
 import { getDriverLocation } from '../../shared/lib/redis';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const DRIVER_SELECT = {
   driver: {
@@ -351,11 +352,71 @@ export class RidesService {
             driverLocationUpdatedAt: liveLocation?.updatedAt ?? null,
           } : null;
         }));
-      return matchedRides
+      const matches = matchedRides
+        .filter((ride): ride is NonNullable<typeof ride> => ride !== null);
+      if (!matches.length) return [];
+
+      const existingContributions = await prisma.booking.groupBy({
+        by: ['rideId'],
+        where: {
+          rideId: { in: matches.map((ride) => ride.id) },
+          status: { in: ['PENDING', 'CONFIRMED', 'COMPLETED'] },
+        },
+        _sum: { totalPrice: true },
+      });
+      const contributionByRide = new Map(
+        existingContributions.map((item) => [item.rideId, item._sum.totalPrice ?? 0]),
+      );
+      const vehicleTypes = Array.from(new Set(matches.map((ride) => ride.vehicle?.type ?? 'CAR')));
+      const configByVehicle = new Map(await Promise.all(vehicleTypes.map(async (vehicleType) => [
+        vehicleType,
+        await PricingService.getActiveConfig(vehicleType),
+      ] as const)));
+
+      return matches
+        .map((ride) => {
+          const originalDistanceKm = Math.max(ride.distance ?? ride.sharedDistanceKm, 0.001);
+          const config = configByVehicle.get(ride.vehicle?.type ?? 'CAR');
+          if (!config) return null;
+          try {
+            const fullRoutePricing = PricingService.calculateCarpoolContribution({
+              sharedDistanceKm: originalDistanceKm,
+              originalDistanceKm,
+              detourKm: 0,
+              offeredSeats: ride.offeredSeats,
+              tollCost: ride.tollCost,
+            }, config);
+            const priceFactor = fullRoutePricing.recommendedPricePerSeat > 0
+              ? ride.pricePerSeat / fullRoutePricing.recommendedPricePerSeat
+              : 1;
+            const pricing = PricingService.calculateCarpoolContribution({
+              sharedDistanceKm: ride.sharedDistanceKm,
+              originalDistanceKm,
+              detourKm: ride.detourKm,
+              offeredSeats: ride.offeredSeats,
+              bookedSeats: requestedSeats,
+              tollCost: ride.tollCost * Math.min(1, ride.sharedDistanceKm / originalDistanceKm),
+              tripTollCost: ride.tollCost,
+              existingContributions: contributionByRide.get(ride.id) ?? 0,
+              priceFactor,
+            }, config);
+            return {
+              ...ride,
+              passengerFare: pricing.totalPrice,
+              passengerPricePerSeat: pricing.totalPrice / requestedSeats,
+            };
+          } catch {
+            // Search and booking must enforce the same configured detour/pricing limits.
+            return null;
+          }
+        })
         .filter((ride): ride is NonNullable<typeof ride> => ride !== null)
         .sort((first, second) =>
           second.matchScore - first.matchScore ||
-          first.departureTime.getTime() - second.departureTime.getTime()
+          first.timeDifferenceMinutes - second.timeDifferenceMinutes ||
+          first.pickupDistanceKm - second.pickupDistanceKm ||
+          first.detourKm - second.detourKm ||
+          first.passengerFare - second.passengerFare
         );
     }
 
@@ -452,30 +513,14 @@ export class RidesService {
   }
 
   static async deleteRide(id: string, driverId: string) {
-    const ride = await prisma.ride.findUnique({ where: { id } });
-    if (!ride) throw new AppError('Không tìm thấy chuyến đi', 404);
-    if (ride.driverId !== driverId) {
-      throw new AppError('Bạn không có quyền xóa chuyến đi này', 403);
-    }
-    if (ride.status === 'ONGOING') {
-      throw new AppError('Không thể xóa chuyến đang diễn ra', 400);
-    }
-
-    const cancelledRide = await prisma.ride.update({
-      where: { id },
-      data: {
-        status: 'CANCELLED',
-        cancelReason: ride.cancelReason || 'Tài xế đã hủy chuyến',
-      },
-    });
-
-    try {
-      SocketEventService.emitGlobal(SocketEvents.RIDE_UPDATED, cancelledRide);
-    } catch (e) {
-      console.warn('[RidesService] Socket emit skipped:', e);
-    }
-
-    return cancelledRide;
+    // DELETE is retained for older clients. Route it through the command
+    // transition so a Ride and its active Bookings cannot diverge.
+    return this.updateRideStatus(
+      id,
+      driverId,
+      'CANCELLED',
+      'Tài xế đã hủy chuyến',
+    );
   }
 
   static async updateRideStatus(id: string, driverId: string, status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED', cancelReason?: string) {
@@ -517,7 +562,7 @@ export class RidesService {
         );
       }
     } else if (status === 'CANCELLED') {
-      if (ride.status !== 'SCHEDULED') {
+      if (ride.status !== 'SCHEDULED' && ride.status !== 'FULL') {
         throw new AppError('Chỉ có thể hủy chuyến đi chưa khởi hành', 400);
       }
       if (!cancelReason) {
@@ -538,8 +583,15 @@ export class RidesService {
     const affectedPassengerIds = affectedPassengers.map((b) => b.passengerId);
 
     const updatedRide = await prisma.$transaction(async (tx) => {
-      // Nếu hủy chuyến, hủy toàn bộ các booking liên quan
+      // Claim the Ride first. This row lock makes concurrent booking reserves
+      // re-check their `status` predicate and fail instead of committing a
+      // new active Booking after the Ride is cancelled.
       if (status === 'CANCELLED') {
+        const cancelledRide = await tx.ride.update({
+          where: { id },
+          data: { status, cancelReason },
+          include: DRIVER_SELECT,
+        });
         await tx.booking.updateMany({
           where: {
             rideId: id,
@@ -552,14 +604,12 @@ export class RidesService {
             seatHeld: false,
           }
         });
+        return cancelledRide;
       }
 
       return tx.ride.update({
         where: { id },
-        data: { 
-          status,
-          ...(status === 'CANCELLED' && { cancelReason })
-        },
+        data: { status },
         include: DRIVER_SELECT,
       });
     });
@@ -576,9 +626,30 @@ export class RidesService {
       // Sự kiện này sẽ đến được tất cả user (bao gồm driver và passenger) mà không cần emit riêng lẻ từng room
       SocketEventService.emitGlobal(SocketEvents.RIDE_STATUS_UPDATED, statusPayload);
       SocketEventService.emitGlobal(SocketEvents.RIDE_UPDATED, updatedRide);
+
+      if (status === 'CANCELLED') {
+        affectedPassengerIds.forEach((passengerId) => {
+          SocketEventService.emitToUser(passengerId, SocketEvents.BOOKING_CANCELLED, {
+            rideId: id,
+            reason: cancelReason || 'Tài xế đã hủy chuyến',
+          });
+        });
+      }
     } catch (socketError) {
       // Socket chưa init (test environment) → skip, không ảnh hưởng logic chính
       console.warn('[RidesService] Socket emit skipped:', socketError);
+    }
+
+    if (status === 'CANCELLED') {
+      affectedPassengerIds.forEach((passengerId) => {
+        NotificationsService.createNotification(
+          passengerId,
+          'Chuyến đi đã bị hủy',
+          `${ride.origin} → ${ride.destination}. ${cancelReason || 'Tài xế đã hủy chuyến.'}`,
+          'RIDE_CANCELLED',
+          { type: 'RIDE', id },
+        ).catch((error) => console.error('[Notification Error]:', error));
+      });
     }
 
     return updatedRide;
