@@ -211,7 +211,7 @@ export default function WaitingConfirmationScreen() {
 
               <Animated.View style={[
                 styles.statusLayer, 
-                StyleSheet.absoluteFillObject, 
+                StyleSheet.absoluteFill, 
                 { opacity: successFadeAnim, transform: [{ scale: successScaleAnim }] },
                 { alignItems: 'center', justifyContent: 'center' }
               ]} pointerEvents="none">
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surface,
-    ...nativeShadows.sm,
+    ...nativeShadows.floating,
   },
   headerTitle: {
     color: colors.textPrimary,

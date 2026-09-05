@@ -100,6 +100,8 @@ interface StopItem {
   lat?: number;
   lng?: number;
   waitTimeMinutes: number;
+  /** Trạng thái UI: true = mở rộng editor, false = thu gọn thành 1 dòng. Mặc định true khi mới thêm. */
+  _expanded?: boolean;
 }
 
 const steps = [
@@ -972,107 +974,179 @@ export default function PostRidePage() {
               </span>
             </div>
 
-            {stops.map((stop, index) => (
-              <div
-                key={stop.id}
-                className="space-y-3 rounded-xl border border-black/[0.08] bg-white p-3.5 shadow-sm dark:border-white/[0.1] dark:bg-[#2c2c2e]"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#f59e0b]/15 text-[11px] font-bold text-[#b45309] dark:bg-[#f59e0b]/25 dark:text-[#fbbf24]">
+            {stops.map((stop, index) => {
+              const hasCoords = stop.lat != null && stop.lng != null && stop.address.trim() !== '';
+              const isExpanded = stop._expanded !== false; // mặc định true khi mới thêm
+
+              if (!isExpanded && hasCoords) {
+                // Chế độ thu gọn: 1 dòng tóm tắt
+                return (
+                  <button
+                    key={stop.id}
+                    type="button"
+                    onClick={() => handleUpdateStop(index, { _expanded: true } as Partial<StopItem>)}
+                    className="flex min-h-11 w-full items-center gap-2.5 rounded-xl border border-black/[0.08] bg-white px-3.5 py-2.5 text-left transition-colors hover:border-[#f59e0b]/50 hover:bg-[#f59e0b]/[0.03] dark:border-white/[0.1] dark:bg-[#2c2c2e]"
+                    aria-label={`Mở rộng điểm dừng ${index + 1}`}
+                  >
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#f59e0b]/15 text-[11px] font-bold text-[#b45309] dark:bg-[#f59e0b]/25 dark:text-[#fbbf24]">
                       {index + 1}
                     </span>
-                    <span className="text-xs font-semibold text-[#1d1d1f] dark:text-white">
-                      Điểm dừng {index + 1}
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-[#f59e0b]" />
+                    <span className="flex-1 truncate text-xs font-medium text-[#1d1d1f] dark:text-white">
+                      {stop.address}
                     </span>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      disabled={index === 0}
-                      onClick={() => handleMoveStop(index, index - 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-black/[0.05] hover:text-black disabled:opacity-25 dark:text-white/45 dark:hover:bg-white/[0.08] dark:hover:text-white"
-                      title="Di chuyển lên"
-                      aria-label={`Di chuyển điểm dừng ${index + 1} lên`}
-                    >
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={index === stops.length - 1}
-                      onClick={() => handleMoveStop(index, index + 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-black/[0.05] hover:text-black disabled:opacity-25 dark:text-white/45 dark:hover:bg-white/[0.08] dark:hover:text-white"
-                      title="Di chuyển xuống"
-                      aria-label={`Di chuyển điểm dừng ${index + 1} xuống`}
-                    >
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveStop(index)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-[#ff3b30]/10 hover:text-[#ff3b30] dark:text-white/45 dark:hover:bg-[#ff3b30]/20 dark:hover:text-[#ff453a]"
-                      title="Xóa điểm dừng"
-                      aria-label={`Xóa điểm dừng ${index + 1}`}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                <AddressAutocomplete
-                  defaultValue={stop.address}
-                  placeholder={`Nhập địa chỉ điểm dừng ${index + 1}`}
-                  inputClassName="h-11 border border-black/10 text-sm focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/20 dark:border-white/10"
-                  onAddressSelect={(address, lat, lng) =>
-                    handleUpdateStop(index, {
-                      address,
-                      lat,
-                      lng,
-                      name: address.split(',')[0]?.trim(),
-                    })
-                  }
-                />
-
-                {/* Stepper thời gian dừng */}
-                <div className="flex items-center justify-between rounded-lg bg-black/[0.03] px-3 py-2 dark:bg-white/[0.04]">
-                  <span className="text-xs text-black/60 dark:text-white/60">
-                    Thời gian dừng đón / trả khách:
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={stop.waitTimeMinutes <= 1}
-                      onClick={() =>
-                        handleUpdateStop(index, {
-                          waitTimeMinutes: Math.max(1, stop.waitTimeMinutes - 1),
-                        })
-                      }
-                      className="flex h-7 w-7 items-center justify-center rounded-md border border-black/10 bg-white text-xs font-semibold shadow-xs transition-colors hover:bg-black/[0.05] disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/10 dark:bg-[#1c1c1e] dark:hover:bg-white/[0.08]"
-                      aria-label="Giảm 1 phút dừng"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </button>
-                    <span className="min-w-16 text-center text-xs font-semibold tabular-nums text-[#1d1d1f] dark:text-white">
+                    <span className="shrink-0 text-[11px] text-black/45 dark:text-white/45">
                       {stop.waitTimeMinutes} phút
                     </span>
-                    <button
-                      type="button"
-                      disabled={stop.waitTimeMinutes >= 15}
-                      onClick={() =>
-                        handleUpdateStop(index, {
-                          waitTimeMinutes: Math.min(15, stop.waitTimeMinutes + 1),
-                        })
-                      }
-                      className="flex h-7 w-7 items-center justify-center rounded-md border border-black/10 bg-white text-xs font-semibold shadow-xs transition-colors hover:bg-black/[0.05] disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/10 dark:bg-[#1c1c1e] dark:hover:bg-white/[0.08]"
-                      aria-label="Tăng 1 phút dừng"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </button>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleMoveStop(index, index - 1); }}
+                        disabled={index === 0}
+                        className="flex h-6 w-6 items-center justify-center rounded text-black/40 transition-colors hover:bg-black/[0.06] disabled:opacity-20 dark:text-white/40 dark:hover:bg-white/[0.08]"
+                        aria-label={`Di chuyển điểm dừng ${index + 1} lên`}
+                      >
+                        <ArrowUp className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleMoveStop(index, index + 1); }}
+                        disabled={index === stops.length - 1}
+                        className="flex h-6 w-6 items-center justify-center rounded text-black/40 transition-colors hover:bg-black/[0.06] disabled:opacity-20 dark:text-white/40 dark:hover:bg-white/[0.08]"
+                        aria-label={`Di chuyển điểm dừng ${index + 1} xuống`}
+                      >
+                        <ArrowDown className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleRemoveStop(index); }}
+                        className="flex h-6 w-6 items-center justify-center rounded text-black/40 transition-colors hover:bg-[#ff3b30]/10 hover:text-[#ff3b30] dark:text-white/40 dark:hover:bg-[#ff3b30]/20 dark:hover:text-[#ff453a]"
+                        aria-label={`Xóa điểm dừng ${index + 1}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </button>
+                );
+              }
+
+              // Chế độ mở rộng: full editor
+              return (
+                <div
+                  key={stop.id}
+                  className="space-y-3 rounded-xl border border-[#f59e0b]/30 bg-white p-3.5 shadow-sm dark:border-[#f59e0b]/20 dark:bg-[#2c2c2e]"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#f59e0b]/15 text-[11px] font-bold text-[#b45309] dark:bg-[#f59e0b]/25 dark:text-[#fbbf24]">
+                        {index + 1}
+                      </span>
+                      <span className="text-xs font-semibold text-[#1d1d1f] dark:text-white">
+                        Điểm dừng {index + 1}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={index === 0}
+                        onClick={() => handleMoveStop(index, index - 1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-black/[0.05] hover:text-black disabled:opacity-25 dark:text-white/45 dark:hover:bg-white/[0.08] dark:hover:text-white"
+                        title="Di chuyển lên"
+                        aria-label={`Di chuyển điểm dừng ${index + 1} lên`}
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={index === stops.length - 1}
+                        onClick={() => handleMoveStop(index, index + 1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-black/[0.05] hover:text-black disabled:opacity-25 dark:text-white/45 dark:hover:bg-white/[0.08] dark:hover:text-white"
+                        title="Di chuyển xuống"
+                        aria-label={`Di chuyển điểm dừng ${index + 1} xuống`}
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveStop(index)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-[#ff3b30]/10 hover:text-[#ff3b30] dark:text-white/45 dark:hover:bg-[#ff3b30]/20 dark:hover:text-[#ff453a]"
+                        title="Xóa điểm dừng"
+                        aria-label={`Xóa điểm dừng ${index + 1}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                      {/* Nút thu gọn — chỉ hiện khi đã có tọa độ */}
+                      {hasCoords && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateStop(index, { _expanded: false } as Partial<StopItem>)}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-black/[0.05] hover:text-black dark:text-white/45 dark:hover:bg-white/[0.08] dark:hover:text-white"
+                          title="Thu gọn"
+                          aria-label="Thu gọn điểm dừng"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <AddressAutocomplete
+                    defaultValue={stop.address}
+                    placeholder={`Nhập địa chỉ điểm dừng ${index + 1}`}
+                    inputClassName="h-11 border border-black/10 text-sm focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/20 dark:border-white/10"
+                    onAddressSelect={(address, lat, lng) => {
+                      handleUpdateStop(index, {
+                        address,
+                        lat,
+                        lng,
+                        name: address.split(',')[0]?.trim(),
+                        // Tự thu gọn sau khi chọn xong địa chỉ
+                        _expanded: false,
+                      } as Partial<StopItem>);
+                    }}
+                  />
+
+                  {/* Stepper thời gian dừng */}
+                  <div className="flex items-center justify-between rounded-lg bg-black/[0.03] px-3 py-2 dark:bg-white/[0.04]">
+                    <span className="text-xs text-black/60 dark:text-white/60">
+                      Thời gian dừng đón / trả khách:
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={stop.waitTimeMinutes <= 1}
+                        onClick={() =>
+                          handleUpdateStop(index, {
+                            waitTimeMinutes: Math.max(1, stop.waitTimeMinutes - 1),
+                          })
+                        }
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-black/10 bg-white text-xs font-semibold shadow-xs transition-colors hover:bg-black/[0.05] disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/10 dark:bg-[#1c1c1e] dark:hover:bg-white/[0.08]"
+                        aria-label="Giảm 1 phút dừng"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <span className="min-w-16 text-center text-xs font-semibold tabular-nums text-[#1d1d1f] dark:text-white">
+                        {stop.waitTimeMinutes} phút
+                      </span>
+                      <button
+                        type="button"
+                        disabled={stop.waitTimeMinutes >= 15}
+                        onClick={() =>
+                          handleUpdateStop(index, {
+                            waitTimeMinutes: Math.min(15, stop.waitTimeMinutes + 1),
+                          })
+                        }
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-black/10 bg-white text-xs font-semibold shadow-xs transition-colors hover:bg-black/[0.05] disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/10 dark:bg-[#1c1c1e] dark:hover:bg-white/[0.08]"
+                        aria-label="Tăng 1 phút dừng"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {stops.length < 3 && (
               <button
@@ -1084,6 +1158,7 @@ export default function PostRidePage() {
                 Thêm điểm dừng dọc đường ({stops.length}/3)
               </button>
             )}
+
           </div>
 
           {/* Điểm đến */}

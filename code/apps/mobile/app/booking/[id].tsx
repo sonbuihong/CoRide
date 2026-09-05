@@ -1,20 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, Linking, StyleSheet, Modal, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { SocketEvents } from '@repo/shared';
 import { bookingService } from '../../src/services/booking.service';
 import { paymentService } from '../../src/services/payment.service';
 import { authService } from '../../src/services/auth.service';
+import { socketService } from '../../src/services/socket.service';
 import { AppText } from '../../src/components/ui/AppText';
 import { AppButton } from '../../src/components/ui/AppButton';
 import { BottomSheetSurface } from '../../src/components/ui/BottomSheetSurface';
 import { LiveBookingMap } from '../../src/features/booking/LiveBookingMap';
+import { PassengerActiveBookingExperience } from '../../src/features/booking/PassengerActiveBookingExperience';
 import { Star, Phone, ArrowLeft, MessageSquare, MapPin, CheckCircle2, Clock3, Navigation, CreditCard, AlertCircle } from 'lucide-react-native';
 import { colors, radius, spacing } from '../../src/theme/tokens';
 import { nativeShadows } from '../../src/theme/shadows';
+
+const CANCEL_REASONS = [
+  'Thay đổi lịch trình / Có việc đột xuất',
+  'Tài xế đến quá lâu so với dự kiến',
+  'Không thể liên lạc được với tài xế',
+  'Đã tìm được phương tiện di chuyển khác',
+  'Lý do cá nhân khác',
+];
 
 export default function BookingManageScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,6 +33,7 @@ export default function BookingManageScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [cancelSheetVisible, setCancelSheetVisible] = useState(false);
+  const [selectedReason, setSelectedReason] = useState(CANCEL_REASONS[0]);
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -48,7 +60,8 @@ export default function BookingManageScreen() {
   });
 
   const cancelBookingMutation = useMutation({
-    mutationFn: () => bookingService.cancelBooking(id as string, 'Hành khách chủ động hủy đặt chỗ'),
+    mutationFn: (reason?: string) =>
+      bookingService.cancelBooking(id as string, reason || selectedReason || 'Hành khách chủ động hủy đặt chỗ'),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['booking', id] }),
@@ -92,6 +105,36 @@ export default function BookingManageScreen() {
     onError: () => Alert.alert('Lỗi', 'Không thể tạo mã QR thanh toán.'),
   });
 
+  useEffect(() => {
+    if (!id) return;
+    const handleUpdate = (data?: any) => {
+      if (!data || data.bookingId === id || data.id === id || data.rideId === booking?.rideId) {
+        queryClient.invalidateQueries({ queryKey: ['booking', id] });
+        queryClient.invalidateQueries({ queryKey: ['active-booking'] });
+        queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+        queryClient.invalidateQueries({ queryKey: ['rides'] });
+      }
+    };
+
+    socketService.on(SocketEvents.BOOKING_DRIVER_ARRIVED, handleUpdate);
+    socketService.on(SocketEvents.BOOKING_PICKED_UP, handleUpdate);
+    socketService.on(SocketEvents.BOOKING_COMPLETED, handleUpdate);
+    socketService.on(SocketEvents.RIDE_STATUS_UPDATED, handleUpdate);
+    socketService.on(SocketEvents.RIDE_UPDATED, handleUpdate);
+    socketService.on(SocketEvents.BOOKING_CONFIRMED, handleUpdate);
+    socketService.on(SocketEvents.BOOKING_CANCELLED, handleUpdate);
+
+    return () => {
+      socketService.off(SocketEvents.BOOKING_DRIVER_ARRIVED, handleUpdate);
+      socketService.off(SocketEvents.BOOKING_PICKED_UP, handleUpdate);
+      socketService.off(SocketEvents.BOOKING_COMPLETED, handleUpdate);
+      socketService.off(SocketEvents.RIDE_STATUS_UPDATED, handleUpdate);
+      socketService.off(SocketEvents.RIDE_UPDATED, handleUpdate);
+      socketService.off(SocketEvents.BOOKING_CONFIRMED, handleUpdate);
+      socketService.off(SocketEvents.BOOKING_CANCELLED, handleUpdate);
+    };
+  }, [id, booking?.rideId, queryClient]);
+
   if (isLoading) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
@@ -130,6 +173,97 @@ export default function BookingManageScreen() {
   const isCompleted = booking.status === 'COMPLETED';
   const isPending = booking.status === 'PENDING';
   const isCancelled = booking.status === 'CANCELLED' || booking.status === 'REJECTED';
+
+  const renderCancelModal = () => (
+    <Modal
+      visible={cancelSheetVisible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={() => setCancelSheetVisible(false)}
+    >
+      <Pressable style={styles.modalBackdrop} onPress={() => setCancelSheetVisible(false)}>
+        <Pressable style={styles.modalContentWrapper} onPress={(e) => e.stopPropagation()}>
+          <BottomSheetSurface style={{ paddingBottom: Math.max(insets.bottom, spacing.lg), padding: spacing.xl }}>
+            <AppText variant="h2" weight="bold" style={{ marginBottom: 8 }}>Hủy đặt chỗ chuyến đi?</AppText>
+            <AppText variant="bodySmall" style={{ color: colors.textSecondary, marginBottom: 16, lineHeight: 20 }}>
+              Ghế của bạn sẽ được trả lại cho tài xế và thông báo hủy sẽ được gửi ngay lập tức. Vui lòng chọn lý do hủy:
+            </AppText>
+
+            <View style={styles.reasonsList}>
+              {CANCEL_REASONS.map((reason) => {
+                const isSelected = selectedReason === reason;
+                return (
+                  <TouchableOpacity
+                    key={reason}
+                    style={[styles.reasonOption, isSelected && styles.reasonOptionSelected]}
+                    onPress={() => setSelectedReason(reason)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
+                      {isSelected && <View style={styles.radioInner} />}
+                    </View>
+                    <AppText
+                      variant="bodySmall"
+                      weight={isSelected ? 'semibold' : 'normal'}
+                      style={[styles.reasonText, isSelected && styles.reasonTextSelected]}
+                    >
+                      {reason}
+                    </AppText>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={styles.modalActions}>
+              <AppButton
+                title="Giữ đặt chỗ"
+                variant="outline"
+                onPress={() => setCancelSheetVisible(false)}
+                style={{ flex: 1, marginRight: 8 }}
+              />
+              <AppButton
+                title="Xác nhận hủy"
+                variant="danger"
+                isLoading={cancelBookingMutation.isPending}
+                disabled={cancelBookingMutation.isPending}
+                onPress={() => cancelBookingMutation.mutate(selectedReason)}
+                style={{ flex: 1, marginLeft: 8 }}
+              />
+            </View>
+          </BottomSheetSurface>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+
+  if (isPassenger && isConfirmed && booking.ride.status === 'ONGOING') {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <PassengerActiveBookingExperience
+          booking={booking}
+          onBack={() => router.back()}
+          onConfirmPayment={() => confirmPaymentMutation.mutate()}
+          onOpenQrPayment={() => createPaymentMutation.mutate()}
+          isConfirmingPayment={confirmPaymentMutation.isPending}
+          isCreatingPayment={createPaymentMutation.isPending}
+          onCancelBooking={() => {
+            if (booking.isPickedUp) {
+              Alert.alert(
+                'Bạn đã lên xe',
+                'Bạn hiện đang trên xe cùng tài xế. Nếu cần kết thúc chuyến sớm hoặc có sự cố, vui lòng trao đổi trực tiếp với tài xế hoặc gọi hotline 1900 6868.',
+                [{ text: 'Đã hiểu', style: 'default' }]
+              );
+              return;
+            }
+            setCancelSheetVisible(true);
+          }}
+          isCancellingBooking={cancelBookingMutation.isPending}
+        />
+        {renderCancelModal()}
+      </View>
+    );
+  }
 
   const renderHeroStatus = () => {
     let title = '';
@@ -246,7 +380,8 @@ export default function BookingManageScreen() {
           <View style={styles.routeDistance}>
             {(booking.ride.distanceKm || booking.ride.distance) ? (
               <AppText variant="caption" style={{ color: colors.textSecondary }}>
-                {booking.ride.distanceKm || booking.ride.distance} km • khoảng {booking.ride.duration || 45} phút
+                {booking.ride.distanceKm || booking.ride.distance} km
+                {booking.ride.durationMinutes ? ` • khoảng ${booking.ride.durationMinutes} phút` : (booking.ride.duration ? ` • khoảng ${booking.ride.duration} phút` : '')}
               </AppText>
             ) : (
               <AppText variant="caption" style={{ color: colors.textSecondary }}>Lộ trình chuyến đi</AppText>
@@ -474,40 +609,7 @@ export default function BookingManageScreen() {
         </View>
       )}
 
-      <Modal
-        visible={cancelSheetVisible}
-        transparent
-        animationType="slide"
-        statusBarTranslucent
-        onRequestClose={() => setCancelSheetVisible(false)}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={() => setCancelSheetVisible(false)}>
-          <Pressable style={styles.modalContentWrapper} onPress={(e) => e.stopPropagation()}>
-            <BottomSheetSurface style={{ paddingBottom: Math.max(insets.bottom, spacing.lg), padding: spacing.xl }}>
-              <AppText variant="h2" weight="bold" style={{ marginBottom: 12 }}>Hủy đặt chỗ?</AppText>
-              <AppText variant="body" style={{ color: colors.textSecondary, marginBottom: 24, lineHeight: 22 }}>
-                Bạn có chắc chắn muốn hủy đặt chỗ cho chuyến đi này? Ghế của bạn sẽ được trả lại cho tài xế. Hành động này không thể hoàn tác.
-              </AppText>
-              <View style={styles.modalActions}>
-                <AppButton
-                  title="Giữ đặt chỗ"
-                  variant="outline"
-                  onPress={() => setCancelSheetVisible(false)}
-                  style={{ flex: 1, marginRight: 8 }}
-                />
-                <AppButton
-                  title="Xác nhận hủy"
-                  variant="danger"
-                  isLoading={cancelBookingMutation.isPending}
-                  disabled={cancelBookingMutation.isPending}
-                  onPress={() => cancelBookingMutation.mutate()}
-                  style={{ flex: 1, marginLeft: 8 }}
-                />
-              </View>
-            </BottomSheetSurface>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {renderCancelModal()}
     </View>
   );
 }
@@ -528,7 +630,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    ...nativeShadows.sm,
+    ...nativeShadows.card,
     zIndex: 10,
   },
   backButton: {
@@ -723,5 +825,49 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     marginTop: 8,
+  },
+  reasonsList: {
+    marginBottom: 20,
+    gap: 8,
+  },
+  reasonOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+  },
+  reasonOptionSelected: {
+    borderColor: colors.danger,
+    backgroundColor: '#FFF5F5',
+  },
+  radioCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: '#94A3B8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  radioCircleSelected: {
+    borderColor: colors.danger,
+  },
+  radioInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.danger,
+  },
+  reasonText: {
+    color: colors.textPrimary,
+    flex: 1,
+  },
+  reasonTextSelected: {
+    color: colors.danger,
   },
 });

@@ -1383,6 +1383,8 @@ function StopEditor({
   onDelete: () => void;
   onMove: (from: number, to: number) => void;
 }) {
+  const [expanded, setExpanded] = useState(true);
+  const hasCoords = Number.isFinite(stop.latitude) && Number.isFinite(stop.longitude);
   const panResponder = useMemo(
     () =>
       PanResponder.create({
@@ -1395,6 +1397,37 @@ function StopEditor({
       }),
     [count, index, onMove],
   );
+
+  if (!expanded) {
+    return (
+      <Pressable
+        onPress={() => setExpanded(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`Mở rộng điểm đón ${index + 1}`}
+        style={({ pressed }) => [styles.stopCollapsed, pressed && styles.pressed]}
+      >
+        <MapPin size={16} color={hasCoords ? colors.primary : colors.textTertiary} />
+        <AppText
+          numberOfLines={1}
+          style={[styles.flex, styles.stopCollapsedText]}
+        >
+          {hasCoords ? (stop.address || `Điểm đón ${index + 1}`) : `Điểm đón ${index + 1} · Chưa chọn địa điểm`}
+        </AppText>
+        {hasCoords && (
+          <AppText variant="caption" style={styles.secondary}>
+            {stop.waitTimeMinutes ?? 5} phút
+          </AppText>
+        )}
+        <IconButton
+          tone="ghost"
+          icon={<Trash2 size={16} color={colors.danger} />}
+          accessibilityLabel="Xóa điểm dừng"
+          onPress={onDelete}
+        />
+      </Pressable>
+    );
+  }
+
   return (
     <View style={styles.stopEditor}>
       <View style={styles.stopToolbar}>
@@ -1428,15 +1461,21 @@ function StopEditor({
           accessibilityLabel="Xóa điểm dừng"
           onPress={onDelete}
         />
+        {hasCoords && (
+          <IconButton
+            tone="ghost"
+            icon={<Minus size={18} color={colors.textSecondary} />}
+            accessibilityLabel="Thu gọn"
+            onPress={() => setExpanded(false)}
+          />
+        )}
       </View>
       <LocationPicker
         tone="driver"
         label="Địa điểm"
         placeholder="Chọn điểm đón công khai"
         value={stop.address}
-        selected={
-          Number.isFinite(stop.latitude) && Number.isFinite(stop.longitude)
-        }
+        selected={hasCoords}
         onChangeText={(address) =>
           onChange({
             address,
@@ -1445,14 +1484,15 @@ function StopEditor({
             longitude: Number.NaN,
           })
         }
-        onSelectCoords={(latitude, longitude, description) =>
+        onSelectCoords={(latitude, longitude, description) => {
           onChange({
             address: description,
             latitude,
             longitude,
             name: shortPlaceName(description),
-          })
-        }
+          });
+          setExpanded(false);
+        }}
       />
       <View style={styles.stopDurationRow}>
         <View style={styles.flex}>
@@ -2919,4 +2959,21 @@ const styles = StyleSheet.create({
   backButton: { flex: 0.42, minHeight: layout.minTouchTarget },
   nextButton: { flex: 1, minHeight: layout.minTouchTarget },
   pressed: { opacity: 0.72 },
+  stopCollapsed: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.input,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    minHeight: 52,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  stopCollapsedText: {
+    color: colors.textPrimary,
+    fontSize: 14,
+  },
 });

@@ -248,7 +248,7 @@ function DriverRideView({ rideId }: DriverRideViewProps) {
           <View style={styles.mapContainer}>
             <MapView
               provider={PROVIDER_GOOGLE}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               onMapReady={handleMapReady}
               initialRegion={{
                 latitude: (originCoords.latitude + destCoords.latitude) / 2,
@@ -972,7 +972,7 @@ function PassengerRideView() {
           <MapView
             ref={mapRef}
             provider={PROVIDER_GOOGLE}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             initialRegion={ride.departureCoords ? { ...ride.departureCoords, latitudeDelta: 0.08, longitudeDelta: 0.08 } : { latitude: 21.0285, longitude: 105.8542, latitudeDelta: 0.1, longitudeDelta: 0.1 }}
             onMapReady={fitRelevantRoute}
             toolbarEnabled={false}
@@ -1327,7 +1327,7 @@ const styles = StyleSheet.create({
 
   // Map compact
   mapContainer: { height: 196, borderRadius: radius.card, overflow: 'hidden', backgroundColor: colors.surfaceMuted },
-  mapOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: spacing.sm },
+  mapOverlay: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: spacing.sm },
   mapOverlayPill: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
     backgroundColor: colors.navigationDriver, borderRadius: radius.pill,
