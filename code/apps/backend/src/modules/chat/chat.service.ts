@@ -52,6 +52,10 @@ export class ChatService {
    * Lưu tin nhắn mới vào database.
    */
   static async saveMessage(rideId: string, senderId: string, receiverId: string, content: string) {
+    if (senderId === receiverId) {
+      throw new AppError('Không thể gửi tin nhắn cho chính mình', 400);
+    }
+
     return prisma.message.create({
       data: {
         rideId,

@@ -108,10 +108,22 @@ export const updateRideStatusSchema = z.object({
   cancelReason: z.string().optional(),
 });
 
+export const cancelRideScheduleSchema = z.object({
+  cancelReason: z.string().trim().min(1, 'Vui lòng cung cấp lý do hủy lịch chuyến').max(500),
+});
+
+export const updateRoutePickupSharingSchema = z.object({
+  enabled: z.boolean({
+    required_error: 'Trạng thái chia sẻ vị trí là bắt buộc',
+  }),
+});
+
 export type CreateRideInput = z.infer<typeof createRideSchema>;
 export type CreateRideScheduleInput = z.infer<typeof createRideScheduleSchema>;
 export type RideStopInput = z.infer<typeof rideStopInputSchema>;
 export type BookingPolicy = z.infer<typeof bookingPolicySchema>;
 export type SearchRideInput = z.infer<typeof searchRideSchema>;
 export type UpdateRideStatusInput = z.infer<typeof updateRideStatusSchema>;
+export type CancelRideScheduleInput = z.infer<typeof cancelRideScheduleSchema>;
+export type UpdateRoutePickupSharingInput = z.infer<typeof updateRoutePickupSharingSchema>;
 

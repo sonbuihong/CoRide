@@ -27,6 +27,14 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       type: "sourceFile",
     };
   }
+  // react-native-gesture-handler gọi findNodeHandle nội bộ, không hỗ trợ web.
+  // Dùng stub web để tránh crash.
+  if (platform === "web" && (moduleName === "react-native-gesture-handler" || moduleName.startsWith("react-native-gesture-handler/"))) {
+    return {
+      filePath: path.resolve(projectRoot, "src/mocks/react-native-gesture-handler.web.tsx"),
+      type: "sourceFile",
+    };
+  }
   if (defaultResolveRequest) {
     return defaultResolveRequest(context, moduleName, platform);
   }

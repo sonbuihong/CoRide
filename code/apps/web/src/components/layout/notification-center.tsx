@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useSocket } from '@/components/providers/socket-provider';
 import { useRouter } from 'next/navigation';
 import { SocketEvents } from '@repo/shared';
+import { getNotificationHref } from '@/lib/notification-target';
 
 interface Notification {
   id: string;
@@ -17,6 +18,8 @@ interface Notification {
   type: string;
   isRead: boolean;
   createdAt: string;
+  targetType?: 'BOOKING' | 'RIDE' | 'TRIP' | null;
+  targetId?: string | null;
 }
 
 export const NotificationCenter: React.FC = () => {
@@ -85,7 +88,7 @@ export const NotificationCenter: React.FC = () => {
     // Nếu Socket.IO đã connected thì không cần SSE fallback
     if (isConnected) return;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
     const token = localStorage.getItem('accessToken') || '';
     if (!token) return;
 
@@ -134,13 +137,8 @@ export const NotificationCenter: React.FC = () => {
 
     // 2. Navigate based on type
     setIsOpen(false);
-    if (notif.type === 'BOOKING_REQUEST') {
-      // Navigate to driver's booking requests
-      router.push('/booking-requests');
-    } else if (notif.type === 'BOOKING_STATUS') {
-      // Navigate to passenger's bookings
-      router.push('/my-bookings');
-    }
+    const href = getNotificationHref(notif);
+    if (href) router.push(href);
   };
 
   const handleMarkAllRead = async () => {

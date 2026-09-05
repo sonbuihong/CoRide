@@ -33,7 +33,7 @@ function createSocket(): Socket {
   const SOCKET_URL =
     process.env.NEXT_PUBLIC_SOCKET_URL ||
     process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ||
-    'http://localhost:5001';
+    (typeof window !== 'undefined' ? window.location.origin : undefined);
 
   const socket = io(SOCKET_URL, {
     auth: (cb) => {
@@ -118,6 +118,18 @@ export function connectIfNeeded(): boolean {
   _connectedToken = currentToken;
   socket.connect();
   return false;
+}
+
+/** Re-authenticate the realtime connection after REST rotates the access token. */
+export function reconnectWithLatestToken(): void {
+  const socket = getSocket();
+  const currentToken = getToken();
+  if (!currentToken || (socket.connected && _connectedToken === currentToken)) return;
+
+  _isConnecting = true;
+  _connectedToken = currentToken;
+  socket.disconnect();
+  socket.connect();
 }
 
 /**

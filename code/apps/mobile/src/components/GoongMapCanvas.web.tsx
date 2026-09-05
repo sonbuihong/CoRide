@@ -51,8 +51,19 @@ function loadGoongJs() {
     }
     const existing = document.querySelector<HTMLScriptElement>(`script[src="${SCRIPT_URL}"]`);
     const script = existing ?? document.createElement("script");
-    script.addEventListener("load", () => window.goongjs ? resolve(window.goongjs) : reject(new Error("Goong JS unavailable")), { once: true });
-    script.addEventListener("error", () => { loader = undefined; reject(new Error("Unable to load Goong JS")); }, { once: true });
+    script.addEventListener("load", () => {
+      if (window.goongjs) resolve(window.goongjs);
+      else {
+        script.remove();
+        loader = undefined;
+        reject(new Error("Goong JS unavailable"));
+      }
+    }, { once: true });
+    script.addEventListener("error", () => {
+      script.remove();
+      loader = undefined;
+      reject(new Error("Unable to load Goong JS"));
+    }, { once: true });
     if (!existing) {
       script.src = SCRIPT_URL;
       script.async = true;
@@ -81,14 +92,19 @@ export interface GoongMapCanvasProps {
   cameraTarget?: Coordinates;
   onMovingChange?: (moving: boolean) => void;
   zoom?: number;
+  autoFitRoute?: boolean;
+  fitRouteOnce?: boolean;
+  fitEdgePadding?: { top: number; right: number; bottom: number; left: number };
 }
 
-export function GoongMapCanvas({ center, origin, destination, driver, pickupPoints, routeLines = EMPTY_ROUTE_LINES, selectedRouteIndex = 0, onCenterChange, cameraTarget, onMovingChange, zoom = 16 }: GoongMapCanvasProps) {
+export function GoongMapCanvas({ center, origin, destination, driver, pickupPoints, routeLines = EMPTY_ROUTE_LINES, selectedRouteIndex = 0, onCenterChange, cameraTarget, onMovingChange, zoom = 16, autoFitRoute = true, fitRouteOnce = false, fitEdgePadding }: GoongMapCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<GoongMapInstance | null>(null);
   const centerChangeRef = useRef(onCenterChange);
   const movingChangeRef = useRef(onMovingChange);
   const programmaticMove = useRef(false);
+  const hasFittedRoute = useRef(false);
+  const userInteracted = useRef(false);
   const initialCenter = useRef(center).current;
   const initialZoom = useRef(zoom).current;
   const [ready, setReady] = useState(0);
@@ -117,6 +133,7 @@ export function GoongMapCanvas({ center, origin, destination, driver, pickupPoin
     setFailed(false);
     void loadGoongJs().then((goongjs) => {
       if (disposed || !containerRef.current || mapRef.current) return;
+      if (!GOONG_CONFIG.MAPTILES_KEY) throw new Error("Missing Goong map tiles key");
       goongjs.accessToken = GOONG_CONFIG.MAPTILES_KEY;
       const map = new goongjs.Map({ accessToken: GOONG_CONFIG.MAPTILES_KEY, center: [initialCenter.longitude, initialCenter.latitude], container: containerRef.current, dragRotate: false, pitchWithRotate: false, style: "https://tiles.goong.io/assets/goong_map_web.json", zoom: initialZoom });
       mapRef.current = map;
@@ -139,6 +156,7 @@ export function GoongMapCanvas({ center, origin, destination, driver, pickupPoin
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !cameraTarget) return;
+    userInteracted.current = true;
     programmaticMove.current = true;
     const options = { center: [cameraTarget.longitude, cameraTarget.latitude], duration: 200 };
     if (map.easeTo) map.easeTo(options);
@@ -217,8 +235,16 @@ export function GoongMapCanvas({ center, origin, destination, driver, pickupPoin
   useEffect(() => {
     if (!ready) return;
     syncMapData();
+  }, [ready, syncMapData]);
+
+  // GPS/source updates must not reset a camera the user has already adjusted.
+  useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !ready || !autoFitRoute) return;
+    if (fitRouteOnce && (hasFittedRoute.current || userInteracted.current)) return;
+    if (fitRouteOnce && !routeLines.some((line) => line.length > 1)) return;
+    hasFittedRoute.current = true;
+    programmaticMove.current = true;
     if (!routeLines.length) {
       const allPoints = [
         origin,
@@ -232,7 +258,7 @@ export function GoongMapCanvas({ center, origin, destination, driver, pickupPoin
         const lats = allPoints.map((point) => point.latitude);
         map.fitBounds(
           [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-          { padding: { top: 56, right: 36, bottom: 80, left: 36 }, duration: 300 }
+          { padding: fitEdgePadding ?? { top: 56, right: 36, bottom: 80, left: 36 }, duration: 300 }
         );
       } else {
         map.jumpTo({ center: [center.longitude, center.latitude], zoom });
@@ -246,12 +272,19 @@ export function GoongMapCanvas({ center, origin, destination, driver, pickupPoin
     ];
     const lngs = points.map((point) => point.longitude);
     const lats = points.map((point) => point.latitude);
-    map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: { top: 56, right: 36, bottom: 220, left: 36 }, duration: 300 });
-  }, [center.latitude, center.longitude, destination, driver, origin, pickupPoints, ready, routeLines, syncMapData, zoom]);
+    map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: fitEdgePadding ?? { top: 56, right: 36, bottom: 220, left: 36 }, duration: 300 });
+  }, [autoFitRoute, center.latitude, center.longitude, destination, driver, fitEdgePadding, fitRouteOnce, origin, pickupPoints, ready, routeLines, zoom]);
+
+  const handleCameraInteraction = () => { userInteracted.current = true; };
 
   return (
     <View style={styles.root}>
-      <div ref={containerRef} style={webMapStyle} />
+      <div ref={containerRef} style={webMapStyle}
+        onPointerDownCapture={handleCameraInteraction}
+        onTouchStartCapture={handleCameraInteraction}
+        onWheelCapture={handleCameraInteraction}
+        onKeyDownCapture={handleCameraInteraction}
+      />
       {failed && <View accessibilityRole="alert" style={styles.fallback}>
         <AppText weight="semibold">Không tải được bản đồ Goong</AppText>
         <AppText variant="bodySmall" style={styles.fallbackCopy}>Kiểm tra kết nối rồi thử lại.</AppText>
@@ -266,7 +299,7 @@ export function GoongMapCanvas({ center, origin, destination, driver, pickupPoin
 
 const webMapStyle = { height: "100%", width: "100%" };
 const styles = StyleSheet.create({
-  root: { backgroundColor: colors.surfaceMuted, flex: 1, minHeight: 320, width: "100%" },
+  root: { backgroundColor: colors.surfaceMuted, flex: 1, minHeight: 0, width: "100%" },
   fallback: { alignItems: "center", backgroundColor: colors.surface, bottom: spacing.lg, left: spacing.lg, padding: spacing.md, position: "absolute", right: spacing.lg },
   fallbackCopy: { color: colors.textSecondary, marginTop: spacing.xs },
   retry: { alignItems: "center", flexDirection: "row", gap: spacing.xs, minHeight: 48, paddingHorizontal: spacing.sm },

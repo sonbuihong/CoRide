@@ -16,10 +16,10 @@ interface ReportDialogProps {
 }
 
 const PREDEFINED_REASONS = [
-  'Tài xế lái xe không an toàn',
-  'Thái độ không phù hợp',
-  'Chuyến đi không đúng lộ trình',
-  'Thu thêm phí ngoài hệ thống',
+  'Hành vi không phù hợp',
+  'Vấn đề phương tiện',
+  'Sai điểm đón',
+  'Vấn đề thanh toán',
   'Khác'
 ];
 
@@ -87,11 +87,14 @@ export function ReportDialog({ isOpen, onClose, reportedId, rideId, reportedName
           <div>
             <label className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2 block">Chi tiết thêm (tùy chọn)</label>
             <textarea
+              id="report-description"
+              maxLength={1000}
               className="w-full h-24 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-colors resize-none"
               placeholder="Mô tả chi tiết sự việc..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+            <p className="mt-1 text-right text-xs text-muted-foreground">{description.length}/1000</p>
           </div>
         </div>
 

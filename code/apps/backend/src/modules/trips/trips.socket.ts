@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { SocketEvents, TripLocationUpdatedPayload } from '@repo/shared';
 import { extendedPrisma as prisma } from '@repo/database';
-import { updateDriverLocation, refreshDriverOnline } from '../../shared/lib/redis';
+import { updateDriverLocation, refreshDriverOnline, setDriverOnline } from '../../shared/lib/redis';
 import { SocketEventService } from '../../socket/socket.events';
 
 export const registerTripsSocket = (io: Server, socket: Socket, userId: string) => {
@@ -78,6 +78,10 @@ export const registerTripsSocket = (io: Server, socket: Socket, userId: string) 
 
     try {
       // Cập nhật lên Redis (dùng cho backend)
+      const carpoolRide = await prisma.ride.findUnique({
+        where: { id: data.tripId },
+        select: { status: true, routePickupSharingEnabled: true },
+      });
       const updatedAt = Date.now();
       await Promise.all([
         updateDriverLocation(userId, data.latitude, data.longitude, {
@@ -85,7 +89,11 @@ export const registerTripsSocket = (io: Server, socket: Socket, userId: string) 
           accuracy: data.accuracy,
           updatedAt,
         }),
-        refreshDriverOnline(userId),
+        carpoolRide
+          ? (carpoolRide.status === 'ONGOING' && carpoolRide.routePickupSharingEnabled
+              ? setDriverOnline(userId)
+              : Promise.resolve())
+          : refreshDriverOnline(userId),
       ]);
 
       // Broadcast tới tất cả user trong room ngoại trừ người gửi

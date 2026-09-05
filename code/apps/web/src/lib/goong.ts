@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { goongClientCache } from './goong-client-cache';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 export type GoongApiVersion = 'v1' | 'v2';
 export const createGoongSessionToken = () => crypto.randomUUID();
@@ -119,6 +119,8 @@ export interface GeocodeV2Result {
   };
 }
 
+export type RouteGeometry = string | Array<[number, number]>;
+
 interface DirectionsResult {
   routes: Array<{
     summary: string;
@@ -134,7 +136,7 @@ interface DirectionsResult {
       steps: any[];
     }>;
     overview_polyline: {
-      points: string;
+      points: RouteGeometry;
     };
   }>;
 }
@@ -738,7 +740,7 @@ export function formatDuration(seconds: number): string {
  * Decode polyline từ Goong Directions API
  * Trả về mảng [lng, lat][] — đúng format MapLibre/Goong Map cần
  */
-export function decodePolyline(encoded: string): Array<[number, number]> {
+export function decodePolyline(encoded: RouteGeometry): Array<[number, number]> {
   // Nếu encoded là GeoJSON array (từ OSRM fallback)
   // OSRM GeoJSON coordinates đã là [lng, lat] → giữ nguyên
   if (Array.isArray(encoded)) {

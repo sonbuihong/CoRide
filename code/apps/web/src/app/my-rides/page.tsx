@@ -6,26 +6,42 @@ import {
   AlertCircle,
   ArrowRight,
   CalendarDays,
+  CalendarX2,
   Car,
   CheckCircle2,
   ChevronRight,
   Clock3,
+  Loader2,
   MapPin,
   Plus,
   RefreshCw,
   Route,
   Users,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import apiClient from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { groupRidesBySchedule } from '@/lib/group-rides-by-schedule';
 
 type RideStatus = 'SCHEDULED' | 'FULL' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
 type RideTab = 'open' | 'ongoing' | 'completed' | 'cancelled';
 
 interface Ride {
   id: string;
+  scheduleId?: string | null;
   origin: string;
   destination: string;
   departureTime: string;
@@ -49,6 +65,12 @@ interface DriverBooking {
   ride: { id: string };
 }
 
+interface ScheduleCancellationTarget {
+  scheduleId: string;
+  rideCount: number;
+  bookingCount: number;
+}
+
 const tabs: Array<{ id: RideTab; label: string; statuses: RideStatus[] }> = [
   { id: 'open', label: 'Đang mở', statuses: ['SCHEDULED', 'FULL'] },
   { id: 'ongoing', label: 'Đang diễn ra', statuses: ['ONGOING'] },
@@ -70,6 +92,8 @@ export default function MyRidesPage() {
   const [activeTab, setActiveTab] = useState<RideTab>('open');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancellationTarget, setCancellationTarget] = useState<ScheduleCancellationTarget | null>(null);
+  const [cancellingSchedule, setCancellingSchedule] = useState(false);
 
   const fetchData = useCallback(async () => {
     setError(null);
@@ -96,7 +120,7 @@ export default function MyRidesPage() {
 
   const counts = useMemo(() => Object.fromEntries(tabs.map((tab) => [
     tab.id,
-    rides.filter((ride) => tab.statuses.includes(ride.status)).length,
+    groupRidesBySchedule(rides.filter((ride) => tab.statuses.includes(ride.status))).length,
   ])) as Record<RideTab, number>, [rides]);
 
   const bookingCounts = useMemo(() => bookings.reduce<Record<string, { pending: number; confirmed: number }>>((accumulator, booking) => {
@@ -108,10 +132,32 @@ export default function MyRidesPage() {
     return accumulator;
   }, {}), [bookings]);
 
-  const activeStatuses = tabs.find((tab) => tab.id === activeTab)?.statuses ?? [];
-  const visibleRides = rides
-    .filter((ride) => activeStatuses.includes(ride.status))
-    .sort((left, right) => new Date(left.departureTime).getTime() - new Date(right.departureTime).getTime());
+  const visibleRideGroups = useMemo(
+    () => {
+      const activeStatuses = tabs.find((tab) => tab.id === activeTab)?.statuses ?? [];
+      return groupRidesBySchedule(rides.filter((ride) => activeStatuses.includes(ride.status)));
+    },
+    [activeTab, rides],
+  );
+
+  const handleCancelSchedule = async () => {
+    if (!cancellationTarget || cancellingSchedule) return;
+    setCancellingSchedule(true);
+    try {
+      const response = await apiClient.patch(`/rides/schedules/${cancellationTarget.scheduleId}/cancel`, {
+        cancelReason: 'Tài xế chủ động hủy toàn bộ lịch chuyến',
+      });
+      const cancelledCount = response.data.cancelledCount ?? cancellationTarget.rideCount;
+      toast.success(`Đã hủy ${cancelledCount} chuyến trong lịch.`);
+      setCancellationTarget(null);
+      await fetchData();
+    } catch (requestError: unknown) {
+      const message = (requestError as { response?: { data?: { message?: string } } }).response?.data?.message;
+      toast.error(message || 'Không thể hủy lịch chuyến. Vui lòng thử lại.');
+    } finally {
+      setCancellingSchedule(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#f5f5f7] pb-24 pt-8 text-[#1d1d1f] dark:bg-black dark:text-white sm:pt-10">
@@ -154,7 +200,7 @@ export default function MyRidesPage() {
             <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
             <Button variant="outline" className="mt-4 rounded-full" onClick={() => { setLoading(true); void fetchData(); }}>Thử lại</Button>
           </section>
-        ) : visibleRides.length === 0 ? (
+        ) : visibleRideGroups.length === 0 ? (
           <section className="mt-8 rounded-2xl border border-black/[0.06] bg-white p-12 text-center dark:border-white/10 dark:bg-[#1d1d1f]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#0071e3]/10 text-[#0071e3]"><Car className="h-6 w-6" /></div>
             <h2 className="mt-4 text-base font-semibold">Chưa có chuyến trong mục này</h2>
@@ -163,18 +209,31 @@ export default function MyRidesPage() {
           </section>
         ) : (
           <section className="mt-6 space-y-4">
-            {visibleRides.map((ride) => {
+            {visibleRideGroups.map(({ key, primaryRide: ride, rides: scheduleRides }) => {
               const departure = new Date(ride.departureTime);
               const totalSeats = ride.offeredSeats ?? ride.availableSeats;
               const occupiedSeats = Math.max(0, totalSeats - ride.availableSeats);
-              const countsForRide = bookingCounts[ride.id] ?? { pending: 0, confirmed: 0 };
+              const countsForRide = scheduleRides.reduce(
+                (total, scheduledRide) => {
+                  const rideCounts = bookingCounts[scheduledRide.id] ?? { pending: 0, confirmed: 0 };
+                  total.pending += rideCounts.pending;
+                  total.confirmed += rideCounts.confirmed;
+                  return total;
+                },
+                { pending: 0, confirmed: 0 },
+              );
               const meta = statusMeta[ride.status];
               return (
-                <article key={ride.id} className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.035)] dark:border-white/10 dark:bg-[#1d1d1f]">
+                <article key={key} className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.035)] dark:border-white/10 dark:bg-[#1d1d1f]">
                   <div className="p-5 md:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge variant="outline" className={cn('text-[11px]', meta.className)}>{meta.label}</Badge>
+                        {scheduleRides.length > 1 && (
+                          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-[11px] text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300">
+                            Lịch chuyến · {scheduleRides.length} ngày
+                          </Badge>
+                        )}
                         {countsForRide.pending > 0 && <Badge className="bg-amber-500 text-white hover:bg-amber-500">{countsForRide.pending} yêu cầu mới</Badge>}
                       </div>
                       <span className="text-xs font-medium text-black/45 dark:text-white/45">#{ride.id.slice(0, 8).toUpperCase()}</span>
@@ -196,12 +255,32 @@ export default function MyRidesPage() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 text-xs lg:grid-cols-1">
-                        <div className="flex items-center gap-2 rounded-xl bg-black/[0.025] px-3 py-2.5 dark:bg-white/[0.05]"><CalendarDays className="h-4 w-4 text-[#0071e3]" /><span>{departure.toLocaleDateString('vi-VN')}</span></div>
+                        <div className="flex items-center gap-2 rounded-xl bg-black/[0.025] px-3 py-2.5 dark:bg-white/[0.05]"><CalendarDays className="h-4 w-4 text-[#0071e3]" /><span>{departure.toLocaleDateString('vi-VN')}{scheduleRides.length > 1 ? ' · ngày gần nhất' : ''}</span></div>
                         <div className="flex items-center gap-2 rounded-xl bg-black/[0.025] px-3 py-2.5 dark:bg-white/[0.05]"><Clock3 className="h-4 w-4 text-[#0071e3]" /><span>{departure.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span></div>
                         <div className="flex items-center gap-2 rounded-xl bg-black/[0.025] px-3 py-2.5 dark:bg-white/[0.05]"><Users className="h-4 w-4 text-[#0071e3]" /><span>{occupiedSeats}/{totalSeats} ghế đã đặt</span></div>
                         <div className="flex items-center gap-2 rounded-xl bg-black/[0.025] px-3 py-2.5 dark:bg-white/[0.05]"><Route className="h-4 w-4 text-[#0071e3]" /><span>{ride.distance ? `${ride.distance.toFixed(0)} km` : 'Đang tính tuyến'}</span></div>
                       </div>
                     </div>
+
+                    {scheduleRides.length > 1 && (
+                      <details className="mt-5 border-t border-black/[0.06] pt-4 dark:border-white/10">
+                        <summary className="min-h-10 cursor-pointer rounded-lg px-2 py-2 text-sm font-medium text-[#0066cc] outline-none hover:bg-[#0071e3]/8 focus-visible:ring-2 focus-visible:ring-[#0071e3] dark:text-[#2997ff]">
+                          Xem và quản lý {scheduleRides.length} ngày khởi hành
+                        </summary>
+                        <div className="mt-2 divide-y divide-black/[0.06] rounded-xl bg-black/[0.025] px-3 dark:divide-white/10 dark:bg-white/[0.05]">
+                          {scheduleRides.map((scheduledRide) => {
+                            const scheduledDeparture = new Date(scheduledRide.departureTime);
+                            const scheduledCounts = bookingCounts[scheduledRide.id] ?? { pending: 0, confirmed: 0 };
+                            return (
+                              <Link key={scheduledRide.id} href={`/my-rides/${scheduledRide.id}`} className="flex min-h-12 items-center justify-between gap-3 py-2 text-sm hover:text-[#0066cc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] dark:hover:text-[#2997ff]">
+                                <span>{scheduledDeparture.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })} · {scheduledDeparture.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                                <span className="shrink-0 text-xs text-black/45 dark:text-white/45">{scheduledCounts.pending > 0 ? `${scheduledCounts.pending} yêu cầu` : `${scheduledCounts.confirmed} đã nhận`}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </details>
+                    )}
 
                     <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-black/[0.06] pt-4 text-sm dark:border-white/10">
                       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-black/50 dark:text-white/50">
@@ -209,9 +288,25 @@ export default function MyRidesPage() {
                         <span><b className="text-[#1d1d1f] dark:text-white">{ride.pricePerSeat.toLocaleString('vi-VN')}đ</b> / ghế</span>
                         {ride.vehicle && <span><Car className="mr-1 inline h-3.5 w-3.5" />{ride.vehicle.licensePlate}</span>}
                       </div>
-                      <Link href={`/my-rides/${ride.id}`} className="inline-flex min-h-10 items-center gap-1 rounded-lg px-3 font-medium text-[#0066cc] hover:bg-[#0071e3]/8 dark:text-[#2997ff]">
-                        Quản lý chuyến <ChevronRight className="h-4 w-4" />
-                      </Link>
+                      <div className="flex flex-wrap items-center justify-end gap-1">
+                        {scheduleRides.length > 1 && ride.scheduleId && activeTab === 'open' && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="min-h-10 gap-2 rounded-lg px-3 text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+                            onClick={() => setCancellationTarget({
+                              scheduleId: ride.scheduleId!,
+                              rideCount: scheduleRides.length,
+                              bookingCount: countsForRide.pending + countsForRide.confirmed,
+                            })}
+                          >
+                            <CalendarX2 className="h-4 w-4" /> Hủy toàn bộ lịch
+                          </Button>
+                        )}
+                        <Link href={`/my-rides/${ride.id}`} className="inline-flex min-h-10 items-center gap-1 rounded-lg px-3 font-medium text-[#0066cc] hover:bg-[#0071e3]/8 dark:text-[#2997ff]">
+                          {scheduleRides.length > 1 ? 'Quản lý ngày gần nhất' : 'Quản lý chuyến'} <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
 
@@ -228,6 +323,43 @@ export default function MyRidesPage() {
             })}
           </section>
         )}
+
+        <AlertDialog
+          open={cancellationTarget !== null}
+          onOpenChange={(open) => {
+            if (!open && !cancellingSchedule) setCancellationTarget(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogMedia className="bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400">
+                <CalendarX2 />
+              </AlertDialogMedia>
+              <AlertDialogTitle>Hủy toàn bộ lịch chuyến?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {cancellationTarget && (
+                  <>
+                    Thao tác này sẽ hủy <strong className="font-semibold text-foreground">{cancellationTarget.rideCount} ngày khởi hành</strong>
+                    {cancellationTarget.bookingCount > 0
+                      ? ` và ${cancellationTarget.bookingCount} đặt chỗ đang hoạt động`
+                      : ''}. Hành khách bị ảnh hưởng sẽ được thông báo và thao tác không thể hoàn tác.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={cancellingSchedule}>Giữ lại lịch</AlertDialogCancel>
+              <AlertDialogAction
+                className="gap-2 bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600"
+                disabled={cancellingSchedule}
+                onClick={() => void handleCancelSchedule()}
+              >
+                {cancellingSchedule && <Loader2 className="h-4 w-4 animate-spin" />}
+                {cancellingSchedule ? 'Đang hủy…' : `Hủy ${cancellationTarget?.rideCount ?? 0} chuyến`}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </main>
   );

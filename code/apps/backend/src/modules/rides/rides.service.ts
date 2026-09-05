@@ -5,7 +5,7 @@ import { AppError } from '../../shared/errors/AppError';
 import { SocketEventService } from '../../socket/socket.events';
 import { RideMatchingService } from './ride-matching.service';
 import { PricingService } from '../pricing/pricing.service';
-import { getDriverLocation } from '../../shared/lib/redis';
+import { getDriverLocation, isDriverOnline, setDriverOffline, setDriverOnline } from '../../shared/lib/redis';
 import { NotificationsService } from '../notifications/notifications.service';
 
 const DRIVER_SELECT = {
@@ -29,6 +29,8 @@ const DRIVER_SELECT = {
   },
   stops: { orderBy: { order: 'asc' as const } },
 } satisfies Prisma.RideInclude;
+
+const ONGOING_LOCATION_MAX_AGE_MS = 60_000;
 
 export class RidesService {
   private static validateRidePayload(data: Omit<CreateRideInput, 'departureTime'>) {
@@ -267,7 +269,7 @@ export class RidesService {
         if (startOfDay <= now && endOfDay >= now) {
           where.OR = [
             { status: 'SCHEDULED', departureTime: { gte: candidateStart, lte: candidateEnd } },
-            { status: 'ONGOING', departureTime: { gte: startOfDay, lte: endOfDay } },
+            { status: 'ONGOING', allowRoutePickup: true, routePickupSharingEnabled: true, departureTime: { gte: startOfDay, lte: endOfDay } },
           ];
         } else {
           where.status = 'SCHEDULED';
@@ -285,7 +287,7 @@ export class RidesService {
         else if (startOfDay <= now && endOfDay >= now) {
           where.OR = [
             { status: 'SCHEDULED', departureTime: { gte: pastBuffer, lte: endOfDay } },
-            { status: 'ONGOING', departureTime: { gte: startOfDay, lte: endOfDay } }
+            { status: 'ONGOING', allowRoutePickup: true, routePickupSharingEnabled: true, departureTime: { gte: startOfDay, lte: endOfDay } }
           ];
         } else {
           // Khách tìm ngày tương lai: chỉ lấy SCHEDULED
@@ -299,14 +301,14 @@ export class RidesService {
     } else if (!driverId && hasPassengerRoute) {
       where.OR = [
         { status: 'SCHEDULED', departureTime: { gte: new Date() } },
-        { status: 'ONGOING' },
+        { status: 'ONGOING', allowRoutePickup: true, routePickupSharingEnabled: true },
       ];
     } else if (!driverId) {
       // Không truyền date (mặc định lấy từ now)
       const pastBuffer = new Date(Date.now() - 60 * 60 * 1000);
       where.OR = [
         { status: 'SCHEDULED', departureTime: { gte: pastBuffer } },
-        { status: 'ONGOING' } // Lấy hết chuyến ONGOING
+        { status: 'ONGOING', allowRoutePickup: true, routePickupSharingEnabled: true } // Lấy hết chuyến ONGOING
       ];
     }
 
@@ -316,7 +318,7 @@ export class RidesService {
       orderBy: { departureTime: 'asc' },
     });
 
-    const candidateRides = departurePeriod
+    const periodRides = departurePeriod
       ? rides.filter((ride) => {
           // CoRide hiện phục vụ tại Việt Nam (UTC+7). Lọc khung giờ theo giờ địa
           // phương thay vì timezone của máy chủ để kết quả luôn nhất quán.
@@ -327,16 +329,35 @@ export class RidesService {
         })
       : rides;
 
+    const liveLocationByRide = new Map<string, Awaited<ReturnType<typeof getDriverLocation>>>();
+    const candidateRides = driverId
+      ? periodRides
+      : (await Promise.all(periodRides.map(async (ride) => {
+          if (ride.status !== 'ONGOING') return ride;
+          const [online, liveLocation] = await Promise.all([
+            isDriverOnline(ride.driverId),
+            getDriverLocation(ride.driverId),
+          ]);
+          const isFresh = Boolean(
+            liveLocation &&
+            liveLocation.rideId === ride.id &&
+            Date.now() - liveLocation.updatedAt <= ONGOING_LOCATION_MAX_AGE_MS,
+          );
+          if (!online || !isFresh) return null;
+          liveLocationByRide.set(ride.id, liveLocation);
+          return ride;
+        }))).filter((ride): ride is (typeof periodRides)[number] => ride !== null);
+
     if (driverId) return candidateRides;
 
     if (hasPassengerRoute) {
       const desiredTime = date ? new Date(date) : undefined;
       const matchedRides = await Promise.all(candidateRides.map(async (ride) => {
           const liveLocation = ride.status === 'ONGOING'
-            ? await getDriverLocation(ride.driverId)
+            ? liveLocationByRide.get(ride.id) ?? null
             : null;
           const driverCurrentLocation = liveLocation &&
-            (!liveLocation.rideId || liveLocation.rideId === ride.id)
+            liveLocation.rideId === ride.id
             ? { lat: liveLocation.latitude, lng: liveLocation.longitude }
             : undefined;
           const match = RideMatchingService.match(ride, {
@@ -423,10 +444,10 @@ export class RidesService {
     if (hasDestinationCoordinates) {
       const matchedRides = await Promise.all(candidateRides.map(async (ride) => {
           const liveLocation = ride.status === 'ONGOING'
-            ? await getDriverLocation(ride.driverId)
+            ? liveLocationByRide.get(ride.id) ?? null
             : null;
           const driverCurrentLocation = liveLocation &&
-            (!liveLocation.rideId || liveLocation.rideId === ride.id)
+            liveLocation.rideId === ride.id
             ? { lat: liveLocation.latitude, lng: liveLocation.longitude }
             : undefined;
           const match = RideMatchingService.matchDestination(ride, {
@@ -469,6 +490,39 @@ export class RidesService {
       currentDriverLng: belongsToRide ? liveLocation.longitude : null,
       driverLocationUpdatedAt: belongsToRide ? liveLocation.updatedAt : null,
     };
+  }
+
+  static async updateRoutePickupSharing(id: string, driverId: string, enabled: boolean) {
+    const ride = await prisma.ride.findUnique({ where: { id } });
+    if (!ride) throw new AppError('Không tìm thấy chuyến đi', 404);
+    if (ride.driverId !== driverId) {
+      throw new AppError('Bạn không có quyền thay đổi trạng thái nhận khách của chuyến đi này', 403);
+    }
+    if (ride.status !== 'ONGOING') {
+      throw new AppError('Chỉ có thể nhận thêm khách dọc đường khi chuyến đang diễn ra', 409);
+    }
+    if (enabled && !ride.allowRoutePickup) {
+      throw new AppError('Chuyến đi này đã tắt tùy chọn đón khách dọc đường', 409);
+    }
+
+    const changed = await prisma.ride.updateMany({
+      where: {
+        id,
+        driverId,
+        status: 'ONGOING',
+        ...(enabled ? { allowRoutePickup: true } : {}),
+      },
+      data: { routePickupSharingEnabled: enabled },
+    });
+    if (changed.count !== 1) {
+      throw new AppError('Chuyến đi đã thay đổi trạng thái. Vui lòng tải lại và thử lại.', 409);
+    }
+    const updated = await prisma.ride.findUniqueOrThrow({ where: { id }, include: DRIVER_SELECT });
+    if (enabled) await setDriverOnline(driverId);
+    else await setDriverOffline(driverId);
+
+    try { SocketEventService.emitGlobal(SocketEvents.RIDE_UPDATED, updated); } catch { /* socket optional */ }
+    return updated;
   }
 
   static async updateRide(
@@ -521,6 +575,103 @@ export class RidesService {
       'CANCELLED',
       'Tài xế đã hủy chuyến',
     );
+  }
+
+  static async cancelRideSchedule(scheduleId: string, driverId: string, cancelReason: string) {
+    const schedule = await prisma.rideSchedule.findUnique({
+      where: { id: scheduleId },
+      include: {
+        rides: {
+          select: {
+            id: true,
+            driverId: true,
+            origin: true,
+            destination: true,
+            departureTime: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    if (!schedule) throw new AppError('Không tìm thấy lịch chuyến', 404);
+    if (schedule.driverId !== driverId) {
+      throw new AppError('Bạn không có quyền hủy lịch chuyến này', 403);
+    }
+
+    const cancellableRides = schedule.rides.filter((ride) =>
+      ride.driverId === driverId && ['SCHEDULED', 'FULL'].includes(ride.status),
+    );
+    if (cancellableRides.length === 0) {
+      return { cancelledCount: 0, affectedBookingCount: 0 };
+    }
+
+    const rideIds = cancellableRides.map((ride) => ride.id);
+    const result = await prisma.$transaction(async (tx) => {
+      const cancelled = await tx.ride.updateMany({
+        where: {
+          id: { in: rideIds },
+          driverId,
+          status: { in: ['SCHEDULED', 'FULL'] },
+        },
+        data: { status: 'CANCELLED', cancelReason },
+      });
+      const affectedBookings = await tx.booking.findMany({
+        where: {
+          rideId: { in: rideIds },
+          status: { in: ['PENDING', 'CONFIRMED'] },
+        },
+        select: { passengerId: true, rideId: true },
+      });
+      const bookings = await tx.booking.updateMany({
+        where: {
+          rideId: { in: rideIds },
+          status: { in: ['PENDING', 'CONFIRMED'] },
+        },
+        data: {
+          status: 'CANCELLED',
+          cancelReason: 'Tài xế đã hủy lịch chuyến',
+          expiresAt: null,
+          seatHeld: false,
+        },
+      });
+      return { cancelledCount: cancelled.count, affectedBookingCount: bookings.count, affectedBookings };
+    });
+
+    const updatedAt = new Date().toISOString();
+    try {
+      cancellableRides.forEach((ride) => {
+        SocketEventService.emitGlobal(SocketEvents.RIDE_STATUS_UPDATED, {
+          rideId: ride.id,
+          status: 'CANCELLED',
+          updatedAt,
+        });
+      });
+      result.affectedBookings.forEach((booking) => {
+        SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_CANCELLED, {
+          rideId: booking.rideId,
+          reason: cancelReason,
+        });
+      });
+    } catch (socketError) {
+      console.warn('[RidesService] Socket emit skipped:', socketError);
+    }
+
+    result.affectedBookings.forEach((booking) => {
+      const ride = cancellableRides.find((item) => item.id === booking.rideId);
+      NotificationsService.createNotification(
+        booking.passengerId,
+        'Chuyến đi đã bị hủy',
+        `${ride?.origin ?? 'Điểm đi'} → ${ride?.destination ?? 'điểm đến'}. ${cancelReason}`,
+        'RIDE_CANCELLED',
+        { type: 'RIDE', id: booking.rideId },
+      ).catch((error) => console.error('[Notification Error]:', error));
+    });
+
+    return {
+      cancelledCount: result.cancelledCount,
+      affectedBookingCount: result.affectedBookingCount,
+    };
   }
 
   static async updateRideStatus(id: string, driverId: string, status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED', cancelReason?: string) {
@@ -609,10 +760,17 @@ export class RidesService {
 
       return tx.ride.update({
         where: { id },
-        data: { status },
+        data: {
+          status,
+          ...(['ONGOING', 'COMPLETED'].includes(status) ? { routePickupSharingEnabled: false } : {}),
+        },
         include: DRIVER_SELECT,
       });
     });
+
+    if (status === 'ONGOING' || status === 'COMPLETED') {
+      await setDriverOffline(driverId);
+    }
 
     // Broadcast status change đến tất cả participants
     try {

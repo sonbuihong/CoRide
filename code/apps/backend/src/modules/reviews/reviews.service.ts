@@ -9,6 +9,15 @@ const isPrismaUniqueError = (error: unknown): boolean => (
 );
 
 export class ReviewsService {
+  static async getMyRideReviewedUserIds(reviewerId: string, rideId: string) {
+    const reviews = await prisma.review.findMany({
+      where: { reviewerId, rideId },
+      select: { revieweeId: true },
+    });
+
+    return [...new Set(reviews.map((review) => review.revieweeId))];
+  }
+
   static async createReview(reviewerId: string, data: CreateReviewInput) {
     const { rideId, tripRequestId, revieweeId, rating, comment } = data;
     if (reviewerId === revieweeId) {

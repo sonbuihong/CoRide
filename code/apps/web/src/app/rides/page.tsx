@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowLeft, Heart, Loader2, RefreshCw,
+  AlertCircle, ArrowLeft, Heart, Loader2, RefreshCw,
   Bus, Clock, Store, MoreVertical, MapPin, Building2, Plus, X
 } from 'lucide-react';
 import { RideSearchPanel } from '@/components/rides/ride-search-panel';
@@ -11,6 +11,7 @@ import { RideSearchActions } from '@/components/rides/ride-search-actions';
 import { SearchRideInput } from '@repo/shared';
 import apiClient from '@/lib/api-client';
 import { cleanAddressText, geocodeAddress, geocodeAddressV2 } from '@/lib/goong';
+import { groupRidesBySchedule } from '@/lib/group-rides-by-schedule';
 import { Ride, RideCard } from '@/components/rides/ride-card';
 import { RideListFilters } from '@/components/rides/ride-list-filters';
 import GoongAutocomplete from '@/components/goong/goong-autocomplete';
@@ -67,6 +68,7 @@ export default function SearchPage() {
   const [sidebarRides, setSidebarRides] = useState<Ride[]>([]);
   const [initialRides, setInitialRides] = useState<Ride[]>([]);
   const [isLoadingRides, setIsLoadingRides] = useState(false);
+  const [rideLoadError, setRideLoadError] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] = useState('');
   const [selectedDestinationCoords, setSelectedDestinationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedOrigin, setSelectedOrigin] = useState('');
@@ -87,6 +89,10 @@ export default function SearchPage() {
   const [addressVersions, setAddressVersions] = useState<Record<string, AddressVersions>>({});
   const searchDraftRef = useRef<SearchRideInput>({});
   const requestedAddressVersionsRef = useRef(new Set<string>());
+  const rideGroups = useMemo(() => groupRidesBySchedule(sidebarRides), [sidebarRides]);
+  const rideSummaryLabel = rideGroups.length === sidebarRides.length
+    ? `${rideGroups.length} chuyến`
+    : `${rideGroups.length} lịch · ${sidebarRides.length} ngày`;
 
   const getDisplayedAddress = useCallback((address: string) => {
     if (!address) return address;
@@ -211,6 +217,7 @@ export default function SearchPage() {
 
     const loadInitialRides = async () => {
       setIsLoadingRides(true);
+      setRideLoadError(null);
       try {
         const response = await apiClient.get('/rides');
         if (isMounted) {
@@ -220,7 +227,10 @@ export default function SearchPage() {
         }
       } catch (error) {
         console.error('Không thể tải danh sách chuyến đi:', error);
-        if (isMounted) setSidebarRides([]);
+        if (isMounted) {
+          setSidebarRides([]);
+          setRideLoadError('Không thể kết nối tới danh sách chuyến đi. Vui lòng thử tải lại.');
+        }
       } finally {
         if (isMounted) setIsLoadingRides(false);
       }
@@ -234,12 +244,14 @@ export default function SearchPage() {
     setActiveContent('rides');
     setShowRideList(true);
     setIsLoadingRides(true);
+    setRideLoadError(null);
     try {
       const response = await apiClient.get('/rides', { params: rideFilters });
       setSidebarRides(response.data.rides ?? []);
     } catch (error) {
       console.error('Không thể tải danh sách chuyến đi:', error);
       setSidebarRides([]);
+      setRideLoadError('Không thể kết nối tới danh sách chuyến đi. Vui lòng thử tải lại.');
     } finally {
       setIsLoadingRides(false);
     }
@@ -250,12 +262,14 @@ export default function SearchPage() {
     setActiveContent('rides');
     setShowRideList(true);
     setIsLoadingRides(true);
+    setRideLoadError(null);
     try {
       const response = await apiClient.get('/rides', { params: filters });
       setSidebarRides(response.data.rides ?? []);
     } catch (error) {
       console.error('Không thể tìm kiếm chuyến đi:', error);
       setSidebarRides([]);
+      setRideLoadError('Không thể tìm kiếm chuyến đi lúc này. Vui lòng thử lại.');
     } finally {
       setIsLoadingRides(false);
     }
@@ -267,12 +281,14 @@ export default function SearchPage() {
     setActiveContent('rides');
     setShowRideList(true);
     setIsLoadingRides(true);
+    setRideLoadError(null);
     try {
       const response = await apiClient.get('/rides', { params: nextFilters });
       setSidebarRides(response.data.rides ?? []);
     } catch (error) {
       console.error('Không thể lọc danh sách chuyến đi:', error);
       setSidebarRides([]);
+      setRideLoadError('Không thể áp dụng bộ lọc lúc này. Vui lòng thử lại.');
     } finally {
       setIsLoadingRides(false);
     }
@@ -350,6 +366,7 @@ export default function SearchPage() {
     setActiveContent('rides');
     setShowRideList(true);
     setIsLoadingRides(true);
+    setRideLoadError(null);
     try {
       const response = await apiClient.get('/rides', {
         params: filters,
@@ -358,6 +375,7 @@ export default function SearchPage() {
     } catch (error) {
       console.error('Không thể tìm chuyến theo điểm đến đã chọn:', error);
       setSidebarRides([]);
+      setRideLoadError('Không thể tìm chuyến theo điểm đến này. Vui lòng thử lại.');
     } finally {
       setIsLoadingRides(false);
     }
@@ -533,7 +551,9 @@ export default function SearchPage() {
                   <ArrowLeft className="h-4 w-4" />
                 </button>
                 <h2 className="text-[16px] font-semibold text-[#1d1d1f] dark:text-white">Danh sách chuyến đi</h2>
-                <span className="min-w-9 text-right text-[12px] font-medium text-gray-500">{sidebarRides.length}</span>
+                <span className="min-w-fit text-right text-[12px] font-medium text-gray-500">
+                  {rideSummaryLabel}
+                </span>
               </div>
 
               <RideListFilters
@@ -546,12 +566,22 @@ export default function SearchPage() {
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-6 w-6 animate-spin text-[#0071e3]" />
                 </div>
-              ) : sidebarRides.length > 0 ? (
-                sidebarRides.map((ride) => (
+              ) : rideLoadError ? (
+                <div role="alert" className="rounded-[18px] bg-red-50 px-4 py-6 text-center dark:bg-red-950/30">
+                  <AlertCircle className="mx-auto h-5 w-5 text-red-600 dark:text-red-400" />
+                  <p className="mt-2 text-[14px] leading-5 text-red-700 dark:text-red-300">{rideLoadError}</p>
+                  <button type="button" onClick={() => void handleShowRideList()} className="mt-3 min-h-10 rounded-full bg-white px-4 text-[14px] font-semibold text-red-700 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-950 dark:text-red-200">
+                    Thử tải lại
+                  </button>
+                </div>
+              ) : rideGroups.length > 0 ? (
+                rideGroups.map(({ key, primaryRide, rides }) => (
                   <RideCard
-                    key={ride.id}
-                    ride={ride}
-                    href={getRideDetailHref(ride.id)}
+                    key={key}
+                    ride={primaryRide}
+                    scheduleRides={rides}
+                    getRideHref={getRideDetailHref}
+                    href={getRideDetailHref(primaryRide.id)}
                   />
                 ))
               ) : (
@@ -679,16 +709,26 @@ export default function SearchPage() {
                <div className="flex items-center justify-center py-24">
                  <Loader2 className="h-8 w-8 animate-spin text-[#0071e3]" />
                </div>
-             ) : sidebarRides.length > 0 ? (
-               sidebarRides.map((ride) => (
+             ) : rideLoadError ? (
+               <div role="alert" className="rounded-[24px] bg-red-50 px-6 py-14 text-center dark:bg-red-950/30">
+                 <AlertCircle className="mx-auto h-6 w-6 text-red-600 dark:text-red-400" />
+                 <p className="mx-auto mt-3 max-w-md text-[15px] leading-6 text-red-700 dark:text-red-300">{rideLoadError}</p>
+                 <button type="button" onClick={() => void handleShowRideList()} className="mt-4 min-h-11 rounded-full bg-white px-5 text-[14px] font-semibold text-red-700 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:bg-red-950 dark:text-red-200">
+                   Thử tải lại
+                 </button>
+               </div>
+             ) : rideGroups.length > 0 ? (
+               rideGroups.map(({ key, primaryRide, rides }) => (
                  <RideCard
-                   key={ride.id}
+                   key={key}
                    ride={{
-                     ...ride,
-                     origin: getDisplayedAddress(ride.origin),
-                     destination: getDisplayedAddress(ride.destination),
+                     ...primaryRide,
+                     origin: getDisplayedAddress(primaryRide.origin),
+                     destination: getDisplayedAddress(primaryRide.destination),
                    }}
-                   href={getRideDetailHref(ride.id)}
+                   scheduleRides={rides}
+                   getRideHref={getRideDetailHref}
+                   href={getRideDetailHref(primaryRide.id)}
                  />
                ))
              ) : (

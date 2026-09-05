@@ -98,6 +98,15 @@ export const useDriverTracking = (rideId: string | null) => {
     return () => stopTracking();
   }, [startTracking, stopTracking]);
 
+  useEffect(() => {
+    if (!rideId) return;
+    return socketService.subscribeConnection(() => {
+      if (socketService.connected) {
+        socketService.emit(SocketEvents.TRIP_JOIN_ROOM, rideId);
+      }
+    });
+  }, [rideId]);
+
   return { currentLocation, permissionGranted, startTracking, stopTracking };
 };
 

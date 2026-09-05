@@ -12,7 +12,8 @@ interface PageProps {
 // Hàm generateMetadata chạy ở Server (SSR/SSG) để tự động tạo title/description cho SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api';
+    const baseUrl = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL;
+    if (!baseUrl) return { title: 'Chi tiết chuyến đi | CoRide' };
     // Fetch thông tin chuyến đi trực tiếp từ backend
     const res = await fetch(`${baseUrl}/rides/${params.id}`, { cache: 'no-store' });
     

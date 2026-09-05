@@ -118,3 +118,47 @@ export const updateRideStatus = async (
   }
 };
 
+export const cancelRideSchedule = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const result = await RidesService.cancelRideSchedule(
+      req.params.scheduleId as string,
+      req.user!.id,
+      req.body.cancelReason,
+    );
+    res.json({
+      message: result.cancelledCount > 0
+        ? `Đã hủy ${result.cancelledCount} chuyến trong lịch`
+        : 'Lịch chuyến không còn ngày nào có thể hủy',
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateRoutePickupSharing = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const ride = await RidesService.updateRoutePickupSharing(
+      req.params.id as string,
+      req.user!.id,
+      req.body.enabled,
+    );
+    res.json({
+      message: req.body.enabled
+        ? 'Đã bật tiếp tục nhận khách dọc đường'
+        : 'Đã tắt nhận thêm khách dọc đường',
+      ride,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

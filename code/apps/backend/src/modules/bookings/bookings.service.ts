@@ -3,7 +3,7 @@ import { CreateBookingInput, UpdateBookingStatusInput, SocketEvents } from '@rep
 import { BookingStatus, Prisma } from '@repo/database';
 import { AppError } from '../../shared/errors/AppError';
 import { NotificationsService } from '../notifications/notifications.service';
-import { getDriverLocation } from '../../shared/lib/redis';
+import { getDriverLocation, isDriverOnline } from '../../shared/lib/redis';
 import { SocketEventService } from '../../socket/socket.events';
 import { RouteMatchingService } from './route-matching.service';
 import { PricingService } from '../pricing/pricing.service';
@@ -15,8 +15,31 @@ const MAX_DETOUR_KM = 5;
 /** Ngưỡng lệch điểm đến tối đa (km) — điểm đến khách cách điểm đến tài xế */
 const MAX_DEST_DEVIATION_KM = 5;
 const SCHEDULED_APPROVAL_TIMEOUT_MS = 15 * 60_000;
+const ONGOING_LOCATION_MAX_AGE_MS = 60_000;
 
 export class BookingsService {
+  private static async assertOngoingRideAcceptingBookings(ride: any) {
+    if (!ride.allowRoutePickup) {
+      throw new AppError('Chuyến đi này không cho phép đón khách dọc đường', 409);
+    }
+    if (!ride.routePickupSharingEnabled) {
+      throw new AppError('Tài xế đã tắt nhận thêm khách dọc đường', 409);
+    }
+    const [online, location] = await Promise.all([
+      isDriverOnline(ride.driverId),
+      getDriverLocation(ride.driverId),
+    ]);
+    if (
+      !online ||
+      !location ||
+      location.rideId !== ride.id ||
+      Date.now() - location.updatedAt > ONGOING_LOCATION_MAX_AGE_MS
+    ) {
+      throw new AppError('Vị trí của tài xế không còn khả dụng. Vui lòng tìm chuyến khác.', 409);
+    }
+    return location;
+  }
+
   private static async assertPassengerCanReserve(
     tx: Pick<typeof prisma, 'ride' | 'booking' | '$queryRaw'>,
     passengerId: string,
@@ -337,14 +360,7 @@ export class BookingsService {
     }
 
     // Lấy vị trí hiện tại của tài xế từ Redis Geo Index
-    const driverLocation = await getDriverLocation(ride.driverId);
-
-    if (!driverLocation) {
-      throw new AppError(
-        'Tài xế chưa bật chia sẻ vị trí GPS. Không thể ghép chuyến lúc này.',
-        400
-      );
-    }
+    const driverLocation = await this.assertOngoingRideAcceptingBookings(ride);
 
     // Kiểm tra "thuận đường" bằng Haversine + Point-to-Segment
     // Lấy các điểm đón hiện tại của chuyến đi để tính toán detour sát thực tế hơn
@@ -376,11 +392,19 @@ export class BookingsService {
 
     const pricing = await this.calculateBookingContribution(data, ride, seats, routeCheck.detourKm);
 
+    await this.assertOngoingRideAcceptingBookings(ride);
+
     const instant = ride.bookingPolicy === 'INSTANT';
     const booking = await prisma.$transaction(async (tx) => {
       await this.assertPassengerCanReserve(tx, passengerId);
       const reserved = await tx.ride.updateMany({
-        where: { id: rideId, status: 'ONGOING', availableSeats: { gte: seats } },
+        where: {
+          id: rideId,
+          status: 'ONGOING',
+          allowRoutePickup: true,
+          routePickupSharingEnabled: true,
+          availableSeats: { gte: seats },
+        },
         data: { availableSeats: { decrement: seats } },
       });
       if (reserved.count !== 1) throw new AppError('Chuyến đi không còn đủ ghế để giữ chỗ', 409);
@@ -439,6 +463,15 @@ export class BookingsService {
     seats: number,
     detourKm: number
   ) {
+    // When a passenger books the posted route end-to-end, the coordinates below
+    // are only fallbacks. Route-matching noise must not become a detour charge.
+    const booksEntireRoute =
+      data.passengerLat == null &&
+      data.passengerLng == null &&
+      data.dropoffLat == null &&
+      data.dropoffLng == null &&
+      data.pickupStopId == null;
+    const billableDetourKm = booksEntireRoute ? 0 : detourKm;
     const pickup = {
       lat: data.passengerLat ?? ride.originLat,
       lng: data.passengerLng ?? ride.originLng,
@@ -474,7 +507,7 @@ export class BookingsService {
     return PricingService.calculateCarpoolContribution({
       sharedDistanceKm,
       originalDistanceKm,
-      detourKm,
+      detourKm: billableDetourKm,
       offeredSeats: ride.offeredSeats,
       bookedSeats: seats,
       // Chưa có mô hình toll segment; phân bổ theo phần tuyến thực tế được dùng.

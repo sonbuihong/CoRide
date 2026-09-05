@@ -231,6 +231,7 @@ exports.Prisma.RideScalarFieldEnum = {
   offeredSeats: 'offeredSeats',
   tollCost: 'tollCost',
   allowRoutePickup: 'allowRoutePickup',
+  routePickupSharingEnabled: 'routePickupSharingEnabled',
   bookingPolicy: 'bookingPolicy',
   scheduleId: 'scheduleId',
   allowLuggage: 'allowLuggage',

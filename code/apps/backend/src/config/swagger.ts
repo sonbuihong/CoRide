@@ -137,6 +137,8 @@ export const swaggerSpec = {
           availableSeats: { type: 'integer' },
           pricePerSeat: { type: 'number' },
           status: { type: 'string', enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED'] },
+          allowRoutePickup: { type: 'boolean' },
+          routePickupSharingEnabled: { type: 'boolean', default: false },
           description: { type: 'string', nullable: true },
           createdAt: { type: 'string', format: 'date-time' },
         },
@@ -409,6 +411,31 @@ export const swaggerSpec = {
     },
 
     // ── Bookings ──────────────────────────────────────────────────────────────
+    '/rides/{id}/route-pickup-sharing': {
+      patch: {
+        tags: ['Rides'],
+        summary: 'Bật hoặc tắt nhận thêm khách dọc đường cho chuyến đang diễn ra',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['enabled'],
+                properties: { enabled: { type: 'boolean' } },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'Cập nhật trạng thái nhận khách thành công' },
+          403: { description: 'Không phải chủ chuyến' },
+          409: { description: 'Chuyến không đang diễn ra hoặc không cho đón khách dọc đường' },
+        },
+      },
+    },
     '/bookings': {
       post: {
         tags: ['Bookings'],
@@ -523,6 +550,29 @@ export const swaggerSpec = {
     },
 
     // ── Reviews ────────────────────────────────────────────────────────────────
+    '/reviews/ride/{rideId}/mine': {
+      get: {
+        tags: ['Reviews'],
+        summary: 'Danh sách hành khách đã được tôi đánh giá trong chuyến',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'rideId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        responses: {
+          200: {
+            description: 'Danh sách ID người dùng đã được đánh giá',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['reviewedUserIds'],
+                  properties: { reviewedUserIds: { type: 'array', items: { type: 'string', format: 'uuid' } } },
+                },
+              },
+            },
+          },
+          401: { description: 'Chưa đăng nhập' },
+        },
+      },
+    },
     '/reviews/user/{userId}': {
       get: {
         tags: ['Reviews'],

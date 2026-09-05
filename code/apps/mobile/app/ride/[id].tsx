@@ -21,6 +21,7 @@ import {
   BadgeCheck,
   CalendarClock,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   LocateFixed,
   Luggage,
@@ -735,6 +736,7 @@ function PassengerRideView() {
   const [seats, setSeats] = useState(initialSeats);
   const [pickupStopId, setPickupStopId] = useState<string>();
   const [sheetState, setSheetState] = useState<'confirm' | 'success' | null>(null);
+  const [timelineExpanded, setTimelineExpanded] = useState(false);
   const [bookingError, setBookingError] = useState<string>();
   const [createdBooking, setCreatedBooking] = useState<{ id?: string; status?: string; totalPrice?: number }>();
 
@@ -919,7 +921,6 @@ function PassengerRideView() {
   const driverName = [ride.driver?.firstName, ride.driver?.lastName].filter(Boolean).join(' ') || 'Tài xế CoRide';
   const vehicle = ride.driver?.vehicle ?? ride.vehicle ?? undefined;
   const vehicleText = [vehicle?.type === 'CAR' ? 'Ô tô' : vehicle?.type === 'BIKE' ? 'Xe máy' : undefined, vehicle?.color, vehicle?.licensePlate].filter(Boolean).join(' · ');
-  const fullRouteTitle = 'Tài xế đi: ' + ride.departure + ' → ' + ride.destination;
   const dateText = format(new Date(ride.departureTime), 'HH:mm · EEEE, dd/MM', { locale: vi });
   const ctaTitle = canBook ? (isInstant ? 'Đặt chỗ' : 'Yêu cầu đặt chỗ') : offerUnavailable || ride.availableSeats < seats ? 'Chuyến vừa hết chỗ' : 'Không thể đặt chỗ';
 
@@ -951,10 +952,10 @@ function PassengerRideView() {
             {passengerDestination ? <Marker coordinate={passengerDestination} title="Điểm xuống của bạn" pinColor={colors.mapDestination} /> : null}
           </MapView>
           <View style={[styles.passengerMapHeader, { top: insets.top + spacing.xs }]}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={() => router.back()} style={styles.passengerMapButton}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={() => router.back()} style={({ pressed }) => [styles.passengerMapButton, pressed && styles.passengerMapButtonPressed]}>
               <ArrowLeft color={colors.textPrimary} size={23} />
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Căn giữa toàn bộ hành trình" onPress={fitRelevantRoute} style={styles.passengerMapButton}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Căn giữa toàn bộ hành trình" onPress={fitRelevantRoute} style={({ pressed }) => [styles.passengerMapButton, pressed && styles.passengerMapButtonPressed]}>
               <LocateFixed color={colors.primary} size={21} />
             </Pressable>
           </View>
@@ -966,15 +967,34 @@ function PassengerRideView() {
 
         <View style={styles.passengerBody}>
           <View style={styles.passengerHero}>
-            <AppText variant="caption" style={styles.capitalize}>{dateText}</AppText>
+            <View style={styles.passengerHeroTopRow}>
+              <View style={styles.passengerDatePill}>
+                <CalendarClock size={15} color={colors.primary} />
+                <AppText variant="caption" weight="semibold" style={[styles.capitalize, styles.passengerDateText]}>{dateText}</AppText>
+              </View>
+              <View style={styles.passengerAvailabilityPill}>
+                <View style={styles.passengerAvailabilityDot} />
+                <AppText variant="caption" weight="semibold" style={styles.passengerAvailabilityText}>Còn {ride.availableSeats} ghế</AppText>
+              </View>
+            </View>
             <View style={styles.passengerRouteRow}>
               <View style={styles.passengerRouteRail}><View style={styles.passengerPickupDot} /><View style={styles.passengerRouteLine} /><View style={styles.passengerDropoffDot} /></View>
               <View style={styles.passengerRouteCopy}>
-                <AppText variant="body" weight="semibold">{pickupLabel}</AppText>
-                <AppText variant="body" weight="semibold">{dropoffLabel}</AppText>
+                <View>
+                  <AppText variant="caption" style={styles.passengerRouteLabel}>Điểm đón</AppText>
+                  <AppText variant="body" weight="semibold">{pickupLabel}</AppText>
+                </View>
+                <View>
+                  <AppText variant="caption" style={styles.passengerRouteLabel}>Điểm đến</AppText>
+                  <AppText variant="body" weight="semibold">{dropoffLabel}</AppText>
+                </View>
               </View>
             </View>
-            <AppText variant="caption" style={styles.passengerMuted}>{fullRouteTitle}</AppText>
+            <View style={styles.passengerTripFacts}>
+              <View style={styles.passengerTripFact}><Route size={15} color={colors.textSecondary} /><AppText variant="caption" weight="semibold">{ride.distance ? `${ride.distance.toFixed(1).replace('.', ',')} km` : 'Đang cập nhật'}</AppText></View>
+              <View style={styles.passengerTripFact}><CalendarClock size={15} color={colors.textSecondary} /><AppText variant="caption" weight="semibold">{ride.duration ? `Khoảng ${Math.round(ride.duration)} phút` : 'Chưa có thời lượng'}</AppText></View>
+              <View style={styles.passengerTripFact}><BadgeCheck size={15} color={colors.textSecondary} /><AppText variant="caption" weight="semibold">{isInstant ? 'Xác nhận tức thì' : 'Tài xế duyệt'}</AppText></View>
+            </View>
           </View>
 
           {hasSearchContext && ride.matchScore != null ? (
@@ -983,28 +1003,43 @@ function PassengerRideView() {
             </View>
           ) : null}
 
-          <View style={styles.passengerSection}>
-            <AppText accessibilityRole="header" variant="h3" weight="semibold">Hành trình của tài xế</AppText>
-            <AppText variant="bodySmall" style={styles.passengerMuted}>Bạn tham gia đoạn {pickupLabel} → {dropoffLabel}</AppText>
-            <View style={styles.passengerTimeline}>
-              {timeline.map((item, index) => (
-                <View key={item.key} style={styles.passengerTimelineItem}>
-                  <View style={styles.passengerTimelineRail}>
-                    <View style={[
-                      styles.passengerTimelineDot,
-                      item.kind === 'pickup' && styles.passengerTimelinePickup,
-                      item.kind === 'dropoff' && styles.passengerTimelineDropoff,
-                    ]} />
-                    {index < timeline.length - 1 ? <View style={styles.passengerTimelineLine} /> : null}
+          <View style={styles.passengerSectionCompact}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={timelineExpanded ? 'Thu gọn chi tiết tuyến đường' : 'Xem chi tiết tuyến đường'}
+              accessibilityState={{ expanded: timelineExpanded }}
+              onPress={() => setTimelineExpanded((value) => !value)}
+              style={({ pressed }) => [styles.passengerSectionToggle, pressed && styles.passengerPressed]}
+            >
+              <View style={styles.flex1}>
+                <AppText accessibilityRole="header" variant="h3" weight="semibold">Chi tiết tuyến đường</AppText>
+                <AppText variant="caption" style={styles.passengerMuted}>{timeline.length} điểm trên hành trình</AppText>
+              </View>
+              <View style={styles.passengerToggleIcon}>
+                <ChevronDown size={19} color={colors.primary} style={{ transform: [{ rotate: timelineExpanded ? '180deg' : '0deg' }] }} />
+              </View>
+            </Pressable>
+            {timelineExpanded ? (
+              <View style={styles.passengerTimeline}>
+                {timeline.map((item, index) => (
+                  <View key={item.key} style={styles.passengerTimelineItem}>
+                    <View style={styles.passengerTimelineRail}>
+                      <View style={[
+                        styles.passengerTimelineDot,
+                        item.kind === 'pickup' && styles.passengerTimelinePickup,
+                        item.kind === 'dropoff' && styles.passengerTimelineDropoff,
+                      ]} />
+                      {index < timeline.length - 1 ? <View style={styles.passengerTimelineLine} /> : null}
+                    </View>
+                    <View style={styles.passengerTimelineCopy}>
+                      <AppText variant="bodySmall" weight={item.kind === 'pickup' || item.kind === 'dropoff' ? 'semibold' : 'normal'}>{item.title}</AppText>
+                      {item.kind === 'pickup' ? <AppText variant="caption" style={styles.passengerAccent}>Điểm đón của bạn</AppText> : null}
+                      {item.kind === 'dropoff' ? <AppText variant="caption" style={styles.passengerAccent}>Điểm xuống của bạn</AppText> : null}
+                    </View>
                   </View>
-                  <View style={styles.passengerTimelineCopy}>
-                    <AppText variant="bodySmall" weight={item.kind === 'pickup' || item.kind === 'dropoff' ? 'semibold' : 'normal'}>{item.title}</AppText>
-                    {item.kind === 'pickup' ? <AppText variant="caption" style={styles.passengerAccent}>Điểm đón của bạn</AppText> : null}
-                    {item.kind === 'dropoff' ? <AppText variant="caption" style={styles.passengerAccent}>Điểm xuống của bạn</AppText> : null}
-                  </View>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.passengerSection}>
@@ -1021,7 +1056,15 @@ function PassengerRideView() {
                 </View>
                 {vehicleText ? <AppText variant="caption">{vehicleText}</AppText> : null}
               </View>
-              <Pressable accessibilityRole="button" accessibilityLabel="Nhắn tin cho tài xế" onPress={() => router.push('/chat/' + ride.id as any)} style={styles.passengerChat}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Nhắn tin cho tài xế"
+                onPress={() => router.push({
+                  pathname: '/chat/[rideId]',
+                  params: { rideId: ride.id, otherUserId: ride.driverId, otherUserName: driverName },
+                } as any)}
+                style={({ pressed }) => [styles.passengerChat, pressed && styles.passengerPressed]}
+              >
                 <MessageCircle size={20} color={colors.primary} />
               </Pressable>
             </View>
@@ -1033,25 +1076,22 @@ function PassengerRideView() {
           </View>
 
           <View style={styles.passengerSection}>
-            <AppText accessibilityRole="header" variant="h3" weight="semibold">Chi phí của bạn</AppText>
+            <View style={styles.seatPickerRow}>
+              <View>
+                <AppText accessibilityRole="header" variant="h3" weight="semibold">Đặt chỗ</AppText>
+                <AppText variant="caption" style={styles.passengerMuted}>Chọn số ghế bạn cần</AppText>
+              </View>
+              <View style={styles.passengerSeatPicker}>
+                <Pressable accessibilityRole="button" accessibilityLabel="Giảm số ghế" accessibilityState={{ disabled: seats <= 1 }} disabled={seats <= 1} onPress={() => setSeats((value) => Math.max(1, value - 1))} style={({ pressed }) => [styles.seatPickerButton, pressed && seats > 1 && styles.passengerPressed]}><Minus size={18} color={seats <= 1 ? colors.textTertiary : colors.textPrimary} /></Pressable>
+                <AppText weight="semibold" style={styles.seatPickerValue}>{seats}</AppText>
+                <Pressable accessibilityRole="button" accessibilityLabel="Tăng số ghế" accessibilityState={{ disabled: seats >= ride.availableSeats }} disabled={seats >= ride.availableSeats} onPress={() => setSeats((value) => Math.min(ride.availableSeats, value + 1))} style={({ pressed }) => [styles.seatPickerButton, pressed && seats < ride.availableSeats && styles.passengerPressed]}><Plus size={18} color={seats >= ride.availableSeats ? colors.textTertiary : colors.textPrimary} /></Pressable>
+              </View>
+            </View>
+            <View style={styles.priceDivider} />
             {ride.sharedDistanceKm != null ? <View style={styles.priceRow}><AppText variant="bodySmall" style={styles.passengerMuted}>Đoạn đi chung</AppText><AppText variant="bodySmall" weight="semibold">{ride.sharedDistanceKm.toFixed(1).replace('.', ',')} km</AppText></View> : null}
             <View style={styles.priceRow}><AppText variant="bodySmall" style={styles.passengerMuted}>{hasSearchContext ? 'Chi phí chia sẻ' : 'Giá mỗi ghế'}</AppText><AppText variant="bodySmall" weight="semibold">{formatVnd(hasSearchContext ? totalFare : ride.price)}</AppText></View>
             <View style={styles.priceDivider} />
             <View style={styles.priceRow}><AppText weight="semibold">Tổng</AppText><AppText variant="h2" weight="semibold" style={styles.passengerPrice}>{formatVnd(totalFare)}</AppText></View>
-          </View>
-
-          <View style={styles.passengerSection}>
-            <View style={styles.seatPickerRow}>
-              <View>
-                <AppText variant="bodySmall" weight="semibold">Số ghế</AppText>
-                <AppText variant="caption">Còn {ride.availableSeats} chỗ</AppText>
-              </View>
-              <View style={styles.passengerSeatPicker}>
-                <Pressable accessibilityRole="button" accessibilityLabel="Giảm số ghế" accessibilityState={{ disabled: seats <= 1 }} disabled={seats <= 1} onPress={() => setSeats((value) => Math.max(1, value - 1))} style={styles.seatPickerButton}><Minus size={18} color={seats <= 1 ? colors.textTertiary : colors.textPrimary} /></Pressable>
-                <AppText weight="semibold" style={styles.seatPickerValue}>{seats}</AppText>
-                <Pressable accessibilityRole="button" accessibilityLabel="Tăng số ghế" accessibilityState={{ disabled: seats >= ride.availableSeats }} disabled={seats >= ride.availableSeats} onPress={() => setSeats((value) => Math.min(ride.availableSeats, value + 1))} style={styles.seatPickerButton}><Plus size={18} color={seats >= ride.availableSeats ? colors.textTertiary : colors.textPrimary} /></Pressable>
-              </View>
-            </View>
           </View>
 
           {!hasSearchContext && ride.stops?.length ? (
@@ -1453,28 +1493,42 @@ const styles = StyleSheet.create({
   pickupChoiceAddrSelected: { color: '#2563EB' },
 
   // Passenger search-context detail
-  passengerScreen: { backgroundColor: colors.background, flex: 1 },
+  passengerScreen: { backgroundColor: '#F4F7FB', flex: 1 },
   passengerScrollContent: { flexGrow: 1 },
-  passengerMap: { backgroundColor: colors.surfaceMuted, height: 300, overflow: 'hidden' },
+  passengerMap: { backgroundColor: colors.surfaceMuted, height: 332, overflow: 'hidden' },
   passengerMapHeader: { flexDirection: 'row', justifyContent: 'space-between', left: spacing.md, position: 'absolute', right: spacing.md },
-  passengerMapButton: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.pill, elevation: 3, height: 48, justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, width: 48 },
-  mapLegend: { backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: radius.input, bottom: spacing.sm, gap: spacing.xs, left: spacing.sm, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, position: 'absolute' },
+  passengerMapButton: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: radius.pill, elevation: 4, height: 48, justifyContent: 'center', shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.14, shadowRadius: 10, width: 48 },
+  passengerMapButtonPressed: { opacity: 0.72 },
+  mapLegend: { backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: radius.pill, bottom: spacing.lg, flexDirection: 'row', gap: spacing.sm, left: spacing.md, paddingHorizontal: spacing.sm, paddingVertical: 9, position: 'absolute', shadowColor: '#0F172A', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 8 },
   legendItem: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
   driverLegendLine: { backgroundColor: '#94A3B8', borderRadius: radius.pill, height: 4, width: 22 },
   sharedLegendLine: { backgroundColor: colors.primary, borderRadius: radius.pill, height: 7, width: 22 },
-  passengerBody: { alignSelf: 'center', gap: spacing.lg, maxWidth: 720, padding: spacing.md, width: '100%' },
-  passengerHero: { backgroundColor: colors.surface, borderRadius: radius.card, gap: spacing.md, padding: spacing.lg },
-  passengerRouteRow: { flexDirection: 'row', minHeight: 68 },
-  passengerRouteRail: { alignItems: 'center', marginRight: spacing.sm, paddingVertical: 4, width: 16 },
+  passengerBody: { alignSelf: 'center', gap: spacing.md, marginTop: -20, maxWidth: 720, paddingBottom: spacing.lg, paddingHorizontal: spacing.md, width: '100%', zIndex: 2 },
+  passengerHero: { backgroundColor: colors.surface, borderRadius: 24, elevation: 5, gap: spacing.md, padding: spacing.lg, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 20 },
+  passengerHeroTopRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, justifyContent: 'space-between' },
+  passengerDatePill: { alignItems: 'center', backgroundColor: colors.primarySoft, borderRadius: radius.pill, flexDirection: 'row', gap: 6, minHeight: 34, paddingHorizontal: 11 },
+  passengerDateText: { color: colors.primary },
+  passengerAvailabilityPill: { alignItems: 'center', backgroundColor: '#ECFDF5', borderRadius: radius.pill, flexDirection: 'row', gap: 6, minHeight: 34, paddingHorizontal: 10 },
+  passengerAvailabilityDot: { backgroundColor: '#16A34A', borderRadius: radius.pill, height: 7, width: 7 },
+  passengerAvailabilityText: { color: '#166534' },
+  passengerRouteRow: { flexDirection: 'row', minHeight: 108 },
+  passengerRouteRail: { alignItems: 'center', marginRight: spacing.sm, paddingVertical: 7, width: 18 },
   passengerPickupDot: { backgroundColor: colors.surface, borderColor: colors.mapPickup, borderRadius: radius.pill, borderWidth: 2, height: 12, width: 12 },
-  passengerRouteLine: { backgroundColor: colors.primary, flex: 1, marginVertical: 3, width: 3 },
+  passengerRouteLine: { backgroundColor: colors.primary, borderRadius: radius.pill, flex: 1, marginVertical: 4, width: 3 },
   passengerDropoffDot: { backgroundColor: colors.mapDestination, borderRadius: radius.pill, height: 11, width: 11 },
-  passengerRouteCopy: { flex: 1, gap: spacing.lg, justifyContent: 'space-between' },
+  passengerRouteCopy: { flex: 1, gap: spacing.lg, justifyContent: 'space-between', minWidth: 0 },
+  passengerRouteLabel: { color: colors.textSecondary, marginBottom: 3 },
+  passengerTripFacts: { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, paddingTop: spacing.sm },
+  passengerTripFact: { alignItems: 'center', backgroundColor: '#F7F9FC', borderRadius: radius.pill, flexDirection: 'row', gap: 6, minHeight: 34, paddingHorizontal: 10 },
   passengerMuted: { color: colors.textSecondary },
   passengerAccent: { color: colors.primary, marginTop: 2 },
   capitalize: { textTransform: 'capitalize' },
-  passengerSection: { backgroundColor: colors.surface, borderRadius: radius.card, gap: spacing.md, padding: spacing.lg },
-  passengerTimeline: { paddingTop: spacing.xs },
+  passengerSection: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, gap: spacing.md, padding: spacing.lg },
+  passengerSectionCompact: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  passengerSectionToggle: { alignItems: 'center', flexDirection: 'row', minHeight: 72, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+  passengerToggleIcon: { alignItems: 'center', backgroundColor: colors.primarySoft, borderRadius: radius.pill, height: 40, justifyContent: 'center', width: 40 },
+  passengerPressed: { opacity: 0.68 },
+  passengerTimeline: { borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.lg, paddingTop: spacing.md },
   passengerTimelineItem: { flexDirection: 'row', minHeight: 58 },
   passengerTimelineRail: { alignItems: 'center', marginRight: spacing.sm, width: 18 },
   passengerTimelineDot: { backgroundColor: colors.surface, borderColor: colors.borderStrong, borderRadius: radius.pill, borderWidth: 2, height: 11, marginTop: 3, width: 11 },
@@ -1494,15 +1548,15 @@ const styles = StyleSheet.create({
   priceRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   priceDivider: { backgroundColor: colors.border, height: StyleSheet.hairlineWidth },
   seatPickerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-  passengerSeatPicker: { alignItems: 'center', backgroundColor: colors.surfaceMuted, borderRadius: radius.input, flexDirection: 'row' },
+  passengerSeatPicker: { alignItems: 'center', backgroundColor: '#F1F5F9', borderColor: colors.border, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row' },
   seatPickerButton: { alignItems: 'center', height: 48, justifyContent: 'center', width: 48 },
   seatPickerValue: { minWidth: 36, textAlign: 'center' },
   stopChoice: { alignItems: 'center', borderRadius: radius.input, flexDirection: 'row', gap: spacing.sm, minHeight: 56, padding: spacing.sm },
   stopChoiceSelected: { backgroundColor: colors.primarySoft },
   soldOutNotice: { backgroundColor: colors.dangerSoft, borderRadius: radius.card, gap: spacing.xs, padding: spacing.md },
   soldOutTitle: { color: colors.danger },
-  passengerCtaBar: { backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, bottom: 0, elevation: 12, left: 0, paddingHorizontal: spacing.md, paddingTop: spacing.sm, position: 'absolute', right: 0, shadowColor: '#000', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.08, shadowRadius: 14 },
-  passengerCtaSummary: { alignItems: 'center', alignSelf: 'center', flexDirection: 'row', gap: spacing.md, maxWidth: 720, width: '100%' },
+  passengerCtaBar: { backgroundColor: colors.surface, borderTopColor: colors.border, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: StyleSheet.hairlineWidth, bottom: 0, elevation: 12, left: 0, paddingHorizontal: spacing.md, paddingTop: spacing.sm, position: 'absolute', right: 0, shadowColor: '#0F172A', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.1, shadowRadius: 18 },
+  passengerCtaSummary: { alignItems: 'center', alignSelf: 'center', flexDirection: 'row', gap: spacing.sm, maxWidth: 720, width: '100%' },
   passengerCtaButton: { flex: 1 },
   confirmBackdrop: { backgroundColor: colors.scrim, flex: 1, justifyContent: 'flex-end' },
   confirmSheetPressable: { width: '100%' },

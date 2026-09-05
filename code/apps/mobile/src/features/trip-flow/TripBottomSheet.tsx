@@ -45,6 +45,7 @@ interface TripBottomSheetProps {
   onOpenRoute: () => void;
   onPassengerPress: (booking: DriverBookingSummary) => void;
   onChat: (booking: DriverBookingSummary) => void;
+  routePickupControl?: React.ReactNode;
 }
 
 const passengerName = (booking?: DriverBookingSummary | null) =>
@@ -375,6 +376,7 @@ export const TripBottomSheetContent = memo(function TripBottomSheetContent({
   onOpenRoute,
   onPassengerPress,
   onChat,
+  routePickupControl,
 }: TripBottomSheetProps) {
   const passengers = useMemo(() => getConfirmedPassengers(ride), [ride]);
   const currentBooking = useMemo(() => getNextStop(ride)?.booking ?? null, [ride]);
@@ -387,6 +389,8 @@ export const TripBottomSheetContent = memo(function TripBottomSheetContent({
           <View style={styles.expandedBadge}><AppText variant="caption" weight="bold" style={styles.expandedBadgeText}>ĐANG DI CHUYỂN</AppText></View>
         </View>
       ) : <TripStatusHeader phase={phase} />}
+
+      {routePickupControl}
 
       {snapIndex === 0 ? (
         <CompactNextStop ride={ride} phase={phase} distance={distance} duration={duration} />

@@ -84,7 +84,7 @@ export function getActivityActions(item: ActivityItem, role: ActivityRole): Acti
         ? { label: 'Xem chuyến', route: '/(passenger-tabs)/ride-hailing', kind: 'primary' as const }
         : { label: 'Xem chi tiết', route: `/trip/${item.tripId}`, kind: 'primary' as const }
       : item.segment === 'ACTIVE' && item.bookingId
-        ? { label: 'Xem chuyến', route: `/ride/passenger/${item.bookingId}`, kind: 'primary' as const, params: item.rideId ? { rideId: item.rideId } : undefined }
+        ? { label: 'Xem chuyến', route: `/booking/${item.bookingId}`, kind: 'primary' as const }
         : { label: 'Xem chi tiết', route: `/booking/${item.bookingId}`, kind: 'primary' as const };
     const actions: ActivityAction[] = [primary];
     if (item.segment === 'ACTIVE' && item.chatRideId && item.relatedUser) {

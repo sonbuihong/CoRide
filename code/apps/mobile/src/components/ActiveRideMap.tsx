@@ -1,9 +1,11 @@
-import React, { forwardRef, memo, useEffect, useImperativeHandle, useRef } from 'react';
+import React, { forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Navigation } from 'lucide-react-native';
 
 import { colors } from '../theme/tokens';
+
+const DEFAULT_FIT_EDGE_PADDING = { top: 88, right: 42, bottom: 230, left: 42 };
 
 export interface ActiveRideLatLng {
   latitude: number;
@@ -18,6 +20,8 @@ export interface ActiveRideStopMarker {
   kind?: 'PICKUP' | 'DROPOFF';
 }
 
+const EMPTY_STOP_MARKERS: ActiveRideStopMarker[] = [];
+
 export interface ActiveRideMapHandle {
   recenter: (coordinate?: ActiveRideLatLng | null) => void;
 }
@@ -31,6 +35,12 @@ interface ActiveRideMapProps {
   destinationLabel?: string;
   pickupMarkers?: ActiveRideStopMarker[];
   onUserPan?: () => void;
+  fitEdgePadding?: { top: number; right: number; bottom: number; left: number };
+  autoFitRoute?: boolean;
+  fitRouteOnce?: boolean;
+  focusZoom?: number;
+  autoFocusDriver?: boolean;
+  userLocation?: ActiveRideLatLng | null;
 }
 
 const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function ActiveRideMap(
@@ -41,38 +51,62 @@ const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function 
     driverLocation,
     originLabel = 'Điểm đi',
     destinationLabel = 'Điểm đến',
-    pickupMarkers = [],
+    pickupMarkers = EMPTY_STOP_MARKERS,
     onUserPan,
+    fitEdgePadding = DEFAULT_FIT_EDGE_PADDING,
+    autoFitRoute = true,
+    fitRouteOnce = false,
+    focusZoom = 16,
+    autoFocusDriver = true,
+    userLocation,
   },
   forwardedRef,
 ) {
   const mapRef = useRef<MapView>(null);
   const hasInitialDriverFit = useRef(false);
+  const hasRouteFit = useRef(false);
+  const userInteracted = useRef(false);
+  const [mapReady, setMapReady] = useState(false);
+  const [layoutReady, setLayoutReady] = useState(false);
+  const initialRegion = useRef({
+    ...(driverLocation || originCoords),
+    latitudeDelta: 0.005,
+    longitudeDelta: 0.005,
+  }).current;
 
   useImperativeHandle(forwardedRef, () => ({
     recenter: (coordinate) => {
+      userInteracted.current = true;
       const target = coordinate || driverLocation || originCoords;
-      mapRef.current?.animateCamera({ center: target, zoom: 16 }, { duration: 280 });
+      mapRef.current?.animateCamera({ center: target }, { duration: 280 });
     },
-  }), [driverLocation, originCoords]);
+  }), [driverLocation, focusZoom, originCoords]);
 
   useEffect(() => {
-    if (!mapRef.current || routeCoords.length < 2) return;
+    if (!mapReady || !layoutReady || !autoFitRoute || !mapRef.current || routeCoords.length < 2) return;
+    if (fitRouteOnce && (hasRouteFit.current || userInteracted.current)) return;
     mapRef.current.fitToCoordinates(
       [...routeCoords, ...pickupMarkers.map((marker) => marker.coordinate)],
-      { edgePadding: { top: 88, right: 42, bottom: 230, left: 42 }, animated: true },
+      { edgePadding: fitEdgePadding, animated: true },
     );
-    hasInitialDriverFit.current = false;
-  }, [pickupMarkers, routeCoords]);
+    hasRouteFit.current = true;
+    if (!fitRouteOnce) hasInitialDriverFit.current = false;
+  }, [autoFitRoute, fitEdgePadding, fitRouteOnce, layoutReady, mapReady, pickupMarkers, routeCoords]);
 
   useEffect(() => {
-    if (!driverLocation || routeCoords.length < 2 || hasInitialDriverFit.current || !mapRef.current) return;
+    if (!mapReady || !layoutReady || userInteracted.current || !autoFocusDriver || !driverLocation || hasInitialDriverFit.current || !mapRef.current) return;
+    if (!autoFitRoute) {
+      hasInitialDriverFit.current = true;
+      mapRef.current.animateCamera({ center: driverLocation, zoom: focusZoom }, { duration: 280 });
+      return;
+    }
+    if (routeCoords.length < 2) return;
     hasInitialDriverFit.current = true;
     mapRef.current.fitToCoordinates(
       [...routeCoords, driverLocation, ...pickupMarkers.map((marker) => marker.coordinate)],
-      { edgePadding: { top: 88, right: 42, bottom: 230, left: 42 }, animated: true },
+      { edgePadding: fitEdgePadding, animated: true },
     );
-  }, [driverLocation, pickupMarkers, routeCoords]);
+  }, [autoFitRoute, autoFocusDriver, driverLocation, fitEdgePadding, focusZoom, layoutReady, mapReady, pickupMarkers, routeCoords]);
 
   return (
     <View style={styles.container}>
@@ -80,20 +114,41 @@ const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function 
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={StyleSheet.absoluteFillObject}
-        initialRegion={{ ...originCoords, latitudeDelta: 0.05, longitudeDelta: 0.05 }}
+        initialRegion={initialRegion}
+        onMapReady={() => setMapReady(true)}
+        onLayout={({ nativeEvent }) => setLayoutReady(nativeEvent.layout.width > 0 && nativeEvent.layout.height > 0)}
         showsUserLocation={false}
         showsMyLocationButton={false}
+        scrollEnabled
+        zoomEnabled
+        rotateEnabled
+        pitchEnabled
         toolbarEnabled={false}
         moveOnMarkerPress={false}
-        onPanDrag={onUserPan}
+        onTouchStart={() => {
+          userInteracted.current = true;
+          onUserPan?.();
+        }}
+        onPanDrag={() => {
+          userInteracted.current = true;
+          onUserPan?.();
+        }}
+        onRegionChangeComplete={(_, details) => {
+          if (details.isGesture) {
+            userInteracted.current = true;
+            onUserPan?.();
+          }
+        }}
         accessibilityLabel="Bản đồ hành trình đang diễn ra"
       >
         {routeCoords.length > 1 ? (
-          <Polyline coordinates={routeCoords} strokeColor={colors.mapRoute} strokeWidth={5} />
+          <Polyline coordinates={routeCoords} strokeColor={colors.mapRoute} strokeWidth={6} zIndex={5} />
         ) : null}
 
         <Marker coordinate={originCoords} title={originLabel} pinColor={colors.success} />
         <Marker coordinate={destinationCoords} title={destinationLabel} pinColor={colors.danger} />
+
+        {userLocation ? <Marker coordinate={userLocation} title="Vị trí của bạn" pinColor={colors.primary} /> : null}
 
         {driverLocation ? (
           <Marker coordinate={driverLocation} title="Vị trí tài xế" anchor={{ x: 0.5, y: 0.5 }} flat>

@@ -36,6 +36,8 @@ export interface ActiveRideViewModel {
   destinationLng?: number | null;
   distance?: number;
   duration?: number;
+  allowRoutePickup?: boolean;
+  routePickupSharingEnabled?: boolean;
   pricePerSeat?: number;
   bookings?: DriverBookingSummary[];
 }

@@ -87,7 +87,7 @@ const ImageKycUpload: React.FC<ImageKycUploadProps> = ({ label, value, onChange,
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
     // Base URL mapping
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
     const backendHost = apiBase.replace('/api', '');
     return `${backendHost}${url}`;
   };

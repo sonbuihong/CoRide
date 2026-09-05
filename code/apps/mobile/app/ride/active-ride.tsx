@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Linking, Modal, Platform, Pressable, StyleSheet, Switch, useWindowDimensions, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Headphones, MapPinned, Navigation, Share2, ShieldAlert } from 'lucide-react-native';
+import { Headphones, MapPinned, Navigation, Share2, ShieldAlert, UserPlus } from 'lucide-react-native';
 import { SocketEvents } from '@repo/shared';
 
 import { ActiveRideMap, type ActiveRideMapHandle } from '../../src/components/ActiveRideMap';
@@ -12,8 +12,8 @@ import { SkeletonLoader } from '../../src/components/ui/SkeletonLoader';
 import { ErrorState } from '../../src/components/ui/ErrorState';
 import { AppButton } from '../../src/components/ui/AppButton';
 import { AppText } from '../../src/components/ui/AppText';
-import { useDriverTracking } from '../../src/hooks/useDriverLocation';
 import { getRealtimeRefetchInterval, useSocketConnection } from '../../src/hooks/useSocketConnection';
+import { useRideTrackingSession } from '../../src/providers/ride-tracking-provider';
 import { bookingService, type DriverBookingSummary } from '../../src/services/booking.service';
 import { getDirections, getDirectionsThroughStops } from '../../src/services/direction.service';
 import { rideService } from '../../src/services/ride.service';
@@ -65,7 +65,7 @@ export default function ActiveRideScreen() {
 
   const ride = (activeQuery.data?.ride ?? null) as ActiveRideViewModel | null;
   const rideId = ride?.id ?? null;
-  const { currentLocation: driverLocation, permissionGranted } = useDriverTracking(rideId);
+  const { currentLocation: driverLocation, permissionGranted, ensureCurrentLocation } = useRideTrackingSession();
   const phase = getDriverTripPhase(ride);
   const currentBooking = getCurrentBooking(ride);
   const passengers = useMemo(() => getConfirmedPassengers(ride), [ride]);
@@ -203,6 +203,30 @@ export default function ActiveRideScreen() {
       }} as never);
     },
     onError: (error: any) => showInfoDialog('Không thể hoàn thành chuyến', error?.response?.data?.message || 'Vui lòng thử lại.'),
+  });
+
+  const routePickupSharingMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      if (enabled) {
+        const location = await ensureCurrentLocation();
+        if (!location) throw new Error('LOCATION_PERMISSION_REQUIRED');
+      }
+      return rideService.updateRoutePickupSharing(ride!.id, enabled);
+    },
+    onSuccess: async () => { await invalidateTrip(); },
+    onError: (error: any) => {
+      if (error?.message === 'LOCATION_PERMISSION_REQUIRED') {
+        showInfoDialog(
+          'Cần quyền vị trí',
+          'Hãy cho phép CoRide truy cập vị trí và bật GPS trước khi nhận thêm khách dọc đường.',
+        );
+        return;
+      }
+      showInfoDialog(
+        'Không thể cập nhật nhận khách',
+        error?.response?.data?.message || 'Vui lòng kiểm tra kết nối rồi thử lại.',
+      );
+    },
   });
 
   const handlePrimaryAction = useCallback(() => {
@@ -354,6 +378,42 @@ export default function ActiveRideScreen() {
             onOpenRoute={() => router.push({ pathname: '/ride/route-detail', params: { rideId: ride.id } } as never)}
             onPassengerPress={openPassenger}
             onChat={openChat}
+            routePickupControl={ride.status === 'ONGOING' ? (
+              <View style={[styles.routePickupCard, !ride.allowRoutePickup && styles.routePickupCardDisabled]}>
+                <View style={styles.routePickupIcon}>
+                  <UserPlus size={20} color={ride.allowRoutePickup ? colors.success : colors.textMuted} />
+                </View>
+                <View style={styles.routePickupCopy}>
+                  <AppText weight="semibold">Tiếp tục nhận khách dọc đường</AppText>
+                  <AppText variant="caption" style={styles.routePickupDescription}>
+                    {!ride.allowRoutePickup
+                      ? 'Chuyến này đã tắt tùy chọn đón khách dọc đường khi đăng.'
+                      : ride.routePickupSharingEnabled
+                        ? 'Đang hiển thị chuyến cho hành khách phù hợp gần tuyến.'
+                        : 'Không nhận thêm khách; vị trí vẫn được gửi cho khách hiện tại.'}
+                  </AppText>
+                </View>
+                {routePickupSharingMutation.isPending ? (
+                  <View style={styles.routePickupLoading} accessibilityLabel="Đang cập nhật trạng thái nhận khách">
+                    <ActivityIndicator color={colors.success} />
+                  </View>
+                ) : (
+                  <Switch
+                    accessibilityLabel={`Tiếp tục nhận khách dọc đường, ${ride.routePickupSharingEnabled ? 'đang bật' : 'đang tắt'}`}
+                    accessibilityHint={ride.allowRoutePickup ? 'Bật hoặc tắt nhận thêm khách cho chuyến đang diễn ra' : 'Không khả dụng vì chuyến đã tắt đón khách dọc đường'}
+                    accessibilityState={{
+                      checked: Boolean(ride.routePickupSharingEnabled),
+                      disabled: !ride.allowRoutePickup,
+                    }}
+                    disabled={!ride.allowRoutePickup}
+                    onValueChange={(enabled) => routePickupSharingMutation.mutate(enabled)}
+                    trackColor={{ false: colors.borderStrong, true: colors.success }}
+                    thumbColor={colors.surface}
+                    value={Boolean(ride.routePickupSharingEnabled)}
+                  />
+                )}
+              </View>
+            ) : undefined}
           />
         </DraggableBottomSheet>
 
@@ -405,6 +465,12 @@ const styles = StyleSheet.create({
   gpsBanner: { alignItems: 'center', alignSelf: 'center', backgroundColor: colors.warningSoft, borderRadius: radius.full, flexDirection: 'row', gap: spacing.md, minHeight: 40, paddingHorizontal: spacing.md, position: 'absolute', zIndex: 25 },
   gpsText: { color: colors.warning },
   retryText: { color: colors.info },
+  routePickupCard: { alignItems: 'center', backgroundColor: colors.successSoft, borderRadius: radius.card, flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md, padding: spacing.md },
+  routePickupCardDisabled: { backgroundColor: colors.surfaceSecondary },
+  routePickupIcon: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.full, height: 42, justifyContent: 'center', width: 42 },
+  routePickupCopy: { flex: 1, minWidth: 0 },
+  routePickupDescription: { color: colors.textSecondary, marginTop: 2 },
+  routePickupLoading: { alignItems: 'center', height: 48, justifyContent: 'center', width: 48 },
   sheetFooterRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   footerNavigate: { alignItems: 'center', backgroundColor: colors.primarySoft, borderColor: colors.info, borderRadius: radius.input, borderWidth: 1, height: 52, justifyContent: 'center', width: 52 },
   primaryActionWrap: { flex: 1 },

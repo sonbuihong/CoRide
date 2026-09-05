@@ -23,6 +23,8 @@ export interface DriverBookingRide {
   destinationLat?: number | null;
   destinationLng?: number | null;
   routePolyline?: string | null;
+  allowRoutePickup?: boolean;
+  routePickupSharingEnabled?: boolean;
   updatedAt?: string;
 }
 

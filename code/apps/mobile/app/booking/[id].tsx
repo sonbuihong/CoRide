@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, Linking } from 'react-native';
+import { View, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image, Linking, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import { authService } from '../../src/services/auth.service';
 import { AppText } from '../../src/components/ui/AppText';
 import { AppButton } from '../../src/components/ui/AppButton';
 import { StatusBadge } from '../../src/components/ui/StatusBadge';
+import { LiveBookingMap } from '../../src/features/booking/LiveBookingMap';
 import { Star, Phone, CreditCard, ArrowLeft, Mail, MessageSquare } from 'lucide-react-native';
 
 export default function BookingManageScreen() {
@@ -29,13 +30,13 @@ export default function BookingManageScreen() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: (status: 'CONFIRMED' | 'REJECTED') => 
+    mutationFn: (status: 'CONFIRMED' | 'REJECTED') =>
       bookingService.updateBookingStatus(id as string, status),
     onSuccess: (_, status) => {
       queryClient.invalidateQueries({ queryKey: ['booking', id] });
       queryClient.invalidateQueries({ queryKey: ['active-booking'] });
       Alert.alert(
-        'Thành công', 
+        'Thành công',
         status === 'CONFIRMED' ? 'Đã chấp nhận yêu cầu.' : 'Đã từ chối yêu cầu.',
       );
     },
@@ -111,14 +112,11 @@ export default function BookingManageScreen() {
 
   return (
     <View className="flex-1 bg-background" style={{ paddingBottom: insets.bottom }}>
-      {/* Header nổi */}
-      <View 
-        style={{ paddingTop: insets.top + 10 }}
-        className="px-6 py-4 flex-row items-center bg-background border-b border-border/30"
-      >
-        <TouchableOpacity 
+      {/* Header — shadow elevation thay vi border-b nhat */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
           onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-surface border border-border/30 items-center justify-center shadow-sm active:bg-slate-50 mr-4"
+          style={styles.backButton}
           accessibilityRole="button"
           accessibilityLabel="Quay lại"
         >
@@ -127,11 +125,16 @@ export default function BookingManageScreen() {
         <AppText variant="h3" weight="bold" className="text-text-primary flex-1">{title}</AppText>
       </View>
 
-      <ScrollView 
+      {isPassenger && booking.status === 'CONFIRMED' && booking.ride.status === 'ONGOING' ? (
+        <LiveBookingMap booking={booking} />
+      ) : null}
+
+      <ScrollView
         className="flex-1 px-6 pt-4"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 16 }}
       >
-        {/* Thẻ liên hệ đối phương (Hành khách/Tài xế) */}
+        {/* The card tai xe / hanh khach */}
         <View className="bg-surface p-5 rounded-3xl border border-border/40 shadow-sm mb-6">
           <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-slate-100">
             <AppText variant="bodySmall" weight="semibold" className="text-text-secondary">
@@ -167,7 +170,6 @@ export default function BookingManageScreen() {
               </View>
             </View>
 
-            {/* Nút Chat */}
             <TouchableOpacity
               onPress={() => router.push({
                 pathname: `/chat/${booking.rideId}` as any,
@@ -185,23 +187,23 @@ export default function BookingManageScreen() {
           </View>
         </View>
 
-        {/* Thông tin Chi tiết Đặt chỗ */}
+        {/* Chi tiet dat cho */}
         <View className="bg-surface p-5 rounded-3xl border border-border/40 shadow-sm mb-6">
           <AppText variant="bodySmall" weight="semibold" className="text-text-secondary mb-4">Chi tiết yêu cầu</AppText>
-          
+
           <View className="space-y-4">
             <View className="flex-row justify-between py-3 border-b border-slate-100">
               <AppText className="text-text-secondary">Số ghế đặt</AppText>
               <AppText weight="bold" className="text-text-primary">{booking.seats} ghế</AppText>
             </View>
-            
+
             <View className="flex-row justify-between py-3 border-b border-slate-100">
               <AppText className="text-text-secondary">Tổng chi phí</AppText>
               <AppText weight="bold" className="text-passenger">
                 {(booking.totalPrice || 0).toLocaleString('vi-VN')}đ
               </AppText>
             </View>
-            
+
             <View className="flex-row justify-between py-3 border-b border-slate-100">
               <AppText className="text-text-secondary">Trạng thái thanh toán</AppText>
               <AppText weight="bold" className={booking.paymentStatus === 'PAID' ? 'text-confirmed' : 'text-pending'}>
@@ -213,8 +215,8 @@ export default function BookingManageScreen() {
               <View className="flex-row justify-between py-3 border-b border-slate-100">
                 <AppText className="text-text-secondary">Số điện thoại</AppText>
                 <View className="flex-row items-center">
-                  <Phone size={14} color="#64748B" className="mr-1.5" />
-                  <AppText weight="semibold" className="text-text-primary">{displayUser.phone}</AppText>
+                  <Phone size={14} color="#64748B" />
+                  <AppText weight="semibold" className="text-text-primary ml-1">{displayUser.phone}</AppText>
                 </View>
               </View>
             )}
@@ -223,15 +225,15 @@ export default function BookingManageScreen() {
               <View className="flex-row justify-between py-3">
                 <AppText className="text-text-secondary">Địa chỉ email</AppText>
                 <View className="flex-row items-center">
-                  <Mail size={14} color="#64748B" className="mr-1.5" />
-                  <AppText weight="semibold" className="text-text-primary">{displayUser.email}</AppText>
+                  <Mail size={14} color="#64748B" />
+                  <AppText weight="semibold" className="text-text-primary ml-1">{displayUser.email}</AppText>
                 </View>
               </View>
             )}
           </View>
         </View>
 
-        {/* Thông tin chuyến đi lộ trình */}
+        {/* Thong tin lo trinh */}
         <AppText variant="bodySmall" weight="bold" className="text-text-secondary uppercase mb-3 ml-2">Thông tin lộ trình</AppText>
         <View className="bg-surface p-5 rounded-3xl border border-border/40 shadow-sm mb-10">
           <AppText variant="body" weight="bold" className="text-text-primary mb-2">
@@ -245,10 +247,9 @@ export default function BookingManageScreen() {
         </View>
       </ScrollView>
 
-      {/* Hành động dưới chân màn hình */}
       {isDriver && booking.status === 'PENDING' && (
         <View className="p-6 bg-surface border-t border-border/40 flex-row space-x-4">
-          <AppButton 
+          <AppButton
             title="Từ chối"
             variant="outline"
             onPress={() => updateStatusMutation.mutate('REJECTED')}
@@ -257,8 +258,7 @@ export default function BookingManageScreen() {
             textClassName="text-rejected"
             accessibilityLabel="Từ chối yêu cầu đặt chỗ này"
           />
-          
-          <AppButton 
+          <AppButton
             title="Chấp nhận"
             variant="driver"
             onPress={() => updateStatusMutation.mutate('CONFIRMED')}
@@ -271,13 +271,13 @@ export default function BookingManageScreen() {
 
       {isPassenger && booking.status === 'COMPLETED' && booking.paymentStatus === 'UNPAID' && (
         <View className="p-6 bg-surface border-t border-border/40">
-          <AppButton 
+          <AppButton
             title="Thanh toán chuyến đi"
             variant="passenger"
             onPress={() => createPaymentMutation.mutate()}
             disabled={createPaymentMutation.isPending || confirmPaymentMutation.isPending}
             className="w-full flex-row justify-center items-center"
-            leftIcon={<CreditCard size={20} color="white" className="mr-2" />}
+            leftIcon={<CreditCard size={20} color="white" />}
             accessibilityLabel="Nhấn để tiến hành thanh toán chi phí chuyến đi"
           />
         </View>
@@ -319,3 +319,31 @@ export default function BookingManageScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  // Header: dung shadow elevation thay vi border-b nhat
+  // Tao depth perception ro rang hon, tach header khoi content scrollable
+  header: {
+    paddingBottom: 14,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+});

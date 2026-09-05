@@ -1,4 +1,6 @@
 import React, { useRef, useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { User, Phone, MapPin, Navigation, CheckCircle, XCircle, Loader2, MessageSquare, MoreHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
@@ -59,6 +61,8 @@ interface DriverViewProps {
   onExpand?: () => void;
   activeOrder?: string[];
   onReorder?: (newOrder: string[]) => void;
+  showHeader?: boolean;
+  onCompleted?: (rideId: string) => void;
 }
 
 // ─── State Machine Logic ────────────────────────────────────────────────────
@@ -96,8 +100,9 @@ function getDriverPrimaryAction(ride: Ride): {
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
-export default function DriverView({ data, onRefresh, isExpanded = true, onExpand, activeOrder }: DriverViewProps) {
+export default function DriverView({ data, onRefresh, isExpanded = true, onExpand, activeOrder, showHeader = true, onCompleted }: DriverViewProps) {
   const ride: Ride = data.ride;
+  const router = useRouter();
   const { user } = useAuth();
 
   const [loadingPrimary, setLoadingPrimary] = useState(false);
@@ -114,6 +119,10 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
   const handlePrimaryAction = async () => {
     const action = getDriverPrimaryAction(ride);
     if (!action || primaryActionInFlightRef.current) return;
+    if (
+      action.variant === 'complete'
+      && !window.confirm('Kết thúc chuyến đi ngay bây giờ? Chuyến sẽ được đánh dấu hoàn thành và việc chia sẻ vị trí sẽ dừng lại.')
+    ) return;
 
     primaryActionInFlightRef.current = true;
     setLoadingPrimary(true);
@@ -124,7 +133,12 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
         action.variant === 'start'    ? 'Đã bắt đầu chuyến đi' :
                                         'Đã cập nhật trạng thái chuyến đi';
       toast.success(successText);
-      onRefresh();
+      if (action.variant === 'complete') {
+        onCompleted?.(ride.id);
+        router.replace(`/my-rides/${ride.id}`);
+      } else {
+        onRefresh();
+      }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || 'Không thể cập nhật trạng thái. Vui lòng thử lại.');
@@ -331,9 +345,9 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
   // ─── Render ───────────────────────────────────────────────────────────
 
   return (
-    <div className="w-full flex-1 min-h-0 flex flex-col bg-background">
+    <div className={`w-full flex flex-col bg-background ${showHeader ? 'min-h-0 flex-1' : 'flex-none'}`}>
       {/* Header - Grab/Be Style */}
-      <div className="flex items-center justify-between pb-2 pt-1 px-3 border-b border-border shrink-0">
+      {showHeader && <div className="flex items-center justify-between pb-2 pt-1 px-3 border-b border-border shrink-0">
         <button className="flex flex-col items-center gap-0.5 w-12" onClick={onExpand}>
           <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
             <span className="text-[13px] font-bold text-gray-700">
@@ -356,10 +370,10 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
           </div>
           <span className="text-[9px] text-gray-500 font-medium">Điều hướng</span>
         </a>
-      </div>
+      </div>}
 
       {/* Sticky Info & Actions */}
-      <div className="px-3 pt-3 shrink-0 bg-background z-10">
+      <div className="px-4 pt-3 shrink-0 bg-background z-10">
         {nextBookingToFocus ? (
           <div className="flex flex-col space-y-2.5">
             {/* Điểm đón */}
@@ -380,7 +394,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
             <div className="flex items-start gap-2.5 mt-0.5">
               <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden shrink-0 border border-border">
                 {nextBookingToFocus.passenger.avatarUrl ? (
-                  <img src={nextBookingToFocus.passenger.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  <Image src={nextBookingToFocus.passenger.avatarUrl} alt={`${nextBookingToFocus.passenger.firstName} ${nextBookingToFocus.passenger.lastName}`} width={36} height={36} unoptimized className="h-full w-full object-cover" />
                 ) : (
                   <User className="w-4 h-4 text-gray-500" />
                 )}
@@ -447,7 +461,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
 
         {/* Main Action Button - Gắn liền dưới Action Bar */}
         {mainButton && (
-          <div className="py-2.5">
+          <div className="sticky bottom-0 z-20 -mx-4 border-t border-border/70 bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2.5 backdrop-blur-sm">
             <Button
               className="w-full h-[44px] text-[15px] rounded-full font-semibold shadow-sm bg-primary hover:brightness-110 text-primary-foreground transition-all active:scale-[0.98]"
               onClick={mainButton.action}
@@ -461,7 +475,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
 
       {/* Main Content Area */}
       {(pendingBookings.length > 0 || (isExpanded && confirmedBookings.length > 1) || (isExpanded && ride.status !== 'COMPLETED' && ride.status !== 'ONGOING')) && (
-        <div className="pt-2 pb-4 px-4 flex-1 overflow-y-auto">
+        <div className="px-4 pb-4 pt-2">
 
           {/* Yêu cầu PENDING */}
           {pendingBookings.length > 0 && (
@@ -476,7 +490,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 bg-background rounded-full flex items-center justify-center overflow-hidden border border-orange-200 shrink-0">
                           {b.passenger.avatarUrl ? (
-                            <img src={b.passenger.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            <Image src={b.passenger.avatarUrl} alt={`${b.passenger.firstName} ${b.passenger.lastName}`} width={32} height={32} unoptimized className="h-full w-full object-cover" />
                           ) : (
                             <User className="w-4 h-4 text-gray-400" />
                           )}
@@ -526,7 +540,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
                         {b.passenger.avatarUrl ? (
-                          <img src={b.passenger.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                          <Image src={b.passenger.avatarUrl} alt={`${b.passenger.firstName} ${b.passenger.lastName}`} width={32} height={32} unoptimized className="h-full w-full object-cover" />
                         ) : (
                           <User className="w-4 h-4 text-gray-500" />
                         )}
@@ -627,7 +641,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
                 <div className="shrink-0">
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border border-border">
                     {(confirmedBookings[detailIndex] || nextBookingToFocus)?.passenger.avatarUrl ? (
-                      <img src={(confirmedBookings[detailIndex] || nextBookingToFocus)?.passenger.avatarUrl ?? undefined} alt="Avatar" className="w-full h-full object-cover" />
+                      <Image src={(confirmedBookings[detailIndex] || nextBookingToFocus)?.passenger.avatarUrl ?? ''} alt={`${(confirmedBookings[detailIndex] || nextBookingToFocus)?.passenger.firstName ?? ''} ${(confirmedBookings[detailIndex] || nextBookingToFocus)?.passenger.lastName ?? ''}`.trim()} width={48} height={48} unoptimized className="h-full w-full object-cover" />
                     ) : (
                       <User className="w-5 h-5 text-gray-500" />
                     )}

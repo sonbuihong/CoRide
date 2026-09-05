@@ -51,9 +51,13 @@ export interface Ride {
   timeDifferenceMinutes?: number;
   passengerFare?: number;
   passengerPricePerSeat?: number;
+  currentDriverLat?: number | null;
+  currentDriverLng?: number | null;
+  driverLocationUpdatedAt?: string | number | null;
   bookingPolicy?: BookingPolicy;
   routePolyline?: string | null;
   allowRoutePickup?: boolean;
+  routePickupSharingEnabled: boolean;
   allowSmoking?: boolean;
   allowPets?: boolean;
   allowLuggage?: boolean;
@@ -89,6 +93,7 @@ export interface RideSearchParams {
 
 const normalizeRide = (ride: any): Ride => ({
   ...ride,
+  routePickupSharingEnabled: ride.routePickupSharingEnabled ?? false,
   departure: ride.departure ?? ride.origin,
   price: ride.passengerFare ?? ride.price ?? ride.pricePerSeat,
   totalSeats: ride.totalSeats ?? ride.offeredSeats ?? ride.availableSeats,
@@ -145,5 +150,10 @@ export const rideService = {
   async updateRideStatus(id: string, status: 'ONGOING' | 'COMPLETED' | 'CANCELLED', cancelReason?: string) {
     const response = await api.patch(`/rides/${id}/status`, { status, cancelReason });
     return response.data;
+  },
+
+  async updateRoutePickupSharing(id: string, enabled: boolean): Promise<Ride> {
+    const response = await api.patch(`/rides/${id}/route-pickup-sharing`, { enabled });
+    return normalizeRide(response.data.ride ?? response.data);
   },
 };

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
   AlertCircle,
+  Armchair,
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
@@ -19,6 +20,7 @@ import {
   Route,
   Star,
   Users,
+  Wallet,
   XCircle,
 } from 'lucide-react';
 import { SocketEvents } from '@repo/shared';
@@ -29,6 +31,7 @@ import { useSocket } from '@/components/providers/socket-provider';
 import { ChatWindow } from '@/components/chat/chat-window';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ReviewDialog } from '@/components/reviews/review-dialog';
 import { cn } from '@/lib/utils';
 
 const OngoingMap = dynamic(() => import('@/components/OngoingMap'), { ssr: false });
@@ -114,6 +117,8 @@ export default function DriverRideDetailPage() {
   const [action, setAction] = useState<'start' | 'cancel' | null>(null);
   const actionInFlightRef = useRef(false);
   const [chatBooking, setChatBooking] = useState<DriverBooking | null>(null);
+  const [reviewedUserIds, setReviewedUserIds] = useState<string[]>([]);
+  const [reviewStatus, setReviewStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
 
   const fetchDetail = useCallback(async () => {
     setError(null);
@@ -134,9 +139,25 @@ export default function DriverRideDetailPage() {
     }
   }, [id]);
 
+  const fetchReviewedUsers = useCallback(async () => {
+    setReviewStatus('loading');
+    try {
+      const response = await apiClient.get(`/reviews/ride/${id}/mine`);
+      setReviewedUserIds(response.data.reviewedUserIds ?? []);
+      setReviewStatus('ready');
+    } catch (requestError) {
+      console.error('Không thể tải trạng thái đánh giá:', requestError);
+      setReviewStatus('error');
+    }
+  }, [id]);
+
   useEffect(() => {
     void fetchDetail();
   }, [fetchDetail]);
+
+  useEffect(() => {
+    if (ride?.status === 'COMPLETED' && reviewStatus === 'idle') void fetchReviewedUsers();
+  }, [fetchReviewedUsers, reviewStatus, ride?.status]);
 
   useEffect(() => {
     if (!socket) return;
@@ -165,6 +186,7 @@ export default function DriverRideDetailPage() {
   }, [socket, fetchDetail]);
 
   const confirmedBookings = useMemo(() => bookings.filter((booking) => ['CONFIRMED', 'COMPLETED'].includes(booking.status)), [bookings]);
+  const completedBookings = useMemo(() => bookings.filter((booking) => booking.status === 'COMPLETED'), [bookings]);
   const pendingBookings = useMemo(() => bookings.filter((booking) => booking.status === 'PENDING'), [bookings]);
   const waypoints = useMemo(() => confirmedBookings.flatMap((booking) => {
     const stops: Array<{ id: string; lat: number; lng: number }> = [];
@@ -214,6 +236,10 @@ export default function DriverRideDetailPage() {
   const departure = new Date(ride.departureTime);
   const totalSeats = ride.offeredSeats ?? ride.availableSeats;
   const statusMeta = rideStatusMeta[ride.status];
+  const isCompleted = ride.status === 'COMPLETED';
+  const completedRevenue = completedBookings.reduce((sum, booking) => sum + (Number.isFinite(booking.totalPrice) ? booking.totalPrice : 0), 0);
+  const completedSeats = completedBookings.reduce((sum, booking) => sum + booking.seats, 0);
+  const displayedPassengers = isCompleted ? completedBookings : confirmedBookings;
   const hasMap = [ride.originLat, ride.originLng, ride.destinationLat, ride.destinationLng].every((coordinate) => typeof coordinate === 'number' && Number.isFinite(coordinate));
 
   return (
@@ -224,6 +250,16 @@ export default function DriverRideDetailPage() {
           <Badge variant="outline" className={cn('h-8 px-3', statusMeta.className)}>{statusMeta.label}</Badge>
         </div>
 
+        {isCompleted && (
+          <section className="mt-4 flex flex-col gap-4 rounded-2xl bg-emerald-700 p-5 text-white sm:flex-row sm:items-center sm:justify-between sm:p-6" aria-labelledby="completed-title">
+            <div className="flex min-w-0 items-start gap-3">
+              <CheckCircle2 className="mt-0.5 h-7 w-7 shrink-0" />
+              <div><h1 id="completed-title" className="text-xl font-semibold tracking-[-0.02em]">Chuyến đi đã hoàn thành</h1><p className="mt-1 text-sm leading-6 text-emerald-50">Vị trí đã ngừng chia sẻ. Bạn có thể xem biên nhận và đánh giá từng hành khách bên dưới.</p></div>
+            </div>
+            <span className="shrink-0 text-sm font-medium text-emerald-50">#{ride.id.slice(0, 8).toUpperCase()}</span>
+          </section>
+        )}
+
         <header className="mt-4 rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_8px_30px_rgba(0,0,0,0.035)] dark:border-white/10 dark:bg-[#1d1d1f] sm:p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#0071e3]">Chi tiết chuyến</p>
           <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
@@ -233,10 +269,17 @@ export default function DriverRideDetailPage() {
               <div className="relative"><MapPin className="absolute -left-10 top-0.5 h-7 w-7 fill-orange-500 text-orange-500" /><p className="text-[11px] font-semibold uppercase tracking-wider text-black/40 dark:text-white/40">Điểm đến cuối</p><p className="mt-0.5 text-base font-semibold leading-6 sm:text-lg">{ride.destination}</p></div>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
+              {isCompleted ? <>
+                <div className="rounded-xl bg-emerald-50 p-3 text-emerald-950 dark:bg-emerald-400/10 dark:text-emerald-100"><Wallet className="mb-2 h-4 w-4 text-emerald-700 dark:text-emerald-300" /><p className="text-emerald-800/70 dark:text-emerald-100/65">Tổng tiền chuyến</p><b className="mt-0.5 block tabular-nums">{completedRevenue.toLocaleString('vi-VN')}đ</b></div>
+                <div className="rounded-xl bg-black/[0.025] p-3 dark:bg-white/[0.05]"><Users className="mb-2 h-4 w-4 text-[#0071e3]" /><p className="text-black/45 dark:text-white/45">Hành khách</p><b className="mt-0.5 block tabular-nums">{completedBookings.length}</b></div>
+                <div className="rounded-xl bg-black/[0.025] p-3 dark:bg-white/[0.05]"><Armchair className="mb-2 h-4 w-4 text-[#0071e3]" /><p className="text-black/45 dark:text-white/45">Số ghế</p><b className="mt-0.5 block tabular-nums">{completedSeats}</b></div>
+                <div className="rounded-xl bg-black/[0.025] p-3 dark:bg-white/[0.05]"><Clock3 className="mb-2 h-4 w-4 text-[#0071e3]" /><p className="text-black/45 dark:text-white/45">Thời gian chuyến</p><b className="mt-0.5 block tabular-nums">{ride.duration ? `${Math.round(ride.duration)} phút` : '—'}</b></div>
+              </> : <>
               <div className="rounded-xl bg-black/[0.025] p-3 dark:bg-white/[0.05]"><CalendarDays className="mb-2 h-4 w-4 text-[#0071e3]" /><p className="text-black/45 dark:text-white/45">Ngày đi</p><b className="mt-0.5 block">{departure.toLocaleDateString('vi-VN')}</b></div>
               <div className="rounded-xl bg-black/[0.025] p-3 dark:bg-white/[0.05]"><Clock3 className="mb-2 h-4 w-4 text-[#0071e3]" /><p className="text-black/45 dark:text-white/45">Khởi hành</p><b className="mt-0.5 block">{departure.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</b></div>
               <div className="rounded-xl bg-black/[0.025] p-3 dark:bg-white/[0.05]"><Users className="mb-2 h-4 w-4 text-[#0071e3]" /><p className="text-black/45 dark:text-white/45">Ghế còn</p><b className="mt-0.5 block">{ride.availableSeats} / {totalSeats} ghế</b></div>
               <div className="rounded-xl bg-black/[0.025] p-3 dark:bg-white/[0.05]"><Route className="mb-2 h-4 w-4 text-[#0071e3]" /><p className="text-black/45 dark:text-white/45">Giá mỗi ghế</p><b className="mt-0.5 block">{ride.pricePerSeat.toLocaleString('vi-VN')}đ</b></div>
+              </>}
             </div>
           </div>
         </header>
@@ -247,7 +290,7 @@ export default function DriverRideDetailPage() {
               <div className="flex items-center justify-between border-b border-black/[0.06] px-5 py-4 dark:border-white/10"><div><h2 className="text-base font-semibold">Bản đồ tuyến và điểm dừng</h2><p className="mt-0.5 text-xs text-black/45 dark:text-white/45">Điểm đón và trả của hành khách đã xác nhận</p></div><Navigation className="h-5 w-5 text-[#0071e3]" /></div>
               {hasMap ? (
                 <div className="h-[360px] w-full">
-                  <OngoingMap originLat={ride.originLat!} originLng={ride.originLng!} destLat={ride.destinationLat!} destLng={ride.destinationLng!} waypoints={waypoints} useCustomOrder />
+                  <OngoingMap originLat={ride.originLat!} originLng={ride.originLng!} destLat={ride.destinationLat!} destLng={ride.destinationLng!} waypoints={waypoints} vehicle={ride.vehicle?.type === 'BIKE' ? 'bike' : 'car'} />
                 </div>
               ) : (
                 <div className="flex h-64 items-center justify-center px-6 text-center text-sm text-black/50 dark:text-white/50">Chuyến đi chưa có đủ tọa độ để hiển thị bản đồ.</div>
@@ -260,7 +303,7 @@ export default function DriverRideDetailPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-black/[0.06] bg-white p-5 dark:border-white/10 dark:bg-[#1d1d1f]">
+            {!isCompleted && <section className="rounded-2xl border border-black/[0.06] bg-white p-5 dark:border-white/10 dark:bg-[#1d1d1f]">
               <div className="flex items-center justify-between gap-3"><div><h2 className="text-base font-semibold">Lộ trình điểm dừng</h2><p className="mt-0.5 text-xs text-black/45 dark:text-white/45">Theo thứ tự hiện tại của chuyến</p></div><Route className="h-5 w-5 text-[#0071e3]" /></div>
               <ol className="mt-5 space-y-0">
                 <li className="relative flex gap-3 pb-5 before:absolute before:left-[13px] before:top-7 before:h-full before:w-px before:bg-black/10 dark:before:bg-white/15"><span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0071e3] text-xs font-bold text-white">A</span><div><p className="text-xs text-black/45 dark:text-white/45">Xuất phát</p><p className="mt-0.5 text-sm font-medium">{ride.origin}</p></div></li>
@@ -270,7 +313,7 @@ export default function DriverRideDetailPage() {
                 ])}
                 <li className="flex gap-3"><span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white">B</span><div><p className="text-xs text-black/45 dark:text-white/45">Điểm đến cuối</p><p className="mt-0.5 text-sm font-medium">{ride.destination}</p></div></li>
               </ol>
-            </section>
+            </section>}
           </div>
 
           <aside className="space-y-5 lg:sticky lg:top-20">
@@ -291,21 +334,27 @@ export default function DriverRideDetailPage() {
             <section className="rounded-2xl border border-black/[0.06] bg-white p-5 dark:border-white/10 dark:bg-[#1d1d1f]">
               <div className="flex items-center justify-between"><div><h2 className="text-base font-semibold">Hành khách</h2><p className="mt-0.5 text-xs text-black/45 dark:text-white/45">Đã xác nhận trên chuyến</p></div><Users className="h-5 w-5 text-[#0071e3]" /></div>
               <div className="mt-4 space-y-2">
-                {confirmedBookings.length === 0 ? <p className="rounded-xl bg-black/[0.025] p-4 text-center text-sm text-black/45 dark:bg-white/[0.05] dark:text-white/45">Chưa có hành khách được xác nhận.</p> : confirmedBookings.map((booking) => (
+                {displayedPassengers.length === 0 ? <p className="rounded-xl bg-black/[0.025] p-4 text-center text-sm text-black/45 dark:bg-white/[0.05] dark:text-white/45">{isCompleted ? 'Chuyến đi hoàn thành mà không có hành khách.' : 'Chưa có hành khách được xác nhận.'}</p> : displayedPassengers.map((booking) => (
                   <div key={booking.id} className="rounded-xl border border-black/[0.06] p-3 dark:border-white/10">
                     <div className="flex items-center gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 font-semibold text-emerald-700">{(booking.passenger.firstName?.[0] || 'C').toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{passengerName(booking)}</p><p className="mt-0.5 flex items-center gap-1 text-xs text-black/45 dark:text-white/45"><Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> {(booking.passenger.passengerRating ?? 0).toFixed(1)} · {booking.seats} ghế</p></div><CheckCircle2 className="h-4 w-4 text-emerald-500" /></div>
-                    <div className="mt-3 grid grid-cols-2 gap-2"><Link href={`/bookings/${booking.id}`} className="flex min-h-9 items-center justify-center rounded-lg bg-black/[0.035] text-xs font-medium dark:bg-white/[0.07]">Chi tiết</Link><button type="button" onClick={() => setChatBooking(booking)} className="flex min-h-9 items-center justify-center gap-1 rounded-lg bg-[#0071e3]/10 text-xs font-medium text-[#0066cc] dark:text-[#2997ff]"><MessageSquare className="h-3.5 w-3.5" /> Nhắn tin</button></div>
+                    <div className="mt-3 grid grid-cols-2 gap-2"><Link href={`/bookings/${booking.id}`} className="flex min-h-10 items-center justify-center rounded-lg bg-black/[0.035] text-xs font-medium dark:bg-white/[0.07]">Chi tiết</Link>{isCompleted ? (reviewStatus === 'ready' && reviewedUserIds.includes(booking.passenger.id) ? <span className="flex min-h-10 items-center justify-center gap-1 rounded-lg bg-emerald-50 px-2 text-xs font-semibold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300"><CheckCircle2 className="h-3.5 w-3.5" /> Đã đánh giá</span> : reviewStatus === 'ready' ? <ReviewDialog rideId={ride.id} revieweeId={booking.passenger.id} revieweeName={passengerName(booking)} triggerLabel="Đánh giá" onSuccess={() => setReviewedUserIds((current) => current.includes(booking.passenger.id) ? current : [...current, booking.passenger.id])} /> : <span className="flex min-h-10 items-center justify-center text-xs text-black/45 dark:text-white/45">{reviewStatus === 'loading' ? 'Đang kiểm tra…' : 'Chưa thể kiểm tra'}</span>) : <button type="button" onClick={() => setChatBooking(booking)} className="flex min-h-10 items-center justify-center gap-1 rounded-lg bg-[#0071e3]/10 text-xs font-medium text-[#0066cc] dark:text-[#2997ff]"><MessageSquare className="h-3.5 w-3.5" /> Nhắn tin</button>}</div>
                   </div>
                 ))}
               </div>
+              {isCompleted && reviewStatus === 'error' && <button type="button" onClick={() => void fetchReviewedUsers()} className="mt-3 min-h-10 w-full rounded-lg text-sm font-medium text-[#0066cc] hover:bg-[#0071e3]/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] dark:text-[#2997ff]">Thử tải lại trạng thái đánh giá</button>}
             </section>
 
             <section className="rounded-2xl border border-black/[0.06] bg-white p-5 dark:border-white/10 dark:bg-[#1d1d1f]">
-              <h2 className="text-base font-semibold">Thông tin vận hành</h2>
+              <h2 className="text-base font-semibold">{isCompleted ? 'Thông tin chuyến' : 'Thông tin vận hành'}</h2>
               <div className="mt-4 space-y-3 text-sm"><div className="flex justify-between gap-3"><span className="text-black/45 dark:text-white/45">Phương tiện</span><b>{ride.vehicle ? `${ride.vehicle.type === 'CAR' ? 'Ô tô' : 'Xe máy'} · ${ride.vehicle.licensePlate}` : 'Chưa cập nhật'}</b></div><div className="flex justify-between gap-3"><span className="text-black/45 dark:text-white/45">Đón dọc đường</span><b>{ride.allowRoutePickup ? 'Cho phép' : 'Không'}</b></div><div className="flex justify-between gap-3"><span className="text-black/45 dark:text-white/45">Hành lý</span><b>{ride.allowLuggage ? 'Cho phép' : 'Hạn chế'}</b></div></div>
               {(ride.status === 'SCHEDULED' || ride.status === 'FULL') && <div className="mt-5 space-y-2"><Button className="h-11 w-full gap-2 bg-emerald-600 hover:bg-emerald-700" onClick={() => void handleRideAction('start')} disabled={action !== null}>{action === 'start' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />} Bắt đầu chuyến</Button><Button variant="ghost" className="h-10 w-full gap-2 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => void handleRideAction('cancel')} disabled={action !== null}>{action === 'cancel' ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />} Hủy chuyến</Button></div>}
               {ride.status === 'ONGOING' && <Link href="/ongoing"><Button className="mt-5 h-11 w-full gap-2"><Navigation className="h-4 w-4" /> Mở chuyến đang chạy</Button></Link>}
             </section>
+
+            {isCompleted && <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              <Link href="/my-rides" className="flex min-h-11 items-center justify-center rounded-xl border border-black/10 px-4 text-sm font-semibold transition-colors hover:bg-black/[0.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] dark:border-white/15 dark:hover:bg-white/[0.07]">Về chuyến của tôi</Link>
+              <Link href="/rides/post" className="flex min-h-11 items-center justify-center rounded-xl bg-[#0071e3] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#0066cc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] focus-visible:ring-offset-2">Đăng chuyến mới</Link>
+            </section>}
           </aside>
         </div>
       </div>

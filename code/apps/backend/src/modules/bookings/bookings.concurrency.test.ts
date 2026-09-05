@@ -4,6 +4,8 @@ const mockBookingFindFirst = jest.fn();
 const mockBookingAggregate = jest.fn();
 const mockTransaction = jest.fn();
 const mockEmitGlobal = jest.fn();
+const mockCalculateCarpoolContribution = jest.fn();
+const mockRideMatch = jest.fn();
 
 jest.mock('@repo/database', () => ({
   extendedPrisma: {
@@ -27,17 +29,12 @@ jest.mock('../notifications/notifications.service', () => ({
 jest.mock('../pricing/pricing.service', () => ({
   PricingService: {
     getActiveConfig: jest.fn().mockResolvedValue({}),
-    calculateCarpoolContribution: jest.fn().mockReturnValue({
-      totalPrice: 32_000,
-      sharedDistanceKm: 8.4,
-      detourKm: 0,
-      recommendedPricePerSeat: 32_000,
-    }),
+    calculateCarpoolContribution: mockCalculateCarpoolContribution,
   },
 }));
 jest.mock('../rides/ride-matching.service', () => ({
   RideMatchingService: {
-    match: jest.fn().mockReturnValue({ detourKm: 0 }),
+    match: mockRideMatch,
     sharedRouteDistance: jest.fn().mockReturnValue(8.4),
   },
 }));
@@ -92,6 +89,13 @@ describe('BookingsService concurrent reservation', () => {
     mockRideFindFirst.mockResolvedValue(null);
     mockBookingFindFirst.mockResolvedValue(null);
     mockBookingAggregate.mockResolvedValue({ _sum: { totalPrice: 0 } });
+    mockRideMatch.mockReturnValue({ detourKm: 0 });
+    mockCalculateCarpoolContribution.mockReturnValue({
+      totalPrice: 32_000,
+      sharedDistanceKm: 8.4,
+      detourKm: 0,
+      recommendedPricePerSeat: 32_000,
+    });
 
     mockTransaction.mockImplementation(async (operation: (tx: any) => Promise<unknown>) => {
       const previous = transactionQueue;
@@ -167,5 +171,18 @@ describe('BookingsService concurrent reservation', () => {
     expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
     expect(bookings).toHaveLength(1);
     expect(availableSeats).toBe(1);
+  });
+  it('does not charge route-matching noise for an end-to-end booking', async () => {
+    mockRideMatch.mockReturnValue({ detourKm: 0.21 });
+
+    await BookingsService.createBooking('passenger-a', {
+      rideId: rideSnapshot.id,
+      seats: 1,
+    });
+
+    expect(mockCalculateCarpoolContribution).toHaveBeenLastCalledWith(
+      expect.objectContaining({ detourKm: 0 }),
+      {},
+    );
   });
 });

@@ -9,6 +9,7 @@ import '../global.css';
 import { useAuth } from '../src/hooks/useAuth';
 import { useAppStore } from '../src/stores/useAppStore';
 import { QueryProvider } from '../src/providers/query-provider';
+import { RideTrackingProvider } from '../src/providers/ride-tracking-provider';
 import { OfflineBanner } from '../src/components/ui/OfflineBanner';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -29,7 +30,9 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayoutWrapper() {
   return (
     <QueryProvider>
-      <RootLayout />
+      <RideTrackingProvider>
+        <RootLayout />
+      </RideTrackingProvider>
     </QueryProvider>
   );
 }
@@ -100,7 +103,11 @@ function RootLayoutNav() {
       <Stack.Screen name="ride/history" options={{ headerShown: false }} />
       <Stack.Screen name="ride/history/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="ride/active-ride" options={{ headerShown: false, title: 'Chuyến đi' }} />
+      <Stack.Screen name="ride/manage" options={{ headerShown: false }} />
       <Stack.Screen name="booking/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="driver/trips/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="driver/register" options={{ headerShown: false }} />
+      <Stack.Screen name="driver/active-trip" options={{ headerShown: false }} />
       <Stack.Screen name="search" options={{ headerShown: false }} />
       <Stack.Screen name="search-results" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />

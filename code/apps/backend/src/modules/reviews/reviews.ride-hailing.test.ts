@@ -11,6 +11,7 @@ jest.mock('@repo/database', () => ({
     booking: { findFirst: jest.fn() },
     review: {
       findFirst: mockReviewFindFirst,
+      findMany: jest.fn(),
       create: mockReviewCreate,
     },
   },

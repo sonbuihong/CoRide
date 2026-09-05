@@ -112,55 +112,56 @@ model Notification {
 }
 
 model Ride {
-  id                 String        @id @default(uuid())
-  driverId           String
-  origin             String
-  destination        String
-  departureTime      DateTime
-  availableSeats     Int
-  pricePerSeat       Float
-  status             RideStatus    @default(SCHEDULED)
-  description        String?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  destinationLat     Float?
-  destinationLng     Float?
-  originLat          Float?
-  originLng          Float?
-  distance           Float?
-  duration           Float?
-  addressDetailLevel String?
-  destAddressType    String?
-  destDistrict       String?
-  destHouseNumber    String?
-  destProvince       String?
-  destStreet         String?
-  destWard           String?
-  originAddressType  String?
-  originDistrict     String?
-  originHouseNumber  String?
-  originProvince     String?
-  originStreet       String?
-  originWard         String?
-  routePolyline      String?
-  offeredSeats       Int           @default(1)
-  tollCost           Float         @default(0)
-  allowRoutePickup   Boolean       @default(true)
-  bookingPolicy      BookingPolicy @default(DRIVER_APPROVAL)
-  scheduleId         String?
-  allowLuggage       Boolean       @default(true)
-  allowPets          Boolean       @default(false)
-  allowSmoking       Boolean       @default(false)
-  cancelReason       String?
-  vehicleId          String?
-  bookings           Booking[]
-  messages           Message[]
-  reports            Report[]
-  reviews            Review[]
-  driver             User          @relation("DriverRides", fields: [driverId], references: [id])
-  schedule           RideSchedule? @relation(fields: [scheduleId], references: [id])
-  vehicle            Vehicle?      @relation(fields: [vehicleId], references: [id])
-  stops              RideStop[]
+  id                        String        @id @default(uuid())
+  driverId                  String
+  origin                    String
+  destination               String
+  departureTime             DateTime
+  availableSeats            Int
+  pricePerSeat              Float
+  status                    RideStatus    @default(SCHEDULED)
+  description               String?
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+  destinationLat            Float?
+  destinationLng            Float?
+  originLat                 Float?
+  originLng                 Float?
+  distance                  Float?
+  duration                  Float?
+  addressDetailLevel        String?
+  destAddressType           String?
+  destDistrict              String?
+  destHouseNumber           String?
+  destProvince              String?
+  destStreet                String?
+  destWard                  String?
+  originAddressType         String?
+  originDistrict            String?
+  originHouseNumber         String?
+  originProvince            String?
+  originStreet              String?
+  originWard                String?
+  routePolyline             String?
+  offeredSeats              Int           @default(1)
+  tollCost                  Float         @default(0)
+  allowRoutePickup          Boolean       @default(true)
+  routePickupSharingEnabled Boolean       @default(false)
+  bookingPolicy             BookingPolicy @default(DRIVER_APPROVAL)
+  scheduleId                String?
+  allowLuggage              Boolean       @default(true)
+  allowPets                 Boolean       @default(false)
+  allowSmoking              Boolean       @default(false)
+  cancelReason              String?
+  vehicleId                 String?
+  bookings                  Booking[]
+  messages                  Message[]
+  reports                   Report[]
+  reviews                   Review[]
+  driver                    User          @relation("DriverRides", fields: [driverId], references: [id])
+  schedule                  RideSchedule? @relation(fields: [scheduleId], references: [id])
+  vehicle                   Vehicle?      @relation(fields: [vehicleId], references: [id])
+  stops                     RideStop[]
 
   @@unique([driverId, departureTime])
   @@index([origin, destination, departureTime])

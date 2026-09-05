@@ -9,6 +9,11 @@ const protectedRoutes = [
   '/my-bookings',
   '/booking-requests',
   '/rides/post',
+  '/notifications',
+  '/activity',
+  '/messages',
+  '/driver',
+  '/ride-hailing',
 ];
 
 // Các route dành cho người chưa đăng nhập

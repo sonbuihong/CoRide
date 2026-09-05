@@ -1,0 +1,16 @@
+'use client';
+import { useState } from 'react';
+import { Loader2, MessageSquare, Star } from 'lucide-react';
+import { toast } from 'sonner';
+import apiClient from '@/lib/api-client';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
+
+interface ReviewDialogProps { rideId?: string; tripRequestId?: string; revieweeId: string; revieweeName: string; triggerLabel?: string; onSuccess?: () => void; }
+export function ReviewDialog({ rideId, tripRequestId, revieweeId, revieweeName, triggerLabel = 'Đánh giá chuyến đi', onSuccess }: ReviewDialogProps) {
+  const [open, setOpen] = useState(false); const [rating, setRating] = useState(0); const [comment, setComment] = useState(''); const [loading, setLoading] = useState(false);
+  const submit = async () => { if (!rating) { toast.error('Vui lòng chọn số sao đánh giá'); return; } setLoading(true); try { await apiClient.post('/reviews', { rideId, tripRequestId, revieweeId, rating, comment: comment.trim() }); toast.success('Đã gửi đánh giá'); setOpen(false); onSuccess?.(); } catch (error: unknown) { toast.error((error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Không thể gửi đánh giá'); } finally { setLoading(false); } };
+  return <><Button onClick={() => setOpen(true)} className="min-h-10 w-full gap-2"><Star className="h-4 w-4" />{triggerLabel}</Button><Dialog open={open} onOpenChange={(value) => !loading && setOpen(value)}><DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md"><DialogHeader><DialogTitle>Chuyến đi của bạn thế nào?</DialogTitle><DialogDescription>Đánh giá {revieweeName} để cộng đồng CoRide ngày càng tin cậy.</DialogDescription></DialogHeader><div className="py-2"><Label id="rating-label">Mức độ hài lòng</Label><div role="radiogroup" aria-labelledby="rating-label" className="mt-3 flex justify-center gap-1 sm:gap-2">{[1,2,3,4,5].map(value => <button key={value} type="button" role="radio" aria-checked={rating === value} aria-label={`${value} sao`} onClick={() => setRating(value)} className="flex h-11 w-11 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Star className={cn('h-8 w-8 transition-colors', value <= rating ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40')} /></button>)}</div><div className="mt-5"><Label htmlFor="review-comment" className="flex items-center gap-2"><MessageSquare className="h-4 w-4" />Nhận xét (tùy chọn)</Label><textarea id="review-comment" maxLength={500} value={comment} onChange={e => setComment(e.target.value)} placeholder="Chia sẻ thêm về chuyến đi…" className="mt-2 min-h-28 w-full resize-y rounded-lg border bg-background p-3 text-sm outline-none focus:ring-2 focus:ring-ring" /><p className="mt-1 text-right text-xs text-muted-foreground">{comment.length}/500</p></div></div><DialogFooter><Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>Bỏ qua</Button><Button onClick={submit} disabled={loading || !rating}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Gửi đánh giá</Button></DialogFooter></DialogContent></Dialog></>;
+}

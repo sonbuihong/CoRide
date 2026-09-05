@@ -1,4 +1,5 @@
-import { getDirections, getDistanceMatrix } from './goong';
+import { decodePolyline, getDirections, getDistanceMatrix, type RouteGeometry } from './goong';
+import type { GoongVehicleType } from '@repo/shared';
 
 export interface Coordinate {
   id?: string;
@@ -90,7 +91,8 @@ export async function getOptimalWaypointOrderGoong(
 export async function getGoongMultiStopRoute(
   start: Coordinate,
   waypoints: Coordinate[],
-  end: Coordinate
+  end: Coordinate,
+  vehicle: GoongVehicleType = 'car',
 ): Promise<[number, number][]> {
   const points = [start, ...waypoints, end];
   let finalRoute: [number, number][] = [];
@@ -100,7 +102,7 @@ export async function getGoongMultiStopRoute(
     const p2 = points[i + 1];
 
     try {
-      const data = await getDirections(`${p1.lat},${p1.lng}`, `${p2.lat},${p2.lng}`, 'car');
+      const data = await getDirections(`${p1.lat},${p1.lng}`, `${p2.lat},${p2.lng}`, vehicle);
 
       if (data && data.routes && data.routes.length > 0) {
         // Goong Direction trả về routes[0].overview_polyline.points (đã encode)
@@ -148,10 +150,16 @@ function permute(arr: number[]): number[][] {
 
 // Helper decode polyline encoded từ Goong
 // Trả về format [lat, lng] cho React Leaflet
-export function decodeGoongPolyline(encoded: string): [number, number][] {
+export function decodeGoongPolyline(encoded: RouteGeometry): [number, number][] {
+  // OSRM fallback returns GeoJSON coordinates as [lng, lat]. This helper
+  // exposes [lat, lng], matching the encoded Goong polyline branch below.
+  if (Array.isArray(encoded)) {
+    return decodePolyline(encoded).map(([lng, lat]) => [lat, lng]);
+  }
+
   const poly: [number, number][] = [];
-  let index = 0,
-    len = encoded.length;
+  let index = 0;
+  const len = encoded.length;
   let lat = 0,
     lng = 0;
 

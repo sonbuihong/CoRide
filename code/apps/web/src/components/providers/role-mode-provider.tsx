@@ -43,8 +43,8 @@ export function RoleModeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!pathname) return;
 
-    const driverRoutes = ['/rides/post', '/my-rides', '/booking-requests'];
-    const passengerRoutes = ['/rides', '/my-bookings'];
+    const driverRoutes = ['/driver', '/rides/post', '/my-rides', '/booking-requests'];
+    const passengerRoutes = ['/rides', '/my-bookings', '/ride-hailing'];
 
     if (driverRoutes.some((route) => pathname.startsWith(route))) {
       setModeState((prev) => {

@@ -789,10 +789,10 @@ export default function PostRidePage() {
             <Clock className="h-6 w-6" />
           </div>
           <h1 className="mt-5 text-2xl font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
-            Bạn đang có một chuyến hoạt động
+            Bạn vẫn có một chuyến đang diễn ra
           </h1>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-black/55 dark:text-white/55">
-            Hoàn thành hoặc hủy chuyến hiện tại trước khi đăng thêm chuyến mới.
+            Hủy lịch chỉ áp dụng cho các ngày chưa khởi hành. Hãy hoàn thành chuyến đang chạy này trước khi đăng chuyến mới.
           </p>
           <div className="mt-6 rounded-2xl bg-black/[0.025] p-4 text-left dark:bg-white/[0.05]">
             <p className="text-sm font-semibold text-[#1d1d1f] dark:text-white">{activeRide.origin}</p>
@@ -804,10 +804,10 @@ export default function PostRidePage() {
           </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <Link
-              href={'/rides/' + activeRide.id}
+              href="/ongoing"
               className="flex h-12 items-center justify-center rounded-xl bg-[#0071e3] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#0077ed]"
             >
-              Xem chuyến hiện tại
+              Tiếp tục chuyến đang chạy
             </Link>
             <Link
               href="/my-rides"

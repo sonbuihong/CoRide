@@ -2,16 +2,17 @@
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Bike, Car, Check, ChevronUp, CircleHelp, Clock3, Loader2, MapPin, Navigation, Phone, ReceiptText, Share2, ShieldCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { decodePolyline, getDirections } from '@/lib/goong';
+import { DriverRouteRequestCoordinator, type LiveLocation } from '@/lib/driver-route-lifecycle';
 import { usePassengerTrip } from './use-passenger-trip';
 import { canCancelTrip, formatEta, formatPrice, formatTripDistance, getPassengerStatus } from './domain';
 import { passengerTripKeys, passengerTripService } from './service';
 import { useBookingDraft } from './store';
 import { useAuth } from '@/components/providers/auth-provider';
+import { ReviewDialog } from '@/components/reviews/review-dialog';
 
 const GoongMap = dynamic(() => import('@/components/goong/goong-map'), { ssr: false, loading: () => <div className="h-full bg-[#edf1eb]" /> });
 
@@ -22,25 +23,48 @@ export default function OngoingExperience({ tripId }: { tripId?: string | null }
   const [expanded, setExpanded] = useState(false);
   const [routeLine, setRouteLine] = useState<Array<[number, number]>>([]);
   const [recoveredTripId, setRecoveredTripId] = useState<string | null>(tripId ?? null);
+  const routeCoordinatorRef = useRef(new DriverRouteRequestCoordinator());
+  const driverLocationRef = useRef<LiveLocation | null>(null);
   useEffect(() => {
     if (!tripId) setRecoveredTripId(sessionStorage.getItem('coride-active-trip-id'));
   }, [tripId]);
   const effectiveTripId = tripId || recoveredTripId;
   const { data: trip, isLoading, isError, refetch, driverLocation } = usePassengerTrip(effectiveTripId, !authLoading && Boolean(user));
+  driverLocationRef.current = driverLocation;
   const id = trip?.id || effectiveTripId || '';
   const status = trip ? getPassengerStatus(trip.status) : null;
   const qr = useQuery({ queryKey: ['trip-payment-qr', id], queryFn: () => passengerTripService.paymentQr(id), enabled: Boolean(id && trip?.status === 'WAITING_PAYMENT') });
   const cancel = useMutation({ mutationFn: () => passengerTripService.cancel(id, 'Hành khách hủy chuyến'), onSuccess: (value) => { draft.reset(); client.setQueryData(passengerTripKeys.detail(id), value); toast.success('Đã hủy chuyến đi.'); }, onError: () => toast.error('Không thể hủy chuyến ở thời điểm này.') });
   const pay = useMutation({ mutationFn: () => passengerTripService.confirmPayment(id), onSuccess: async () => { await refetch(); toast.success('Thanh toán thành công.'); }, onError: () => toast.error('Không thể xác nhận thanh toán. Vui lòng thử lại.') });
+  const routeTripId = trip?.id;
+  const routeStatus = trip?.status;
+  const routeOriginLat = trip?.originLat;
+  const routeOriginLng = trip?.originLng;
+  const routeDestLat = trip?.destLat;
+  const routeDestLng = trip?.destLng;
+  const routeVehicleType = trip?.vehicleType;
   useEffect(() => {
-    if (!trip) return;
-    const start = driverLocation && trip.status === 'IN_PROGRESS' ? driverLocation : { lat: trip.originLat, lng: trip.originLng };
-    getDirections(`${start.lat},${start.lng}`, `${trip.destLat},${trip.destLng}`, trip.vehicleType === 'BIKE' ? 'bike' : 'car').then((result) => {
-      const points = result?.routes?.[0]?.overview_polyline?.points; if (points) setRouteLine(decodePolyline(points));
+    if (!routeTripId || routeOriginLat == null || routeOriginLng == null || routeDestLat == null || routeDestLng == null) return;
+    let cancelled = false;
+    const liveSnapshot = driverLocationRef.current;
+    const origin = liveSnapshot && routeStatus === 'IN_PROGRESS'
+      ? { lat: liveSnapshot.lat, lng: liveSnapshot.lng }
+      : { lat: routeOriginLat, lng: routeOriginLng };
+    void routeCoordinatorRef.current.request({
+      mode: routeStatus === 'IN_PROGRESS' ? 'DIRECT' : 'BASE',
+      origin,
+      destination: { lat: routeDestLat, lng: routeDestLng },
+      vehicle: routeVehicleType === 'BIKE' ? 'bike' : 'car',
+    }).then((result) => {
+      if (!cancelled && result.isLatest) setRouteLine(result.route.coordinates);
+    }).catch(() => {
+      // Preserve the last stable route when a topology refresh fails.
     });
-  // Route chỉ cần tính lại khi trip/status hoặc tọa độ tài xế thay đổi.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trip?.id, trip?.status, driverLocation?.lat, driverLocation?.lng]);
+    return () => {
+      cancelled = true;
+    };
+  // GPS chỉ di chuyển marker; route chỉ đổi theo endpoint hoặc trạng thái chuyến.
+  }, [routeDestLat, routeDestLng, routeOriginLat, routeOriginLng, routeStatus, routeTripId, routeVehicleType]);
   const markers = useMemo(() => trip ? [
     { position: [trip.originLng, trip.originLat] as [number, number], type: 'dot' as const, color: '#16833b' },
     { position: [trip.destLng, trip.destLat] as [number, number], type: 'pin' as const, color: '#17251b' },
@@ -66,9 +90,9 @@ export default function OngoingExperience({ tripId }: { tripId?: string | null }
         <div className="mt-5 space-y-4"><div className="flex gap-3"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#16833b]"/><div><span className="block text-[11px] font-semibold text-[#687168]">ĐIỂM ĐÓN</span><span className="text-sm leading-5 text-[#17251b]">{trip.originAddress}</span></div></div><div className="flex gap-3"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#17251b]"/><div><span className="block text-[11px] font-semibold text-[#687168]">ĐIỂM ĐẾN</span><span className="text-sm leading-5 text-[#17251b]">{trip.destAddress}</span></div></div></div>
         <div className="mt-5 grid grid-cols-3 gap-2 rounded-[14px] bg-[#f3f6f2] p-4 text-center"><div><Clock3 className="mx-auto h-4 w-4 text-[#687168]"/><strong className="mt-1 block text-sm text-[#17251b]">{formatEta(trip.estimatedDuration)}</strong></div><div><Navigation className="mx-auto h-4 w-4 text-[#687168]"/><strong className="mt-1 block text-sm text-[#17251b]">{formatTripDistance(trip.estimatedDistance)}</strong></div><div><ReceiptText className="mx-auto h-4 w-4 text-[#687168]"/><strong className="mt-1 block text-sm text-[#17251b]">{formatPrice(trip.finalPrice ?? trip.estimatedPrice)}</strong></div></div>
         {trip.status === 'WAITING_PAYMENT' && <div className="mt-5 text-center">{qr.isLoading ? <div className="flex h-48 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-[#16833b]"/></div> : qr.data ? <><div className="mx-auto w-fit rounded-[14px] bg-white p-2 outline outline-1 outline-[#e3e7e1]"><Image src={qr.data.qrUrl} alt="Mã QR thanh toán" width={210} height={210} unoptimized/></div><p className="mt-3 text-sm font-semibold text-[#17251b]">{formatPrice(qr.data.amount)}</p><p className="text-xs text-[#687168]">{qr.data.description}</p></> : <button onClick={() => qr.refetch()} className="text-sm text-[#9c2f24]">Không tải được QR · Thử lại</button>}</div>}
-        {trip.status === 'COMPLETED' && <div className="mt-5 rounded-[14px] bg-[#e8f5eb] p-4"><div className="flex items-center gap-2 font-semibold text-[#16833b]"><Check className="h-5 w-5"/>Thanh toán thành công</div><p className="mt-2 text-sm text-[#33523b]">Mã chuyến #{trip.id.slice(0, 8).toUpperCase()} · {formatPrice(trip.finalPrice ?? trip.estimatedPrice)}</p></div>}
+        {trip.status === 'COMPLETED' && <><div className="mt-5 rounded-[14px] bg-[#e8f5eb] p-4"><div className="flex items-center gap-2 font-semibold text-[#16833b]"><Check className="h-5 w-5"/>Thanh toán thành công</div><p className="mt-2 text-sm text-[#33523b]">Mã chuyến #{trip.id.slice(0, 8).toUpperCase()} · {formatPrice(trip.finalPrice ?? trip.estimatedPrice)}</p></div>{trip.driver && <div className="mt-4"><ReviewDialog tripRequestId={trip.id} revieweeId={trip.driver.id} revieweeName={`${trip.driver.firstName} ${trip.driver.lastName}`} /></div>}</>}
       </div>
-      <div className="border-t border-[#e3e7e1] bg-white p-4 md:p-5">{trip.status === 'WAITING_PAYMENT' ? <button disabled={pay.isPending} onClick={() => pay.mutate()} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[#16833b] font-semibold text-white disabled:opacity-50">{pay.isPending && <Loader2 className="h-5 w-5 animate-spin"/>}Tôi đã thanh toán</button> : terminal ? <Link href="/book" onClick={() => draft.reset()} className="flex min-h-12 w-full items-center justify-center rounded-[12px] bg-[#16833b] font-semibold text-white">{trip.status === 'NO_DRIVER' ? 'Thử đặt lại' : 'Đặt chuyến mới'}</Link> : canCancelTrip(trip.status) ? <button disabled={cancel.isPending} onClick={() => cancel.mutate()} className="flex min-h-12 w-full items-center justify-center rounded-[12px] bg-[#fff1ef] font-semibold text-[#9c2f24] disabled:opacity-50">{cancel.isPending ? 'Đang hủy…' : 'Hủy chuyến'}</button> : <a href="tel:19000000" className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[#f0f4ef] font-semibold text-[#33523b]"><CircleHelp className="h-5 w-5"/>Liên hệ hỗ trợ</a>}</div>
+      <div className="border-t border-[#e3e7e1] bg-white p-4 md:p-5">{trip.status === 'WAITING_PAYMENT' ? <button disabled={pay.isPending} onClick={() => pay.mutate()} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[#16833b] font-semibold text-white disabled:opacity-50">{pay.isPending && <Loader2 className="h-5 w-5 animate-spin"/>}Tôi đã thanh toán</button> : terminal ? <Link href="/ride-hailing" onClick={() => draft.reset()} className="flex min-h-12 w-full items-center justify-center rounded-[12px] bg-[#16833b] font-semibold text-white">{trip.status === 'NO_DRIVER' ? 'Thử đặt lại' : 'Đặt chuyến mới'}</Link> : canCancelTrip(trip.status) ? <button disabled={cancel.isPending} onClick={() => cancel.mutate()} className="flex min-h-12 w-full items-center justify-center rounded-[12px] bg-[#fff1ef] font-semibold text-[#9c2f24] disabled:opacity-50">{cancel.isPending ? 'Đang hủy…' : 'Hủy chuyến'}</button> : <a href="tel:19000000" className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-[#f0f4ef] font-semibold text-[#33523b]"><CircleHelp className="h-5 w-5"/>Liên hệ hỗ trợ</a>}</div>
     </section>
   </div>;
 }

@@ -32,7 +32,7 @@ export default function BookingExperience() {
     return raw ? Object.entries(raw).map(([vehicleType, value]) => ({ ...(value as TripEstimate), vehicleType: vehicleType as VehicleType })) : [];
   }, [estimateQuery.data]);
   const selected = estimates.find((item) => item.vehicleType === draft.vehicleType);
-  const createTrip = useMutation({ mutationFn: () => passengerTripService.create(draft), onSuccess: (trip) => { sessionStorage.setItem('coride-active-trip-id', trip.id); draft.reset(); router.push(`/ongoing?tripId=${trip.id}`); }, onError: () => toast.error('Không thể đặt xe. Vui lòng kiểm tra thông tin và thử lại.') });
+  const createTrip = useMutation({ mutationFn: () => passengerTripService.create(draft), onSuccess: (trip) => { sessionStorage.setItem('coride-active-trip-id', trip.id); draft.reset(); router.push(`/ride-hailing/searching?tripId=${trip.id}`); }, onError: () => toast.error('Không thể đặt xe. Vui lòng kiểm tra thông tin và thử lại.') });
 
   useEffect(() => {
     if (draft.step !== 'estimate' || !draft.pickup || !draft.destination) return;

@@ -3845,7 +3845,7 @@ export namespace Prisma {
     readonly passengerRatingCount: FieldRef<"User", 'Int'>
     readonly isDriverVerified: FieldRef<"User", 'Boolean'>
   }
-
+    
 
   // Custom InputTypes
   /**
@@ -5140,7 +5140,7 @@ export namespace Prisma {
     readonly rideBalance: FieldRef<"Wallet", 'Float'>
     readonly driverEarnings: FieldRef<"Wallet", 'Float'>
   }
-
+    
 
   // Custom InputTypes
   /**
@@ -9552,6 +9552,7 @@ export namespace Prisma {
     offeredSeats: number | null
     tollCost: number | null
     allowRoutePickup: boolean | null
+    routePickupSharingEnabled: boolean | null
     bookingPolicy: $Enums.BookingPolicy | null
     scheduleId: string | null
     allowLuggage: boolean | null
@@ -9596,6 +9597,7 @@ export namespace Prisma {
     offeredSeats: number | null
     tollCost: number | null
     allowRoutePickup: boolean | null
+    routePickupSharingEnabled: boolean | null
     bookingPolicy: $Enums.BookingPolicy | null
     scheduleId: string | null
     allowLuggage: boolean | null
@@ -9640,6 +9642,7 @@ export namespace Prisma {
     offeredSeats: number
     tollCost: number
     allowRoutePickup: number
+    routePickupSharingEnabled: number
     bookingPolicy: number
     scheduleId: number
     allowLuggage: number
@@ -9712,6 +9715,7 @@ export namespace Prisma {
     offeredSeats?: true
     tollCost?: true
     allowRoutePickup?: true
+    routePickupSharingEnabled?: true
     bookingPolicy?: true
     scheduleId?: true
     allowLuggage?: true
@@ -9756,6 +9760,7 @@ export namespace Prisma {
     offeredSeats?: true
     tollCost?: true
     allowRoutePickup?: true
+    routePickupSharingEnabled?: true
     bookingPolicy?: true
     scheduleId?: true
     allowLuggage?: true
@@ -9800,6 +9805,7 @@ export namespace Prisma {
     offeredSeats?: true
     tollCost?: true
     allowRoutePickup?: true
+    routePickupSharingEnabled?: true
     bookingPolicy?: true
     scheduleId?: true
     allowLuggage?: true
@@ -9931,6 +9937,7 @@ export namespace Prisma {
     offeredSeats: number
     tollCost: number
     allowRoutePickup: boolean
+    routePickupSharingEnabled: boolean
     bookingPolicy: $Enums.BookingPolicy
     scheduleId: string | null
     allowLuggage: boolean
@@ -9994,6 +10001,7 @@ export namespace Prisma {
     offeredSeats?: boolean
     tollCost?: boolean
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: boolean
     scheduleId?: boolean
     allowLuggage?: boolean
@@ -10047,6 +10055,7 @@ export namespace Prisma {
     offeredSeats?: boolean
     tollCost?: boolean
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: boolean
     scheduleId?: boolean
     allowLuggage?: boolean
@@ -10094,6 +10103,7 @@ export namespace Prisma {
     offeredSeats?: boolean
     tollCost?: boolean
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: boolean
     scheduleId?: boolean
     allowLuggage?: boolean
@@ -10167,6 +10177,7 @@ export namespace Prisma {
       offeredSeats: number
       tollCost: number
       allowRoutePickup: boolean
+      routePickupSharingEnabled: boolean
       bookingPolicy: $Enums.BookingPolicy
       scheduleId: string | null
       allowLuggage: boolean
@@ -10609,6 +10620,7 @@ export namespace Prisma {
     readonly offeredSeats: FieldRef<"Ride", 'Int'>
     readonly tollCost: FieldRef<"Ride", 'Float'>
     readonly allowRoutePickup: FieldRef<"Ride", 'Boolean'>
+    readonly routePickupSharingEnabled: FieldRef<"Ride", 'Boolean'>
     readonly bookingPolicy: FieldRef<"Ride", 'BookingPolicy'>
     readonly scheduleId: FieldRef<"Ride", 'String'>
     readonly allowLuggage: FieldRef<"Ride", 'Boolean'>
@@ -23937,6 +23949,7 @@ export namespace Prisma {
     offeredSeats: 'offeredSeats',
     tollCost: 'tollCost',
     allowRoutePickup: 'allowRoutePickup',
+    routePickupSharingEnabled: 'routePickupSharingEnabled',
     bookingPolicy: 'bookingPolicy',
     scheduleId: 'scheduleId',
     allowLuggage: 'allowLuggage',
@@ -24383,7 +24396,7 @@ export namespace Prisma {
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-
+    
 
 
   /**
@@ -25051,6 +25064,7 @@ export namespace Prisma {
     offeredSeats?: IntFilter<"Ride"> | number
     tollCost?: FloatFilter<"Ride"> | number
     allowRoutePickup?: BoolFilter<"Ride"> | boolean
+    routePickupSharingEnabled?: BoolFilter<"Ride"> | boolean
     bookingPolicy?: EnumBookingPolicyFilter<"Ride"> | $Enums.BookingPolicy
     scheduleId?: StringNullableFilter<"Ride"> | string | null
     allowLuggage?: BoolFilter<"Ride"> | boolean
@@ -25103,6 +25117,7 @@ export namespace Prisma {
     offeredSeats?: SortOrder
     tollCost?: SortOrder
     allowRoutePickup?: SortOrder
+    routePickupSharingEnabled?: SortOrder
     bookingPolicy?: SortOrder
     scheduleId?: SortOrderInput | SortOrder
     allowLuggage?: SortOrder
@@ -25159,6 +25174,7 @@ export namespace Prisma {
     offeredSeats?: IntFilter<"Ride"> | number
     tollCost?: FloatFilter<"Ride"> | number
     allowRoutePickup?: BoolFilter<"Ride"> | boolean
+    routePickupSharingEnabled?: BoolFilter<"Ride"> | boolean
     bookingPolicy?: EnumBookingPolicyFilter<"Ride"> | $Enums.BookingPolicy
     scheduleId?: StringNullableFilter<"Ride"> | string | null
     allowLuggage?: BoolFilter<"Ride"> | boolean
@@ -25211,6 +25227,7 @@ export namespace Prisma {
     offeredSeats?: SortOrder
     tollCost?: SortOrder
     allowRoutePickup?: SortOrder
+    routePickupSharingEnabled?: SortOrder
     bookingPolicy?: SortOrder
     scheduleId?: SortOrderInput | SortOrder
     allowLuggage?: SortOrder
@@ -25263,6 +25280,7 @@ export namespace Prisma {
     offeredSeats?: IntWithAggregatesFilter<"Ride"> | number
     tollCost?: FloatWithAggregatesFilter<"Ride"> | number
     allowRoutePickup?: BoolWithAggregatesFilter<"Ride"> | boolean
+    routePickupSharingEnabled?: BoolWithAggregatesFilter<"Ride"> | boolean
     bookingPolicy?: EnumBookingPolicyWithAggregatesFilter<"Ride"> | $Enums.BookingPolicy
     scheduleId?: StringNullableWithAggregatesFilter<"Ride"> | string | null
     allowLuggage?: BoolWithAggregatesFilter<"Ride"> | boolean
@@ -27050,6 +27068,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -27100,6 +27119,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -27148,6 +27168,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -27198,6 +27219,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -27247,6 +27269,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -27290,6 +27313,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -27332,6 +27356,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -29384,6 +29409,7 @@ export namespace Prisma {
     offeredSeats?: SortOrder
     tollCost?: SortOrder
     allowRoutePickup?: SortOrder
+    routePickupSharingEnabled?: SortOrder
     bookingPolicy?: SortOrder
     scheduleId?: SortOrder
     allowLuggage?: SortOrder
@@ -29441,6 +29467,7 @@ export namespace Prisma {
     offeredSeats?: SortOrder
     tollCost?: SortOrder
     allowRoutePickup?: SortOrder
+    routePickupSharingEnabled?: SortOrder
     bookingPolicy?: SortOrder
     scheduleId?: SortOrder
     allowLuggage?: SortOrder
@@ -29485,6 +29512,7 @@ export namespace Prisma {
     offeredSeats?: SortOrder
     tollCost?: SortOrder
     allowRoutePickup?: SortOrder
+    routePickupSharingEnabled?: SortOrder
     bookingPolicy?: SortOrder
     scheduleId?: SortOrder
     allowLuggage?: SortOrder
@@ -33045,6 +33073,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -33093,6 +33122,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -33702,6 +33732,7 @@ export namespace Prisma {
     offeredSeats?: IntFilter<"Ride"> | number
     tollCost?: FloatFilter<"Ride"> | number
     allowRoutePickup?: BoolFilter<"Ride"> | boolean
+    routePickupSharingEnabled?: BoolFilter<"Ride"> | boolean
     bookingPolicy?: EnumBookingPolicyFilter<"Ride"> | $Enums.BookingPolicy
     scheduleId?: StringNullableFilter<"Ride"> | string | null
     allowLuggage?: BoolFilter<"Ride"> | boolean
@@ -34528,6 +34559,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -34577,6 +34609,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -34792,6 +34825,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -34841,6 +34875,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -35825,6 +35860,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -35874,6 +35910,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -36169,6 +36206,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -36218,6 +36256,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -36297,6 +36336,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -36346,6 +36386,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -36493,6 +36534,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -36542,6 +36584,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -36753,6 +36796,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -36802,6 +36846,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -37011,6 +37056,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -37060,6 +37106,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -37352,6 +37399,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -37401,6 +37449,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -38131,6 +38180,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -38180,6 +38230,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -38551,6 +38602,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -38600,6 +38652,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -38892,6 +38945,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -38941,6 +38995,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -39178,6 +39233,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -39640,6 +39696,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -39688,6 +39745,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -39736,6 +39794,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -40370,6 +40429,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     allowLuggage?: boolean
     allowPets?: boolean
@@ -40412,6 +40472,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -40461,6 +40522,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -40509,6 +40571,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -40866,6 +40929,7 @@ export namespace Prisma {
     offeredSeats?: number
     tollCost?: number
     allowRoutePickup?: boolean
+    routePickupSharingEnabled?: boolean
     bookingPolicy?: $Enums.BookingPolicy
     scheduleId?: string | null
     allowLuggage?: boolean
@@ -40908,6 +40972,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
     allowPets?: BoolFieldUpdateOperationsInput | boolean
@@ -40957,6 +41022,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean
@@ -41005,6 +41071,7 @@ export namespace Prisma {
     offeredSeats?: IntFieldUpdateOperationsInput | number
     tollCost?: FloatFieldUpdateOperationsInput | number
     allowRoutePickup?: BoolFieldUpdateOperationsInput | boolean
+    routePickupSharingEnabled?: BoolFieldUpdateOperationsInput | boolean
     bookingPolicy?: EnumBookingPolicyFieldUpdateOperationsInput | $Enums.BookingPolicy
     scheduleId?: NullableStringFieldUpdateOperationsInput | string | null
     allowLuggage?: BoolFieldUpdateOperationsInput | boolean

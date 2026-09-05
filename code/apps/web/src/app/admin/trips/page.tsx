@@ -1,0 +1,12 @@
+'use client';
+import Link from 'next/link';
+import { AlertTriangle, ArrowLeft, Database, Route } from 'lucide-react';
+import { useAuth } from '@/components/providers/auth-provider';
+import { Button } from '@/components/ui/button';
+
+export default function AdminTripsPage() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="mx-auto max-w-6xl px-4 py-10"><div className="h-80 animate-pulse rounded-xl bg-muted" /></div>;
+  if (user?.role !== 'ADMIN') return <div className="flex min-h-[70dvh] items-center justify-center p-6 text-center"><div><h1 className="text-2xl font-semibold">Bạn không có quyền truy cập</h1><Link href="/"><Button className="mt-5">Về trang chủ</Button></Link></div></div>;
+  return <main className="min-h-[calc(100dvh-3rem)] bg-background"><div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12"><Link href="/admin" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Tổng quan</Link><header className="mt-5"><p className="text-sm font-medium text-primary">Quản trị vận hành</p><h1 className="mt-1 text-3xl font-semibold tracking-tight">Ride-Hailing</h1><p className="mt-2 text-sm text-muted-foreground">Giám sát cuốc xe theo thời gian thực.</p></header><section role="status" className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-6 text-amber-950 sm:p-8"><div className="flex flex-col gap-5 sm:flex-row"><span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-amber-100"><AlertTriangle className="h-6 w-6 text-amber-700" /></span><div><h2 className="text-lg font-semibold">Chưa có Admin Trips API</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-amber-900/80">Backend hiện chỉ cung cấp lịch sử Trip theo người dùng tại <code className="rounded bg-white/70 px-1.5 py-0.5">GET /trips/history</code>. Không có endpoint admin để lấy toàn bộ trip, thống kê hoặc phân trang an toàn. Trang này không hiển thị dữ liệu giả.</p><div className="mt-5 grid gap-3 text-sm sm:grid-cols-2"><div className="flex gap-2 rounded-lg bg-white/70 p-3"><Database className="h-4 w-4 shrink-0 text-amber-700" /><span>Cần API danh sách + thống kê có guard ADMIN.</span></div><div className="flex gap-2 rounded-lg bg-white/70 p-3"><Route className="h-4 w-4 shrink-0 text-amber-700" /><span>Sau khi có API, UI sẽ dùng bảng và detail drawer.</span></div></div></div></div></section></div></main>;
+}

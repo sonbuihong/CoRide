@@ -133,4 +133,32 @@ describe('Review API', () => {
       }));
     });
   });
+
+  describe('GET /api/reviews/ride/:rideId/mine', () => {
+    it('trả danh sách người đã được người dùng hiện tại đánh giá trong chuyến', async () => {
+      (prisma.review.findMany as jest.Mock).mockResolvedValue([
+        { revieweeId },
+        { revieweeId: '123e4567-e89b-12d3-a456-426614174004' },
+        { revieweeId },
+      ]);
+
+      const response = await request(app)
+        .get(`/api/reviews/ride/${rideId}/mine`)
+        .set('Authorization', `Bearer ${userToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        reviewedUserIds: [revieweeId, '123e4567-e89b-12d3-a456-426614174004'],
+      });
+      expect(prisma.review.findMany).toHaveBeenCalledWith({
+        where: { reviewerId: userId, rideId },
+        select: { revieweeId: true },
+      });
+    });
+
+    it('yêu cầu đăng nhập', async () => {
+      const response = await request(app).get(`/api/reviews/ride/${rideId}/mine`);
+      expect(response.status).toBe(401);
+    });
+  });
 });

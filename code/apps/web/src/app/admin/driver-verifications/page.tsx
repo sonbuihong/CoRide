@@ -56,7 +56,7 @@ export default function AdminDriverVerificationsPage() {
   const getImageUrl = (url: string) => {
     if (!url) return '';
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
     const backendHost = apiBase.replace('/api', '');
     return `${backendHost}${url}`;
   };

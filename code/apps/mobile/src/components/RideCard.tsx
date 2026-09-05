@@ -100,6 +100,7 @@ export const RideCard: React.FC<RideCardProps> = memo(({
 }) => {
   const router = useRouter();
   const isSoldOut = ride.availableSeats <= 0;
+  const isOngoing = ride.status === 'ONGOING';
   const primaryOrigin = showMatch && passengerRoute?.origin ? passengerRoute.origin : ride.departure;
   const primaryDestination = showMatch && passengerRoute?.destination ? passengerRoute.destination : ride.destination;
   const fare = ride.passengerFare ?? ride.price;
@@ -140,7 +141,7 @@ export const RideCard: React.FC<RideCardProps> = memo(({
     <View style={[styles.card, featured && styles.featuredCard, isSoldOut && styles.disabledCard]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Chuyến ${format(new Date(ride.departureTime), 'HH:mm')}, từ ${primaryOrigin} đến ${primaryDestination}, ${fare.toLocaleString('vi-VN')} đồng, còn ${ride.availableSeats} chỗ`}
+        accessibilityLabel={`Chuyến ${isOngoing ? 'đang di chuyển, ' : ''}${format(new Date(ride.departureTime), 'HH:mm')}, từ ${primaryOrigin} đến ${primaryDestination}, ${fare.toLocaleString('vi-VN')} đồng, còn ${ride.availableSeats} chỗ`}
         accessibilityHint="Nhấn để xem chi tiết chuyến đi"
         onPress={openDetail}
         style={({ pressed }) => [styles.pressable, pressed && styles.pressed, Platform.OS === 'web' && ({ cursor: 'pointer' } as any)]}
@@ -158,6 +159,12 @@ export const RideCard: React.FC<RideCardProps> = memo(({
             <View>
               <AppText variant="h2" weight="semibold" style={styles.time}>{format(new Date(ride.departureTime), 'HH:mm')}</AppText>
               <AppText variant="caption" style={styles.date}>{rideDate(ride.departureTime)}</AppText>
+              {isOngoing ? (
+                <View style={styles.ongoingBadge}>
+                  <View style={styles.ongoingDot} />
+                  <AppText variant="caption" weight="semibold" style={styles.ongoingText}>Đang di chuyển</AppText>
+                </View>
+              ) : null}
             </View>
             <View style={styles.priceBlock}>
               <AppText variant="h2" weight="semibold" style={styles.price}>{fare.toLocaleString('vi-VN')}đ</AppText>
@@ -224,6 +231,9 @@ const styles = StyleSheet.create({
   header: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },
   time: { fontVariant: ['tabular-nums'] },
   date: { marginTop: 1, textTransform: 'capitalize' },
+  ongoingBadge: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.successSoft, borderRadius: radius.full, flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs, minHeight: 28, paddingHorizontal: spacing.sm },
+  ongoingDot: { backgroundColor: colors.success, borderRadius: radius.full, height: 7, width: 7 },
+  ongoingText: { color: colors.success },
   priceBlock: { alignItems: 'flex-end' },
   price: { color: colors.primary, fontVariant: ['tabular-nums'] },
   route: { flexDirection: 'row', minHeight: 58 },

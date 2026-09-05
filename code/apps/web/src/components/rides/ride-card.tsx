@@ -3,7 +3,7 @@
 import React from 'react';
 import { Bike, Calendar, Car, Users, Star, ChevronRight, Route } from 'lucide-react';
 import Link from 'next/link';
-import { getStaticMapUrl } from '@/lib/goong';
+import { useRouter } from 'next/navigation';
 
 export interface Driver {
   id: string;
@@ -16,6 +16,8 @@ export interface Driver {
 
 export interface Ride {
   id: string;
+  scheduleId?: string | null;
+  status?: string;
   origin: string;
   originLat: number | null;
   originLng: number | null;
@@ -42,6 +44,8 @@ export interface Ride {
 
 interface RideCardProps {
   ride: Ride;
+  scheduleRides?: Ride[];
+  getRideHref?: (rideId: string) => string;
   href?: string;
   userLocation?: { lat: number; lng: number } | null;
   onMouseEnter?: () => void;
@@ -64,8 +68,10 @@ function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon
   return R * c;
 }
 
-export function RideCard({ ride, href, userLocation, onMouseEnter, onMouseLeave, onClick }: RideCardProps) {
+export function RideCard({ ride, scheduleRides, getRideHref, href, userLocation, onMouseEnter, onMouseLeave, onClick }: RideCardProps) {
+  const router = useRouter();
   const departureDate = new Date(ride.departureTime);
+  const departures = scheduleRides?.length ? scheduleRides : [ride];
   const formattedDate = departureDate.toLocaleDateString('vi-VN', {
     weekday: 'short',
     year: 'numeric',
@@ -100,16 +106,6 @@ export function RideCard({ ride, href, userLocation, onMouseEnter, onMouseLeave,
       ? 'bg-blue-50 text-[#0066cc] dark:bg-blue-500/15 dark:text-blue-300'
       : 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300';
   const vehicleTypeLabel = ride.vehicle?.type === 'CAR' ? 'Ô tô' : 'Xe máy';
-  const staticMapUrl = ride.originLat != null && ride.originLng != null && ride.destinationLat != null && ride.destinationLng != null
-    ? getStaticMapUrl({
-        origin: `${ride.originLat},${ride.originLng}`,
-        destination: `${ride.destinationLat},${ride.destinationLng}`,
-        width: 960,
-        height: 260,
-        vehicle: ride.vehicle?.type === 'BIKE' ? 'bike' : 'car',
-      })
-    : null;
-
   return (
     <div 
       className="group relative w-full bg-white dark:bg-[#1d1d1f] rounded-[24px] p-6 sm:p-8 transition-all shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)] border-2 border-slate-300 dark:border-slate-700 overflow-hidden cursor-pointer"
@@ -117,9 +113,6 @@ export function RideCard({ ride, href, userLocation, onMouseEnter, onMouseLeave,
       onMouseLeave={onMouseLeave}
       onClick={onClick}
     >
-      {staticMapUrl && (
-        <img src={staticMapUrl} alt="Ảnh xem trước tuyến đường" className="mb-5 h-32 w-full rounded-2xl bg-gray-50 object-cover dark:bg-white/5" loading="lazy" />
-      )}
       {matchLabel && ride.matchScore != null && (
         <div className="mb-5 flex flex-wrap items-center gap-2" aria-label={`Mức độ phù hợp ${ride.matchScore}%`}>
           <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold ${matchBadgeClass}`}>
@@ -140,6 +133,20 @@ export function RideCard({ ride, href, userLocation, onMouseEnter, onMouseLeave,
             <span className="text-[12px] font-semibold text-[#0066cc] dark:text-[#2997ff]">
               Điểm đi tài xế cách điểm đi của bạn{' '}
               {ride.originDistanceKm < 0.1 ? '< 100 m' : `${ride.originDistanceKm} km`}
+            </span>
+          )}
+        </div>
+      )}
+      {(ride.status === 'ONGOING' || departures.length > 1) && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {ride.status === 'ONGOING' && (
+            <span className="inline-flex items-center rounded-full bg-amber-50 px-3 py-1.5 text-[12px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+              Đang di chuyển
+            </span>
+          )}
+          {departures.length > 1 && (
+            <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1.5 text-[12px] font-semibold text-[#0066cc] dark:bg-blue-500/15 dark:text-blue-300">
+              Lịch chuyến · {departures.length} ngày
             </span>
           )}
         </div>
@@ -180,11 +187,33 @@ export function RideCard({ ride, href, userLocation, onMouseEnter, onMouseLeave,
 
           {/* Info Pills */}
           <div className="flex flex-wrap gap-2 pt-2">
-            <div className="inline-flex items-center bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.08)] px-3 py-1.5 rounded-[980px]">
+            <div className="relative z-20 inline-flex min-h-9 items-center bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.08)] px-3 py-1.5 rounded-[980px]">
               <Calendar className="mr-1.5 h-3.5 w-3.5 text-[rgba(0,0,0,0.64)] dark:text-[rgba(255,255,255,0.64)]" />
-              <span className="text-[12px] font-medium tracking-[-0.12px] text-[#1d1d1f] dark:text-white">
-                {formattedTime}, {formattedDate}
-              </span>
+              {departures.length > 1 ? (
+                <select
+                  aria-label={`Chọn một trong ${departures.length} ngày khởi hành`}
+                  defaultValue={ride.id}
+                  onClick={(event) => event.stopPropagation()}
+                  onChange={(event) => {
+                    const selectedRideId = event.target.value;
+                    router.push(getRideHref?.(selectedRideId) ?? `/rides/${selectedRideId}`);
+                  }}
+                  className="max-w-[220px] cursor-pointer appearance-auto bg-transparent pr-1 text-[12px] font-medium tracking-[-0.12px] text-[#1d1d1f] outline-none focus-visible:ring-2 focus-visible:ring-[#0071e3] dark:text-white"
+                >
+                  {departures.map((departure) => {
+                    const optionDate = new Date(departure.departureTime);
+                    return (
+                      <option key={departure.id} value={departure.id} className="bg-white text-[#1d1d1f]">
+                        {optionDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}, {optionDate.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </option>
+                    );
+                  })}
+                </select>
+              ) : (
+                <span className="text-[12px] font-medium tracking-[-0.12px] text-[#1d1d1f] dark:text-white">
+                  {formattedTime}, {formattedDate}
+                </span>
+              )}
             </div>
             <div className="inline-flex items-center bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.08)] px-3 py-1.5 rounded-[980px]">
               <Users className="mr-1.5 h-3.5 w-3.5 text-[rgba(0,0,0,0.64)] dark:text-[rgba(255,255,255,0.64)]" />

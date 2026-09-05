@@ -11,9 +11,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, isToday } from 'date-fns';
 import { useRouter } from 'expo-router';
 import {
-  ArrowRight, CarFront, CircleAlert, Navigation, RefreshCw, Route, Users, Wifi, WifiOff, X,
+  ArrowRight, CarFront, CircleAlert, Navigation, RefreshCw, Route, Users, X,
 } from 'lucide-react-native';
-import { Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SocketEvents } from '@repo/shared';
 
 import type { DriverBookingSummary } from '../../src/services/booking.service';
@@ -27,7 +27,6 @@ import {
   TodayOverviewStats, UpcomingTripCard, UpcomingTripEmpty,
 } from '../../src/components/driver-home/DriverHomeSections';
 import { useAuth } from '../../src/hooks/useAuth';
-import { useDriverAvailability } from '../../src/hooks/useDriverAvailability';
 import { getRealtimeRefetchInterval, useSocketConnection } from '../../src/hooks/useSocketConnection';
 import { bookingService } from '../../src/services/booking.service';
 import { rideService } from '../../src/services/ride.service';
@@ -61,39 +60,6 @@ const TRIP_EVENTS = [
 
 const EMPTY_RIDES: Ride[] = [];
 const EMPTY_BOOKINGS: DriverBookingSummary[] = [];
-
-function DriverAvailabilityBar({
-  isOnline,
-  isChanging,
-  onPress,
-}: {
-  isOnline: boolean;
-  isChanging: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <View style={[styles.availabilityBar, isOnline && styles.availabilityBarOnline]}>
-      <View style={[styles.availabilityIcon, isOnline && styles.availabilityIconOnline]}>
-        {isOnline
-          ? <Wifi size={21} color={colors.navigationDriver} />
-          : <WifiOff size={21} color={colors.textSecondary} />}
-      </View>
-      <View style={styles.availabilityCopy}>
-        <AppText weight="semibold">{isOnline ? 'Đang trực tuyến' : 'Sẵn sàng nhận chuyến?'}</AppText>
-        <AppText variant="caption">
-          {isOnline ? 'Đang chia sẻ vị trí để nhận yêu cầu phù hợp.' : 'Bật vị trí để hành khách gần bạn có thể kết nối.'}
-        </AppText>
-      </View>
-      <AppButton
-        title={isOnline ? 'DỪNG' : 'BẮT ĐẦU'}
-        variant={isOnline ? 'outline' : 'driver'}
-        isLoading={isChanging}
-        onPress={onPress}
-        style={styles.availabilityButton}
-      />
-    </View>
-  );
-}
 
 function ActiveTripCard({ item, onPress }: { item: DriverHomeActiveItem; onPress: () => void }) {
   return (
@@ -161,7 +127,6 @@ export default function DriverHomeScreen() {
   const hasObservedSocketConnection = useRef(isSocketConnected);
   const [draftPrompt, setDraftPrompt] = useState<RideDraft | null>(null);
   const [clearingDraft, setClearingDraft] = useState(false);
-  const { isOnline, isChanging, goOnline, goOffline } = useDriverAvailability();
   const ridesQuery = useQuery({
     queryKey: ['my-driver-rides'], queryFn: rideService.getMyRides, enabled: queriesEnabled,
   });
@@ -276,27 +241,6 @@ export default function DriverHomeScreen() {
     ]);
   }, [activeBookingQuery, activeTripQuery, bookingsQuery, ridesQuery]);
 
-  const handleAvailability = useCallback(async () => {
-    if (isOnline) {
-      goOffline();
-      return;
-    }
-    try {
-      const enabled = await goOnline();
-      if (!enabled) {
-        Alert.alert(
-          'Cần quyền vị trí',
-          'Hãy cho phép CoRide truy cập vị trí để nhận chuyến gần bạn.',
-        );
-      }
-    } catch {
-      Alert.alert(
-        'Không thể bật trực tuyến',
-        'Vui lòng kiểm tra GPS và kết nối mạng rồi thử lại.',
-      );
-    }
-  }, [goOffline, goOnline, isOnline]);
-
   const queries = [ridesQuery, bookingsQuery, activeBookingQuery, activeTripQuery];
   const isInitialLoading = queries.some((query) => query.isLoading);
   const isRefreshing = queries.some((query) => query.isRefetching);
@@ -333,13 +277,6 @@ export default function DriverHomeScreen() {
             ) : null}
 
             <DriverHero firstName={user?.firstName} onCreate={() => void openSchedule()} />
-            {!activeItem ? (
-              <DriverAvailabilityBar
-                isOnline={isOnline}
-                isChanging={isChanging}
-                onPress={() => void handleAvailability()}
-              />
-            ) : null}
             {activeItem ? <View style={styles.section}><ActiveTripCard item={activeItem} onPress={() => router.push(activeItem.route as never)} /></View> : null}
             <BookingRequestList bookings={matchingRequests} onAll={() => router.push('/(driver-tabs)/requests' as never)} onOpen={(id) => router.push(`/booking/${id}` as never)} />
             {nextRide ? <UpcomingTripCard ride={nextRide} passengerCount={Math.max(0, nextRide.bookedSeats ?? nextRide.totalSeats - nextRide.availableSeats)} onAll={() => router.push('/ride/manage' as never)} onOpen={() => router.push(`/ride/${nextRide.id}` as never)} /> : <UpcomingTripEmpty onAll={() => router.push('/ride/manage' as never)} onCreate={() => void openSchedule()} />}
@@ -410,12 +347,6 @@ export default function DriverHomeScreen() {
 const styles = StyleSheet.create({
   scrollContent: { backgroundColor: colors.background, flexGrow: 1, paddingBottom: spacing.xxxl },
   content: { alignSelf: 'center', maxWidth: layout.maxContentWidth, paddingHorizontal: spacing.md, paddingTop: spacing.lg, width: '100%' },
-  availabilityBar: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.card, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, padding: spacing.sm },
-  availabilityBarOnline: { backgroundColor: colors.navigationDriverSoft, borderColor: colors.navigationDriver },
-  availabilityIcon: { alignItems: 'center', backgroundColor: colors.surfaceMuted, borderRadius: radius.input, height: layout.minTouchTarget, justifyContent: 'center', width: layout.minTouchTarget },
-  availabilityIconOnline: { backgroundColor: colors.surface },
-  availabilityCopy: { flex: 1, minWidth: 0 },
-  availabilityButton: { minHeight: 48, paddingHorizontal: spacing.sm },
   errorBanner: { alignItems: 'center', backgroundColor: colors.dangerSoft, borderRadius: radius.input, flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md, padding: spacing.sm },
   errorCopy: { flex: 1, minWidth: 0 },
   retryButton: { alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.pill, height: layout.minTouchTarget, justifyContent: 'center', width: layout.minTouchTarget },

@@ -146,6 +146,7 @@ model Ride {
   offeredSeats       Int           @default(1)
   tollCost           Float         @default(0)
   allowRoutePickup   Boolean       @default(true)
+  routePickupSharingEnabled Boolean @default(false)
   bookingPolicy      BookingPolicy @default(DRIVER_APPROVAL)
   scheduleId         String?
   allowLuggage       Boolean       @default(true)

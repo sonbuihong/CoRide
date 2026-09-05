@@ -1,6 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
 import { ReviewsService } from './reviews.service';
 
+export const getMyRideReviews = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const reviewedUserIds = await ReviewsService.getMyRideReviewedUserIds(
+      req.user!.id,
+      req.params.rideId as string,
+    );
+    res.json({ reviewedUserIds });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createReview = async (
   req: Request,
   res: Response,

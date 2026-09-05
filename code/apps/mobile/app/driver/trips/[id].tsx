@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -12,7 +12,6 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import {
   ArrowLeft,
   CalendarClock,
@@ -32,11 +31,11 @@ import { vi } from 'date-fns/locale';
 
 import { AppButton } from '../../../src/components/ui/AppButton';
 import { AppText } from '../../../src/components/ui/AppText';
+import { RideMap } from '../../../src/components/RideMap';
 import { bookingService } from '../../../src/services/booking.service';
 import { rideService } from '../../../src/services/ride.service';
 import { socketService } from '../../../src/services/socket.service';
 import { colors, radius, spacing, typography } from '../../../src/theme/tokens';
-import { getDirections } from '../../../src/services/direction.service';
 import { SocketEvents } from '@repo/shared';
 import { showInfoDialog } from '../../../src/utils/dialog';
 
@@ -74,8 +73,6 @@ export default function DriverTripDetailScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
-  const [mapRouteCoords, setMapRouteCoords] = useState<{ latitude: number; longitude: number }[]>([]);
-  const [mapReady, setMapReady] = useState(false);
 
   // Queries
   const { data: ride, isLoading: isRideLoading } = useQuery({
@@ -180,24 +177,6 @@ export default function DriverTripDetailScreen() {
       socketService.off(SocketEvents.RIDE_UPDATED, handleUpdate);
     };
   }, [id, queryClient]);
-
-  const fetchMapRoute = useCallback(async () => {
-    if (!ride?.departureCoords || !ride?.destinationCoords) return;
-    try {
-      const result = await getDirections(
-        { latitude: ride.departureCoords.latitude, longitude: ride.departureCoords.longitude },
-        { latitude: ride.destinationCoords.latitude, longitude: ride.destinationCoords.longitude },
-      );
-      if (result?.polylineCoords) setMapRouteCoords(result.polylineCoords);
-    } catch {
-      // Bỏ qua lỗi
-    }
-  }, [ride?.departureCoords, ride?.destinationCoords]);
-
-  const handleMapReady = useCallback(() => {
-    setMapReady(true);
-    void fetchMapRoute();
-  }, [fetchMapRoute]);
 
   // Handlers
   const handleStartRide = () => {
@@ -305,36 +284,21 @@ export default function DriverTripDetailScreen() {
         )}
 
         {/* COMPACT MAP */}
-        <View style={styles.mapContainer}>
-          {hasCoords ? (
-            <MapView
-              provider={PROVIDER_GOOGLE}
-              style={StyleSheet.absoluteFillObject}
-              onMapReady={handleMapReady}
-              initialRegion={{
-                latitude: (ride.departureCoords!.latitude + ride.destinationCoords!.latitude) / 2,
-                longitude: (ride.departureCoords!.longitude + ride.destinationCoords!.longitude) / 2,
-                latitudeDelta: Math.abs(ride.departureCoords!.latitude - ride.destinationCoords!.latitude) * 2 + 0.05,
-                longitudeDelta: Math.abs(ride.departureCoords!.longitude - ride.destinationCoords!.longitude) * 2 + 0.05,
-              }}
-              scrollEnabled={false}
-              zoomEnabled={false}
-              pitchEnabled={false}
-              rotateEnabled={false}
-            >
-              {mapRouteCoords.length > 0 && (
-                <Polyline coordinates={mapRouteCoords} strokeColor={colors.navigationDriver} strokeWidth={4} />
-              )}
-              <Marker coordinate={ride.departureCoords!} pinColor="#22C55E" />
-              <Marker coordinate={ride.destinationCoords!} pinColor="#EF4444" />
-            </MapView>
-          ) : (
+        {hasCoords ? (
+          <RideMap
+            departureCoords={ride.departureCoords!}
+            destinationCoords={ride.destinationCoords!}
+            encodedPolyline={ride.routePolyline}
+            containerStyle={styles.mapContainer}
+          />
+        ) : (
+          <View style={styles.mapContainer}>
             <View style={styles.mapPlaceholder}>
               <Route size={28} color={colors.textTertiary} strokeWidth={1.5} />
               <AppText variant="caption" style={{ color: colors.textTertiary, marginTop: 8 }}>Không có dữ liệu bản đồ</AppText>
             </View>
-          )}
-        </View>
+          </View>
+        )}
 
         {/* TIMELINE HÀNH TRÌNH */}
         <View style={styles.section}>

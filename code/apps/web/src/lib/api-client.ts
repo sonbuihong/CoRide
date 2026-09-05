@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5001/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -20,7 +20,14 @@ export function refreshAccessToken(): Promise<string> {
     .then((response) => {
       const token = response.data.accessToken as string;
       if (!token) throw new Error('Refresh response does not contain an access token');
-      if (typeof window !== 'undefined') sessionStorage.setItem('accessToken', token);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('accessToken', token);
+        // REST and Socket.IO share the same short-lived access token. A refresh
+        // must therefore re-authenticate the existing realtime connection too.
+        void import('./socket-client').then(({ reconnectWithLatestToken }) => {
+          reconnectWithLatestToken();
+        });
+      }
       return token;
     })
     .finally(() => {

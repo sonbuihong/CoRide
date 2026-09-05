@@ -29,6 +29,7 @@ export const MOCK_SAMPLE_RIDES: Ride[] = [
     distance: 14.5,
     duration: 35,
     status: 'ACTIVE',
+    routePickupSharingEnabled: false,
   },
   {
     id: 'ride-02',
@@ -48,6 +49,7 @@ export const MOCK_SAMPLE_RIDES: Ride[] = [
     distance: 16.0,
     duration: 44,
     status: 'ACTIVE',
+    routePickupSharingEnabled: false,
   },
   {
     id: 'ride-03',
@@ -67,6 +69,7 @@ export const MOCK_SAMPLE_RIDES: Ride[] = [
     distance: 11.2,
     duration: 28,
     status: 'ACTIVE',
+    routePickupSharingEnabled: false,
   },
   {
     id: 'ride-04',
@@ -87,6 +90,7 @@ export const MOCK_SAMPLE_RIDES: Ride[] = [
     distance: 8.2,
     duration: 20,
     status: 'ACTIVE',
+    routePickupSharingEnabled: false,
   },
   {
     id: 'ride-05',
@@ -106,6 +110,7 @@ export const MOCK_SAMPLE_RIDES: Ride[] = [
     distance: 38.0,
     duration: 45,
     status: 'ACTIVE',
+    routePickupSharingEnabled: false,
   },
   {
     id: 'ride-06',
@@ -126,6 +131,7 @@ export const MOCK_SAMPLE_RIDES: Ride[] = [
     distance: 9.8,
     duration: 25,
     status: 'ACTIVE',
+    routePickupSharingEnabled: false,
   },
   {
     id: 'ride-07',
@@ -145,6 +151,7 @@ export const MOCK_SAMPLE_RIDES: Ride[] = [
     distance: 1.8,
     duration: 6,
     status: 'ACTIVE',
+    routePickupSharingEnabled: false,
   },
   {
     id: 'ride-08',
@@ -165,6 +172,7 @@ export const MOCK_SAMPLE_RIDES: Ride[] = [
     distance: 18.5,
     duration: 32,
     status: 'ACTIVE',
+    routePickupSharingEnabled: false,
   },
   {
     id: 'ride-09',
@@ -184,6 +192,7 @@ export const MOCK_SAMPLE_RIDES: Ride[] = [
     distance: 10.2,
     duration: 24,
     status: 'ACTIVE',
+    routePickupSharingEnabled: false,
   },
   {
     id: 'ride-10',
@@ -203,5 +212,6 @@ export const MOCK_SAMPLE_RIDES: Ride[] = [
     distance: 7.5,
     duration: 22,
     status: 'ACTIVE',
+    routePickupSharingEnabled: false,
   },
 ];

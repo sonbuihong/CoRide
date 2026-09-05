@@ -1,22 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
-import { getDirections } from '../services/direction.service';
+import { decodePolyline, getDirections } from '../services/direction.service';
 
 interface RideMapProps {
   departureCoords?: { latitude: number; longitude: number };
   destinationCoords?: { latitude: number; longitude: number };
+  encodedPolyline?: string | null;
   containerStyle?: ViewStyle;
   fullScreen?: boolean;
 }
 
-export const RideMap: React.FC<RideMapProps> = ({ departureCoords, destinationCoords, containerStyle, fullScreen = false }) => {
-  const [route, setRoute] = useState<{ latitude: number; longitude: number }[]>([]);
+export const RideMap: React.FC<RideMapProps> = ({ departureCoords, destinationCoords, encodedPolyline, containerStyle, fullScreen = false }) => {
+  const [fetchedRoute, setFetchedRoute] = useState<{ latitude: number; longitude: number }[]>([]);
+  const storedRoute = useMemo(
+    () => encodedPolyline ? decodePolyline(encodedPolyline) : [],
+    [encodedPolyline],
+  );
   const departureLat = departureCoords?.latitude;
   const departureLng = departureCoords?.longitude;
   const destinationLat = destinationCoords?.latitude;
   const destinationLng = destinationCoords?.longitude;
   useEffect(() => {
+    if (storedRoute.length > 1) return;
     if (departureLat == null || departureLng == null || destinationLat == null || destinationLng == null) return;
     let active = true;
     getDirections(
@@ -24,10 +30,11 @@ export const RideMap: React.FC<RideMapProps> = ({ departureCoords, destinationCo
       { latitude: destinationLat, longitude: destinationLng },
     ).then((result) => {
       // Keep the last successful route when Goong is temporarily unavailable.
-      if (active && result?.polylineCoords?.length) setRoute(result.polylineCoords);
-    });
+      if (active && result?.polylineCoords?.length) setFetchedRoute(result.polylineCoords);
+    }).catch(() => undefined);
     return () => { active = false; };
-  }, [departureLat, departureLng, destinationLat, destinationLng]);
+  }, [departureLat, departureLng, destinationLat, destinationLng, storedRoute.length]);
+  const route = storedRoute.length > 1 ? storedRoute : fetchedRoute;
   // Tọa độ mặc định (Hà Nội) nếu không có dữ liệu
   const defaultRegion = {
     latitude: 21.0285,

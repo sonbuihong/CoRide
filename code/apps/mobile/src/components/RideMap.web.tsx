@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { GoongMapCanvas } from './GoongMapCanvas.web';
-import { getDirections } from '../services/direction.service';
+import { decodePolyline, getDirections } from '../services/direction.service';
 
 interface RideMapProps {
   departureCoords?: { latitude: number; longitude: number };
   destinationCoords?: { latitude: number; longitude: number };
+  encodedPolyline?: string | null;
   containerStyle?: ViewStyle;
   fullScreen?: boolean;
 }
@@ -13,10 +14,15 @@ interface RideMapProps {
 export const RideMap: React.FC<RideMapProps> = ({
   departureCoords,
   destinationCoords,
+  encodedPolyline,
   containerStyle,
   fullScreen = false,
 }) => {
-  const [route, setRoute] = useState<{ latitude: number; longitude: number }[]>([]);
+  const [fetchedRoute, setFetchedRoute] = useState<{ latitude: number; longitude: number }[]>([]);
+  const storedRoute = useMemo(
+    () => encodedPolyline ? decodePolyline(encodedPolyline) : [],
+    [encodedPolyline],
+  );
 
   const departureLat = departureCoords?.latitude;
   const departureLng = departureCoords?.longitude;
@@ -24,6 +30,7 @@ export const RideMap: React.FC<RideMapProps> = ({
   const destinationLng = destinationCoords?.longitude;
 
   useEffect(() => {
+    if (storedRoute.length > 1) return;
     if (departureLat == null || departureLng == null || destinationLat == null || destinationLng == null) return;
     let active = true;
     getDirections(
@@ -31,13 +38,14 @@ export const RideMap: React.FC<RideMapProps> = ({
       { latitude: destinationLat, longitude: destinationLng }
     ).then((result) => {
       if (active && result?.polylineCoords?.length) {
-        setRoute(result.polylineCoords);
+        setFetchedRoute(result.polylineCoords);
       }
-    });
+    }).catch(() => undefined);
     return () => {
       active = false;
     };
-  }, [departureLat, departureLng, destinationLat, destinationLng]);
+  }, [departureLat, departureLng, destinationLat, destinationLng, storedRoute.length]);
+  const route = storedRoute.length > 1 ? storedRoute : fetchedRoute;
 
   const center = useMemo(() => {
     return departureCoords || destinationCoords || { latitude: 21.0285, longitude: 105.8542 };

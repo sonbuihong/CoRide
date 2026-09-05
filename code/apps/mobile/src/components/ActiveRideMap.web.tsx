@@ -22,10 +22,17 @@ interface ActiveRideMapProps {
   destinationLabel?: string;
   pickupMarkers?: ActiveRideStopMarker[];
   onUserPan?: () => void;
+  fitEdgePadding?: { top: number; right: number; bottom: number; left: number };
+  autoFitRoute?: boolean;
+  fitRouteOnce?: boolean;
+  focusZoom?: number;
+  autoFocusDriver?: boolean;
+  userLocation?: ActiveRideLatLng | null;
 }
 
 const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function ActiveRideMap(
-  { originCoords, destinationCoords, routeCoords = [], driverLocation, pickupMarkers = [], onUserPan },
+  { originCoords, destinationCoords, routeCoords = [], driverLocation, pickupMarkers = [], onUserPan,
+    autoFitRoute = true, fitRouteOnce = false, fitEdgePadding },
   forwardedRef,
 ) {
   const [cameraTarget, setCameraTarget] = useState<ActiveRideLatLng>();
@@ -54,6 +61,9 @@ const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function 
         cameraTarget={cameraTarget}
         onCenterChange={onUserPan ? () => onUserPan() : undefined}
         zoom={14}
+        autoFitRoute={autoFitRoute}
+        fitRouteOnce={fitRouteOnce}
+        fitEdgePadding={fitEdgePadding}
       />
     </View>
   );

@@ -1,402 +1,45 @@
 'use client';
-
-import React, { useState } from 'react';
 import Link from 'next/link';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Car, User, LogOut, Search, PlusSquare, Bookmark, MapPin, LayoutDashboard, Users, CreditCard, ShieldAlert, Menu } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { NotificationCenter } from './notification-center';
+import { usePathname, useRouter } from 'next/navigation';
+import { Activity, Bell, Bookmark, Car, ChevronDown, CircleDollarSign, LayoutDashboard, LogOut, Menu, MessageCircle, Plus, Route, Search, ShieldCheck, User, Users } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useRoleMode } from '@/components/providers/role-mode-provider';
-import { useRouter, usePathname } from 'next/navigation';
-import { toast } from 'sonner';
+import { NotificationCenter } from './notification-center';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
-// ==========================================
-// THIẾT KẾ APPLE: Utilities CSS — Passenger Mode (Light)
-// ==========================================
-const passengerHeaderClass =
-  "px-4 lg:px-6 h-12 flex items-center sticky top-0 z-50 transition-all duration-500 bg-[rgba(255,255,255,0.9)] border-b border-[rgba(0,0,0,0.16)] supports-[backdrop-filter]:backdrop-blur-[20px] supports-[backdrop-filter]:saturate-[180%]";
+type NavItem = { href: string; label: string; icon: typeof Car };
+const passengerNav: NavItem[] = [
+  { href: '/rides', label: 'Tìm chuyến', icon: Search }, { href: '/ride-hailing', label: 'Ride-Hailing', icon: Car },
+  { href: '/activity', label: 'Hoạt động', icon: Activity }, { href: '/messages', label: 'Tin nhắn', icon: MessageCircle },
+];
+const driverNav: NavItem[] = [
+  { href: '/driver', label: 'Tổng quan', icon: LayoutDashboard }, { href: '/rides/post', label: 'Đăng chuyến', icon: Plus },
+  { href: '/my-rides', label: 'Chuyến của tôi', icon: Route }, { href: '/booking-requests', label: 'Yêu cầu', icon: Users },
+  { href: '/messages', label: 'Tin nhắn', icon: MessageCircle },
+];
+const adminPrimary: NavItem[] = [{ href: '/admin', label: 'Tổng quan', icon: LayoutDashboard }, { href: '/admin/users', label: 'Người dùng', icon: Users }];
+const adminManage: NavItem[] = [
+  { href: '/admin/rides', label: 'Carpooling', icon: Route }, { href: '/admin/trips', label: 'Ride-Hailing', icon: Car },
+  { href: '/admin/bookings', label: 'Đặt chỗ', icon: Bookmark }, { href: '/admin/transactions', label: 'Giao dịch', icon: CircleDollarSign },
+  { href: '/admin/pricing', label: 'Cấu hình giá', icon: CircleDollarSign }, { href: '/admin/driver-verifications', label: 'KYC tài xế', icon: ShieldCheck },
+  { href: '/admin/reports', label: 'Báo cáo', icon: Bell },
+];
 
-// Driver Mode — Dark header riêng biệt để phân biệt trực quan
-const driverHeaderClass =
-  "px-4 lg:px-6 h-12 flex items-center sticky top-0 z-50 transition-all duration-500 bg-[rgba(10,30,60,0.92)] border-b border-[rgba(255,255,255,0.08)] supports-[backdrop-filter]:backdrop-blur-[20px] supports-[backdrop-filter]:saturate-[180%]";
+export function Header() {
+  const { user, loading, logout } = useAuth(); const { mode, setMode } = useRoleMode(); const pathname = usePathname(); const router = useRouter();
+  const isAdmin = user?.role === 'ADMIN'; const isDriver = !!user && mode === 'driver' && !isAdmin;
+  const nav = isAdmin ? adminPrimary : isDriver ? driverNav : passengerNav;
+  const active = (href: string) => pathname === href || (href !== '/' && pathname.startsWith(`${href}/`));
+  const switchMode = () => { const next = isDriver ? 'passenger' : 'driver'; setMode(next); router.push(next === 'driver' ? '/driver' : '/rides'); };
+  const signOut = async () => { if (!window.confirm('Bạn có chắc chắn muốn đăng xuất?')) return; try { await logout(); toast.success('Đã đăng xuất'); router.push('/'); } catch { toast.error('Đăng xuất thất bại'); } };
+  const dark = isAdmin || isDriver;
+  return <header className={cn('sticky top-0 z-50 h-14 border-b backdrop-blur-md', dark ? 'border-white/10 bg-slate-950/95 text-white' : 'bg-background/95')}><div className="mx-auto flex h-full max-w-7xl items-center gap-5 px-4 sm:px-6"><Link href={isAdmin ? '/admin' : isDriver ? '/driver' : '/'} className="flex min-h-11 items-center gap-2 font-semibold tracking-tight"><Car className="h-5 w-5" />CoRide</Link>
+    {!loading && user && !isAdmin && <button onClick={switchMode} className={cn('hidden min-h-9 items-center rounded-full px-3 text-xs font-semibold md:inline-flex', isDriver ? 'bg-emerald-500/15 text-emerald-300' : 'bg-primary/10 text-primary')} aria-label={`Chuyển sang chế độ ${isDriver ? 'hành khách' : 'tài xế'}`}>{isDriver ? 'Tài xế' : 'Hành khách'}<ChevronDown className="ml-1 h-3.5 w-3.5" /></button>}
+    <nav aria-label="Điều hướng chính" className="hidden items-center gap-1 lg:flex">{nav.map(item => <NavLink key={item.href} item={item} selected={active(item.href)} dark={dark} />)}{isAdmin && <details className="group relative"><summary className="flex min-h-10 cursor-pointer list-none items-center rounded-lg px-3 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white">Quản lý<ChevronDown className="ml-1 h-4 w-4 group-open:rotate-180" /></summary><div className="absolute left-0 top-11 grid w-56 gap-1 rounded-xl border bg-popover p-2 text-popover-foreground shadow-lg">{adminManage.map(item => <NavLink key={item.href} item={item} selected={active(item.href)} />)}</div></details>}</nav>
+    <div className="ml-auto flex items-center gap-1">{loading ? <div className="h-9 w-24 animate-pulse rounded-lg bg-muted" /> : user ? <><div className="hidden lg:block"><NotificationCenter /></div><Link href="/notifications" className={cn('flex h-11 w-11 items-center justify-center rounded-lg lg:hidden', dark ? 'hover:bg-white/10' : 'hover:bg-muted')} aria-label="Thông báo"><Bell className="h-5 w-5" /></Link><Link href="/profile" className={cn('hidden min-h-10 items-center gap-2 rounded-lg px-2 text-sm xl:flex', dark ? 'hover:bg-white/10' : 'hover:bg-muted')}><User className="h-4 w-4" />Hồ sơ</Link><button onClick={signOut} className={cn('hidden h-10 w-10 items-center justify-center rounded-lg xl:flex', dark ? 'text-white/70 hover:bg-white/10 hover:text-white' : 'text-muted-foreground hover:bg-muted hover:text-foreground')} aria-label="Đăng xuất"><LogOut className="h-4 w-4" /></button><MobileMenu nav={nav} extra={isAdmin ? adminManage : []} dark={dark} isAdmin={isAdmin} isDriver={isDriver} onSwitch={switchMode} onLogout={signOut} selected={active} /></> : <div className="flex items-center gap-2"><Link href="/login" className="inline-flex min-h-10 items-center px-3 text-sm font-medium">Đăng nhập</Link><Link href="/register" className="inline-flex min-h-10 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground">Đăng ký</Link></div>}</div></div></header>;
+}
 
-// Admin Mode — Black header sang trọng, quyền lực
-const adminHeaderClass =
-  "px-4 lg:px-6 h-12 flex items-center sticky top-0 z-50 transition-all duration-500 bg-[rgba(29,29,31,0.94)] border-b border-[rgba(255,255,255,0.1)] supports-[backdrop-filter]:backdrop-blur-[20px] supports-[backdrop-filter]:saturate-[180%]";
-
-const passengerNavLinkItem =
-  "px-3 py-1.5 rounded-[8px] text-[13px] font-medium tracking-[-0.12px] text-[rgba(0,0,0,0.8)] hover:text-black hover:bg-[rgba(0,0,0,0.04)] flex items-center gap-1.5 transition-colors";
-
-const passengerNavLinkActive =
-  "px-3 py-1.5 rounded-[8px] text-[13px] font-semibold tracking-[-0.12px] text-black bg-[rgba(0,0,0,0.08)] flex items-center gap-1.5 transition-colors";
-
-const driverNavLinkItem =
-  "px-3 py-1.5 rounded-[8px] text-[13px] font-medium tracking-[-0.12px] text-[rgba(255,255,255,0.8)] hover:text-white hover:bg-[rgba(255,255,255,0.08)] flex items-center gap-1.5 transition-colors";
-
-const driverNavLinkActive =
-  "px-3 py-1.5 rounded-[8px] text-[13px] font-semibold tracking-[-0.12px] text-white bg-[rgba(255,255,255,0.12)] flex items-center gap-1.5 transition-colors";
-
-const adminNavLinkItem = driverNavLinkItem;
-const adminNavLinkActive = driverNavLinkActive;
-
-const appleNavButtonClass =
-  "bg-transparent text-[#1d1d1f] hover:bg-[rgba(0,0,0,0.04)] px-3 py-1 rounded-[980px] text-[12px] font-medium tracking-tight transition-colors";
-
-const appleNavPrimaryCTA =
-  "bg-[#1d1d1f] text-white hover:bg-black px-4 py-1.5 rounded-[980px] text-[12px] font-medium tracking-tight transition-colors";
-
-// Tab switch styles
-const tabBaseClass =
-  "px-4 py-1.5 text-[12px] font-medium tracking-[-0.12px] rounded-[980px] transition-all duration-300 flex items-center gap-1.5 cursor-pointer select-none";
-
-const passengerTabActive =
-  "bg-[#0071e3] text-white shadow-[0_2px_8px_rgba(0,113,227,0.3)]";
-
-const passengerTabInactive =
-  "text-[rgba(0,0,0,0.56)] hover:text-[rgba(0,0,0,0.8)] hover:bg-[rgba(0,0,0,0.04)]";
-
-const driverTabActive =
-  "bg-[#34c759] text-white shadow-[0_2px_8px_rgba(52,199,89,0.3)]";
-
-const driverTabInactive =
-  "text-[rgba(255,255,255,0.56)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]";
-
-export const Header: React.FC = () => {
-  const { user, loading, logout } = useAuth();
-  const { mode, setMode } = useRoleMode();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const [rolePopupOpen, setRolePopupOpen] = useState(false);
-  const [rolePopupContent, setRolePopupContent] = useState<{title: string, desc: string} | null>(null);
-
-  // Hook khóa trang nếu có chuyến đi active
-  const handleModeSwitch = (newMode: 'passenger' | 'driver') => {
-    setMode(newMode);
-    if (newMode === 'passenger') {
-      setRolePopupContent({
-        title: 'Chế độ Hành khách',
-        desc: 'Bạn đang ở chế độ Hành khách. Tại đây, bạn có thể tìm kiếm chuyến đi, đặt chỗ và xem lịch sử các chuyến đã đồng hành.'
-      });
-      router.push('/rides');
-    } else {
-      setRolePopupContent({
-        title: 'Chế độ Tài xế',
-        desc: 'Bạn đang ở chế độ Tài xế. Tại đây, bạn có thể đăng các chuyến đi mới, chia sẻ chỗ trống và quản lý yêu cầu đặt chỗ từ hành khách.'
-      });
-      router.push('/rides/post');
-    }
-    setRolePopupOpen(true);
-  };
-
-  const isAdmin = user?.role === 'ADMIN';
-  const isDriverMode = !!user && mode === 'driver' && !isAdmin;
-
-  let headerClass = passengerHeaderClass;
-
-  if (isAdmin) {
-    headerClass = adminHeaderClass;
-  } else if (isDriverMode) {
-    headerClass = driverHeaderClass;
-  }
-
-  const getLinkClass = (href: string) => {
-    // Exact match cho trang chủ dashboard/admin, startWith cho các trang con
-    const isActive = pathname === href || (href !== '/admin' && pathname.startsWith(href));
-    if (isAdmin) return isActive ? adminNavLinkActive : adminNavLinkItem;
-    if (isDriverMode) return isActive ? driverNavLinkActive : driverNavLinkItem;
-    return isActive ? passengerNavLinkActive : passengerNavLinkItem;
-  };
-
-  const handleLogout = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
-      return;
-    }
-    try {
-      await logout();
-      toast.success('Đã đăng xuất');
-      router.push('/');
-    } catch {
-      toast.error('Đăng xuất thất bại');
-    }
-  };
-
-  return (
-    <header className={headerClass}>
-      <div className="container mx-auto flex items-center max-w-[980px]">
-        {/* LOGO */}
-        <Link className="flex items-center justify-center mr-6 opacity-80 hover:opacity-100 transition-opacity" href="/">
-          <Car className={`h-5 w-5 mr-1 ${isDriverMode || isAdmin ? 'text-white' : 'text-[#1d1d1f]'}`} />
-          <span className={`font-semibold text-[17px] tracking-[-0.37px] ${isDriverMode || isAdmin ? 'text-white' : 'text-[#1d1d1f]'}`}>
-            CoRide
-          </span>
-        </Link>
-
-        {/* ROLE SWITCH TABS — chỉ hiện khi đã đăng nhập, không phải ADMIN và KHÔNG Ở trang ongoing */}
-        {user && !isAdmin && (
-          <div className={`hidden md:flex items-center rounded-[980px] p-0.5 mr-6 ${isDriverMode ? 'bg-[rgba(255,255,255,0.08)]' : 'bg-[rgba(0,0,0,0.04)]'}`}>
-            <button
-              onClick={() => handleModeSwitch('passenger')}
-              className={`${tabBaseClass} ${!isDriverMode ? passengerTabActive : (isDriverMode ? driverTabInactive : passengerTabInactive)}`}
-            >
-              <Search className="h-3 w-3" />
-              Tìm chuyến đi
-            </button>
-            <button
-              onClick={() => handleModeSwitch('driver')}
-              className={`${tabBaseClass} ${isDriverMode ? driverTabActive : passengerTabInactive}`}
-            >
-              <MapPin className="h-3 w-3" />
-              Đăng chuyến đi
-            </button>
-          </div>
-        )}
-
-        {/* CONTEXTUAL NAVIGATION (DESKTOP) */}
-        <nav className="hidden lg:flex items-center gap-1">
-          {
-            isAdmin ? (
-              <>
-                <Link href="/admin" className={getLinkClass('/admin')}>
-                  <LayoutDashboard className="h-4 w-4" /> Tổng quan
-                </Link>
-                <Link href="/admin/users" className={getLinkClass('/admin/users')}>
-                  <Users className="h-4 w-4" /> Người dùng
-                </Link>
-                <Link href="/admin/rides" className={getLinkClass('/admin/rides')}>
-                  <Car className="h-4 w-4" /> Chuyến đi
-                </Link>
-                <Link href="/admin/bookings" className={getLinkClass('/admin/bookings')}>
-                  <Bookmark className="h-4 w-4" /> Đặt chỗ
-                </Link>
-                <Link href="/admin/pricing" className={getLinkClass('/admin/pricing')}>
-                  <CreditCard className="h-4 w-4" /> Bảng giá
-                </Link>
-                <Link href="/admin/kyc" className={getLinkClass('/admin/kyc')}>
-                  <ShieldAlert className="h-4 w-4" /> Xác thực tài xế
-                </Link>
-              </>
-            ) : isDriverMode ? (
-              <>
-                <Link href="/rides/post" className={getLinkClass('/rides/post')}>
-                  <PlusSquare className="h-4 w-4" /> Đăng chuyến mới
-                </Link>
-                <Link href="/my-rides" className={getLinkClass('/my-rides')}>
-                  <Car className="h-4 w-4" /> Chuyến của tôi
-                </Link>
-                <Link href="/booking-requests" className={getLinkClass('/booking-requests')}>
-                  <Users className="h-4 w-4" /> Yêu cầu đặt chỗ
-                </Link>
-              </>
-            ) : (
-              user ? (
-                <>
-                  <Link href="/rides" className={getLinkClass('/rides')}>
-                    <Search className="h-4 w-4" /> Tìm chuyến
-                  </Link>
-                  <Link href="/my-bookings" className={getLinkClass('/my-bookings')}>
-                    <Bookmark className="h-4 w-4" /> Chuyến của tôi
-                  </Link>
-                </>
-              ) : (
-                <Link className={getLinkClass('/rides')} href="/rides">
-                  <Search className="h-3.5 w-3.5" /> Tìm chuyến đi
-                </Link>
-              )
-            )
-          }
-        </nav>
-
-        {/* RIGHT ACTION ICONS */}
-        <div className="ml-auto flex gap-3 items-center">
-          {loading ? (
-            <div className="h-6 w-20 bg-[rgba(0,0,0,0.08)] animate-pulse rounded-[8px]" />
-          ) : user ? (
-            <>
-              {/* Mobile Role Switch */}
-              {user && !isAdmin && (
-                <div className="flex lg:hidden items-center gap-1">
-                  <button
-                    onClick={() => handleModeSwitch(isDriverMode ? 'passenger' : 'driver')}
-                    className={`px-2.5 py-1 rounded-[980px] text-[11px] font-medium transition-all duration-300 ${isDriverMode
-                        ? 'bg-[#34c759] text-white'
-                        : 'bg-[#0071e3] text-white'
-                      }`}
-                  >
-                    {isDriverMode ? 'Tài xế' : 'Hành khách'}
-                  </button>
-                </div>
-              )}
-
-              {user && !isAdmin && (
-                <div className={`mx-1 h-3 border-l ${isDriverMode ? 'border-[rgba(255,255,255,0.2)]' : 'border-[rgba(0,0,0,0.2)]'} lg:hidden`} />
-              )}
-
-              {/* Desktop Utilities (Notification, Profile, Logout) ẩn ở Mobile */}
-              <div className="hidden lg:flex items-center gap-3">
-                {/* NOTIFICATIONS */}
-                <NotificationCenter />
-
-                {/* USER PROFILE */}
-                <div className="flex items-center gap-2">
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                    title="Hồ sơ cá nhân"
-                  >
-                    <div className={`h-6 w-6 rounded-full flex items-center justify-center overflow-hidden ${isDriverMode || isAdmin ? 'bg-[rgba(255,255,255,0.1)]' : 'bg-[rgba(0,0,0,0.04)]'}`}>
-                      {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                      ) : (
-                        <User className={`h-3.5 w-3.5 ${isDriverMode || isAdmin ? 'text-white' : 'text-[#1d1d1f]'}`} />
-                      )}
-                    </div>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className={`p-1.5 transition-colors rounded-full ${isDriverMode || isAdmin ? 'text-[rgba(255,255,255,0.56)] hover:text-[#ff453a] hover:bg-[rgba(255,255,255,0.1)]' : 'text-[rgba(0,0,0,0.56)] hover:text-[#d93025] hover:bg-[rgba(0,0,0,0.04)]'}`}
-                    title="Đăng xuất"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* MOBILE MENU TRIGGER */}
-              <Sheet>
-                <SheetTrigger render={<button className={`lg:hidden p-1.5 rounded-full transition-colors ${isDriverMode || isAdmin ? 'text-[rgba(255,255,255,0.8)] hover:text-white hover:bg-[rgba(255,255,255,0.1)]' : 'text-[rgba(0,0,0,0.8)] hover:text-black hover:bg-[rgba(0,0,0,0.04)]'}`} />}>
-                  <Menu className="h-5 w-5" />
-                </SheetTrigger>
-                <SheetContent side="right" className={`w-[85vw] sm:w-[350px] border-l ${isAdmin ? 'bg-[#1d1d1f] border-[#333] text-white' : isDriverMode ? 'bg-[#0a1e3c] border-[rgba(255,255,255,0.1)] text-white' : 'bg-[#f5f5f7] border-gray-200'}`}>
-                  <SheetHeader className="text-left mb-6 pt-4">
-                    <SheetTitle className={isAdmin || isDriverMode ? 'text-white' : 'text-[#1d1d1f]'}>
-                      Menu
-                    </SheetTitle>
-                  </SheetHeader>
-                  <nav className="flex flex-col gap-2">
-                    {
-                      isAdmin ? (
-                        <>
-                          <Link href="/admin" className={getLinkClass('/admin')}>
-                            <LayoutDashboard className="h-4 w-4" /> Tổng quan
-                          </Link>
-                          <Link href="/admin/users" className={getLinkClass('/admin/users')}>
-                            <Users className="h-4 w-4" /> Người dùng
-                          </Link>
-                          <Link href="/admin/rides" className={getLinkClass('/admin/rides')}>
-                            <Car className="h-4 w-4" /> Chuyến đi
-                          </Link>
-                          <Link href="/admin/bookings" className={getLinkClass('/admin/bookings')}>
-                            <Bookmark className="h-4 w-4" /> Đặt chỗ
-                          </Link>
-                          <Link href="/admin/pricing" className={getLinkClass('/admin/pricing')}>
-                            <CreditCard className="h-4 w-4" /> Bảng giá
-                          </Link>
-                          <Link href="/admin/kyc" className={getLinkClass('/admin/kyc')}>
-                            <ShieldAlert className="h-4 w-4" /> Xác thực tài xế
-                          </Link>
-                        </>
-                      ) : isDriverMode ? (
-                        <>
-                          <Link href="/rides/post" className={getLinkClass('/rides/post')}>
-                            <PlusSquare className="h-4 w-4" /> Đăng chuyến mới
-                          </Link>
-                          <Link href="/my-rides" className={getLinkClass('/my-rides')}>
-                            <Car className="h-4 w-4" /> Chuyến của tôi
-                          </Link>
-                          <Link href="/booking-requests" className={getLinkClass('/booking-requests')}>
-                            <Users className="h-4 w-4" /> Yêu cầu đặt chỗ
-                          </Link>
-                        </>
-                      ) : (
-                        user ? (
-                          <>
-                            <Link href="/rides" className={getLinkClass('/rides')}>
-                              <Search className="h-4 w-4" /> Tìm chuyến
-                            </Link>
-                            <Link href="/my-bookings" className={getLinkClass('/my-bookings')}>
-                              <Bookmark className="h-4 w-4" /> Chuyến của tôi
-                            </Link>
-                          </>
-                        ) : (
-                          <Link className={getLinkClass('/rides')} href="/rides">
-                            <Search className="h-3.5 w-3.5" /> Tìm chuyến đi
-                          </Link>
-                        )
-                      )
-                    }
-
-                    {/* Tiện ích cá nhân trên Mobile Menu */}
-                    {user && (
-                      <div className="mt-6 pt-6 border-t border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)] flex flex-col gap-2">
-                        <div className={getLinkClass('') + " !px-2 justify-start pointer-events-none"}>
-                          <NotificationCenter /> 
-                          <span className="ml-1 pointer-events-auto cursor-pointer" onClick={() => {
-                            // Focus on notification center if clicked on text
-                            const btn = document.querySelector('[data-radix-popover-trigger]') as HTMLButtonElement;
-                            if (btn) btn.click();
-                          }}>Thông báo</span>
-                        </div>
-
-                        <Link href="/profile" className={getLinkClass('/profile') + " justify-start"}>
-                          <div className={`h-5 w-5 rounded-full overflow-hidden mr-0.5 flex items-center justify-center ${isDriverMode || isAdmin ? 'bg-[rgba(255,255,255,0.1)]' : 'bg-[rgba(0,0,0,0.04)]'}`}>
-                            {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : <User className="h-3 w-3" />}
-                          </div>
-                          Hồ sơ cá nhân
-                        </Link>
-
-                        {!isAdmin && (
-                          <button 
-                            onClick={() => handleModeSwitch(isDriverMode ? 'passenger' : 'driver')} 
-                            className={getLinkClass('') + " justify-start text-left w-full"}
-                          >
-                            <Car className="h-4 w-4" /> 
-                            Chuyển sang {isDriverMode ? 'Hành khách' : 'Tài xế'}
-                          </button>
-                        )}
-
-                        <button 
-                          onClick={handleLogout} 
-                          className="px-3 py-2 mt-2 rounded-[8px] text-[13px] font-semibold tracking-[-0.12px] text-[#ff453a] hover:bg-[rgba(255,59,48,0.08)] flex items-center gap-1.5 transition-colors justify-start w-full"
-                        >
-                          <LogOut className="h-4 w-4" /> Đăng xuất
-                        </button>
-                      </div>
-                    )}
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            </>
-          ) : (
-            <div className="flex gap-2 items-center">
-              <Link className={appleNavButtonClass} href="/login">
-                Đăng nhập
-              </Link>
-              <Link className={appleNavPrimaryCTA} href="/register">
-                Tạo ID CoRide
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <Dialog open={rolePopupOpen} onOpenChange={setRolePopupOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{rolePopupContent?.title}</DialogTitle>
-            <DialogDescription className="text-[14px] leading-relaxed mt-2 text-[rgba(0,0,0,0.7)] dark:text-[rgba(255,255,255,0.7)]">
-              {rolePopupContent?.desc}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4">
-            <Button onClick={() => setRolePopupOpen(false)} className="w-full sm:w-auto bg-[#1d1d1f] text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-[#f5f5f7]">
-              Đã hiểu
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </header>
-  );
-};
+function NavLink({ item, selected, dark = false }: { item: NavItem; selected: boolean; dark?: boolean }) { const Icon = item.icon; return <Link href={item.href} aria-current={selected ? 'page' : undefined} className={cn('flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors', dark ? selected ? 'bg-white/12 text-white' : 'text-white/75 hover:bg-white/10 hover:text-white' : selected ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}><Icon className="h-4 w-4" />{item.label}</Link>; }
+function MobileMenu({ nav, extra, dark, isAdmin, isDriver, onSwitch, onLogout, selected }: { nav: NavItem[]; extra: NavItem[]; dark: boolean; isAdmin: boolean; isDriver: boolean; onSwitch: () => void; onLogout: () => void; selected: (href: string) => boolean }) { return <Sheet><SheetTrigger render={<button className={cn('flex h-11 w-11 items-center justify-center rounded-lg lg:hidden', dark ? 'hover:bg-white/10' : 'hover:bg-muted')} aria-label="Mở menu" />}><Menu className="h-5 w-5" /></SheetTrigger><SheetContent side="right" className="w-[min(88vw,380px)]"><SheetHeader><SheetTitle>Điều hướng CoRide</SheetTitle></SheetHeader><nav className="mt-6 grid gap-1">{[...nav, ...extra].map(item => <NavLink key={item.href} item={item} selected={selected(item.href)} />)}</nav><div className="mt-6 grid gap-2 border-t pt-6"><NavLink item={{ href: '/notifications', label: 'Thông báo', icon: Bell }} selected={selected('/notifications')} /><NavLink item={{ href: '/profile', label: 'Hồ sơ', icon: User }} selected={selected('/profile')} />{!isAdmin && <button onClick={onSwitch} className="flex min-h-11 items-center gap-2 rounded-lg px-3 text-left text-sm font-medium hover:bg-muted"><Car className="h-4 w-4" />Chuyển sang {isDriver ? 'Hành khách' : 'Tài xế'}</button>}<button onClick={onLogout} className="mt-2 flex min-h-11 items-center gap-2 rounded-lg px-3 text-left text-sm font-medium text-destructive hover:bg-destructive/10"><LogOut className="h-4 w-4" />Đăng xuất</button></div></SheetContent></Sheet>; }
