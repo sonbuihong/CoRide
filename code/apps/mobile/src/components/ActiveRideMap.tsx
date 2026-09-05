@@ -2,7 +2,9 @@ import React, { forwardRef, memo, useEffect, useImperativeHandle, useRef, useSta
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Navigation } from 'lucide-react-native';
+import { GoongNativeMap } from './GoongNativeMap';
 
+import { GOONG_CONFIG } from '../../constants/Config';
 import { colors } from '../theme/tokens';
 
 const DEFAULT_FIT_EDGE_PADDING = { top: 88, right: 42, bottom: 230, left: 42 };
@@ -26,7 +28,7 @@ export interface ActiveRideMapHandle {
   recenter: (coordinate?: ActiveRideLatLng | null) => void;
 }
 
-interface ActiveRideMapProps {
+export interface ActiveRideMapProps {
   originCoords: ActiveRideLatLng;
   destinationCoords: ActiveRideLatLng;
   routeCoords: ActiveRideLatLng[];
@@ -80,7 +82,7 @@ const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function 
       const target = coordinate || driverLocation || originCoords;
       mapRef.current?.animateCamera({ center: target }, { duration: 280 });
     },
-  }), [driverLocation, focusZoom, originCoords]);
+  }), [driverLocation, originCoords]);
 
   useEffect(() => {
     if (!mapReady || !layoutReady || !autoFitRoute || !mapRef.current || routeCoords.length < 2) return;
@@ -171,7 +173,13 @@ const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function 
   );
 });
 
-export const ActiveRideMap = memo(MapContent);
+const GoogleActiveRideMap = memo(MapContent);
+
+// Goong dùng cùng style vector với bản Next.js. Google Maps vẫn là fallback khi
+// môi trường build chưa có Maptiles key, tránh để màn hình hành trình trắng.
+export const ActiveRideMap = GOONG_CONFIG.MAPTILES_KEY
+  ? GoongNativeMap
+  : GoogleActiveRideMap;
 
 const styles = StyleSheet.create({
   container: { flex: 1, width: '100%' },
