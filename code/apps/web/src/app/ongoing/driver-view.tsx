@@ -113,6 +113,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
   const [showDetails, setShowDetails] = useState(false);
   const [detailIndex, setDetailIndex] = useState(0);
   const [showChat, setShowChat] = useState<{ isOpen: boolean; bookingId?: string; passengerId?: string; passengerName?: string }>({ isOpen: false });
+  const [showPaymentFor, setShowPaymentFor] = useState<string | null>(null);
 
   // ─── Handlers ────────────────────────────────────────────────────────
 
@@ -301,7 +302,7 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
   } else if (nextBookingToFocus && nextBookingToFocus.isPickedUp && nextBookingToFocus.status === 'CONFIRMED' && ride.status === 'ONGOING') {
      mainButton = {
        label: 'Trả khách',
-       action: () => handleDropoffPassenger(nextBookingToFocus.id),
+       action: () => setShowPaymentFor(nextBookingToFocus.id),
        loading: loadingPickup[nextBookingToFocus.id] || false,
        variant: 'dropoff'
      };
@@ -739,6 +740,44 @@ export default function DriverView({ data, onRefresh, isExpanded = true, onExpan
               currentUserId={user.id}
               onClose={() => setShowChat({ isOpen: false })}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Payment Slide-up Modal */}
+      {showPaymentFor && (
+        <div className="fixed inset-0 z-[9999] bg-black/50 flex flex-col justify-end animate-in fade-in duration-200">
+          <div className="bg-background w-full rounded-t-2xl shadow-xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-full duration-300 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h3 className="text-[17px] font-bold text-foreground">Xác nhận thanh toán</h3>
+              <button onClick={() => setShowPaymentFor(null)} className="p-1 -mr-1">
+                <X className="w-6 h-6 text-foreground" />
+              </button>
+            </div>
+            
+            <div className="p-5 flex flex-col items-center">
+              <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                 <CheckCircle className="w-8 h-8 text-[#0071e3]" />
+              </div>
+              <p className="text-[14px] text-gray-500 mb-1">Thu tiền mặt từ hành khách</p>
+              <p className="text-[32px] font-black text-[#0071e3] mb-6">
+                {(() => {
+                   const b = confirmedBookings.find(x => x.id === showPaymentFor);
+                   return (((b?.totalPrice ?? b?.price) ?? 0).toLocaleString('vi-VN')) + 'đ';
+                })()}
+              </p>
+              
+              <Button 
+                className="w-full h-[48px] rounded-full text-[16px] font-bold bg-[#0071e3] hover:bg-[#0071e3]/90 text-white shadow-md active:scale-[0.98] transition-all"
+                onClick={() => {
+                  handleDropoffPassenger(showPaymentFor);
+                  setShowPaymentFor(null);
+                }}
+                disabled={loadingPickup[showPaymentFor]}
+              >
+                {loadingPickup[showPaymentFor] ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Xác nhận đã thu tiền & Trả khách'}
+              </Button>
+            </div>
           </div>
         </div>
       )}

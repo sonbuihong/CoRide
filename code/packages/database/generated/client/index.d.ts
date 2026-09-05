@@ -121,6 +121,15 @@ export namespace $Enums {
 export type Role = (typeof Role)[keyof typeof Role]
 
 
+export const UserStatus: {
+  ACTIVE: 'ACTIVE',
+  BANNED: 'BANNED',
+  DELETED: 'DELETED'
+};
+
+export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus]
+
+
 export const TransactionType: {
   DEPOSIT: 'DEPOSIT',
   WITHDRAWAL: 'WITHDRAWAL',
@@ -253,6 +262,10 @@ export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus]
 export type Role = $Enums.Role
 
 export const Role: typeof $Enums.Role
+
+export type UserStatus = $Enums.UserStatus
+
+export const UserStatus: typeof $Enums.UserStatus
 
 export type TransactionType = $Enums.TransactionType
 
@@ -3049,6 +3062,8 @@ export namespace Prisma {
     passengerRating: number | null
     passengerRatingCount: number | null
     isDriverVerified: boolean | null
+    status: $Enums.UserStatus | null
+    deletedAt: Date | null
   }
 
   export type UserMaxAggregateOutputType = {
@@ -3068,6 +3083,8 @@ export namespace Prisma {
     passengerRating: number | null
     passengerRatingCount: number | null
     isDriverVerified: boolean | null
+    status: $Enums.UserStatus | null
+    deletedAt: Date | null
   }
 
   export type UserCountAggregateOutputType = {
@@ -3087,6 +3104,8 @@ export namespace Prisma {
     passengerRating: number
     passengerRatingCount: number
     isDriverVerified: number
+    status: number
+    deletedAt: number
     _all: number
   }
 
@@ -3122,6 +3141,8 @@ export namespace Prisma {
     passengerRating?: true
     passengerRatingCount?: true
     isDriverVerified?: true
+    status?: true
+    deletedAt?: true
   }
 
   export type UserMaxAggregateInputType = {
@@ -3141,6 +3162,8 @@ export namespace Prisma {
     passengerRating?: true
     passengerRatingCount?: true
     isDriverVerified?: true
+    status?: true
+    deletedAt?: true
   }
 
   export type UserCountAggregateInputType = {
@@ -3160,6 +3183,8 @@ export namespace Prisma {
     passengerRating?: true
     passengerRatingCount?: true
     isDriverVerified?: true
+    status?: true
+    deletedAt?: true
     _all?: true
   }
 
@@ -3266,6 +3291,8 @@ export namespace Prisma {
     passengerRating: number
     passengerRatingCount: number
     isDriverVerified: boolean
+    status: $Enums.UserStatus
+    deletedAt: Date | null
     _count: UserCountAggregateOutputType | null
     _avg: UserAvgAggregateOutputType | null
     _sum: UserSumAggregateOutputType | null
@@ -3304,6 +3331,8 @@ export namespace Prisma {
     passengerRating?: boolean
     passengerRatingCount?: boolean
     isDriverVerified?: boolean
+    status?: boolean
+    deletedAt?: boolean
     bookings?: boolean | User$bookingsArgs<ExtArgs>
     driverVerification?: boolean | User$driverVerificationArgs<ExtArgs>
     receivedMessages?: boolean | User$receivedMessagesArgs<ExtArgs>
@@ -3340,6 +3369,8 @@ export namespace Prisma {
     passengerRating?: boolean
     passengerRatingCount?: boolean
     isDriverVerified?: boolean
+    status?: boolean
+    deletedAt?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
@@ -3359,6 +3390,8 @@ export namespace Prisma {
     passengerRating?: boolean
     passengerRatingCount?: boolean
     isDriverVerified?: boolean
+    status?: boolean
+    deletedAt?: boolean
   }
 
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3419,6 +3452,8 @@ export namespace Prisma {
       passengerRating: number
       passengerRatingCount: number
       isDriverVerified: boolean
+      status: $Enums.UserStatus
+      deletedAt: Date | null
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -3844,6 +3879,8 @@ export namespace Prisma {
     readonly passengerRating: FieldRef<"User", 'Float'>
     readonly passengerRatingCount: FieldRef<"User", 'Int'>
     readonly isDriverVerified: FieldRef<"User", 'Boolean'>
+    readonly status: FieldRef<"User", 'UserStatus'>
+    readonly deletedAt: FieldRef<"User", 'DateTime'>
   }
     
 
@@ -12065,12 +12102,14 @@ export namespace Prisma {
     latitude: number | null
     longitude: number | null
     order: number | null
+    waitTimeMinutes: number | null
   }
 
   export type RideStopSumAggregateOutputType = {
     latitude: number | null
     longitude: number | null
     order: number | null
+    waitTimeMinutes: number | null
   }
 
   export type RideStopMinAggregateOutputType = {
@@ -12081,6 +12120,7 @@ export namespace Prisma {
     latitude: number | null
     longitude: number | null
     order: number | null
+    waitTimeMinutes: number | null
     createdAt: Date | null
   }
 
@@ -12092,6 +12132,7 @@ export namespace Prisma {
     latitude: number | null
     longitude: number | null
     order: number | null
+    waitTimeMinutes: number | null
     createdAt: Date | null
   }
 
@@ -12103,6 +12144,7 @@ export namespace Prisma {
     latitude: number
     longitude: number
     order: number
+    waitTimeMinutes: number
     createdAt: number
     _all: number
   }
@@ -12112,12 +12154,14 @@ export namespace Prisma {
     latitude?: true
     longitude?: true
     order?: true
+    waitTimeMinutes?: true
   }
 
   export type RideStopSumAggregateInputType = {
     latitude?: true
     longitude?: true
     order?: true
+    waitTimeMinutes?: true
   }
 
   export type RideStopMinAggregateInputType = {
@@ -12128,6 +12172,7 @@ export namespace Prisma {
     latitude?: true
     longitude?: true
     order?: true
+    waitTimeMinutes?: true
     createdAt?: true
   }
 
@@ -12139,6 +12184,7 @@ export namespace Prisma {
     latitude?: true
     longitude?: true
     order?: true
+    waitTimeMinutes?: true
     createdAt?: true
   }
 
@@ -12150,6 +12196,7 @@ export namespace Prisma {
     latitude?: true
     longitude?: true
     order?: true
+    waitTimeMinutes?: true
     createdAt?: true
     _all?: true
   }
@@ -12248,6 +12295,7 @@ export namespace Prisma {
     latitude: number
     longitude: number
     order: number
+    waitTimeMinutes: number
     createdAt: Date
     _count: RideStopCountAggregateOutputType | null
     _avg: RideStopAvgAggregateOutputType | null
@@ -12278,6 +12326,7 @@ export namespace Prisma {
     latitude?: boolean
     longitude?: boolean
     order?: boolean
+    waitTimeMinutes?: boolean
     createdAt?: boolean
     selectedByBookings?: boolean | RideStop$selectedByBookingsArgs<ExtArgs>
     ride?: boolean | RideDefaultArgs<ExtArgs>
@@ -12292,6 +12341,7 @@ export namespace Prisma {
     latitude?: boolean
     longitude?: boolean
     order?: boolean
+    waitTimeMinutes?: boolean
     createdAt?: boolean
     ride?: boolean | RideDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["rideStop"]>
@@ -12304,6 +12354,7 @@ export namespace Prisma {
     latitude?: boolean
     longitude?: boolean
     order?: boolean
+    waitTimeMinutes?: boolean
     createdAt?: boolean
   }
 
@@ -12330,6 +12381,7 @@ export namespace Prisma {
       latitude: number
       longitude: number
       order: number
+      waitTimeMinutes: number
       createdAt: Date
     }, ExtArgs["result"]["rideStop"]>
     composites: {}
@@ -12733,6 +12785,7 @@ export namespace Prisma {
     readonly latitude: FieldRef<"RideStop", 'Float'>
     readonly longitude: FieldRef<"RideStop", 'Float'>
     readonly order: FieldRef<"RideStop", 'Int'>
+    readonly waitTimeMinutes: FieldRef<"RideStop", 'Int'>
     readonly createdAt: FieldRef<"RideStop", 'DateTime'>
   }
     
@@ -23838,7 +23891,9 @@ export namespace Prisma {
     driverRatingCount: 'driverRatingCount',
     passengerRating: 'passengerRating',
     passengerRatingCount: 'passengerRatingCount',
-    isDriverVerified: 'isDriverVerified'
+    isDriverVerified: 'isDriverVerified',
+    status: 'status',
+    deletedAt: 'deletedAt'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -23981,6 +24036,7 @@ export namespace Prisma {
     latitude: 'latitude',
     longitude: 'longitude',
     order: 'order',
+    waitTimeMinutes: 'waitTimeMinutes',
     createdAt: 'createdAt'
   };
 
@@ -24309,6 +24365,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'UserStatus'
+   */
+  export type EnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'UserStatus[]'
+   */
+  export type ListEnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserStatus[]'>
+    
+
+
+  /**
    * Reference to a field of type 'TransactionType'
    */
   export type EnumTransactionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TransactionType'>
@@ -24520,6 +24590,8 @@ export namespace Prisma {
     passengerRating?: FloatFilter<"User"> | number
     passengerRatingCount?: IntFilter<"User"> | number
     isDriverVerified?: BoolFilter<"User"> | boolean
+    status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
+    deletedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     bookings?: BookingListRelationFilter
     driverVerification?: XOR<DriverVerificationNullableRelationFilter, DriverVerificationWhereInput> | null
     receivedMessages?: MessageListRelationFilter
@@ -24555,6 +24627,8 @@ export namespace Prisma {
     passengerRating?: SortOrder
     passengerRatingCount?: SortOrder
     isDriverVerified?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
     bookings?: BookingOrderByRelationAggregateInput
     driverVerification?: DriverVerificationOrderByWithRelationInput
     receivedMessages?: MessageOrderByRelationAggregateInput
@@ -24593,6 +24667,8 @@ export namespace Prisma {
     passengerRating?: FloatFilter<"User"> | number
     passengerRatingCount?: IntFilter<"User"> | number
     isDriverVerified?: BoolFilter<"User"> | boolean
+    status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
+    deletedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     bookings?: BookingListRelationFilter
     driverVerification?: XOR<DriverVerificationNullableRelationFilter, DriverVerificationWhereInput> | null
     receivedMessages?: MessageListRelationFilter
@@ -24628,6 +24704,8 @@ export namespace Prisma {
     passengerRating?: SortOrder
     passengerRatingCount?: SortOrder
     isDriverVerified?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
     _count?: UserCountOrderByAggregateInput
     _avg?: UserAvgOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
@@ -24655,6 +24733,8 @@ export namespace Prisma {
     passengerRating?: FloatWithAggregatesFilter<"User"> | number
     passengerRatingCount?: IntWithAggregatesFilter<"User"> | number
     isDriverVerified?: BoolWithAggregatesFilter<"User"> | boolean
+    status?: EnumUserStatusWithAggregatesFilter<"User"> | $Enums.UserStatus
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   }
 
   export type WalletWhereInput = {
@@ -25359,6 +25439,7 @@ export namespace Prisma {
     latitude?: FloatFilter<"RideStop"> | number
     longitude?: FloatFilter<"RideStop"> | number
     order?: IntFilter<"RideStop"> | number
+    waitTimeMinutes?: IntFilter<"RideStop"> | number
     createdAt?: DateTimeFilter<"RideStop"> | Date | string
     selectedByBookings?: BookingListRelationFilter
     ride?: XOR<RideRelationFilter, RideWhereInput>
@@ -25372,6 +25453,7 @@ export namespace Prisma {
     latitude?: SortOrder
     longitude?: SortOrder
     order?: SortOrder
+    waitTimeMinutes?: SortOrder
     createdAt?: SortOrder
     selectedByBookings?: BookingOrderByRelationAggregateInput
     ride?: RideOrderByWithRelationInput
@@ -25389,6 +25471,7 @@ export namespace Prisma {
     latitude?: FloatFilter<"RideStop"> | number
     longitude?: FloatFilter<"RideStop"> | number
     order?: IntFilter<"RideStop"> | number
+    waitTimeMinutes?: IntFilter<"RideStop"> | number
     createdAt?: DateTimeFilter<"RideStop"> | Date | string
     selectedByBookings?: BookingListRelationFilter
     ride?: XOR<RideRelationFilter, RideWhereInput>
@@ -25402,6 +25485,7 @@ export namespace Prisma {
     latitude?: SortOrder
     longitude?: SortOrder
     order?: SortOrder
+    waitTimeMinutes?: SortOrder
     createdAt?: SortOrder
     _count?: RideStopCountOrderByAggregateInput
     _avg?: RideStopAvgOrderByAggregateInput
@@ -25421,6 +25505,7 @@ export namespace Prisma {
     latitude?: FloatWithAggregatesFilter<"RideStop"> | number
     longitude?: FloatWithAggregatesFilter<"RideStop"> | number
     order?: IntWithAggregatesFilter<"RideStop"> | number
+    waitTimeMinutes?: IntWithAggregatesFilter<"RideStop"> | number
     createdAt?: DateTimeWithAggregatesFilter<"RideStop"> | Date | string
   }
 
@@ -26474,6 +26559,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -26509,6 +26596,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -26544,6 +26633,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -26579,6 +26670,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -26614,6 +26707,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
   }
 
   export type UserUpdateManyMutationInput = {
@@ -26633,6 +26728,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type UserUncheckedUpdateManyInput = {
@@ -26652,6 +26749,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type WalletCreateInput = {
@@ -27432,6 +27531,7 @@ export namespace Prisma {
     latitude: number
     longitude: number
     order: number
+    waitTimeMinutes?: number
     createdAt?: Date | string
     selectedByBookings?: BookingCreateNestedManyWithoutPickupStopInput
     ride: RideCreateNestedOneWithoutStopsInput
@@ -27445,6 +27545,7 @@ export namespace Prisma {
     latitude: number
     longitude: number
     order: number
+    waitTimeMinutes?: number
     createdAt?: Date | string
     selectedByBookings?: BookingUncheckedCreateNestedManyWithoutPickupStopInput
   }
@@ -27456,6 +27557,7 @@ export namespace Prisma {
     latitude?: FloatFieldUpdateOperationsInput | number
     longitude?: FloatFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
+    waitTimeMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     selectedByBookings?: BookingUpdateManyWithoutPickupStopNestedInput
     ride?: RideUpdateOneRequiredWithoutStopsNestedInput
@@ -27469,6 +27571,7 @@ export namespace Prisma {
     latitude?: FloatFieldUpdateOperationsInput | number
     longitude?: FloatFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
+    waitTimeMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     selectedByBookings?: BookingUncheckedUpdateManyWithoutPickupStopNestedInput
   }
@@ -27481,6 +27584,7 @@ export namespace Prisma {
     latitude: number
     longitude: number
     order: number
+    waitTimeMinutes?: number
     createdAt?: Date | string
   }
 
@@ -27491,6 +27595,7 @@ export namespace Prisma {
     latitude?: FloatFieldUpdateOperationsInput | number
     longitude?: FloatFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
+    waitTimeMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -27502,6 +27607,7 @@ export namespace Prisma {
     latitude?: FloatFieldUpdateOperationsInput | number
     longitude?: FloatFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
+    waitTimeMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -28761,6 +28867,24 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
+  export type EnumUserStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.UserStatus | EnumUserStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.UserStatus[] | ListEnumUserStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.UserStatus[] | ListEnumUserStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumUserStatusFilter<$PrismaModel> | $Enums.UserStatus
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type BookingListRelationFilter = {
     every?: BookingWhereInput
     some?: BookingWhereInput
@@ -28893,6 +29017,8 @@ export namespace Prisma {
     passengerRating?: SortOrder
     passengerRatingCount?: SortOrder
     isDriverVerified?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type UserAvgOrderByAggregateInput = {
@@ -28919,6 +29045,8 @@ export namespace Prisma {
     passengerRating?: SortOrder
     passengerRatingCount?: SortOrder
     isDriverVerified?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
@@ -28938,6 +29066,8 @@ export namespace Prisma {
     passengerRating?: SortOrder
     passengerRatingCount?: SortOrder
     isDriverVerified?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type UserSumOrderByAggregateInput = {
@@ -29045,6 +29175,30 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type EnumUserStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.UserStatus | EnumUserStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.UserStatus[] | ListEnumUserStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.UserStatus[] | ListEnumUserStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumUserStatusWithAggregatesFilter<$PrismaModel> | $Enums.UserStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumUserStatusFilter<$PrismaModel>
+    _max?: NestedEnumUserStatusFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type TransactionListRelationFilter = {
@@ -29260,17 +29414,6 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type NotificationCountOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
@@ -29308,20 +29451,6 @@ export namespace Prisma {
     deletedAt?: SortOrder
     targetType?: SortOrder
     targetId?: SortOrder
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type EnumRideStatusFilter<$PrismaModel = never> = {
@@ -29608,6 +29737,7 @@ export namespace Prisma {
     latitude?: SortOrder
     longitude?: SortOrder
     order?: SortOrder
+    waitTimeMinutes?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -29615,6 +29745,7 @@ export namespace Prisma {
     latitude?: SortOrder
     longitude?: SortOrder
     order?: SortOrder
+    waitTimeMinutes?: SortOrder
   }
 
   export type RideStopMaxOrderByAggregateInput = {
@@ -29625,6 +29756,7 @@ export namespace Prisma {
     latitude?: SortOrder
     longitude?: SortOrder
     order?: SortOrder
+    waitTimeMinutes?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -29636,6 +29768,7 @@ export namespace Prisma {
     latitude?: SortOrder
     longitude?: SortOrder
     order?: SortOrder
+    waitTimeMinutes?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -29643,6 +29776,7 @@ export namespace Prisma {
     latitude?: SortOrder
     longitude?: SortOrder
     order?: SortOrder
+    waitTimeMinutes?: SortOrder
   }
 
   export type EnumBookingStatusFilter<$PrismaModel = never> = {
@@ -30735,6 +30869,14 @@ export namespace Prisma {
     set?: boolean
   }
 
+  export type EnumUserStatusFieldUpdateOperationsInput = {
+    set?: $Enums.UserStatus
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type BookingUpdateManyWithoutPassengerNestedInput = {
     create?: XOR<BookingCreateWithoutPassengerInput, BookingUncheckedCreateWithoutPassengerInput> | BookingCreateWithoutPassengerInput[] | BookingUncheckedCreateWithoutPassengerInput[]
     connectOrCreate?: BookingCreateOrConnectWithoutPassengerInput | BookingCreateOrConnectWithoutPassengerInput[]
@@ -31337,10 +31479,6 @@ export namespace Prisma {
     create?: XOR<UserCreateWithoutNotificationsInput, UserUncheckedCreateWithoutNotificationsInput>
     connectOrCreate?: UserCreateOrConnectWithoutNotificationsInput
     connect?: UserWhereUniqueInput
-  }
-
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
   }
 
   export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
@@ -32276,6 +32414,24 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
+  export type NestedEnumUserStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.UserStatus | EnumUserStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.UserStatus[] | ListEnumUserStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.UserStatus[] | ListEnumUserStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumUserStatusFilter<$PrismaModel> | $Enums.UserStatus
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -32385,6 +32541,30 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
+  export type NestedEnumUserStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.UserStatus | EnumUserStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.UserStatus[] | ListEnumUserStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.UserStatus[] | ListEnumUserStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumUserStatusWithAggregatesFilter<$PrismaModel> | $Enums.UserStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumUserStatusFilter<$PrismaModel>
+    _max?: NestedEnumUserStatusFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
   export type NestedEnumTransactionTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.TransactionType | EnumTransactionTypeFieldRefInput<$PrismaModel>
     in?: $Enums.TransactionType[] | ListEnumTransactionTypeFieldRefInput<$PrismaModel>
@@ -32417,31 +32597,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumTransactionStatusFilter<$PrismaModel>
     _max?: NestedEnumTransactionStatusFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumRideStatusFilter<$PrismaModel = never> = {
@@ -33948,6 +34103,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -33982,6 +34139,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -34065,6 +34224,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -34099,6 +34260,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -34469,6 +34632,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     sentMessages?: MessageCreateNestedManyWithoutSenderInput
@@ -34503,6 +34668,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -34645,6 +34812,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -34679,6 +34848,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -34729,6 +34900,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     sentMessages?: MessageUpdateManyWithoutSenderNestedInput
@@ -34763,6 +34936,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -34917,6 +35092,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -34951,6 +35128,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -34985,6 +35164,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -35019,6 +35200,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -35069,6 +35252,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -35103,6 +35288,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -35137,6 +35324,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -35171,6 +35360,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -35221,6 +35412,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -35255,6 +35448,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -35453,6 +35648,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -35487,6 +35684,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -35566,6 +35765,7 @@ export namespace Prisma {
     latitude: number
     longitude: number
     order: number
+    waitTimeMinutes?: number
     createdAt?: Date | string
     selectedByBookings?: BookingCreateNestedManyWithoutPickupStopInput
   }
@@ -35577,6 +35777,7 @@ export namespace Prisma {
     latitude: number
     longitude: number
     order: number
+    waitTimeMinutes?: number
     createdAt?: Date | string
     selectedByBookings?: BookingUncheckedCreateNestedManyWithoutPickupStopInput
   }
@@ -35683,6 +35884,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -35717,6 +35920,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -35823,6 +36028,7 @@ export namespace Prisma {
     latitude?: FloatFilter<"RideStop"> | number
     longitude?: FloatFilter<"RideStop"> | number
     order?: IntFilter<"RideStop"> | number
+    waitTimeMinutes?: IntFilter<"RideStop"> | number
     createdAt?: DateTimeFilter<"RideStop"> | Date | string
   }
 
@@ -35951,6 +36157,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -35985,6 +36193,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -36051,6 +36261,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -36085,6 +36297,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -36417,6 +36631,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
     sentMessages?: MessageCreateNestedManyWithoutSenderInput
@@ -36451,6 +36667,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
     sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -36480,6 +36698,7 @@ export namespace Prisma {
     latitude: number
     longitude: number
     order: number
+    waitTimeMinutes?: number
     createdAt?: Date | string
     ride: RideCreateNestedOneWithoutStopsInput
   }
@@ -36492,6 +36711,7 @@ export namespace Prisma {
     latitude: number
     longitude: number
     order: number
+    waitTimeMinutes?: number
     createdAt?: Date | string
   }
 
@@ -36667,6 +36887,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
     sentMessages?: MessageUpdateManyWithoutSenderNestedInput
@@ -36701,6 +36923,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
     sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -36736,6 +36960,7 @@ export namespace Prisma {
     latitude?: FloatFieldUpdateOperationsInput | number
     longitude?: FloatFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
+    waitTimeMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ride?: RideUpdateOneRequiredWithoutStopsNestedInput
   }
@@ -36748,6 +36973,7 @@ export namespace Prisma {
     latitude?: FloatFieldUpdateOperationsInput | number
     longitude?: FloatFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
+    waitTimeMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -36893,6 +37119,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -36927,6 +37155,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -36966,6 +37196,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -37000,6 +37232,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -37224,6 +37458,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -37258,6 +37494,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -37303,6 +37541,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -37337,6 +37577,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -37557,6 +37799,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
     sentMessages?: MessageCreateNestedManyWithoutSenderInput
@@ -37591,6 +37835,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
     sentMessages?: MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -37641,6 +37887,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
     sentMessages?: MessageUpdateManyWithoutSenderNestedInput
@@ -37675,6 +37923,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
     sentMessages?: MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -37811,6 +38061,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -37845,6 +38097,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -37884,6 +38138,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -37918,6 +38174,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -38016,6 +38274,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -38050,6 +38310,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -38095,6 +38357,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -38129,6 +38393,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -38271,6 +38537,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -38305,6 +38573,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -38371,6 +38641,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -38405,6 +38677,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -38439,6 +38713,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -38473,6 +38749,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -38512,6 +38790,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationCreateNestedOneWithoutUserInput
     receivedMessages?: MessageCreateNestedManyWithoutReceiverInput
@@ -38546,6 +38826,8 @@ export namespace Prisma {
     passengerRating?: number
     passengerRatingCount?: number
     isDriverVerified?: boolean
+    status?: $Enums.UserStatus
+    deletedAt?: Date | string | null
     bookings?: BookingUncheckedCreateNestedManyWithoutPassengerInput
     driverVerification?: DriverVerificationUncheckedCreateNestedOneWithoutUserInput
     receivedMessages?: MessageUncheckedCreateNestedManyWithoutReceiverInput
@@ -38770,6 +39052,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -38804,6 +39088,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -38849,6 +39135,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUpdateManyWithoutReceiverNestedInput
@@ -38883,6 +39171,8 @@ export namespace Prisma {
     passengerRating?: FloatFieldUpdateOperationsInput | number
     passengerRatingCount?: IntFieldUpdateOperationsInput | number
     isDriverVerified?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     bookings?: BookingUncheckedUpdateManyWithoutPassengerNestedInput
     driverVerification?: DriverVerificationUncheckedUpdateOneWithoutUserNestedInput
     receivedMessages?: MessageUncheckedUpdateManyWithoutReceiverNestedInput
@@ -40174,6 +40464,7 @@ export namespace Prisma {
     latitude: number
     longitude: number
     order: number
+    waitTimeMinutes?: number
     createdAt?: Date | string
   }
 
@@ -40369,6 +40660,7 @@ export namespace Prisma {
     latitude?: FloatFieldUpdateOperationsInput | number
     longitude?: FloatFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
+    waitTimeMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     selectedByBookings?: BookingUpdateManyWithoutPickupStopNestedInput
   }
@@ -40380,6 +40672,7 @@ export namespace Prisma {
     latitude?: FloatFieldUpdateOperationsInput | number
     longitude?: FloatFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
+    waitTimeMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     selectedByBookings?: BookingUncheckedUpdateManyWithoutPickupStopNestedInput
   }
@@ -40391,6 +40684,7 @@ export namespace Prisma {
     latitude?: FloatFieldUpdateOperationsInput | number
     longitude?: FloatFieldUpdateOperationsInput | number
     order?: IntFieldUpdateOperationsInput | number
+    waitTimeMinutes?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

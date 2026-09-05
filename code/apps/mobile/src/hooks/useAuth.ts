@@ -48,8 +48,7 @@ export const useAuth = () => {
       
       // Connect socket sau khi đã xác thực xong
       socketService.connect();
-    } catch (error) {
-      console.log('[Auth] Check auth failed:', error);
+    } catch {
       // Nếu lỗi 401 và interceptor không refresh được, nó đã tự gọi SecureStore.clearAuthTokens()
       setStatus('UNAUTHENTICATED');
       socketService.disconnect();

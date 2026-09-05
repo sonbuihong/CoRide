@@ -187,7 +187,7 @@ export function IncomingTripRequestSheet() {
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
-  scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.scrim },
+  scrim: { ...StyleSheet.absoluteFill, backgroundColor: colors.scrim },
   sheet: { backgroundColor: colors.surface, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, gap: spacing.md, paddingHorizontal: layout.screenGutter, paddingTop: spacing.sm },
   handle: { alignSelf: 'center', backgroundColor: colors.borderStrong, borderRadius: radius.full, height: 5, width: 42 },
   headerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },

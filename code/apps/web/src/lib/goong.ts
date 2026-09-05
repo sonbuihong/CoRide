@@ -579,6 +579,7 @@ export async function getDirections(
   destination: string,
   vehicle: string = 'car',
   alternatives = false,
+  waypoints: string[] = [],
 ): Promise<DirectionsResult | null> {
   try {
     const response = await axios.post(`${API_URL}/goong/directions`, {
@@ -586,6 +587,7 @@ export async function getDirections(
       destination,
       vehicle,
       alternatives,
+      waypoints,
     }, { timeout: 10000 });
 
     if (response.data) {
@@ -597,7 +599,7 @@ export async function getDirections(
     
     // Fallback OSRM
     try {
-      const coords = `${origin};${destination}`;
+      const coords = [origin, ...waypoints, destination].join(';');
       const url = `${OSRM_BASE}/route/v1/driving/${coords}?overview=full&geometries=geojson`;
 
       const res = await axios.get(url, { timeout: 5000 });

@@ -739,6 +739,7 @@ function PassengerRideView() {
   const [timelineExpanded, setTimelineExpanded] = useState(false);
   const [bookingError, setBookingError] = useState<string>();
   const [createdBooking, setCreatedBooking] = useState<{ id?: string; status?: string; totalPrice?: number }>();
+  const [driverLocation, setDriverLocation] = useState<{ latitude: number; longitude: number; heading?: number } | null>(null);
 
   const rideQuery = useQuery({
     queryKey: ['ride', id],
@@ -844,12 +845,33 @@ function PassengerRideView() {
     return items.sort((left, right) => left.position - right.position);
   }, [driverRoute, dropoffPosition, hasSearchContext, params.passengerDestination, params.passengerOrigin, pickupPosition, ride]);
 
+  // Khởi tạo vị trí tài xế từ API ban đầu nếu có
+  useEffect(() => {
+    if (baseRide && (baseRide as any).currentDriverLat != null && (baseRide as any).currentDriverLng != null) {
+      setDriverLocation((prev) => prev || {
+        latitude: (baseRide as any).currentDriverLat,
+        longitude: (baseRide as any).currentDriverLng,
+      });
+    }
+  }, [baseRide]);
+
   useEffect(() => {
     if (!id) return;
     const refresh = () => {
       void queryClient.invalidateQueries({ queryKey: ['ride', id] });
       void queryClient.invalidateQueries({ queryKey: ['ride-offer', id] });
     };
+    
+    const handleDriverLocation = (payload: any) => {
+      if (payload && payload.latitude && payload.longitude) {
+        setDriverLocation({
+          latitude: payload.latitude,
+          longitude: payload.longitude,
+          heading: payload.heading,
+        });
+      }
+    };
+
     const events = [
       SocketEvents.RIDE_UPDATED,
       SocketEvents.RIDE_STATUS_UPDATED,
@@ -862,9 +884,12 @@ function PassengerRideView() {
     void socketService.connect();
     socketService.emit(SocketEvents.RIDE_JOIN_ROOM, id);
     events.forEach((event) => socketService.on(event, refresh));
+    socketService.on(SocketEvents.DRIVER_LOCATION, handleDriverLocation);
+    
     return () => {
       socketService.emit(SocketEvents.RIDE_LEAVE_ROOM, id);
       events.forEach((event) => socketService.off(event, refresh));
+      socketService.off(SocketEvents.DRIVER_LOCATION, handleDriverLocation);
     };
   }, [id, queryClient]);
 
@@ -882,7 +907,8 @@ function PassengerRideView() {
       const booking = result.booking ?? result;
       setCreatedBooking({ id: booking.id, status: booking.status, totalPrice: booking.totalPrice });
       setBookingError(undefined);
-      setSheetState('success');
+      setSheetState(null); // Close confirmation sheet
+      
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['ride', id] }),
         queryClient.invalidateQueries({ queryKey: ['ride-search'] }),
@@ -890,6 +916,16 @@ function PassengerRideView() {
         queryClient.invalidateQueries({ queryKey: ['my-bookings'] }),
         queryClient.invalidateQueries({ queryKey: ['active-booking'] }),
       ]);
+
+      if (booking.id) {
+        if (booking.status === 'CONFIRMED') {
+          router.replace({ pathname: '/booking/[id]', params: { id: booking.id } } as any);
+        } else {
+          router.replace({ pathname: '/booking/waiting', params: { id: booking.id } } as any);
+        }
+      } else {
+        router.replace('/(passenger-tabs)/my-rides' as any);
+      }
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || 'Không thể thực hiện đặt chỗ. Vui lòng thử lại.';
@@ -950,6 +986,22 @@ function PassengerRideView() {
             {ride.destinationCoords ? <Marker coordinate={ride.destinationCoords} title="Điểm cuối tuyến tài xế" pinColor="#475569" /> : null}
             {passengerOrigin ? <Marker coordinate={passengerOrigin} title="Điểm đón của bạn" pinColor={colors.mapPickup} /> : null}
             {passengerDestination ? <Marker coordinate={passengerDestination} title="Điểm xuống của bạn" pinColor={colors.mapDestination} /> : null}
+            {driverLocation ? (
+              <Marker
+                coordinate={driverLocation}
+                title={driverName || 'Tài xế'}
+                anchor={{ x: 0.5, y: 0.5 }}
+                rotation={driverLocation.heading ?? 0}
+                flat={true}
+                zIndex={3}
+              >
+                <View style={styles.driverMarkerOuter}>
+                  <View style={styles.driverMarkerInner}>
+                    <Navigation size={12} color="#FFFFFF" style={{ transform: [{ rotate: '45deg' }] }} />
+                  </View>
+                </View>
+              </Marker>
+            ) : null}
           </MapView>
           <View style={[styles.passengerMapHeader, { top: insets.top + spacing.xs }]}>
             <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={() => router.back()} style={({ pressed }) => [styles.passengerMapButton, pressed && styles.passengerMapButtonPressed]}>
@@ -962,6 +1014,7 @@ function PassengerRideView() {
           <View pointerEvents="none" style={styles.mapLegend}>
             <View style={styles.legendItem}><View style={styles.driverLegendLine} /><AppText variant="caption">Tuyến tài xế</AppText></View>
             {hasSearchContext ? <View style={styles.legendItem}><View style={styles.sharedLegendLine} /><AppText variant="caption" weight="semibold">Đoạn bạn đi chung</AppText></View> : null}
+            <View style={styles.legendItem}><View style={styles.driverLegendMarker} /><AppText variant="caption">Vị trí tài xế</AppText></View>
           </View>
         </View>
 
@@ -1129,14 +1182,18 @@ function PassengerRideView() {
                   <AppText variant="bodySmall" style={[styles.passengerMuted, styles.confirmCentered]}>{createdBooking?.status === 'CONFIRMED' ? 'Chỗ của bạn đã được xác nhận ngay.' : 'Đang chờ ' + driverName + ' xác nhận. Bạn sẽ nhận được thông báo khi tài xế phản hồi.'}</AppText>
                   {createdBooking?.totalPrice != null ? <AppText variant="h3" weight="semibold" style={[styles.passengerPrice, styles.confirmCentered]}>{formatVnd(createdBooking.totalPrice)}</AppText> : null}
                   <AppButton
-                    title="Xem trong Hoạt động"
+                    title="Xem chuyến đi"
                     variant="passenger"
                     onPress={() => {
                       setSheetState(null);
-                      router.replace({
-                        pathname: '/(passenger-tabs)/my-rides',
-                        params: { segment: 'UPCOMING', bookingId: createdBooking?.id },
-                      } as any);
+                      if (createdBooking?.id) {
+                        router.replace({
+                          pathname: `/booking/[id]`,
+                          params: { id: createdBooking.id },
+                        } as any);
+                      } else {
+                        router.replace('/(passenger-tabs)/my-rides' as any);
+                      }
                     }}
                   />
                 </View>
@@ -1503,6 +1560,9 @@ const styles = StyleSheet.create({
   legendItem: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
   driverLegendLine: { backgroundColor: '#94A3B8', borderRadius: radius.pill, height: 4, width: 22 },
   sharedLegendLine: { backgroundColor: colors.primary, borderRadius: radius.pill, height: 7, width: 22 },
+  driverMarkerOuter: { alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0, 113, 227, 0.25)' },
+  driverMarkerInner: { alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 11, backgroundColor: colors.navigationPassenger || '#0071E3', borderWidth: 2, borderColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3, elevation: 4 },
+  driverLegendMarker: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.navigationPassenger || '#0071E3', borderWidth: 2, borderColor: '#FFFFFF' },
   passengerBody: { alignSelf: 'center', gap: spacing.md, marginTop: -20, maxWidth: 720, paddingBottom: spacing.lg, paddingHorizontal: spacing.md, width: '100%', zIndex: 2 },
   passengerHero: { backgroundColor: colors.surface, borderRadius: 24, elevation: 5, gap: spacing.md, padding: spacing.lg, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 20 },
   passengerHeroTopRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, justifyContent: 'space-between' },

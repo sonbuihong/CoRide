@@ -11,7 +11,7 @@ import {
   Plus, Search, RefreshCw, ShoppingBag, TrainFront, Utensils, X,
 } from 'lucide-react-native';
 import {
-  ActivityIndicator, BackHandler, KeyboardAvoidingView, Linking, Platform, Pressable,
+  ActivityIndicator, BackHandler, Keyboard, KeyboardAvoidingView, Linking, Platform, Pressable,
   ScrollView, StyleSheet, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -235,6 +235,7 @@ export default function SearchScreen() {
       };
       setMapPickerMode(editingOrigin ? 'origin' : 'destination');
       setMapPickerInitial(selected.coords);
+      Keyboard.dismiss();
       setMapPickerOpen(true);
       setPredictions([]);
       sessionTokenRef.current = createGoongSessionToken();
@@ -263,6 +264,7 @@ export default function SearchScreen() {
 
   const submit = () => {
     if (!origin || !destination) return;
+    Keyboard.dismiss();
     router.push({ pathname: '/search-results' as any, params: {
       origin: origin.address, destination: destination.address,
       originLat: String(origin.coords.latitude), originLng: String(origin.coords.longitude),
@@ -348,7 +350,7 @@ export default function SearchScreen() {
   return (
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
-        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           {editingOrigin ? (
             <View style={styles.originEditHeader}>
               <Pressable accessibilityRole="button" accessibilityLabel="Đóng chọn điểm đi" onPress={exitOriginEdit} style={styles.backButton}>
@@ -373,7 +375,7 @@ export default function SearchScreen() {
                 <ArrowLeft size={25} color={colors.textPrimary} strokeWidth={2.2} />
               </Pressable>
               <Pressable accessibilityRole="button" accessibilityLabel="Thay đổi điểm đi" onPress={beginOriginEdit}
-                style={({ pressed }) => [styles.locationCopy, pressed && styles.pressed]}>
+                cssInterop={false} style={({ pressed }) => [styles.locationCopy, pressed && styles.pressed]}>
                 <AppText variant="bodySmall" style={styles.locationLabel}>Vị trí của bạn</AppText>
                 <View style={styles.locationNameRow}>
                   {originLoading ? <ActivityIndicator size="small" color={colors.primary} /> : (
@@ -406,10 +408,10 @@ export default function SearchScreen() {
           {!editingOrigin && !displayRows && !destination && (
             <View style={styles.tabs}>
               <Pressable accessibilityRole="button" accessibilityState={{ selected: activeTab === 'suggested' }} accessibilityLabel="Xem địa điểm gợi ý" onPress={() => setActiveTab('suggested')} style={[styles.tab, activeTab === 'suggested' && styles.tabActive]}>
-                <AppText variant="bodySmall" weight="bold" className={activeTab === 'suggested' ? 'text-white' : 'text-text-primary'} style={activeTab === 'suggested' ? styles.tabTextActive : styles.tabTextInactive}>Gợi ý</AppText>
+                <AppText variant="bodySmall" weight="bold" style={activeTab === 'suggested' ? styles.tabTextActive : styles.tabTextInactive}>Gợi ý</AppText>
               </Pressable>
               <Pressable accessibilityRole="button" accessibilityState={{ selected: activeTab === 'recent' }} accessibilityLabel="Xem điểm đến đã đi gần đây" onPress={() => setActiveTab('recent')} style={[styles.tab, activeTab === 'recent' && styles.tabActive]}>
-                <AppText variant="bodySmall" weight="bold" className={activeTab === 'recent' ? 'text-white' : 'text-text-primary'} style={activeTab === 'recent' ? styles.tabTextActive : styles.tabTextInactive}>Đã đi gần đây</AppText>
+                <AppText variant="bodySmall" weight="bold" style={activeTab === 'recent' ? styles.tabTextActive : styles.tabTextInactive}>Đã đi gần đây</AppText>
               </Pressable>
             </View>
           )}
@@ -473,6 +475,7 @@ export default function SearchScreen() {
               onMap={() => {
                 setMapPickerMode(editingOrigin ? 'origin' : 'destination');
                 setMapPickerInitial((editingOrigin ? origin : destination)?.coords || origin?.coords);
+                Keyboard.dismiss();
                 setMapPickerOpen(true);
               }}
               onAddPlace={focusNewPlace}
@@ -513,11 +516,13 @@ export default function SearchScreen() {
   );
 }
 
+// Keep callback styles on native Pressable: NativeWind interop can discard them,
+// dropping row layout, padding, and pressed-state styling on Android.
 function PredictionRow({ prediction, onPress }: { prediction: PlaceSearchResult; onPress: () => void }) {
   const { Icon, label } = getPlaceKind(prediction);
   const distance = distanceLabel(prediction.distance);
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`Chọn ${prediction.address}`} onPress={onPress} style={({ pressed }) => [styles.suggestionRow, pressed && styles.placeRowPressed]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Chọn ${prediction.address}`} onPress={onPress} cssInterop={false} style={({ pressed }) => [styles.suggestionRow, pressed && styles.placeRowPressed]}>
       {({ pressed }) => <>
         <View style={styles.suggestionIconColumn}>
           <View style={[styles.suggestionIconBadge, pressed && styles.suggestionIconBadgePressed]}>
@@ -537,7 +542,7 @@ function PredictionRow({ prediction, onPress }: { prediction: PlaceSearchResult;
 
 function RecentRow({ place, onPress }: { place: RecentPlace; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`Đi lại đến ${place.name}`} onPress={onPress} style={({ pressed }) => [styles.placeRow, pressed && styles.placeRowPressed]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Đi lại đến ${place.name}`} onPress={onPress} cssInterop={false} style={({ pressed }) => [styles.placeRow, pressed && styles.placeRowPressed]}>
       {({ pressed }) => <>
         <View style={styles.placeIconColumn}><History size={23} color={pressed ? colors.primary : colors.textSecondary} strokeWidth={1.8} /></View>
         <View style={styles.placeCopy}><AppText variant="body" weight="semibold" numberOfLines={1} style={pressed && styles.primaryText}>{place.name}</AppText><AppText variant="bodySmall" style={[styles.secondaryText, pressed && styles.selectedSecondaryText]} numberOfLines={2}>{place.address}</AppText><View style={[styles.kindTag, pressed && styles.kindTagPressed]}><AppText variant="caption" style={styles.kindText}>Đã đi trước đây</AppText></View></View>
@@ -549,7 +554,7 @@ function RecentRow({ place, onPress }: { place: RecentPlace; onPress: () => void
 function OriginPlaceRow({ place, onPress }: { place: SelectedPlace; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={`Dùng ${place.name} làm điểm đi`} onPress={onPress}
-      style={({ pressed }) => [styles.placeRow, pressed && styles.placeRowPressed]}>
+      cssInterop={false} style={({ pressed }) => [styles.placeRow, pressed && styles.placeRowPressed]}>
       {({ pressed }) => <>
         <View style={styles.placeIconColumn}>
           <View style={[styles.currentLocationIcon, pressed && styles.suggestionIconBadgePressed]}>
@@ -596,7 +601,7 @@ function OriginUtilitySection({ mode, showMergedAddress, onToggleMergedAddress, 
           accessibilityLabel="Hiển thị địa chỉ sau sáp nhập tỉnh"
           accessibilityState={{ checked: showMergedAddress }}
           onPress={() => onToggleMergedAddress(!showMergedAddress)}
-          style={({ pressed }) => [styles.toggleTrack, showMergedAddress && styles.toggleTrackOn, pressed && styles.togglePressed]}>
+          cssInterop={false} style={({ pressed }) => [styles.toggleTrack, showMergedAddress && styles.toggleTrackOn, pressed && styles.togglePressed]}>
           <View style={[styles.toggleThumb, showMergedAddress && styles.toggleThumbOn]}>
             {showMergedAddress && <Check size={15} color={colors.primary} strokeWidth={3} />}
           </View>
@@ -623,7 +628,7 @@ function OriginUtilityRow({ Icon, iconColor = colors.textPrimary, title, subtitl
 }) {
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress}
-      style={({ pressed }) => [styles.utilityRow, pressed && styles.utilityRowPressed]}>
+      cssInterop={false} style={({ pressed }) => [styles.utilityRow, pressed && styles.utilityRowPressed]}>
       {({ pressed }) => <>
         <View style={[styles.utilityIcon, pressed && styles.utilityIconPressed]}>
           <Icon size={23} color={pressed ? colors.primaryPressed : iconColor} strokeWidth={1.9} />
@@ -685,15 +690,15 @@ const styles = StyleSheet.create({
   content: { alignSelf: 'center', maxWidth: layout.maxContentWidth, paddingBottom: spacing.xxxl, paddingHorizontal: spacing.lg, width: '100%' },
   locationHeader: { alignItems: 'center', flexDirection: 'row', minHeight: 116, paddingTop: spacing.sm },
   originEditHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs, minHeight: 112, paddingTop: spacing.sm },
-  originSearchBox: { flex: 1, minHeight: 58 },
+  originSearchBox: { flex: 1, minWidth: 0, minHeight: 64 },
   originDot: { alignItems: 'center', backgroundColor: colors.textPrimary, borderRadius: radius.pill, height: 28, justifyContent: 'center', width: 28 },
   originDotCenter: { backgroundColor: colors.surface, borderRadius: radius.pill, height: 8, width: 8 },
   backButton: { alignItems: 'center', height: layout.minTouchTarget, justifyContent: 'center', marginRight: spacing.sm, width: layout.minTouchTarget },
   locationCopy: { borderRadius: radius.sm, flex: 1, minHeight: layout.minTouchTarget, minWidth: 0, paddingHorizontal: spacing.xs, justifyContent: 'center' }, locationCopyActive: { backgroundColor: colors.primarySoft }, locationLabel: { color: colors.textTertiary, marginBottom: 1 },
   locationRecovery: { alignItems: 'center', height: layout.minTouchTarget, justifyContent: 'center', width: layout.minTouchTarget },
   locationNameRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs, minHeight: 31 },
-  searchBox: { alignItems: 'center', backgroundColor: colors.background, borderColor: colors.borderStrong, borderRadius: radius.input, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, minHeight: 64, paddingHorizontal: spacing.md },
-  searchBoxSelected: { borderColor: colors.primary, borderWidth: 2 }, searchInput: { color: colors.textPrimary, flex: 1, fontSize: 17, minHeight: 60, paddingVertical: 0 }, searchInputWeb: { outlineStyle: 'none' } as any,
+  searchBox: { alignItems: 'center', backgroundColor: colors.background, borderColor: colors.borderStrong, borderRadius: radius.input, borderWidth: 2, flexDirection: 'row', gap: spacing.sm, minHeight: 64, paddingHorizontal: spacing.md },
+  searchBoxSelected: { borderColor: colors.primary, borderWidth: 2 }, searchInput: { color: colors.textPrimary, flex: 1, fontSize: 17, minWidth: 0, minHeight: 60, paddingHorizontal: 0, paddingVertical: 0, textAlignVertical: 'center' }, searchInputWeb: { outlineStyle: 'none' } as any,
   clearButton: { alignItems: 'center', borderRadius: radius.pill, height: layout.minTouchTarget, justifyContent: 'center', width: layout.minTouchTarget },
   tabs: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md }, tab: { alignItems: 'center', borderColor: colors.border, borderRadius: radius.pill, borderWidth: 1, justifyContent: 'center', minHeight: layout.minTouchTarget, paddingHorizontal: spacing.md },
   tabActive: { backgroundColor: colors.primaryPressed, borderColor: colors.primaryPressed }, tabTextActive: { color: '#FFFFFF', opacity: 1 }, tabTextInactive: { color: colors.textPrimary, opacity: 1 },
@@ -710,7 +715,7 @@ const styles = StyleSheet.create({
   suggestionTagText: { color: colors.primaryPressed, fontSize: 11, lineHeight: 15 },
   placeRow: { borderRadius: radius.sm, flexDirection: 'row', minHeight: 96, paddingVertical: spacing.sm }, placeRowPressed: { backgroundColor: colors.primarySoft }, placeIconColumn: { alignItems: 'center', paddingTop: 3, width: 64 }, distance: { color: colors.textSecondary, marginTop: spacing.xxs, textAlign: 'center' },
   currentLocationIcon: { alignItems: 'center', backgroundColor: colors.primarySoft, borderRadius: radius.sm, height: 40, justifyContent: 'center', width: 40 }, currentLocationLabel: { color: colors.primaryPressed, marginBottom: 2 },
-  placeCopy: { flex: 1, paddingBottom: spacing.sm }, secondaryText: { color: colors.textTertiary, marginTop: 2 }, selectedSecondaryText: { color: colors.primaryPressed },
+  placeCopy: { flex: 1, minWidth: 0, paddingBottom: spacing.sm }, secondaryText: { color: colors.textTertiary, marginTop: 2 }, selectedSecondaryText: { color: colors.primaryPressed },
   kindTag: { alignSelf: 'flex-start', backgroundColor: colors.primarySoft, borderRadius: 6, marginTop: spacing.xs, paddingHorizontal: spacing.xs, paddingVertical: 3 }, kindTagPressed: { backgroundColor: colors.surface }, kindText: { color: colors.primaryPressed },
   originUtilitySection: { marginHorizontal: -spacing.lg, marginTop: spacing.lg, paddingBottom: spacing.xl },
   utilityRow: { alignItems: 'center', borderRadius: radius.sm, flexDirection: 'row', gap: spacing.md, minHeight: 82, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },

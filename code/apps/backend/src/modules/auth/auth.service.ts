@@ -60,6 +60,14 @@ export class AuthService {
       throw new AppError('Email hoặc mật khẩu không đúng', 401);
     }
 
+    if (user.status === 'DELETED' || user.deletedAt) {
+      throw new AppError('Tài khoản này đã bị xóa hoặc ngừng hoạt động', 403);
+    }
+
+    if (user.status === 'BANNED') {
+      throw new AppError('Tài khoản này đã bị khóa do vi phạm chính sách', 403);
+    }
+
     const tokens = await this.generateTokenPair(user.id);
     const { password: _, ...userWithoutPassword } = user;
     return { user: userWithoutPassword, ...tokens };

@@ -168,6 +168,7 @@ export default function CreateRideScreen() {
   const [departureClock, setDepartureClock] = useState(initialClock);
   const [calendarMonth, setCalendarMonth] = useState(startOfMonth(new Date()));
   const [stops, setStops] = useState<RideStopInput[]>([]);
+  const [isDepartNow, setIsDepartNow] = useState(false);
   const [routes, setRoutes] = useState<GoongRoute[]>([]);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [routeLoading, setRouteLoading] = useState(false);
@@ -551,13 +552,28 @@ export default function CreateRideScreen() {
     }
   };
 
-  const departures = useMemo(
-    () => selectedDates.map((day) => toDepartureIso(day, departureClock)),
-    [departureClock, selectedDates],
-  );
+  const departures = useMemo(() => {
+    if (isDepartNow) {
+      return [new Date(Date.now() + 2 * 60 * 1000).toISOString()];
+    }
+    return selectedDates.map((day) => toDepartureIso(day, departureClock));
+  }, [departureClock, isDepartNow, selectedDates]);
+
   const departuresValid =
-    departures.length > 0 &&
-    departures.every((value) => new Date(value).getTime() > Date.now());
+    isDepartNow ||
+    (departures.length > 0 &&
+      departures.every((value) => new Date(value).getTime() > Date.now()));
+
+  const handleBack = () => {
+    if (step === 0) {
+      router.back();
+    } else if (step === 6 && isDepartNow) {
+      // Khi chọn đăng chuyến ngay, bỏ qua bước 5 (chọn giờ) và quay lại bước 4
+      setStep(4);
+    } else {
+      setStep((value) => value - 1);
+    }
+  };
 
   const continueFlow = async () => {
     setScreenError(undefined);
@@ -608,6 +624,11 @@ export default function CreateRideScreen() {
       return;
     }
     if (step === 4) {
+      if (isDepartNow) {
+        // Đăng chuyến ngay: bỏ qua bước 5 (chọn giờ) và sang thẳng bước 6 (xe & quy định)
+        setStep(6);
+        return;
+      }
       if (!selectedDates.length) {
         setScreenError("Chọn ít nhất một ngày khởi hành.");
         return;
@@ -684,9 +705,7 @@ export default function CreateRideScreen() {
           accessibilityLabel={
             step > 0 ? "Quay lại bước trước" : "Thoát đăng chuyến"
           }
-          onPress={() =>
-            step > 0 ? setStep((value) => value - 1) : router.back()
-          }
+          onPress={handleBack}
         />
         <View style={styles.headerCopy}>
           <AppText variant="h3" weight="semibold">
@@ -777,6 +796,8 @@ export default function CreateRideScreen() {
           )}
           {step === 4 && (
             <DatesStep
+              isDepartNow={isDepartNow}
+              setIsDepartNow={setIsDepartNow}
               selectedDates={selectedDates}
               setSelectedDates={setSelectedDates}
               month={calendarMonth}
@@ -790,6 +811,8 @@ export default function CreateRideScreen() {
               pickerOpen={timePickerOpen}
               setPickerOpen={setTimePickerOpen}
               valid={departuresValid}
+              isDepartNow={isDepartNow}
+              setIsDepartNow={setIsDepartNow}
             />
           )}
           {step === 6 && (
@@ -820,6 +843,7 @@ export default function CreateRideScreen() {
           {step === 9 && originCoordinates && destinationCoordinates && (
             <ReviewStep
               form={form}
+              isDepartNow={isDepartNow}
               dates={selectedDates}
               clock={departureClock}
               stops={stops}
@@ -847,14 +871,16 @@ export default function CreateRideScreen() {
             <AppButton
               title="Quay lại"
               variant="ghost"
-              onPress={() => setStep((value) => value - 1)}
+              onPress={handleBack}
               style={styles.backButton}
             />
           )}
           <AppButton
             title={
               step === 9
-                ? `Đăng ${selectedDates.length} chuyến`
+                ? isDepartNow
+                  ? "Đăng chuyến & Khởi hành ngay"
+                  : `Đăng ${selectedDates.length} chuyến`
                 : step === 1
                   ? "Xác nhận điểm đi"
                   : "Tiếp tục"
@@ -1282,7 +1308,7 @@ function StopsStep({
   const addStop = () =>
     setStops([
       ...stops,
-      { name: "", address: "", latitude: Number.NaN, longitude: Number.NaN },
+      { name: "", address: "", latitude: Number.NaN, longitude: Number.NaN, waitTimeMinutes: 5 },
     ]);
   const updateStop = (index: number, patch: Partial<RideStopInput>) =>
     setStops(
@@ -1335,7 +1361,7 @@ function StopsStep({
         />
       )}
       <AppText variant="caption" style={styles.helper}>
-        Tối đa 3 điểm. Kéo biểu tượng tay cầm hoặc dùng nút lên/xuống để sắp
+        Tối đa 3 điểm (thời gian dừng tối đa 15 phút mỗi điểm). Kéo biểu tượng tay cầm hoặc dùng nút lên/xuống để sắp
         xếp.
       </AppText>
     </View>
@@ -1428,16 +1454,69 @@ function StopEditor({
           })
         }
       />
+      <View style={styles.stopDurationRow}>
+        <View style={styles.flex}>
+          <AppText variant="caption" weight="semibold" style={styles.secondary}>
+            Thời gian dừng:
+          </AppText>
+          <AppText variant="caption" style={styles.secondary}>
+            (Tối đa 15 phút)
+          </AppText>
+        </View>
+        <View style={styles.stopDurationStepper}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Giảm 1 phút dừng"
+            disabled={(stop.waitTimeMinutes ?? 5) <= 1}
+            onPress={() =>
+              onChange({
+                waitTimeMinutes: Math.max(1, (stop.waitTimeMinutes ?? 5) - 1),
+              })
+            }
+            style={({ pressed }) => [
+              styles.stepperButton,
+              (stop.waitTimeMinutes ?? 5) <= 1 && styles.stepperButtonDisabled,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Minus size={16} color={colors.textPrimary} />
+          </Pressable>
+          <AppText weight="semibold" style={styles.stepperText}>
+            {stop.waitTimeMinutes ?? 5} phút
+          </AppText>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Tăng 1 phút dừng"
+            disabled={(stop.waitTimeMinutes ?? 5) >= 15}
+            onPress={() =>
+              onChange({
+                waitTimeMinutes: Math.min(15, (stop.waitTimeMinutes ?? 5) + 1),
+              })
+            }
+            style={({ pressed }) => [
+              styles.stepperButton,
+              (stop.waitTimeMinutes ?? 5) >= 15 && styles.stepperButtonDisabled,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Plus size={16} color={colors.textPrimary} />
+          </Pressable>
+        </View>
+      </View>
     </View>
   );
 }
 
 function DatesStep({
+  isDepartNow,
+  setIsDepartNow,
   selectedDates,
   setSelectedDates,
   month,
   setMonth,
 }: {
+  isDepartNow: boolean;
+  setIsDepartNow: (val: boolean) => void;
   selectedDates: string[];
   setSelectedDates: (dates: string[]) => void;
   month: Date;
@@ -1459,87 +1538,140 @@ function DatesStep({
     else if (selectedDates.length < 30)
       setSelectedDates([...selectedDates, key].sort());
   };
+
+  const handleToggleDepartNow = (checked: boolean) => {
+    setIsDepartNow(checked);
+    if (checked) {
+      setSelectedDates([today]);
+    }
+  };
+
   return (
     <View>
       <StepHeading
-        title="Chọn ngày khởi hành"
-        copy="Chọn tối đa 30 ngày trong 6 tháng tới. Tất cả ngày dùng chung một giờ khởi hành."
+        title={isDepartNow ? "Thời gian khởi hành" : "Chọn ngày khởi hành"}
+        copy={
+          isDepartNow
+            ? "Chuyến đi sẽ được kích hoạt và sẵn sàng khởi hành ngay lập tức."
+            : "Chọn tối đa 30 ngày trong 6 tháng tới. Tất cả ngày dùng chung một giờ khởi hành."
+        }
       />
-      <View style={styles.calendar}>
-        <View style={styles.calendarHeader}>
-          <IconButton
-            tone="ghost"
-            icon={<ChevronLeft size={21} color={colors.textPrimary} />}
-            accessibilityLabel="Tháng trước"
-            disabled={monthKey <= minMonth}
-            onPress={() => setMonth(addMonths(month, -1))}
-          />
-          <AppText weight="semibold">
-            {format(month, "MMMM yyyy", { locale: vi })}
+
+      <Pressable
+        accessibilityRole="switch"
+        accessibilityState={{ checked: isDepartNow }}
+        accessibilityLabel="Đăng chuyến ngay"
+        onPress={() => handleToggleDepartNow(!isDepartNow)}
+        style={({ pressed }) => [
+          styles.departNowRowCompact,
+          isDepartNow && styles.departNowRowCompactActive,
+          pressed && styles.pressed,
+        ]}
+      >
+        <Zap
+          size={18}
+          color={isDepartNow ? colors.driverAccent : colors.textTertiary}
+        />
+        <AppText weight="medium" style={styles.flex}>
+          Đăng chuyến ngay
+        </AppText>
+        <View
+          style={[styles.switchTrack, isDepartNow && styles.switchTrackOn]}
+        >
+          <View
+            style={[styles.switchThumb, isDepartNow && styles.switchThumbOn]}
+          >
+            {isDepartNow && <Check size={13} color={colors.success} />}
+          </View>
+        </View>
+      </Pressable>
+
+      {isDepartNow ? (
+        <View style={styles.departNowNotice}>
+          <Clock3 size={18} color={colors.driverAccent} />
+          <AppText weight="semibold" style={styles.driverAccentText}>
+            Xuất phát ngay hôm nay (trong 2 phút)
           </AppText>
-          <IconButton
-            tone="ghost"
-            icon={<ChevronRight size={21} color={colors.textPrimary} />}
-            accessibilityLabel="Tháng sau"
-            disabled={monthKey >= maxMonth}
-            onPress={() => setMonth(addMonths(month, 1))}
-          />
         </View>
-        <View style={styles.weekRow}>
-          {WEEKDAYS.map((day) => (
-            <AppText
-              key={day}
-              variant="caption"
-              weight="semibold"
-              style={styles.weekday}
-            >
-              {day}
-            </AppText>
-          ))}
-        </View>
-        <View style={styles.daysGrid}>
-          {cells.map((day, index) => {
-            if (!day)
-              return <View key={`blank-${index}`} style={styles.dayCell} />;
-            const key = `${monthKey}-${String(day).padStart(2, "0")}`;
-            const disabled = key < today || key > maximum;
-            const selected = selectedDates.includes(key);
-            return (
-              <Pressable
-                key={key}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: selected, disabled }}
-                disabled={disabled}
-                onPress={() => toggle(key)}
-                style={({ pressed }) => [
-                  styles.dayCell,
-                  selected && styles.daySelected,
-                  disabled && styles.dayDisabled,
-                  pressed && !disabled && styles.pressed,
-                ]}
-              >
+      ) : (
+        <>
+          <View style={styles.calendar}>
+            <View style={styles.calendarHeader}>
+              <IconButton
+                tone="ghost"
+                icon={<ChevronLeft size={21} color={colors.textPrimary} />}
+                accessibilityLabel="Tháng trước"
+                disabled={monthKey <= minMonth}
+                onPress={() => setMonth(addMonths(month, -1))}
+              />
+              <AppText weight="semibold">
+                {format(month, "MMMM yyyy", { locale: vi })}
+              </AppText>
+              <IconButton
+                tone="ghost"
+                icon={<ChevronRight size={21} color={colors.textPrimary} />}
+                accessibilityLabel="Tháng sau"
+                disabled={monthKey >= maxMonth}
+                onPress={() => setMonth(addMonths(month, 1))}
+              />
+            </View>
+            <View style={styles.weekRow}>
+              {WEEKDAYS.map((day) => (
                 <AppText
-                  variant="bodySmall"
-                  weight={selected ? "semibold" : "normal"}
-                  style={selected ? styles.daySelectedText : undefined}
+                  key={day}
+                  variant="caption"
+                  weight="semibold"
+                  style={styles.weekday}
                 >
                   {day}
                 </AppText>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-      <View style={styles.selectionCount}>
-        <CalendarDays size={19} color={colors.primary} />
-        <AppText weight="semibold">
-          Đã chọn {selectedDates.length}/30 ngày
-        </AppText>
-      </View>
-      {selectedDates.length === 30 && (
-        <AppText variant="caption" style={styles.helper}>
-          Bạn đã đạt số ngày tối đa.
-        </AppText>
+              ))}
+            </View>
+            <View style={styles.daysGrid}>
+              {cells.map((day, index) => {
+                if (!day)
+                  return <View key={`blank-${index}`} style={styles.dayCell} />;
+                const key = `${monthKey}-${String(day).padStart(2, "0")}`;
+                const disabled = key < today || key > maximum;
+                const selected = selectedDates.includes(key);
+                return (
+                  <Pressable
+                    key={key}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selected, disabled }}
+                    disabled={disabled}
+                    onPress={() => toggle(key)}
+                    style={({ pressed }) => [
+                      styles.dayCell,
+                      selected && styles.daySelected,
+                      disabled && styles.dayDisabled,
+                      pressed && !disabled && styles.pressed,
+                    ]}
+                  >
+                    <AppText
+                      variant="bodySmall"
+                      weight={selected ? "semibold" : "normal"}
+                      style={selected ? styles.daySelectedText : undefined}
+                    >
+                      {day}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+          <View style={styles.selectionCount}>
+            <CalendarDays size={19} color={colors.primary} />
+            <AppText weight="semibold">
+              Đã chọn {selectedDates.length}/30 ngày
+            </AppText>
+          </View>
+          {selectedDates.length === 30 && (
+            <AppText variant="caption" style={styles.helper}>
+              Bạn đã đạt số ngày tối đa.
+            </AppText>
+          )}
+        </>
       )}
     </View>
   );
@@ -1551,12 +1683,16 @@ function TimeStep({
   pickerOpen,
   setPickerOpen,
   valid,
+  isDepartNow,
+  setIsDepartNow,
 }: {
   clock: string;
   setClock: (clock: string) => void;
   pickerOpen: boolean;
   setPickerOpen: (open: boolean) => void;
   valid: boolean;
+  isDepartNow?: boolean;
+  setIsDepartNow?: (val: boolean) => void;
 }) {
   const [hours, minutes] = clock.split(":").map(Number);
   const selected = new Date();
@@ -1572,62 +1708,107 @@ function TimeStep({
         title="Chọn giờ khởi hành"
         copy="Giờ này áp dụng cho toàn bộ ngày bạn vừa chọn."
       />
-      {Platform.OS === "web" ? (
-        React.createElement("input", {
-          type: "time",
-          value: clock,
-          "aria-label": "Giờ khởi hành",
-          onChange: (event: { target: { value: string } }) =>
-            setClock(event.target.value),
-          style: webTimeStyle,
-        })
+      {setIsDepartNow && (
+        <Pressable
+          accessibilityRole="switch"
+          accessibilityState={{ checked: Boolean(isDepartNow) }}
+          accessibilityLabel="Đăng chuyến ngay"
+          onPress={() => setIsDepartNow(!isDepartNow)}
+          style={({ pressed }) => [
+            styles.departNowRowCompact,
+            isDepartNow && styles.departNowRowCompactActive,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Zap
+            size={18}
+            color={isDepartNow ? colors.driverAccent : colors.textTertiary}
+          />
+          <AppText weight="medium" style={styles.flex}>
+            Đăng chuyến ngay
+          </AppText>
+          <View
+            style={[styles.switchTrack, isDepartNow && styles.switchTrackOn]}
+          >
+            <View
+              style={[styles.switchThumb, isDepartNow && styles.switchThumbOn]}
+            >
+              {isDepartNow && <Check size={13} color={colors.success} />}
+            </View>
+          </View>
+        </Pressable>
+      )}
+      {isDepartNow ? (
+        <View style={styles.departNowNotice}>
+          <Clock3 size={18} color={colors.driverAccent} />
+          <AppText weight="semibold" style={styles.driverAccentText}>
+            Xuất phát ngay sau khi hoàn tất
+          </AppText>
+        </View>
       ) : (
         <>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setPickerOpen(true)}
-            style={({ pressed }) => [
-              styles.timeHero,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Clock3 size={28} color={colors.driverAccent} />
-            <View>
-              <AppText variant="caption" style={styles.secondary}>
-                Giờ khởi hành chung
-              </AppText>
-              <AppText variant="h1" weight="semibold" style={styles.timeValue}>
-                {clock}
-              </AppText>
-            </View>
-          </Pressable>
-          {pickerOpen && (
-            <View style={styles.nativePicker}>
-              <DateTimePicker
-                value={selected}
-                mode="time"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={onChange}
-              />
-              {Platform.OS === "ios" && (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => setPickerOpen(false)}
-                  style={styles.pickerDone}
-                >
-                  <AppText weight="semibold" style={styles.primaryText}>
-                    Hoàn tất
+          {Platform.OS === "web" ? (
+            React.createElement("input", {
+              type: "time",
+              value: clock,
+              "aria-label": "Giờ khởi hành",
+              onChange: (event: { target: { value: string } }) =>
+                setClock(event.target.value),
+              style: webTimeStyle,
+            })
+          ) : (
+            <>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setPickerOpen(true)}
+                style={({ pressed }) => [
+                  styles.timeHero,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Clock3 size={28} color={colors.driverAccent} />
+                <View>
+                  <AppText variant="caption" style={styles.secondary}>
+                    Giờ khởi hành chung
                   </AppText>
-                </Pressable>
+                  <AppText
+                    variant="h1"
+                    weight="semibold"
+                    style={styles.timeValue}
+                  >
+                    {clock}
+                  </AppText>
+                </View>
+              </Pressable>
+              {pickerOpen && (
+                <View style={styles.nativePicker}>
+                  <DateTimePicker
+                    value={selected}
+                    mode="time"
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    onChange={onChange}
+                  />
+                  {Platform.OS === "ios" && (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => setPickerOpen(false)}
+                      style={styles.pickerDone}
+                    >
+                      <AppText weight="semibold" style={styles.primaryText}>
+                        Hoàn tất
+                      </AppText>
+                    </Pressable>
+                  )}
+                </View>
               )}
-            </View>
+            </>
+          )}
+          {!valid && (
+            <AppText accessibilityRole="alert" style={styles.errorText}>
+              Nếu chọn hôm nay, giờ khởi hành phải ở tương lai.
+            </AppText>
           )}
         </>
-      )}
-      {!valid && (
-        <AppText accessibilityRole="alert" style={styles.errorText}>
-          Nếu chọn hôm nay, giờ khởi hành phải ở tương lai.
-        </AppText>
       )}
     </View>
   );
@@ -1950,6 +2131,7 @@ function PriceStep({
 
 function ReviewStep({
   form,
+  isDepartNow,
   dates,
   clock,
   stops,
@@ -1960,6 +2142,7 @@ function ReviewStep({
   selectedRouteIndex,
 }: {
   form: CreateRideInput;
+  isDepartNow?: boolean;
   dates: string[];
   clock: string;
   stops: RideStopInput[];
@@ -1969,11 +2152,20 @@ function ReviewStep({
   routes: GoongRoute[];
   selectedRouteIndex: number;
 }) {
+  const totalStopMinutes = stops.reduce(
+    (sum, s) => sum + (s.waitTimeMinutes ?? 5),
+    0,
+  );
+
   return (
     <View>
       <StepHeading
         title="Sẵn sàng đăng lịch"
-        copy="Kiểm tra lần cuối. Mỗi ngày sẽ tạo một chuyến có ghế và booking độc lập."
+        copy={
+          isDepartNow
+            ? "Kiểm tra lần cuối. Chuyến đi sẽ xuất phát ngay sau khi hoàn tất đăng chuyến."
+            : "Kiểm tra lần cuối. Mỗi ngày sẽ tạo một chuyến có ghế và booking độc lập."
+        }
       />
       <RoutePreviewMap
         origin={origin}
@@ -1990,13 +2182,22 @@ function ReviewStep({
         />
         <ReviewRow
           label="Ngày khởi hành"
-          value={`${dates.length} ngày · ${format(new Date(`${dates[0]}T00:00:00`), "dd/MM/yyyy")} – ${format(new Date(`${dates.at(-1)}T00:00:00`), "dd/MM/yyyy")}`}
+          value={
+            isDepartNow
+              ? "Hôm nay (Xuất phát ngay)"
+              : `${dates.length} ngày · ${format(new Date(`${dates[0]}T00:00:00`), "dd/MM/yyyy")} – ${format(new Date(`${dates.at(-1)}T00:00:00`), "dd/MM/yyyy")}`
+          }
         />
-        <ReviewRow label="Giờ chung" value={clock} />
+        <ReviewRow
+          label="Giờ khởi hành"
+          value={isDepartNow ? "⚡ Xuất phát ngay (trong 2 phút)" : clock}
+        />
         <ReviewRow
           label="Điểm dừng"
           value={
-            stops.length ? `${stops.length} điểm đón công khai` : "Không có"
+            stops.length
+              ? `${stops.length} điểm đón công khai (${totalStopMinutes} phút dừng)`
+              : "Không có"
           }
         />
         <ReviewRow
@@ -2022,7 +2223,11 @@ function ReviewStep({
         />
       </View>
       <Notice
-        message={`CoRide sẽ tạo ${dates.length} chuyến và mở chi tiết chuyến gần nhất sau khi hoàn tất.`}
+        message={
+          isDepartNow
+            ? "CoRide sẽ kích hoạt chuyến đi này ngay lập tức và mở màn hình theo dõi chuyến."
+            : `CoRide sẽ tạo ${dates.length} chuyến và mở chi tiết chuyến gần nhất sau khi hoàn tất.`
+        }
       />
     </View>
   );
@@ -2392,6 +2597,66 @@ const styles = StyleSheet.create({
   },
   addStopButton: { marginTop: spacing.sm },
   helper: { color: colors.textSecondary, marginTop: spacing.sm },
+  stopDurationRow: {
+    alignItems: "center",
+    borderTopColor: colors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: spacing.sm,
+    paddingTop: spacing.xs,
+  },
+  stopDurationStepper: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  stepperButton: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    height: 32,
+    justifyContent: "center",
+    width: 32,
+  },
+  stepperButtonDisabled: { opacity: 0.3 },
+  stepperText: {
+    fontVariant: ["tabular-nums"],
+    minWidth: 56,
+    textAlign: "center",
+  },
+  departNowRowCompact: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.input,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  departNowRowCompactActive: {
+    backgroundColor: colors.driverAccentSoft,
+    borderColor: colors.driverAccent,
+  },
+  departNowNotice: {
+    alignItems: "center",
+    backgroundColor: colors.driverAccentSoft,
+    borderRadius: radius.input,
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  driverAccentText: {
+    color: colors.driverAccent,
+  },
   calendar: {
     backgroundColor: colors.surface,
     borderRadius: radius.card,

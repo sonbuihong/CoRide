@@ -12,9 +12,21 @@ export const getAllUsers = async (
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
+    const search = (req.query.search as string)?.trim();
+
+    const where: Record<string, any> = {};
+    if (search) {
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
+        where,
         skip,
         take: limit,
         select: {
@@ -24,6 +36,8 @@ export const getAllUsers = async (
           lastName: true,
           phone: true,
           role: true,
+          status: true,
+          deletedAt: true,
           driverRating: true,
           driverRatingCount: true,
           passengerRating: true,
@@ -33,7 +47,7 @@ export const getAllUsers = async (
         },
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.user.count(),
+      prisma.user.count({ where }),
     ]);
 
     res.json({
@@ -67,6 +81,8 @@ export const getUserById = async (
         avatarUrl: true,
         bio: true,
         role: true,
+        status: true,
+        deletedAt: true,
         driverRating: true,
         driverRatingCount: true,
         passengerRating: true,
@@ -108,17 +124,26 @@ export const updateUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { firstName, lastName, phone, role, bio } = req.body;
+    const { firstName, lastName, phone, role, bio, status } = req.body;
+
+    const dataToUpdate: Record<string, any> = {};
+    if (firstName !== undefined) dataToUpdate.firstName = firstName;
+    if (lastName !== undefined) dataToUpdate.lastName = lastName;
+    if (phone !== undefined) dataToUpdate.phone = phone;
+    if (role !== undefined) dataToUpdate.role = role;
+    if (bio !== undefined) dataToUpdate.bio = bio;
+    if (status !== undefined) {
+      dataToUpdate.status = status;
+      if (status === 'DELETED') {
+        dataToUpdate.deletedAt = new Date();
+      } else if (status === 'ACTIVE') {
+        dataToUpdate.deletedAt = null;
+      }
+    }
 
     const user = await prisma.user.update({
       where: { id: req.params.id as string },
-      data: {
-        firstName,
-        lastName,
-        phone,
-        role,
-        bio,
-      },
+      data: dataToUpdate,
       select: {
         id: true,
         email: true,
@@ -126,6 +151,8 @@ export const updateUser = async (
         lastName: true,
         phone: true,
         role: true,
+        status: true,
+        deletedAt: true,
         bio: true,
       },
     });
@@ -142,11 +169,149 @@ export const deleteUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    await prisma.user.delete({
-      where: { id: req.params.id as string },
+    const userId = req.params.id as string;
+
+    // Không cho phép Admin tự xóa chính mình
+    if ((req.user as any)?.id === userId) {
+      throw new AppError('Bạn không thể tự xóa tài khoản của chính mình', 400);
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        _count: {
+          select: {
+            ridesAsDriver: true,
+            bookings: true,
+            tripsAsPassenger: true,
+            tripsAsDriver: true,
+            reviewsSent: true,
+            reviewsReceived: true,
+            reportsSent: true,
+            reportsReceived: true,
+            sentMessages: true,
+            receivedMessages: true,
+          },
+        },
+      },
     });
 
-    res.json({ message: 'Xóa người dùng thành công' });
+    if (!targetUser) {
+      throw new AppError('Người dùng không tồn tại', 404);
+    }
+
+    const totalRelations =
+      targetUser._count.ridesAsDriver +
+      targetUser._count.bookings +
+      targetUser._count.tripsAsPassenger +
+      targetUser._count.tripsAsDriver +
+      targetUser._count.reviewsSent +
+      targetUser._count.reviewsReceived +
+      targetUser._count.reportsSent +
+      targetUser._count.reportsReceived +
+      targetUser._count.sentMessages +
+      targetUser._count.receivedMessages;
+
+    // 1. Thu hồi toàn bộ Refresh Token của người dùng này để buộc đăng xuất
+    await prisma.refreshToken.updateMany({
+      where: { userId, revoked: false },
+      data: { revoked: true },
+    });
+
+    // 2. Hủy các chuyến đi đang lên lịch (SCHEDULED) của tài xế này nếu có
+    await prisma.ride.updateMany({
+      where: {
+        driverId: userId,
+        status: 'SCHEDULED',
+      },
+      data: {
+        status: 'CANCELLED',
+        cancelReason: 'Tài khoản tài xế đã bị vô hiệu hóa bởi Quản trị viên',
+      },
+    });
+
+    // 3. Hủy các booking PENDING hoặc CONFIRMED của hành khách này nếu có
+    await prisma.booking.updateMany({
+      where: {
+        passengerId: userId,
+        status: { in: ['PENDING', 'CONFIRMED'] },
+      },
+      data: {
+        status: 'CANCELLED',
+        cancelReason: 'Tài khoản hành khách đã bị vô hiệu hóa bởi Quản trị viên',
+      },
+    });
+
+    // 4. Nếu có yêu cầu hard delete và người dùng hoàn toàn chưa có liên kết dữ liệu
+    if (req.query.hard === 'true') {
+      if (totalRelations > 0) {
+        throw new AppError(
+          'Không thể xóa vĩnh viễn do người dùng đã có dữ liệu liên kết (chuyến đi, vé đặt, đánh giá hoặc giao dịch). Đã tự động chuyển sang vô hiệu hóa tài khoản.',
+          400
+        );
+      }
+
+      await prisma.user.delete({
+        where: { id: userId },
+      });
+
+      res.json({ message: 'Đã xóa vĩnh viễn người dùng khỏi cơ sở dữ liệu' });
+      return;
+    }
+
+    // 5. Mặc định: Xóa mềm an toàn (Soft Delete)
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        status: 'DELETED',
+        deletedAt: new Date(),
+      },
+    });
+
+    res.json({
+      message: 'Đã vô hiệu hóa tài khoản người dùng thành công (dữ liệu lịch sử chuyến đi và tài chính được bảo toàn)',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const restoreUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.params.id as string;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new AppError('Người dùng không tồn tại', 404);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        status: 'ACTIVE',
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        status: true,
+        deletedAt: true,
+      },
+    });
+
+    res.json({
+      message: 'Khôi phục tài khoản người dùng thành công',
+      user: updated,
+    });
   } catch (error) {
     next(error);
   }

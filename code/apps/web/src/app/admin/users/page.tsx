@@ -19,6 +19,7 @@ import {
   Edit, 
   Trash2, 
   Eye,
+  RotateCcw,
   ChevronLeft, 
   ChevronRight 
 } from 'lucide-react';
@@ -41,6 +42,8 @@ interface User {
   lastName: string | null;
   phone: string | null;
   role: string;
+  status?: 'ACTIVE' | 'BANNED' | 'DELETED';
+  deletedAt?: string | null;
   driverRating?: number;
   driverRatingCount?: number;
   passengerRating?: number;
@@ -69,6 +72,7 @@ export default function AdminUsersPage() {
     lastName: '',
     phone: '',
     role: '',
+    status: 'ACTIVE',
   });
 
   const fetchUsers = async (page = 1) => {
@@ -95,7 +99,7 @@ export default function AdminUsersPage() {
     }
     setLoading(true);
     try {
-      const response = await apiClient.get(`/admin/users?search=${searchTerm}`);
+      const response = await apiClient.get(`/admin/users?search=${encodeURIComponent(searchTerm)}`);
       setUsers(response.data.users);
       setPagination(response.data.pagination);
     } catch (error) {
@@ -113,6 +117,7 @@ export default function AdminUsersPage() {
       lastName: user.lastName || '',
       phone: user.phone || '',
       role: user.role,
+      status: user.status || 'ACTIVE',
     });
     setEditDialogOpen(true);
   };
@@ -124,9 +129,9 @@ export default function AdminUsersPage() {
       toast.success('Cập nhật người dùng thành công');
       setEditDialogOpen(false);
       fetchUsers(pagination?.page || 1);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Lỗi khi cập nhật người dùng:', error);
-      toast.error('Không thể cập nhật người dùng');
+      toast.error(error.response?.data?.message || 'Không thể cập nhật người dùng');
     }
   };
 
@@ -138,13 +143,26 @@ export default function AdminUsersPage() {
   const handleConfirmDelete = async () => {
     if (!selectedUser) return;
     try {
-      await apiClient.delete(`/admin/users/${selectedUser.id}`);
-      toast.success('Xóa người dùng thành công');
+      const response = await apiClient.delete(`/admin/users/${selectedUser.id}`);
+      toast.success(response.data?.message || 'Vô hiệu hóa người dùng thành công');
       setDeleteDialogOpen(false);
       fetchUsers(pagination?.page || 1);
-    } catch (error) {
-      console.error('Lỗi khi xóa người dùng:', error);
-      toast.error('Không thể xóa người dùng');
+    } catch (error: any) {
+      console.error('Lỗi khi vô hiệu hóa người dùng:', error);
+      const errorMsg = error.response?.data?.message || 'Không thể vô hiệu hóa người dùng';
+      toast.error(errorMsg);
+    }
+  };
+
+  const handleRestoreUser = async (user: User) => {
+    try {
+      const response = await apiClient.post(`/admin/users/${user.id}/restore`);
+      toast.success(response.data?.message || 'Khôi phục người dùng thành công');
+      fetchUsers(pagination?.page || 1);
+    } catch (error: any) {
+      console.error('Lỗi khi khôi phục người dùng:', error);
+      const errorMsg = error.response?.data?.message || 'Không thể khôi phục người dùng';
+      toast.error(errorMsg);
     }
   };
 
@@ -155,6 +173,16 @@ export default function AdminUsersPage() {
       default:
         return <Badge variant="secondary">Người dùng</Badge>;
     }
+  };
+
+  const getStatusBadge = (status?: string, deletedAt?: string | null) => {
+    if (status === 'DELETED' || deletedAt) {
+      return <Badge variant="destructive" className="bg-red-500 hover:bg-red-600">Đã vô hiệu hóa</Badge>;
+    }
+    if (status === 'BANNED') {
+      return <Badge className="bg-amber-500 hover:bg-amber-600">Đã khóa</Badge>;
+    }
+    return <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white">Hoạt động</Badge>;
   };
 
   if (loading) {
@@ -219,6 +247,7 @@ export default function AdminUsersPage() {
                 <TableHead className="font-semibold">Họ tên</TableHead>
                 <TableHead className="font-semibold">Số điện thoại</TableHead>
                 <TableHead className="font-semibold">Vai trò</TableHead>
+                <TableHead className="font-semibold">Trạng thái</TableHead>
                 <TableHead className="font-semibold">Đánh giá</TableHead>
                 <TableHead className="font-semibold">Ngày tham gia</TableHead>
                 <TableHead className="font-semibold text-right">Thao tác</TableHead>
@@ -227,7 +256,7 @@ export default function AdminUsersPage() {
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center h-24 text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)]">
+                  <TableCell colSpan={8} className="text-center h-24 text-[rgba(0,0,0,0.56)] dark:text-[rgba(255,255,255,0.56)]">
                     Không có người dùng nào
                   </TableCell>
                 </TableRow>
@@ -240,6 +269,7 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell>{user.phone || '-'}</TableCell>
                     <TableCell>{getRoleBadge(user.role)}</TableCell>
+                    <TableCell>{getStatusBadge(user.status, user.deletedAt)}</TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1 text-[13px]">
                         <div className="flex items-center gap-1">
@@ -274,18 +304,32 @@ export default function AdminUsersPage() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          title="Chỉnh sửa thông tin"
                           onClick={() => handleEdit(user)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          onClick={() => handleDelete(user)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {user.status === 'DELETED' || user.deletedAt ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                            title="Khôi phục tài khoản"
+                            onClick={() => handleRestoreUser(user)}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            title="Vô hiệu hóa người dùng"
+                            onClick={() => handleDelete(user)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -369,6 +413,19 @@ export default function AdminUsersPage() {
                 <option value="ADMIN">Admin</option>
               </select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Trạng thái tài khoản</Label>
+              <select
+                id="status"
+                value={editFormData.status}
+                onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                className="w-full h-[48px] rounded-[11px] border border-[rgba(0,0,0,0.1)] px-3 bg-white dark:bg-[#1d1d1f] dark:text-white"
+              >
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="BANNED">Khóa tài khoản (Banned)</option>
+                <option value="DELETED">Đã vô hiệu hóa (Deleted)</option>
+              </select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
@@ -383,19 +440,23 @@ export default function AdminUsersPage() {
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
-            <DialogTitle>Xác nhận xóa</DialogTitle>
-            <DialogDescription>
-              Bạn có chắc chắn muốn xóa người dùng {selectedUser?.email}? Hành động này không thể hoàn tác.
+            <DialogTitle>Vô hiệu hóa người dùng</DialogTitle>
+            <DialogDescription className="pt-2 text-sm leading-relaxed text-[rgba(0,0,0,0.7)] dark:text-[rgba(255,255,255,0.7)]">
+              Bạn có chắc chắn muốn vô hiệu hóa tài khoản <strong>{selectedUser?.email}</strong>?
+              <br /><br />
+              • Người dùng sẽ bị đăng xuất khỏi mọi thiết bị ngay lập tức.<br />
+              • Các chuyến đi và đặt chỗ đang chờ sẽ được tự động hủy an toàn.<br />
+              • Lịch sử chuyến đi và hóa đơn ví vẫn được bảo toàn để phục vụ đối soát.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Hủy
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
-              Xóa
+              Xác nhận vô hiệu hóa
             </Button>
           </DialogFooter>
         </DialogContent>

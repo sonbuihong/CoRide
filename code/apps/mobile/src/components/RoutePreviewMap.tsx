@@ -64,7 +64,7 @@ export function RoutePreviewMap({
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         initialRegion={{ ...origin, latitudeDelta: 0.08, longitudeDelta: 0.08 }}
         onMapReady={fitRoute}
         rotateEnabled={false}

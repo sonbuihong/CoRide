@@ -7,6 +7,13 @@ export const rideStopInputSchema = z.object({
   address: z.string().trim().min(2, 'Địa chỉ điểm dừng là bắt buộc').max(500),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
+  waitTimeMinutes: z.coerce
+    .number()
+    .int('Thời gian dừng phải là số nguyên')
+    .min(1, 'Thời gian dừng tối thiểu là 1 phút')
+    .max(15, 'Thời gian dừng tối đa không quá 15 phút')
+    .default(5)
+    .optional(),
 });
 
 const futureIsoDate = z.string().refine((value) => !Number.isNaN(Date.parse(value)), {

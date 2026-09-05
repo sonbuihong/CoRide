@@ -25,6 +25,8 @@ model User {
   passengerRating      Float               @default(0)
   passengerRatingCount Int                 @default(0)
   isDriverVerified     Boolean             @default(false)
+  status               UserStatus          @default(ACTIVE)
+  deletedAt            DateTime?
   bookings             Booking[]           @relation("PassengerBookings")
   driverVerification   DriverVerification?
   receivedMessages     Message[]           @relation("ReceivedMessages")
@@ -41,6 +43,8 @@ model User {
   tripsAsPassenger     TripRequest[]       @relation("PassengerTrips")
   vehicles             Vehicle[]
   wallet               Wallet?
+
+  @@index([status, deletedAt])
 }
 
 model Wallet {
@@ -189,6 +193,7 @@ model RideStop {
   latitude           Float
   longitude          Float
   order              Int
+  waitTimeMinutes    Int       @default(5)
   createdAt          DateTime  @default(now())
   selectedByBookings Booking[] @relation("BookingPickupStop")
   ride               Ride      @relation(fields: [rideId], references: [id], onDelete: Cascade)
@@ -404,6 +409,12 @@ model Report {
 enum Role {
   USER
   ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+  DELETED
 }
 
 enum RideStatus {

@@ -77,14 +77,12 @@ class SocketService {
 
 
     this.socket.on('connect', () => {
-      console.log('SocketService: Đã kết nối, socket ID:', this.socket?.id);
       this.isConnecting = false;
       this.joinedRooms.forEach(({ event, args }) => this.socket?.emit(event, ...args));
       this.notifyConnectionChange();
     });
 
-    this.socket.on('disconnect', (reason) => {
-      console.log('SocketService: Đã ngắt kết nối, lý do:', reason);
+    this.socket.on('disconnect', () => {
       this.isConnecting = false;
       this.notifyConnectionChange();
     });
@@ -104,7 +102,6 @@ class SocketService {
       this.socket.disconnect();
       this.socket.removeAllListeners();
       this.socket = null;
-      console.log('SocketService: Đã chủ động ngắt kết nối.');
     }
     this.notifyConnectionChange();
   }

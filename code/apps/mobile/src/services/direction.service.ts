@@ -5,10 +5,9 @@
 import { apiClient as api } from '../api/client';
 
 const GOONG_REST_BASE = 'https://rsapi.goong.io';
-// Goong dùng cùng 1 API key cho Maptiles và REST API (Directions, Geocode, v.v.)
-// EXPO_PUBLIC_ prefix → Expo tự inject vào JS bundle tại build time — key này
-// đã public trong bất kỳ app nào dùng Goong Maptiles, không thể giấu khỏi client
-const GOONG_API_KEY = (process.env.EXPO_PUBLIC_GOONG_MAPTILES_KEY as string | undefined) ?? '';
+// Goong sử dụng 2 API key khác nhau: Maptiles Key (hiển thị bản đồ) và REST API Key (Directions, Geocode)
+// Để gọi direct từ mobile, chúng ta cần dùng REST API Key.
+const GOONG_REST_API_KEY = (process.env.EXPO_PUBLIC_GOONG_REST_API_KEY as string | undefined) ?? '';
 
 interface LatLng {
   latitude: number;
@@ -106,9 +105,9 @@ const getDirectionsDirect = async (
   vehicle: string,
   waypoints: LatLng[] = [],
 ): Promise<DirectionsResult | null> => {
-  if (!GOONG_API_KEY) {
-    console.warn('[Directions] EXPO_PUBLIC_GOONG_MAPTILES_KEY chưa được cấu hình');
-    return null;
+  if (!GOONG_REST_API_KEY) {
+    console.warn('[Directions] EXPO_PUBLIC_GOONG_REST_API_KEY chưa được cấu hình');
+    throw new Error('Missing REST API Key for direct call');
   }
 
   const originStr = `${origin.latitude},${origin.longitude}`;
@@ -118,7 +117,7 @@ const getDirectionsDirect = async (
     origin: originStr,
     destination: destinationStr,
     vehicle,
-    api_key: GOONG_API_KEY,
+    api_key: GOONG_REST_API_KEY,
   });
 
   // Goong Directions V2 hỗ trợ waypoints dạng "lat,lng|lat,lng"

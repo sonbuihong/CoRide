@@ -138,7 +138,9 @@ exports.Prisma.UserScalarFieldEnum = {
   driverRatingCount: 'driverRatingCount',
   passengerRating: 'passengerRating',
   passengerRatingCount: 'passengerRatingCount',
-  isDriverVerified: 'isDriverVerified'
+  isDriverVerified: 'isDriverVerified',
+  status: 'status',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.WalletScalarFieldEnum = {
@@ -257,6 +259,7 @@ exports.Prisma.RideStopScalarFieldEnum = {
   latitude: 'latitude',
   longitude: 'longitude',
   order: 'order',
+  waitTimeMinutes: 'waitTimeMinutes',
   createdAt: 'createdAt'
 };
 
@@ -456,6 +459,12 @@ exports.Prisma.JsonNullValueFilter = {
 exports.Role = exports.$Enums.Role = {
   USER: 'USER',
   ADMIN: 'ADMIN'
+};
+
+exports.UserStatus = exports.$Enums.UserStatus = {
+  ACTIVE: 'ACTIVE',
+  BANNED: 'BANNED',
+  DELETED: 'DELETED'
 };
 
 exports.TransactionType = exports.$Enums.TransactionType = {

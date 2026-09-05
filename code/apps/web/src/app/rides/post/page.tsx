@@ -9,8 +9,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createRideSchema, CreateRideInput } from '@repo/shared';
 import {
   AlertCircle,
+  ArrowDown,
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
   Calendar,
   Car,
   Check,
@@ -29,7 +31,9 @@ import {
   Settings2,
   ShieldCheck,
   Sparkles,
+  Trash2,
   WalletCards,
+  Zap,
 } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { useAuth } from '@/components/providers/auth-provider';
@@ -68,6 +72,7 @@ interface ActiveRide {
   destination: string;
   departureTime: string;
   status: string;
+  duration?: number | null;
 }
 
 interface RouteInfo {
@@ -86,6 +91,15 @@ interface StructuredAddress {
     district?: string;
     commune?: string;
   };
+}
+
+interface StopItem {
+  id: string;
+  address: string;
+  name?: string;
+  lat?: number;
+  lng?: number;
+  waitTimeMinutes: number;
 }
 
 const steps = [
@@ -369,6 +383,42 @@ export default function PostRidePage() {
   const [priceError, setPriceError] = useState<string | null>(null);
   const [isEstimatingPrice, setIsEstimatingPrice] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [stops, setStops] = useState<StopItem[]>([]);
+  const [isDepartNow, setIsDepartNow] = useState(false);
+
+  const handleAddStop = () => {
+    if (stops.length >= 3) return;
+    setStops((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+        address: '',
+        waitTimeMinutes: 5,
+      },
+    ]);
+  };
+
+  const handleRemoveStop = (index: number) => {
+    setStops((prev) => prev.filter((_, i) => i !== index));
+    setStepError(null);
+  };
+
+  const handleUpdateStop = (index: number, patch: Partial<StopItem>) => {
+    setStops((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, ...patch } : item))
+    );
+    setStepError(null);
+  };
+
+  const handleMoveStop = (from: number, to: number) => {
+    if (to < 0 || to >= stops.length || from === to) return;
+    setStops((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+  };
 
   const {
     register,
@@ -525,24 +575,35 @@ export default function PostRidePage() {
     let cancelled = false;
     setIsCalculatingRoute(true);
     setRouteError(null);
+
+    const validWaypoints = stops
+      .filter((s) => s.lat != null && s.lng != null)
+      .map((s) => `${s.lat},${s.lng}`);
+
     getDirections(
       originCoords.lat + ',' + originCoords.lng,
-      destinationCoords.lat + ',' + destinationCoords.lng
+      destinationCoords.lat + ',' + destinationCoords.lng,
+      selectedVehicle?.type === 'BIKE' ? 'bike' : 'car',
+      false,
+      validWaypoints
     )
       .then((data) => {
         if (cancelled) return;
         const route = data?.routes?.[0];
-        const leg = route?.legs?.[0];
-        if (!route || !leg) {
+        if (!route || !route.legs?.length) {
           setRouteInfo(null);
-          setRouteError('Không tìm thấy tuyến đường phù hợp giữa hai địa điểm.');
+          setRouteError('Không tìm thấy tuyến đường phù hợp giữa các địa điểm đã chọn.');
           return;
         }
+        const totalDistanceMeters = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
+        const totalDurationSeconds = route.legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
+        const totalStopWaitMinutes = stops.reduce((sum, s) => sum + (s.waitTimeMinutes || 0), 0);
+        const totalDurationMinutes = Math.max(1, Math.round(totalDurationSeconds / 60)) + totalStopWaitMinutes;
         const routePoints = route.overview_polyline?.points;
         setRouteInfo({
-          distanceKm: Math.round(leg.distance.value / 100) / 10,
-          durationMinutes: Math.max(1, Math.round(leg.duration.value / 60)),
-          durationText: formatDuration(leg.duration.value),
+          distanceKm: Math.round(totalDistanceMeters / 100) / 10,
+          durationMinutes: totalDurationMinutes,
+          durationText: formatDuration(totalDurationSeconds + totalStopWaitMinutes * 60),
           routePolyline:
             typeof routePoints === 'string'
               ? routePoints
@@ -562,7 +623,13 @@ export default function PostRidePage() {
     return () => {
       cancelled = true;
     };
-  }, [destinationCoords, originCoords]);
+  }, [
+    destinationCoords,
+    originCoords,
+    selectedVehicle?.type,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(stops.map((s) => ({ lat: s.lat, lng: s.lng, wait: s.waitTimeMinutes }))),
+  ]);
 
   useEffect(() => {
     if (!originCoords || !destinationCoords || !selectedVehicle || !routeInfo) {
@@ -683,13 +750,48 @@ export default function PostRidePage() {
       setStepError('Vui lòng chọn điểm đến từ danh sách gợi ý để xác định chính xác vị trí.');
       return false;
     }
+    for (let i = 0; i < stops.length; i++) {
+      const stop = stops[i];
+      if (!stop.address.trim() || stop.lat == null || stop.lng == null) {
+        setStepError(`Vui lòng chọn địa chỉ từ danh sách gợi ý cho Điểm dừng ${i + 1}.`);
+        return false;
+      }
+      if (stop.waitTimeMinutes < 1 || stop.waitTimeMinutes > 15) {
+        setStepError(`Thời gian dừng tại Điểm dừng ${i + 1} phải từ 1 đến 15 phút.`);
+        return false;
+      }
+    }
     if (!vehicleId) {
       setStepError('Vui lòng chọn phương tiện sử dụng cho chuyến đi.');
       return false;
     }
-    if (!departureTime || new Date(departureTime).getTime() <= Date.now()) {
-      setStepError('Thời gian khởi hành phải ở tương lai.');
-      return false;
+    if (isDepartNow) {
+      if (activeRide) {
+        setStepError('Bạn đang có một chuyến đi đang diễn ra. Không thể chọn đăng chuyến ngay lúc này.');
+        return false;
+      }
+      setValue('departureTime', toDateTimeLocal(new Date(Date.now() + 2 * 60_000)));
+    } else {
+      if (!departureTime || new Date(departureTime).getTime() <= Date.now()) {
+        setStepError('Thời gian khởi hành phải ở tương lai.');
+        return false;
+      }
+      if (activeRide) {
+        const activeDuration = activeRide.duration && activeRide.duration > 0 ? activeRide.duration : 60;
+        const estimatedEndTime = new Date(
+          Math.max(Date.now(), new Date(activeRide.departureTime).getTime()) + activeDuration * 60 * 1000
+        );
+        if (new Date(departureTime).getTime() <= estimatedEndTime.getTime()) {
+          const timeStr = estimatedEndTime.toLocaleTimeString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+          });
+          setStepError(`Bạn đang có một chuyến đi đang diễn ra (dự kiến kết thúc lúc ${timeStr}). Giờ khởi hành của chuyến mới phải sau thời gian này.`);
+          return false;
+        }
+      }
     }
     return trigger(['originProvince', 'destProvince', 'departureTime', 'vehicleId']);
   };
@@ -726,6 +828,20 @@ export default function PostRidePage() {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
+      const formattedStops = stops
+        .filter((s) => s.address.trim() && s.lat != null && s.lng != null)
+        .map((s) => ({
+          address: s.address,
+          name: s.name || s.address.split(',')[0]?.trim(),
+          latitude: s.lat!,
+          longitude: s.lng!,
+          waitTimeMinutes: s.waitTimeMinutes || 5,
+        }));
+
+      const finalDepartureTime = isDepartNow
+        ? new Date(Date.now() + 2 * 60_000).toISOString()
+        : new Date(data.departureTime).toISOString();
+
       const payload: CreateRideInput = {
         ...data,
         origin: originAddress,
@@ -734,7 +850,7 @@ export default function PostRidePage() {
         destination: destinationAddress,
         destinationLat: destinationCoords.lat,
         destinationLng: destinationCoords.lng,
-        departureTime: new Date(data.departureTime).toISOString(),
+        departureTime: finalDepartureTime,
         vehicleId,
         availableSeats: seatCount,
         pricePerSeat: estimatedPrice,
@@ -745,6 +861,7 @@ export default function PostRidePage() {
         distance: routeInfo.distanceKm,
         duration: routeInfo.durationMinutes,
         routePolyline: routeInfo.routePolyline,
+        ...(formattedStops.length > 0 ? { stops: formattedStops } : {}),
       };
       const response = await apiClient.post('/rides', payload);
       localStorage.setItem(
@@ -781,49 +898,35 @@ export default function PostRidePage() {
     );
   }
 
-  if (activeRide) {
-    return (
-      <main className="min-h-screen bg-[#f5f5f7] px-4 py-12 dark:bg-black">
-        <Surface className="mx-auto max-w-xl text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#ff9f0a]/12 text-[#c93400] dark:text-[#ff9f0a]">
-            <Clock className="h-6 w-6" />
-          </div>
-          <h1 className="mt-5 text-2xl font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
-            Bạn vẫn có một chuyến đang diễn ra
-          </h1>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-black/55 dark:text-white/55">
-            Hủy lịch chỉ áp dụng cho các ngày chưa khởi hành. Hãy hoàn thành chuyến đang chạy này trước khi đăng chuyến mới.
-          </p>
-          <div className="mt-6 rounded-2xl bg-black/[0.025] p-4 text-left dark:bg-white/[0.05]">
-            <p className="text-sm font-semibold text-[#1d1d1f] dark:text-white">{activeRide.origin}</p>
-            <div className="my-2 h-5 w-px bg-black/15 dark:bg-white/20" />
-            <p className="text-sm font-semibold text-[#1d1d1f] dark:text-white">{activeRide.destination}</p>
-            <p className="mt-3 text-xs text-black/45 dark:text-white/45">
-              {new Date(activeRide.departureTime).toLocaleString('vi-VN')}
-            </p>
-          </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <Link
-              href="/ongoing"
-              className="flex h-12 items-center justify-center rounded-xl bg-[#0071e3] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#0077ed]"
-            >
-              Tiếp tục chuyến đang chạy
-            </Link>
-            <Link
-              href="/my-rides"
-              className="flex h-12 items-center justify-center rounded-xl border border-black/10 px-4 text-sm font-semibold text-[#1d1d1f] transition-colors hover:bg-black/[0.03] dark:border-white/10 dark:text-white dark:hover:bg-white/[0.05]"
-            >
-              Quản lý chuyến
-            </Link>
-          </div>
-        </Surface>
-      </main>
-    );
-  }
-
   const renderJourneyStep = () => (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)]">
       <Surface>
+        {activeRide && (
+          <div className="mb-6 rounded-2xl border border-[#ff9f0a]/30 bg-[#ff9f0a]/10 p-4 text-[#1d1d1f] dark:text-white">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#ff9f0a]/20 text-[#c93400] dark:text-[#ff9f0a]">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div className="flex-1 text-sm">
+                <p className="font-semibold text-[#c93400] dark:text-[#ff9f0a]">
+                  Bạn đang có chuyến đi đang diễn ra
+                </p>
+                <p className="mt-0.5 text-xs text-black/60 dark:text-white/60">
+                  {activeRide.origin} → {activeRide.destination}
+                </p>
+                <p className="mt-1 text-xs text-black/70 dark:text-white/70">
+                  Bạn vẫn có thể lên lịch trước cho các chuyến đi tiếp theo. Vui lòng chọn giờ khởi hành sau khi chuyến hiện tại kết thúc.
+                </p>
+              </div>
+              <Link
+                href="/ongoing"
+                className="shrink-0 rounded-xl bg-[#0071e3] px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                Xem chuyến
+              </Link>
+            </div>
+          </div>
+        )}
         <div className="mb-6">
           <span className="text-xs font-semibold uppercase tracking-[0.08em] text-[#0071e3]">
             Bước 1
@@ -837,8 +940,14 @@ export default function PostRidePage() {
         </div>
 
         <div className="space-y-5">
+          {/* Điểm xuất phát */}
           <div>
-            <label className={labelClass}>Điểm đi <span className="text-[#d93025]">*</span></label>
+            <label className={labelClass}>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-[#0071e3]" />
+                Điểm đi <span className="text-[#d93025]">*</span>
+              </span>
+            </label>
             <AddressAutocomplete
               defaultValue={originAddress}
               placeholder="Nhập điểm xuất phát"
@@ -849,13 +958,142 @@ export default function PostRidePage() {
             />
           </div>
 
-          <div className="flex items-center gap-3 pl-5" aria-hidden="true">
-            <span className="h-5 w-px border-l border-dashed border-black/20 dark:border-white/20" />
-            <span className="text-[11px] text-black/35 dark:text-white/35">Tuyến di chuyển</span>
+          {/* Điểm dừng dọc đường (Waypoints) */}
+          <div className="space-y-3 rounded-2xl border border-black/[0.06] bg-black/[0.015] p-4 dark:border-white/[0.08] dark:bg-white/[0.02]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Route className="h-4 w-4 text-[#f59e0b]" />
+                <span className="text-xs font-semibold text-[#1d1d1f] dark:text-white">
+                  Điểm dừng dọc đường ({stops.length}/3)
+                </span>
+              </div>
+              <span className="text-[11px] text-black/45 dark:text-white/45">
+                Tối đa 15 phút mỗi điểm
+              </span>
+            </div>
+
+            {stops.map((stop, index) => (
+              <div
+                key={stop.id}
+                className="space-y-3 rounded-xl border border-black/[0.08] bg-white p-3.5 shadow-sm dark:border-white/[0.1] dark:bg-[#2c2c2e]"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#f59e0b]/15 text-[11px] font-bold text-[#b45309] dark:bg-[#f59e0b]/25 dark:text-[#fbbf24]">
+                      {index + 1}
+                    </span>
+                    <span className="text-xs font-semibold text-[#1d1d1f] dark:text-white">
+                      Điểm dừng {index + 1}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={() => handleMoveStop(index, index - 1)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-black/[0.05] hover:text-black disabled:opacity-25 dark:text-white/45 dark:hover:bg-white/[0.08] dark:hover:text-white"
+                      title="Di chuyển lên"
+                      aria-label={`Di chuyển điểm dừng ${index + 1} lên`}
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === stops.length - 1}
+                      onClick={() => handleMoveStop(index, index + 1)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-black/[0.05] hover:text-black disabled:opacity-25 dark:text-white/45 dark:hover:bg-white/[0.08] dark:hover:text-white"
+                      title="Di chuyển xuống"
+                      aria-label={`Di chuyển điểm dừng ${index + 1} xuống`}
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveStop(index)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-[#ff3b30]/10 hover:text-[#ff3b30] dark:text-white/45 dark:hover:bg-[#ff3b30]/20 dark:hover:text-[#ff453a]"
+                      title="Xóa điểm dừng"
+                      aria-label={`Xóa điểm dừng ${index + 1}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <AddressAutocomplete
+                  defaultValue={stop.address}
+                  placeholder={`Nhập địa chỉ điểm dừng ${index + 1}`}
+                  inputClassName="h-11 border border-black/10 text-sm focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/20 dark:border-white/10"
+                  onAddressSelect={(address, lat, lng) =>
+                    handleUpdateStop(index, {
+                      address,
+                      lat,
+                      lng,
+                      name: address.split(',')[0]?.trim(),
+                    })
+                  }
+                />
+
+                {/* Stepper thời gian dừng */}
+                <div className="flex items-center justify-between rounded-lg bg-black/[0.03] px-3 py-2 dark:bg-white/[0.04]">
+                  <span className="text-xs text-black/60 dark:text-white/60">
+                    Thời gian dừng đón / trả khách:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={stop.waitTimeMinutes <= 1}
+                      onClick={() =>
+                        handleUpdateStop(index, {
+                          waitTimeMinutes: Math.max(1, stop.waitTimeMinutes - 1),
+                        })
+                      }
+                      className="flex h-7 w-7 items-center justify-center rounded-md border border-black/10 bg-white text-xs font-semibold shadow-xs transition-colors hover:bg-black/[0.05] disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/10 dark:bg-[#1c1c1e] dark:hover:bg-white/[0.08]"
+                      aria-label="Giảm 1 phút dừng"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="min-w-16 text-center text-xs font-semibold tabular-nums text-[#1d1d1f] dark:text-white">
+                      {stop.waitTimeMinutes} phút
+                    </span>
+                    <button
+                      type="button"
+                      disabled={stop.waitTimeMinutes >= 15}
+                      onClick={() =>
+                        handleUpdateStop(index, {
+                          waitTimeMinutes: Math.min(15, stop.waitTimeMinutes + 1),
+                        })
+                      }
+                      className="flex h-7 w-7 items-center justify-center rounded-md border border-black/10 bg-white text-xs font-semibold shadow-xs transition-colors hover:bg-black/[0.05] disabled:cursor-not-allowed disabled:opacity-30 dark:border-white/10 dark:bg-[#1c1c1e] dark:hover:bg-white/[0.08]"
+                      aria-label="Tăng 1 phút dừng"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {stops.length < 3 && (
+              <button
+                type="button"
+                onClick={handleAddStop}
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-black/20 bg-white py-2.5 text-xs font-semibold text-[#0071e3] transition-colors hover:border-[#0071e3] hover:bg-[#0071e3]/[0.04] dark:border-white/20 dark:bg-transparent dark:text-[#0a84ff] dark:hover:border-[#0a84ff]"
+              >
+                <Plus className="h-4 w-4" />
+                Thêm điểm dừng dọc đường ({stops.length}/3)
+              </button>
+            )}
           </div>
 
+          {/* Điểm đến */}
           <div>
-            <label className={labelClass}>Điểm đến <span className="text-[#d93025]">*</span></label>
+            <label className={labelClass}>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-[#ff3b30]" />
+                Điểm đến <span className="text-[#d93025]">*</span>
+              </span>
+            </label>
             <AddressAutocomplete
               defaultValue={destinationAddress}
               placeholder="Nhập điểm đến"
@@ -866,33 +1104,90 @@ export default function PostRidePage() {
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="departureTime" className={labelClass}>
+          {/* Chọn ngày giờ & Đăng chuyến ngay */}
+          <div className="space-y-2.5">
+            {/* Dòng chọn ngày giờ: Tiêu đề bên trái, Đăng chuyến ngay nhỏ gọn bên phải */}
+            <div className="flex items-center justify-between gap-3">
+              <label htmlFor="departureTime" className="text-[13px] font-semibold leading-5 text-[#1d1d1f] dark:text-white">
                 Ngày và giờ khởi hành <span className="text-[#d93025]">*</span>
               </label>
-              <input
-                id="departureTime"
-                type="datetime-local"
-                min={toDateTimeLocal(new Date(Date.now() + 5 * 60_000))}
-                className={inputClass}
-                {...register('departureTime')}
-              />
-              {errors.departureTime && (
-                <p className="mt-1.5 text-xs text-[#d93025]">{errors.departureTime.message}</p>
-              )}
+
+              {/* Đăng chuyến ngay nhỏ gọn, không có dòng giải thích */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isDepartNow}
+                onClick={() => {
+                  const next = !isDepartNow;
+                  setIsDepartNow(next);
+                  if (next) {
+                    setValue('departureTime', toDateTimeLocal(new Date(Date.now() + 2 * 60_000)), { shouldValidate: true });
+                  } else {
+                    setValue('departureTime', toDateTimeLocal(new Date(Date.now() + 60 * 60_000)), { shouldValidate: true });
+                  }
+                }}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors',
+                  isDepartNow
+                    ? 'bg-[#0071e3]/10 text-[#0071e3] ring-1 ring-[#0071e3]/30 dark:bg-[#0a84ff]/15 dark:text-[#0a84ff] dark:ring-[#0a84ff]/30'
+                    : 'bg-black/[0.04] text-black/60 hover:bg-black/[0.07] dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1]'
+                )}
+                title="Bật để xuất phát ngay không cần hẹn giờ"
+              >
+                <Zap className={cn('h-3.5 w-3.5', isDepartNow ? 'fill-[#0071e3] text-[#0071e3] dark:fill-[#0a84ff] dark:text-[#0a84ff]' : 'text-black/40 dark:text-white/40')} />
+                <span>Đăng chuyến ngay</span>
+                <span
+                  className={cn(
+                    'relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out',
+                    isDepartNow ? 'bg-[#0071e3] dark:bg-[#0a84ff]' : 'bg-black/20 dark:bg-white/20'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'inline-block h-3 w-3 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out',
+                      isDepartNow ? 'translate-x-3.5' : 'translate-x-0.5'
+                    )}
+                  />
+                </span>
+              </button>
             </div>
-            <div className="rounded-2xl bg-[#0071e3]/[0.055] p-4">
-              <div className="flex items-start gap-3">
-                <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-[#0071e3]" />
-                <div>
-                  <p className="text-xs font-semibold text-[#0071e3]">Gợi ý thời gian</p>
-                  <p className="mt-1 text-xs leading-5 text-black/50 dark:text-white/50">
-                    Đăng trước ít nhất 30 phút để có thêm cơ hội tìm được hành khách phù hợp.
-                  </p>
+
+            {/* Ô nhập ngày giờ hoặc trạng thái xuất phát ngay */}
+            {isDepartNow ? (
+              <div className="flex h-12 items-center justify-between rounded-xl border border-[#0071e3]/30 bg-[#0071e3]/[0.05] px-4 text-sm font-medium text-[#0071e3] dark:border-[#0a84ff]/30 dark:bg-[#0a84ff]/10 dark:text-[#0a84ff]">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 fill-current" />
+                  <span>Xuất phát ngay</span>
                 </div>
+                <span className="text-xs font-semibold tabular-nums opacity-80">
+                  {new Date(Date.now() + 2 * 60_000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - Hôm nay
+                </span>
               </div>
-            </div>
+            ) : (
+              <div>
+                <input
+                  id="departureTime"
+                  type="datetime-local"
+                  min={toDateTimeLocal(new Date(Date.now() + 5 * 60_000))}
+                  className={inputClass}
+                  {...register('departureTime')}
+                />
+                {errors.departureTime && (
+                  <p className="mt-1.5 text-xs text-[#d93025]">{errors.departureTime.message}</p>
+                )}
+              </div>
+            )}
+
+            {/* Phần gợi ý thời gian đặt xuống dưới cùng */}
+            {!isDepartNow && (
+              <div className="flex items-center gap-2 rounded-xl bg-black/[0.03] px-3.5 py-2.5 text-xs text-black/60 dark:bg-white/[0.04] dark:text-white/60">
+                <Calendar className="h-3.5 w-3.5 shrink-0 text-[#0071e3] dark:text-[#0a84ff]" />
+                <p>
+                  <span className="font-semibold text-[#1d1d1f] dark:text-white">Gợi ý:</span>{' '}
+                  Đăng trước ít nhất 30 phút để có thêm cơ hội tìm được hành khách phù hợp.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </Surface>
@@ -991,7 +1286,14 @@ export default function PostRidePage() {
         </div>
         <div className="overflow-hidden rounded-[20px]">
           {originCoords && destinationCoords ? (
-            <MapViewer origin={originCoords} destination={destinationCoords} className="h-[360px] sm:h-[430px]" />
+            <MapViewer
+              origin={originCoords}
+              destination={destinationCoords}
+              waypoints={stops
+                .filter((s) => s.lat != null && s.lng != null)
+                .map((s) => ({ lat: s.lat!, lng: s.lng! }))}
+              className="h-[360px] sm:h-[430px]"
+            />
           ) : (
             <div className="flex h-[360px] items-center justify-center bg-black/[0.03] dark:bg-white/[0.04]">
               <p className="text-sm text-black/45 dark:text-white/45">Chưa có dữ liệu bản đồ</p>
@@ -1006,14 +1308,31 @@ export default function PostRidePage() {
           <div className="mt-5 flex gap-4">
             <div className="flex flex-col items-center">
               <span className="mt-1 h-3 w-3 rounded-full border-[3px] border-[#0071e3] bg-white dark:bg-[#1c1c1e]" />
-              <span className="my-1 h-16 w-px bg-gradient-to-b from-[#0071e3] to-[#ff3b30]" />
+              <span className="my-1 flex-1 w-px bg-gradient-to-b from-[#0071e3] to-[#ff3b30]" />
               <MapPin className="h-4 w-4 text-[#ff3b30]" />
             </div>
-            <div className="min-w-0 flex-1 space-y-7">
+            <div className="min-w-0 flex-1 space-y-6">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-black/40 dark:text-white/40">Điểm đi</p>
                 <p className="mt-1 text-sm font-semibold leading-5 text-[#1d1d1f] dark:text-white">{originAddress}</p>
               </div>
+
+              {stops.map((stop, index) => (
+                <div key={stop.id} className="rounded-xl border border-[#f59e0b]/30 bg-[#f59e0b]/[0.05] p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-[#b45309] dark:text-[#fbbf24]">
+                      Điểm dừng {index + 1}
+                    </span>
+                    <span className="rounded-md bg-[#f59e0b]/20 px-1.5 py-0.5 text-[10px] font-semibold text-[#b45309] dark:text-[#fbbf24]">
+                      Dừng {stop.waitTimeMinutes} phút
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs font-semibold leading-5 text-[#1d1d1f] dark:text-white">
+                    {stop.address || 'Chưa chọn địa chỉ'}
+                  </p>
+                </div>
+              ))}
+
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-black/40 dark:text-white/40">Điểm đến</p>
                 <p className="mt-1 text-sm font-semibold leading-5 text-[#1d1d1f] dark:text-white">{destinationAddress}</p>
@@ -1221,14 +1540,26 @@ export default function PostRidePage() {
           <div className="mt-6 flex gap-4 rounded-2xl bg-black/[0.025] p-4 dark:bg-white/[0.045]">
             <div className="flex flex-col items-center">
               <span className="mt-1 h-3 w-3 rounded-full border-[3px] border-[#0071e3] bg-white dark:bg-[#1c1c1e]" />
-              <span className="my-1 h-16 w-px bg-gradient-to-b from-[#0071e3] to-[#ff3b30]" />
+              <span className="my-1 flex-1 w-px bg-gradient-to-b from-[#0071e3] to-[#ff3b30]" />
               <MapPin className="h-4 w-4 text-[#ff3b30]" />
             </div>
-            <div className="min-w-0 flex-1 space-y-7">
+            <div className="min-w-0 flex-1 space-y-5">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-black/40 dark:text-white/40">Điểm đi</p>
                 <p className="mt-1 text-sm font-semibold leading-5 text-[#1d1d1f] dark:text-white">{originAddress}</p>
               </div>
+
+              {stops.map((stop, index) => (
+                <div key={stop.id} className="rounded-lg bg-black/[0.03] p-2.5 dark:bg-white/[0.04]">
+                  <p className="text-[11px] font-bold text-[#b45309] dark:text-[#fbbf24]">
+                    Điểm dừng {index + 1} · Dừng {stop.waitTimeMinutes} phút
+                  </p>
+                  <p className="mt-0.5 text-xs text-[#1d1d1f] dark:text-white">
+                    {stop.address || '—'}
+                  </p>
+                </div>
+              ))}
+
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-black/40 dark:text-white/40">Điểm đến</p>
                 <p className="mt-1 text-sm font-semibold leading-5 text-[#1d1d1f] dark:text-white">{destinationAddress}</p>
@@ -1240,7 +1571,26 @@ export default function PostRidePage() {
           </div>
 
           <dl className="mt-5 divide-y divide-black/[0.07] dark:divide-white/[0.08]">
-            <SummaryRow label="Khởi hành" value={departureTime ? new Date(departureTime).toLocaleString('vi-VN') : '—'} />
+            <SummaryRow
+              label="Khởi hành"
+              value={
+                isDepartNow ? (
+                  <span className="inline-flex items-center gap-1.5 font-bold text-[#248a3d] dark:text-[#30d158]">
+                    <Zap className="h-4 w-4" /> Khởi hành ngay
+                  </span>
+                ) : departureTime ? (
+                  new Date(departureTime).toLocaleString('vi-VN')
+                ) : (
+                  '—'
+                )
+              }
+            />
+            {stops.length > 0 && (
+              <SummaryRow
+                label="Điểm dừng dọc đường"
+                value={`${stops.length} điểm (nghỉ ${stops.reduce((sum, s) => sum + s.waitTimeMinutes, 0)} phút)`}
+              />
+            )}
             <SummaryRow
               label="Phương tiện"
               value={selectedVehicle ? (selectedVehicle.type === 'CAR' ? 'Ô tô · ' : 'Xe máy · ') + selectedVehicle.licensePlate : '—'}

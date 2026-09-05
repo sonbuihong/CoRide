@@ -250,11 +250,13 @@ export function LiveBookingMap({ booking }: LiveBookingMapProps) {
           autoFocusDriver={false}
         />
 
-        <View style={styles.liveBadge} pointerEvents="none">
+        <View
+          style={styles.liveBadge}
+          pointerEvents="none"
+          accessibilityRole="none"
+          accessibilityLabel={connected ? 'Đang cập nhật trực tiếp' : 'Đang kết nối'}
+        >
           <View style={[styles.liveDot, !connected && styles.liveDotOffline]} />
-          <AppText variant="caption" weight="bold" style={styles.liveBadgeText}>
-            {connected ? 'TRỰC TIẾP' : 'ĐANG KẾT NỐI'}
-          </AppText>
         </View>
 
         <Pressable
@@ -322,16 +324,20 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.full,
     borderWidth: 1,
-    flexDirection: 'row',
+    height: 28,
+    justifyContent: 'center',
     left: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
     position: 'absolute',
     top: spacing.sm,
+    width: 28,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  liveDot: { backgroundColor: colors.success, borderRadius: 5, height: 8, marginRight: spacing.xs, width: 8 },
+  liveDot: { backgroundColor: colors.success, borderRadius: 5, height: 10, width: 10 },
   liveDotOffline: { backgroundColor: colors.warning },
-  liveBadgeText: { color: colors.textPrimary, letterSpacing: 0.4 },
   recenterButton: {
     alignItems: 'center',
     backgroundColor: colors.surface,

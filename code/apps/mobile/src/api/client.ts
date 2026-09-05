@@ -19,7 +19,6 @@ const NO_AUTH_URLS = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/f
 
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.baseURL || ''}${config.url || ''}`);
     // Không đính kèm token cho các route auth public
     if (config.url && NO_AUTH_URLS.some(url => config.url?.includes(url))) {
       return config;

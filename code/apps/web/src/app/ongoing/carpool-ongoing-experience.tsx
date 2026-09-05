@@ -259,9 +259,12 @@ export default function CarpoolOngoingExperience({
             Chuyến đi chưa có đủ tọa độ để hiển thị bản đồ.
           </div>
         )}
-        <div className="pointer-events-none absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-xs font-semibold text-[#134e4a] shadow-[0_6px_20px_rgba(15,118,110,0.16)] dark:bg-[#10211e]/95 dark:text-[#99f6e4]">
-          <span className={`h-2 w-2 rounded-full ${driverLocation ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-          {driverLocation ? 'GPS đang cập nhật' : 'Đang chờ vị trí GPS'}
+        <div
+          className="pointer-events-none absolute left-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-[0_6px_20px_rgba(15,118,110,0.16)] dark:bg-[#10211e]/95"
+          title={driverLocation ? 'GPS đang cập nhật' : 'Đang chờ vị trí GPS'}
+          aria-label={driverLocation ? 'GPS đang cập nhật' : 'Đang chờ vị trí GPS'}
+        >
+          <span className={`h-2.5 w-2.5 rounded-full ${driverLocation ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
         </div>
       </div>
 

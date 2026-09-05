@@ -109,6 +109,9 @@ services:
       - "5101:5101"
     volumes:
       - ./apps/backend/src:/app/apps/backend/src
+      - ./packages/database/prisma:/app/packages/database/prisma
+      - ./packages/database/generated:/app/packages/database/generated
+      - ./packages/database/dist:/app/packages/database/dist
       - ./uploads:/app/apps/backend/uploads
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5101/api/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
@@ -139,6 +142,9 @@ services:
       - "5201:5201"
     volumes:
       - ./apps/notification-service/src:/app/apps/notification-service/src
+      - ./packages/database/prisma:/app/packages/database/prisma
+      - ./packages/database/generated:/app/packages/database/generated
+      - ./packages/database/dist:/app/packages/database/dist
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5201/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
       interval: 5s

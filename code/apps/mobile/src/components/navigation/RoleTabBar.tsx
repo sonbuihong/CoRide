@@ -1,5 +1,5 @@
 import React from 'react';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';

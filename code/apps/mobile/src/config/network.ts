@@ -58,11 +58,3 @@ export const API_URL = developmentHost
 export const SOCKET_URL = developmentHost
   ? `http://${developmentHost}:5001`
   : configuredSocketUrl;
-
-console.log('[CoRide Network Config]', {
-  platform: Platform.OS,
-  isDevice: Device.isDevice,
-  developmentHost,
-  API_URL,
-  SOCKET_URL,
-});

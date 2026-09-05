@@ -19,6 +19,7 @@ interface Location {
 interface MapViewerProps {
   origin?: Location;
   destination?: Location;
+  waypoints?: Location[];
   className?: string;
   zoom?: number;
   /** Hiển thị thanh tìm kiếm + chọn kiểu bản đồ */
@@ -33,6 +34,7 @@ const DEFAULT_CENTER_LAT_LNG: [number, number] = [21.028511, 105.804817];
 export const MapViewer: React.FC<MapViewerProps> = ({
   origin,
   destination,
+  waypoints = [],
   className,
   zoom = 14,
   showControls = false,
@@ -69,8 +71,11 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     // Goong Directions API nhận "lat,lng"
     const originStr = `${origin?.lat},${origin?.lng}`;
     const destStr = `${destination?.lat},${destination?.lng}`;
+    const waypointsStr = (waypoints || [])
+      .filter((w) => isValidCoord(w.lat) && isValidCoord(w.lng))
+      .map((w) => `${w.lat},${w.lng}`);
 
-    getDirections(originStr, destStr)
+    getDirections(originStr, destStr, 'car', false, waypointsStr)
       .then((data) => {
         if (data?.routes?.length) {
           const route = data.routes[0];
@@ -80,17 +85,18 @@ export const MapViewer: React.FC<MapViewerProps> = ({
             setPolyline(decoded);
           }
           if (route.legs?.length) {
-            const leg = route.legs[0];
+            const totalDistance = route.legs.reduce((sum, leg) => sum + (leg.distance?.value || 0), 0);
+            const totalDuration = route.legs.reduce((sum, leg) => sum + (leg.duration?.value || 0), 0);
             setRouteInfo({
-              distance: leg.distance.text,
-              duration: formatDuration(leg.duration.value),
+              distance: `${(totalDistance / 1000).toFixed(1)} km`,
+              duration: formatDuration(totalDuration),
             });
           }
         }
       })
       .catch((err) => console.error('[MapViewer] Lỗi lấy route:', err))
       .finally(() => setIsLoadingRoute(false));
-  }, [origin?.lat, origin?.lng, destination?.lat, destination?.lng, hasValidCoords]);
+  }, [origin?.lat, origin?.lng, destination?.lat, destination?.lng, hasValidCoords, JSON.stringify(waypoints)]);
 
   // GoongMap nhận center dạng [lat, lng] (format cũ của codebase)
   // GoongMap sẽ tự convert sang [lng, lat] bên trong
@@ -99,13 +105,20 @@ export const MapViewer: React.FC<MapViewerProps> = ({
     : DEFAULT_CENTER_LAT_LNG;
 
   // Markers cho GoongMap: position phải là [lng, lat]
-  // origin = vị trí hiện tại (dot xanh), destination = điểm đến (pin đỏ)
+  // origin = vị trí bắt đầu (dot xanh), waypoints = các điểm dừng (pin vàng/cam), destination = điểm đến (pin đỏ)
   const mapMarkers = [
     ...(origin ? [{
       position: [origin.lng, origin.lat] as [number, number],
       type: 'dot' as const,
       color: '#4285F4',
     }] : []),
+    ...(waypoints || [])
+      .filter((w) => isValidCoord(w.lat) && isValidCoord(w.lng))
+      .map((w, index) => ({
+        position: [w.lng, w.lat] as [number, number],
+        type: 'pin' as const,
+        color: '#F59E0B',
+      })),
     ...(destination ? [{
       position: [destination.lng, destination.lat] as [number, number],
       type: 'pin' as const,

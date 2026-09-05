@@ -64,11 +64,38 @@ export class RidesService {
       );
     }
 
+    // Tự động dọn dẹp các chuyến quá hạn nếu có
+    await this.expireOverdueRides().catch((err) => {
+      console.warn('[RidesService] expireOverdueRides check skipped:', err);
+    });
+
     const activeDriverRide = await prisma.ride.findFirst({
       where: { driverId, status: 'ONGOING' },
+      select: { departureTime: true, duration: true, origin: true, destination: true },
     });
     if (activeDriverRide) {
-      throw new AppError('Bạn đang có một chuyến đi diễn ra. Hãy hoàn thành chuyến đó trước khi đăng lịch mới.', 400);
+      const activeDuration = activeDriverRide.duration && activeDriverRide.duration > 0
+        ? activeDriverRide.duration
+        : 60;
+      const estimatedEndTime = new Date(
+        Math.max(Date.now(), activeDriverRide.departureTime.getTime()) + activeDuration * 60 * 1000
+      );
+      // Chỉ chặn nếu giờ khởi hành chuyến mới nằm trước hoặc trong thời gian chuyến đang chạy
+      const conflictingTime = departureTimes.find(
+        (time) => time.getTime() <= estimatedEndTime.getTime()
+      );
+      if (conflictingTime) {
+        const timeStr = estimatedEndTime.toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          day: '2-digit',
+          month: '2-digit',
+        });
+        throw new AppError(
+          `Bạn đang có một chuyến đi đang diễn ra (dự kiến kết thúc lúc ${timeStr}). Chuyến mới phải khởi hành sau thời gian này.`,
+          400
+        );
+      }
     }
     const conflictingRide = await prisma.ride.findFirst({
       where: {
@@ -129,7 +156,7 @@ export class RidesService {
         destinationLat: data.destinationLat ?? null,
         destinationLng: data.destinationLng ?? null,
         distance: route.estimate.estimatedDistance,
-        duration: route.estimate.estimatedDuration,
+        duration: route.estimate.estimatedDuration + (data.stops?.reduce((sum, s) => sum + (s.waitTimeMinutes ?? 5), 0) ?? 0),
         routePolyline: route.estimate.routePolyline,
         departureTime,
         availableSeats: data.availableSeats,
@@ -169,7 +196,14 @@ export class RidesService {
     const newRide = await prisma.$transaction(async (tx) => {
       const ride = await tx.ride.create({ data: this.buildRideData(driverId, data, departureTime, route) });
       if (data.stops?.length) {
-        await tx.rideStop.createMany({ data: data.stops.map((stop, order) => ({ ...stop, rideId: ride.id, order })) });
+        await tx.rideStop.createMany({
+          data: data.stops.map((stop, order) => ({
+            ...stop,
+            rideId: ride.id,
+            order,
+            waitTimeMinutes: stop.waitTimeMinutes ?? 5,
+          })),
+        });
       }
       return tx.ride.findUniqueOrThrow({ where: { id: ride.id }, include: DRIVER_SELECT });
     });
@@ -194,7 +228,14 @@ export class RidesService {
       for (const departureTime of departureTimes) {
         const ride = await tx.ride.create({ data: this.buildRideData(driverId, data, departureTime, route, schedule.id) });
         if (data.stops?.length) {
-          await tx.rideStop.createMany({ data: data.stops.map((stop, order) => ({ ...stop, rideId: ride.id, order })) });
+          await tx.rideStop.createMany({
+            data: data.stops.map((stop, order) => ({
+              ...stop,
+              rideId: ride.id,
+              order,
+              waitTimeMinutes: stop.waitTimeMinutes ?? 5,
+            })),
+          });
         }
         rides.push(await tx.ride.findUniqueOrThrow({ where: { id: ride.id }, include: DRIVER_SELECT }));
       }
@@ -551,7 +592,14 @@ export class RidesService {
       if (stops) {
         await tx.rideStop.deleteMany({ where: { rideId: id } });
         if (stops.length) {
-          await tx.rideStop.createMany({ data: stops.map((stop, order) => ({ ...stop, rideId: id, order })) });
+          await tx.rideStop.createMany({
+            data: stops.map((stop, order) => ({
+              ...stop,
+              rideId: id,
+              order,
+              waitTimeMinutes: stop.waitTimeMinutes ?? 5,
+            })),
+          });
         }
       }
       return tx.ride.findUniqueOrThrow({ where: { id }, include: DRIVER_SELECT });
@@ -812,4 +860,143 @@ export class RidesService {
 
     return updatedRide;
   }
+
+  /**
+   * Tính toán thời điểm hết hạn của chuyến đi chưa khởi hành:
+   * departureTime + duration (ước lượng Goong, fallback 60 phút)
+   * + buffer thời gian dư ra theo tỉ lệ 50% thời lượng chuyến, tối thiểu 60 phút (1 giờ).
+   */
+  static calculateRideExpiryTime(departureTime: Date, durationMinutes?: number | null): Date {
+    const duration = durationMinutes && durationMinutes > 0 ? durationMinutes : 60;
+    const bufferMinutes = Math.max(60, Math.round(duration * 0.5));
+    const totalAllowedMinutes = duration + bufferMinutes;
+    return new Date(departureTime.getTime() + totalAllowedMinutes * 60 * 1000);
+  }
+
+  /**
+   * Tự động quét và hủy các chuyến đi SCHEDULED / FULL đã quá giờ khởi hành + thời gian chờ cho phép.
+   */
+  static async expireOverdueRides(limit = 100) {
+    const now = new Date();
+    const candidateRides = await prisma.ride.findMany({
+      where: {
+        status: { in: ['SCHEDULED', 'FULL'] },
+        departureTime: { lte: now },
+      },
+      take: limit,
+      orderBy: { departureTime: 'asc' },
+      select: {
+        id: true,
+        driverId: true,
+        origin: true,
+        destination: true,
+        departureTime: true,
+        duration: true,
+      },
+    });
+
+    const overdueRides = candidateRides.filter((ride) => {
+      const cutoffTime = this.calculateRideExpiryTime(ride.departureTime, ride.duration);
+      return now.getTime() > cutoffTime.getTime();
+    });
+
+    if (overdueRides.length === 0) return [];
+
+    const results = [];
+    const cancelReason = 'Chuyến đi đã quá hạn khởi hành và thời gian chờ quy định (hệ thống tự động hủy)';
+
+    for (const ride of overdueRides) {
+      try {
+        const result = await prisma.$transaction(async (tx) => {
+          const currentRide = await tx.ride.findUnique({
+            where: { id: ride.id },
+            select: { status: true },
+          });
+          if (!currentRide || !['SCHEDULED', 'FULL'].includes(currentRide.status)) {
+            return null;
+          }
+
+          const cancelledRide = await tx.ride.update({
+            where: { id: ride.id },
+            data: { status: 'CANCELLED', cancelReason },
+          });
+
+          const affectedBookings = await tx.booking.findMany({
+            where: {
+              rideId: ride.id,
+              status: { in: ['PENDING', 'CONFIRMED'] },
+            },
+            select: { id: true, passengerId: true },
+          });
+
+          if (affectedBookings.length > 0) {
+            await tx.booking.updateMany({
+              where: {
+                rideId: ride.id,
+                status: { in: ['PENDING', 'CONFIRMED'] },
+              },
+              data: {
+                status: 'CANCELLED',
+                cancelReason: 'Chuyến đi đã quá hạn khởi hành và bị hủy tự động',
+                expiresAt: null,
+                seatHeld: false,
+              },
+            });
+          }
+
+          return { cancelledRide, affectedBookings };
+        });
+
+        if (!result) continue;
+        results.push(result.cancelledRide);
+
+        try {
+          SocketEventService.emitGlobal(SocketEvents.RIDE_STATUS_UPDATED, {
+            rideId: ride.id,
+            status: 'CANCELLED',
+            updatedAt: new Date().toISOString(),
+          });
+
+          result.affectedBookings.forEach((booking) => {
+            SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_CANCELLED, {
+              rideId: ride.id,
+              reason: 'Chuyến đi đã quá hạn khởi hành và bị hủy tự động',
+            });
+          });
+        } catch (socketError) {
+          console.warn('[RidesService] Socket emit skipped in expireOverdueRides:', socketError);
+        }
+
+        const formattedTime = ride.departureTime.toLocaleString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          day: '2-digit',
+          month: '2-digit',
+        });
+
+        NotificationsService.createNotification(
+          ride.driverId,
+          'Chuyến đi đã bị hủy tự động',
+          `Chuyến đi từ ${ride.origin} đến ${ride.destination} (lúc ${formattedTime}) đã quá giờ khởi hành và thời gian chờ quy định nên đã được hệ thống tự động hủy.`,
+          'RIDE_CANCELLED',
+          { type: 'RIDE', id: ride.id },
+        ).catch(() => undefined);
+
+        result.affectedBookings.forEach((booking) => {
+          NotificationsService.createNotification(
+            booking.passengerId,
+            'Chuyến đi đã bị hủy tự động',
+            `Chuyến đi từ ${ride.origin} đến ${ride.destination} (lúc ${formattedTime}) đã bị hủy tự động do tài xế không khởi hành đúng giờ.`,
+            'RIDE_CANCELLED',
+            { type: 'RIDE', id: ride.id },
+          ).catch(() => undefined);
+        });
+      } catch (rideError) {
+        console.error(`[RidesService] Failed to auto-cancel overdue ride ${ride.id}:`, rideError);
+      }
+    }
+
+    return results;
+  }
 }
+

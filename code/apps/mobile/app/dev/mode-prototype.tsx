@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '../../src/components/ui/AppText';
 import { MOCK_USER_NO_KYC, MOCK_USER_KYC_PENDING, MOCK_USER_KYC_REJECTED, MOCK_USER_KYC_APPROVED } from '../../src/fixtures/mock-profiles';
 import ProfileContent from '../../src/screens/ProfileContent';

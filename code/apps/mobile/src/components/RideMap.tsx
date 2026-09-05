@@ -50,7 +50,7 @@ export const RideMap: React.FC<RideMapProps> = ({ departureCoords, destinationCo
     >
       <MapView
         provider={PROVIDER_GOOGLE}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         initialRegion={departureCoords ? {
           ...departureCoords,
           latitudeDelta: 0.1,

@@ -80,7 +80,15 @@ export default function OngoingExperience({ tripId }: { tripId?: string | null }
   const terminal = trip.status === 'COMPLETED' || trip.status === 'NO_DRIVER' || trip.status === 'CANCELLED';
   return <div className="relative h-[calc(100dvh-113px)] min-h-[540px] overflow-hidden bg-[#edf1eb] lg:h-[calc(100dvh-48px)] lg:min-h-[620px]">
     <div className="absolute inset-0"><GoongMap height="100%" center={[trip.originLat, trip.originLng]} markers={markers} polylines={routeLine.length ? [{ positions: routeLine, color: '#16833b', width: 6, outlineColor: '#fff', outlineWidth: 10 }] : []}/></div>
-    {!terminal && <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#33523b] shadow-[2px_5px_18px_rgba(24,45,29,.14)]"><span className={`h-2 w-2 rounded-full ${trip.status === 'MATCHING' || trip.status === 'PENDING' ? 'animate-pulse bg-[#f3a51f]' : 'bg-[#16833b]'}`}/>{trip.status === 'MATCHING' || trip.status === 'PENDING' ? 'Đang kết nối tài xế' : 'Chuyến đi đang hoạt động'}</div>}
+    {!terminal && (
+      <div
+        className="pointer-events-none absolute left-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-[2px_5px_18px_rgba(24,45,29,.14)]"
+        title={trip.status === 'MATCHING' || trip.status === 'PENDING' ? 'Đang kết nối tài xế' : 'Chuyến đi đang hoạt động'}
+        aria-label={trip.status === 'MATCHING' || trip.status === 'PENDING' ? 'Đang kết nối tài xế' : 'Chuyến đi đang hoạt động'}
+      >
+        <span className={`h-2.5 w-2.5 rounded-full ${trip.status === 'MATCHING' || trip.status === 'PENDING' ? 'animate-pulse bg-[#f3a51f]' : 'bg-[#16833b]'}`} />
+      </div>
+    )}
     <section className={`absolute inset-x-0 bottom-0 z-20 flex max-h-[82dvh] flex-col rounded-t-[22px] bg-white shadow-[2px_-8px_32px_rgba(24,45,29,.18)] transition-[height] md:bottom-6 md:left-6 md:right-auto md:top-6 md:h-auto md:max-h-none md:w-[450px] md:rounded-[16px] ${expanded ? 'h-[82dvh]' : 'h-auto'}`}>
       <button onClick={() => setExpanded(!expanded)} className="flex min-h-9 w-full items-center justify-center md:hidden" aria-label={expanded ? 'Thu gọn' : 'Mở rộng'}><span className="h-1 w-10 rounded-full bg-[#d6dbd4]"/><ChevronUp className={`absolute right-5 h-4 w-4 text-[#687168] transition ${expanded ? 'rotate-180' : ''}`}/></button>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 md:px-6 md:pt-5">

@@ -84,7 +84,7 @@ export function StartLocationMap({
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         initialRegion={initialRegion}
         onRegionChange={() => updateMoving(true)}
         onRegionChangeComplete={(region) => {

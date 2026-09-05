@@ -113,7 +113,7 @@ const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function 
       <MapView
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         initialRegion={initialRegion}
         onMapReady={() => setMapReady(true)}
         onLayout={({ nativeEvent }) => setLayoutReady(nativeEvent.layout.width > 0 && nativeEvent.layout.height > 0)}

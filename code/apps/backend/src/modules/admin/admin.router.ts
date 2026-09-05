@@ -13,6 +13,7 @@ router.get('/users', adminController.getAllUsers);
 router.get('/users/:id', adminController.getUserById);
 router.patch('/users/:id', adminController.updateUser);
 router.delete('/users/:id', adminController.deleteUser);
+router.post('/users/:id/restore', adminController.restoreUser);
 
 // Ride management
 router.get('/rides', adminController.getAllRides);

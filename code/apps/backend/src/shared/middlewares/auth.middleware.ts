@@ -43,12 +43,20 @@ export const authenticate = async (
         lastName: true,
         phone: true,
         role: true,
+        status: true,
+        deletedAt: true,
         createdAt: true,
         updatedAt: true,
       },
     });
 
-    if (!user) throw new AppError('Người dùng không tồn tại hoặc đã bị xóa', 401);
+    if (!user || user.status === 'DELETED' || user.deletedAt) {
+      throw new AppError('Người dùng không tồn tại hoặc đã bị xóa', 401);
+    }
+
+    if (user.status === 'BANNED') {
+      throw new AppError('Tài khoản đã bị khóa do vi phạm chính sách', 403);
+    }
 
     req.user = user;
     next();

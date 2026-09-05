@@ -44,6 +44,13 @@ export const errorHandler = (
       return;
     }
 
+    if (prismaErr.code === 'P2003') {
+      res.status(409).json({
+        message: 'Không thể xóa hoặc thay đổi dữ liệu do bản ghi đang được liên kết với dữ liệu khác trong hệ thống (chuyến đi, vé đặt, đánh giá hoặc giao dịch).'
+      });
+      return;
+    }
+
     // Lỗi truy vấn/kết nối Prisma phát sinh ở server, không phải request sai.
     // Giữ chi tiết trong log để chẩn đoán nhưng không làm lộ nội bộ qua API.
     console.error('[PRISMA ERROR]:', {
