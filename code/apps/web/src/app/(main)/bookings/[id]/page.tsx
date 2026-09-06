@@ -64,6 +64,12 @@ interface BookingDetail {
   passengerId: string;
   seats: number;
   totalPrice: number;
+  priceBreakdown?: {
+    pricingPolicy?: 'FIXED_PER_SEAT';
+    offeredSeats?: number;
+    costShareSeats?: number;
+    totalCostShares?: number;
+  } | null;
   sharedDistanceKm?: number | null;
   detourKm?: number | null;
   status: BookingStatus;
@@ -103,9 +109,12 @@ interface BookingDetail {
     destinationLng?: number | null;
     departureTime: string;
     pricePerSeat: number;
+    offeredSeats?: number;
     distance?: number | null;
     duration?: number | null;
     status: RideStatus;
+    currentDriverLat?: number | null;
+    currentDriverLng?: number | null;
     driver: Person;
     vehicle?: {
       id: string;
@@ -288,7 +297,7 @@ export default function BookingDetailPage() {
   const dropoffAddress = booking.dropoffAddress || booking.ride.destination;
   const driverName = getPersonName(booking.ride.driver);
   const departure = new Date(booking.ride.departureTime);
-  const pricePerSeat = booking.ride.pricePerSeat || booking.totalPrice / Math.max(booking.seats, 1);
+  const pricePerSeat = booking.totalPrice / Math.max(booking.seats, 1);
   const hasMap = [
     booking.ride.originLat,
     booking.ride.originLng,
@@ -419,6 +428,13 @@ export default function BookingDetailPage() {
                     destination={{ lat: booking.ride.destinationLat!, lng: booking.ride.destinationLng! }}
                     passengerOrigin={booking.passengerLat != null && booking.passengerLng != null ? { lat: booking.passengerLat, lng: booking.passengerLng } : null}
                     passengerDestination={booking.dropoffLat != null && booking.dropoffLng != null ? { lat: booking.dropoffLat, lng: booking.dropoffLng } : null}
+                    driverLocation={
+                      booking.ride.currentDriverLat != null && booking.ride.currentDriverLng != null
+                        ? { lat: booking.ride.currentDriverLat, lng: booking.ride.currentDriverLng }
+                        : (booking.ride.status === 'ONGOING' && booking.ride.originLat != null && booking.ride.originLng != null
+                            ? { lat: booking.ride.originLat, lng: booking.ride.originLng }
+                            : null)
+                    }
                   />
                 </CardContent>
               </Card>
@@ -515,8 +531,13 @@ export default function BookingDetailPage() {
               <CardContent className="space-y-3 p-5 pt-3">
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Đơn giá</span><span>{pricePerSeat.toLocaleString('vi-VN')}đ / ghế</span></div>
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Số ghế</span><span>{booking.seats}</span></div>
+                {booking.priceBreakdown?.totalCostShares && (
+                  <p className="rounded-xl bg-muted/55 p-3 text-xs leading-5 text-muted-foreground">
+                    {booking.priceBreakdown.costShareSeats ?? booking.priceBreakdown.offeredSeats ?? booking.ride.offeredSeats ?? 1} ghế khách + 1 tài xế = chia {booking.priceBreakdown.totalCostShares} phần. Đang mở bán {booking.priceBreakdown.offeredSeats ?? booking.ride.offeredSeats ?? 1} ghế. Giá booking này đã được chốt khi đặt.
+                  </p>
+                )}
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Phương thức</span><span>{booking.paymentStatus === 'PAID' ? 'QR mô phỏng' : 'Chưa thanh toán'}</span></div>
-                <div className="flex items-end justify-between border-t pt-4"><span className="font-semibold">Tổng tiền</span><span className="text-2xl font-bold text-primary">{booking.totalPrice.toLocaleString('vi-VN')}đ</span></div>
+                <div className="flex items-end justify-between border-t pt-4"><span className="font-semibold">Tổng thanh toán</span><span className="text-2xl font-bold text-primary">{booking.totalPrice.toLocaleString('vi-VN')}đ</span></div>
                 <Badge variant="outline" className={cn('mt-1 h-7 w-full justify-center', booking.paymentStatus === 'PAID' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700')}>
                   {booking.paymentStatus === 'PAID' ? 'Đã thanh toán' : booking.paymentStatus === 'REFUNDED' ? 'Đã hoàn tiền' : 'Chưa thanh toán'}
                 </Badge>

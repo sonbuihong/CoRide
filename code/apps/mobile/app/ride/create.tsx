@@ -852,6 +852,7 @@ export default function CreateRideScreen() {
               destination={destinationCoordinates}
               routes={routes}
               selectedRouteIndex={selectedRouteIndex}
+              costShareSeats={pricingQuery.data?.costShareSeats ?? maxSeats}
             />
           )}
           {(screenError || (routeError && step !== 2)) && (
@@ -1940,7 +1941,12 @@ function VehicleRulesStep({
       <View style={styles.seatControl}>
         <View style={styles.seatCopy}>
           <Users size={20} color={colors.primary} />
-          <AppText weight="semibold">Ghế mở bán</AppText>
+          <View style={styles.flex}>
+            <AppText weight="semibold">Ghế dành cho hành khách</AppText>
+            <AppText variant="caption" style={styles.secondary}>
+              {maxSeats} ghế khách + 1 tài xế = chia {maxSeats + 1} phần. Đang mở bán {form.availableSeats} ghế; ghế chưa mở bán do tài xế chịu.
+            </AppText>
+          </View>
         </View>
         <View style={styles.counter}>
           <CounterButton
@@ -2103,7 +2109,11 @@ function PriceStep({
     <View>
       <StepHeading
         title="Thiết lập giá mỗi ghế"
-        copy="CoRide tính mức chia chi phí phù hợp; bạn có thể điều chỉnh trong biên độ ±20%."
+        copy={
+          estimate
+            ? `${estimate.costShareSeats ?? estimate.offeredSeats} ghế khách + 1 tài xế = chia ${estimate.totalCostShares} phần. Bạn đang mở bán ${estimate.offeredSeats} ghế; có thể điều chỉnh giá trong biên độ tối đa ±${Math.round(estimate.driverPriceAdjustmentRate * 100)}%.`
+            : "CoRide tính mức chia chi phí theo số ghế dành cho hành khách và phần của tài xế."
+        }
       />
       {query.isFetching && (
         <StatusRow text="Đang tính giá theo tuyến đã chọn…" />
@@ -2180,6 +2190,7 @@ function ReviewStep({
   destination,
   routes,
   selectedRouteIndex,
+  costShareSeats,
 }: {
   form: CreateRideInput;
   isDepartNow?: boolean;
@@ -2191,6 +2202,7 @@ function ReviewStep({
   destination: MapCoordinates;
   routes: GoongRoute[];
   selectedRouteIndex: number;
+  costShareSeats: number;
 }) {
   const totalStopMinutes = stops.reduce(
     (sum, s) => sum + (s.waitTimeMinutes ?? 5),
@@ -2245,8 +2257,12 @@ function ReviewStep({
           value={vehicle?.licensePlate || "Chưa chọn"}
         />
         <ReviewRow
-          label="Ghế mỗi chuyến"
+          label="Ghế dành cho hành khách"
           value={`${form.availableSeats} ghế`}
+        />
+        <ReviewRow
+          label="Cách chia chi phí"
+          value={`${costShareSeats} ghế khách + 1 tài xế = ${costShareSeats + 1} phần`}
         />
         <ReviewRow
           label="Đặt chỗ"

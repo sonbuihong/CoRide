@@ -133,15 +133,68 @@ const OngoingMap: React.FC<OngoingMapProps> = ({
 
     const driverElement = document.createElement('div');
     driverElement.className = 'goong-driver-marker';
-    Object.assign(driverElement.style, {
-      width: '20px',
-      height: '20px',
-      backgroundColor: '#4285F4',
-      borderRadius: '50%',
-      border: '3px solid white',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-    });
-    driverMarkerRef.current = new maplibregl.Marker({ element: driverElement })
+    driverElement.style.cssText = `
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    `;
+    driverElement.innerHTML = `
+      <div style="
+        background: #0071e3;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        border: 1.5px solid #ffffff;
+        letter-spacing: 0.2px;
+      ">Tài xế</div>
+      <div style="position: relative; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+        <div style="
+          position: absolute;
+          inset: -6px;
+          border-radius: 50%;
+          background: #0071e3;
+          opacity: 0.35;
+          animation: driver-pulse 2s ease-out infinite;
+        "></div>
+        <div style="
+          position: relative;
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: #0071e3;
+          border: 3px solid #ffffff;
+          box-shadow: 0 3px 10px rgba(0,113,227,0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.08 3.11H5.77L6.85 7zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/>
+            <circle cx="7.5" cy="14.5" r="1.5"/>
+            <circle cx="16.5" cy="14.5" r="1.5"/>
+          </svg>
+        </div>
+      </div>
+    `;
+    if (!document.getElementById('driver-marker-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'driver-marker-keyframes';
+      style.textContent = `
+        @keyframes driver-pulse {
+          0% { transform: scale(0.85); opacity: 0.5; }
+          100% { transform: scale(1.7); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    driverMarkerRef.current = new maplibregl.Marker({ element: driverElement, anchor: 'center' })
       .setLngLat([startLng, startLat])
       .addTo(map);
 

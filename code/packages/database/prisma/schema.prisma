@@ -212,6 +212,7 @@ model Booking {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   paymentStatus    PaymentStatus @default(UNPAID)
+  paymentMethod    PaymentMethod?
   sharedDistanceKm Float?
   detourKm         Float?
   priceBreakdown   Json?

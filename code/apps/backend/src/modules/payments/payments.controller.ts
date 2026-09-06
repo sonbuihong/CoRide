@@ -109,8 +109,8 @@ export class PaymentsController {
         if (booking.status !== BookingStatus.COMPLETED) {
           throw new AppError('Chỉ có thể thanh toán sau khi đã hoàn thành điểm trả khách', 400);
         }
-        if (booking.paymentStatus === PaymentStatus.PAID) {
-          throw new AppError('Đặt chỗ này đã được thanh toán', 400);
+        if (booking.paymentStatus !== PaymentStatus.UNPAID) {
+          throw new AppError('Thanh toán đã được xử lý hoặc đã hoàn tiền', 409, true, 'PAYMENT_ALREADY_PROCESSED');
         }
         isAllowed = booking.passengerId === userId;
         amount = booking.totalPrice;
@@ -167,7 +167,7 @@ export class PaymentsController {
       } else if (booking) {
         if (booking.passengerId !== userId) throw new AppError('Chỉ hành khách mới có thể xác nhận thanh toán', 403);
         if (booking.status !== BookingStatus.COMPLETED) throw new AppError('Chỉ có thể thanh toán sau khi đã hoàn thành điểm trả khách', 400);
-        if (booking.paymentStatus === PaymentStatus.PAID) throw new AppError('Đặt chỗ này đã được thanh toán', 400);
+        if (booking.paymentStatus !== PaymentStatus.UNPAID) throw new AppError('Thanh toán đã được xử lý hoặc đã hoàn tiền', 409, true, 'PAYMENT_ALREADY_PROCESSED');
         amount = booking.totalPrice;
         isTrip = false;
       } else {
@@ -250,7 +250,7 @@ export class PaymentsController {
             status: BookingStatus.COMPLETED,
             paymentStatus: PaymentStatus.UNPAID,
           },
-          data: { paymentStatus: PaymentStatus.PAID },
+          data: { paymentStatus: PaymentStatus.PAID, paymentMethod: PaymentMethod.QR },
         });
         if (claimed.count !== 1) {
           throw new AppError('Thanh toán đã được xử lý hoặc trạng thái đặt chỗ đã thay đổi', 409, true, 'PAYMENT_ALREADY_PROCESSED');
@@ -271,7 +271,7 @@ export class PaymentsController {
       SocketEventService.emitToRooms(
         [`user:${booking.passengerId}`, `user:${booking.ride.driverId}`, `ride:${booking.rideId}`],
         SocketEvents.PAYMENT_STATUS_CHANGED,
-        { bookingId: id, rideId: booking.rideId, paymentStatus: PaymentStatus.PAID },
+        { bookingId: id, rideId: booking.rideId, paymentStatus: PaymentStatus.PAID, paymentMethod: PaymentMethod.QR },
       );
 
       res.status(200).json({

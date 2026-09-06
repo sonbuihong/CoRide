@@ -114,7 +114,14 @@ export function LiveBookingMap({ booking }: LiveBookingMapProps) {
   const apiLocation = useMemo(() =>
     toCoordinate(rideQuery.data?.currentDriverLat, rideQuery.data?.currentDriverLng),
   [rideQuery.data?.currentDriverLat, rideQuery.data?.currentDriverLng]);
-  const driverLocation = socketLocation ?? apiLocation;
+  const rawDriverLocation = socketLocation ?? apiLocation;
+  const driverLocation = useMemo(() => {
+    if (rawDriverLocation) return rawDriverLocation;
+    if (booking.ride) {
+      return toCoordinate(booking.ride.originLat, booking.ride.originLng);
+    }
+    return null;
+  }, [rawDriverLocation, booking.ride]);
   const target = booking.isPickedUp ? dropoff : pickup;
 
   useEffect(() => {

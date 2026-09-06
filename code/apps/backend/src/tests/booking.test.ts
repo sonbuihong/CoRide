@@ -154,7 +154,15 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
       if (response.status !== 201) console.log(response.body);
       expect(response.status).toBe(201);
       expect(response.body.booking?.status).toBe(BookingStatus.PENDING);
+      expect(response.body.booking?.pricing).toMatchObject({
+        pricingPolicy: 'FIXED_PER_SEAT',
+        offeredSeats: 4,
+        totalCostShares: 5,
+        bookedSeats: 2,
+      });
       expect(prisma.booking.create).toHaveBeenCalled();
+      expect((prisma.booking.create as jest.Mock).mock.calls[0][0].data.priceBreakdown)
+        .toMatchObject({ totalCostShares: 5, bookedSeats: 2 });
     });
 
     it('API_BKG_003: Validation - Lỗi do thiếu rideId', async () => {

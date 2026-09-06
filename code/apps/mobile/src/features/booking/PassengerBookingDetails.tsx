@@ -61,6 +61,7 @@ export const PassengerBookingDetails = memo(function PassengerBookingDetails({
 }: PassengerBookingDetailsProps) {
   const isPaid = booking.paymentStatus === 'PAID';
   const totalPrice = booking.totalPrice || 0;
+  const pricePerSeat = totalPrice / Math.max(booking.seats, 1);
   const isCompleted = journeyState === 'COMPLETED';
 
   // Format distance & duration safely without hardcoded fallback
@@ -168,7 +169,13 @@ export const PassengerBookingDetails = memo(function PassengerBookingDetails({
           THANH TOÁN
         </AppText>
         <View style={styles.detailRow}>
-          <AppText variant="body" style={styles.detailLabel}>Tổng cộng</AppText>
+          <AppText variant="bodySmall" style={styles.detailLabel}>Giá mỗi ghế</AppText>
+          <AppText variant="bodySmall" weight="semibold" style={styles.detailValue}>
+            {pricePerSeat.toLocaleString('vi-VN')}đ
+          </AppText>
+        </View>
+        <View style={styles.detailRow}>
+          <AppText variant="body" style={styles.detailLabel}>Tổng thanh toán</AppText>
           <AppText variant="h3" weight="bold" style={styles.priceValue}>
             {totalPrice.toLocaleString('vi-VN')}đ
           </AppText>

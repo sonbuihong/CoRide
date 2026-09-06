@@ -35,12 +35,21 @@ const PassengerPickupMap = dynamic(
 interface BookingButtonProps {
   rideId: string;
   availableSeats: number;
+  offeredSeats: number;
+  costShareSeats: number;
+  pricePerSeat: number;
   driverId: string;
   currentUserId?: string;
   passengerDestination?: { lat: number; lng: number };
 }
 
-export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId, passengerDestination }: BookingButtonProps) => {
+interface BookingQuote {
+  totalPrice: number;
+  pricePerSeat: number;
+  totalCostShares: number;
+}
+
+export const BookingButton = ({ rideId, availableSeats, offeredSeats, costShareSeats, pricePerSeat, driverId, currentUserId, passengerDestination }: BookingButtonProps) => {
   const [seats, setSeats] = useState(1);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -50,6 +59,9 @@ export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId,
   // States cho luồng mới
   const [step, setStep] = useState<'map' | 'seats'>('map');
   const [pickupLocation, setPickupLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [quote, setQuote] = useState<BookingQuote | null>(null);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [isQuoting, setIsQuoting] = useState(false);
 
   const router = useRouter();
 
@@ -86,6 +98,53 @@ export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId,
 
     checkActiveBooking();
   }, [currentUserId]);
+
+  useEffect(() => {
+    if (step !== 'seats' || !pickupLocation || !passengerDestination) {
+      setQuote(null);
+      setQuoteError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setIsQuoting(true);
+      setQuoteError(null);
+      try {
+        const response = await apiClient.get('/rides', {
+          params: {
+            originLat: pickupLocation.lat,
+            originLng: pickupLocation.lng,
+            destinationLat: passengerDestination.lat,
+            destinationLng: passengerDestination.lng,
+            seats,
+          },
+          signal: controller.signal,
+        });
+        const matchedRide = (response.data?.rides ?? []).find((ride: { id: string }) => ride.id === rideId);
+        if (!matchedRide?.pricing) throw new Error('QUOTE_UNAVAILABLE');
+        setQuote({
+          totalPrice: matchedRide.pricing.totalPrice,
+          pricePerSeat: matchedRide.pricing.pricePerSeat,
+          totalCostShares: matchedRide.pricing.totalCostShares,
+        });
+      } catch (error: unknown) {
+        if ((error as { code?: string }).code === 'ERR_CANCELED') return;
+        setQuote(null);
+        setQuoteError('Chưa thể xác nhận giá cho điểm đón này. Vui lòng chọn lại điểm đón hoặc thử lại.');
+      } finally {
+        setIsQuoting(false);
+      }
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [passengerDestination, pickupLocation, rideId, seats, step]);
+
+  const displayedPricePerSeat = quote?.pricePerSeat ?? pricePerSeat;
+  const displayedTotalPrice = quote?.totalPrice ?? displayedPricePerSeat * seats;
 
   const handleBooking = async () => {
     if (seats < 1 || seats > availableSeats) {
@@ -228,12 +287,27 @@ export const BookingButton = ({ rideId, availableSeats, driverId, currentUserId,
                   </button>
                 </div>
               )}
+              <div className="space-y-2 rounded-xl bg-muted/55 p-4" aria-live="polite">
+                <p className="text-xs text-muted-foreground">
+                  {costShareSeats} ghế khách + 1 tài xế = chia {quote?.totalCostShares ?? costShareSeats + 1} phần. Bạn đang mở bán {offeredSeats} ghế; ghế còn lại do tài xế chịu.
+                </p>
+                <div className="flex items-center justify-between gap-4 text-sm">
+                  <span className="text-muted-foreground">Giá mỗi ghế</span>
+                  <strong>{displayedPricePerSeat.toLocaleString('vi-VN')} đ</strong>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-t pt-2">
+                  <span className="font-semibold">Tổng thanh toán</span>
+                  <strong className="text-lg text-primary">{displayedTotalPrice.toLocaleString('vi-VN')} đ</strong>
+                </div>
+                {isQuoting && <p className="text-xs text-muted-foreground">Đang xác nhận giá theo điểm đón…</p>}
+                {quoteError && <p className="text-xs font-medium text-destructive" role="alert">{quoteError}</p>}
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setStep('map')} disabled={loading}>
                 Quay lại
               </Button>
-              <Button onClick={handleBooking} disabled={loading}>
+              <Button onClick={handleBooking} disabled={loading || isQuoting || Boolean(quoteError)}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -57,8 +57,8 @@ interface MarkerConfig {
   // [lng, lat] – Goong/MapLibre dùng lng trước
   position: [number, number];
   color?: string;
-  /** 'pin' = Google Maps-style teardrop (điểm đến), 'dot' = chấm tròn pulse (vị trí hiện tại) */
-  type?: 'pin' | 'dot';
+  /** 'pin' = Google Maps-style teardrop (điểm đến), 'dot' = chấm tròn pulse, 'driver' = biểu tượng tài xế kèm nhãn */
+  type?: 'pin' | 'dot' | 'driver';
   /** Canvas layer giữ tọa độ chính xác hơn DOM marker ở mức zoom rất rộng. */
   renderMode?: 'dom' | 'layer';
 }
@@ -67,15 +67,80 @@ interface MarkerConfig {
 // Tạo DOM element cho marker theo loại
 // pin: Hình giọt nước đỏ với chấm trắng bên trong (kiểu Google Maps)
 // dot: Chấm tròn xanh dương với hiệu ứng pulse (vị trí hiện tại)
+// driver: Biểu tượng xe hơi với huy hiệu 'Tài xế' và hiệu ứng pulse
 // ─────────────────────────────────────────────────────────────────────────────
-function createMarkerElement(type: 'pin' | 'dot' = 'pin', color?: string): HTMLDivElement {
+function createMarkerElement(type: 'pin' | 'dot' | 'driver' = 'pin', color?: string): HTMLDivElement {
   const el = document.createElement('div');
   // MapLibre quản lý transform trên chính root element này. Giữ kích thước và
   // box model ổn định để anchor không đổi khi zoom hoặc thay đổi pitch.
   el.style.boxSizing = 'border-box';
   el.style.pointerEvents = 'none';
 
-  if (type === 'dot') {
+  if (type === 'driver') {
+    const driverColor = color || '#0071e3';
+    el.style.cssText = `
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    `;
+    el.innerHTML = `
+      <div style="
+        background: ${driverColor};
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        border: 1.5px solid #ffffff;
+        letter-spacing: 0.2px;
+      ">Tài xế</div>
+      <div style="position: relative; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+        <div style="
+          position: absolute;
+          inset: -6px;
+          border-radius: 50%;
+          background: ${driverColor};
+          opacity: 0.35;
+          animation: marker-pulse 2s ease-out infinite;
+        "></div>
+        <div style="
+          position: relative;
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: ${driverColor};
+          border: 3px solid #ffffff;
+          box-shadow: 0 3px 10px rgba(0,113,227,0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.08 3.11H5.77L6.85 7zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/>
+            <circle cx="7.5" cy="14.5" r="1.5"/>
+            <circle cx="16.5" cy="14.5" r="1.5"/>
+          </svg>
+        </div>
+      </div>
+    `;
+
+    if (!document.getElementById('marker-pulse-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'marker-pulse-keyframes';
+      style.textContent = `
+        @keyframes marker-pulse {
+          0%   { transform: scale(1);   opacity: 0.35; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  } else if (type === 'dot') {
     // Vị trí hiện tại: chấm xanh dương + pulse
     const dotColor = color || '#4285F4';
     el.style.cssText = 'position: relative; width: 22px; height: 22px;';
@@ -377,7 +442,7 @@ const GoongMapComponent: React.FC<GoongMapProps> = ({
       const el = createMarkerElement(m.type || 'pin', m.color);
       const anchorOpts = {
         element: el,
-        anchor: m.type === 'dot' ? 'center' as const : 'bottom' as const,
+        anchor: (m.type === 'dot' || m.type === 'driver') ? ('center' as const) : ('bottom' as const),
         // Không làm tròn vị trí chiếu về pixel nguyên. Sai số nửa pixel gần như
         // không thấy khi zoom gần nhưng có thể tương ứng hàng trăm mét/km khi zoom rộng.
         subpixelPositioning: true,

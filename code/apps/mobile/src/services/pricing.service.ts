@@ -2,12 +2,20 @@ import { apiClient } from "../api/client";
 
 export interface CarpoolPriceEstimate {
   vehicleType: "BIKE" | "CAR";
+  pricingPolicy: "FIXED_PER_SEAT";
+  offeredSeats: number;
+  costShareSeats: number;
+  totalCostShares: number;
+  bookedSeats: number;
+  driverPriceAdjustmentRate: number;
   estimatedDistance: number;
   estimatedDuration: number;
   estimatedPrice: number;
   recommendedPricePerSeat: number;
   minimumPricePerSeat: number;
   maximumPricePerSeat: number;
+  pricePerSeat: number;
+  totalPrice: number;
   routePolyline?: string;
 }
 

@@ -15,6 +15,9 @@ import { AppButton } from '../../src/components/ui/AppButton';
 import { BottomSheetSurface } from '../../src/components/ui/BottomSheetSurface';
 import { LiveBookingMap } from '../../src/features/booking/LiveBookingMap';
 import { PassengerActiveBookingExperience } from '../../src/features/booking/PassengerActiveBookingExperience';
+import { CompletedBookingExperience } from '../../src/features/booking/CompletedBookingExperience';
+import { isPassengerJourneyCompleted } from '../../src/features/booking/completed-booking';
+import { useBookingPaymentSync } from '../../src/features/payment/useBookingPaymentSync';
 import { Star, Phone, ArrowLeft, MessageSquare, MapPin, CheckCircle2, Clock3, Navigation, CreditCard, AlertCircle } from 'lucide-react-native';
 import { colors, radius, spacing } from '../../src/theme/tokens';
 import { nativeShadows } from '../../src/theme/shadows';
@@ -32,10 +35,11 @@ export default function BookingManageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  useBookingPaymentSync(id);
   const [cancelSheetVisible, setCancelSheetVisible] = useState(false);
   const [selectedReason, setSelectedReason] = useState(CANCEL_REASONS[0]);
 
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isLoading: isCurrentUserLoading } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => authService.getCurrentUser(),
   });
@@ -116,26 +120,22 @@ export default function BookingManageScreen() {
       }
     };
 
-    socketService.on(SocketEvents.BOOKING_DRIVER_ARRIVED, handleUpdate);
-    socketService.on(SocketEvents.BOOKING_PICKED_UP, handleUpdate);
-    socketService.on(SocketEvents.BOOKING_COMPLETED, handleUpdate);
-    socketService.on(SocketEvents.RIDE_STATUS_UPDATED, handleUpdate);
-    socketService.on(SocketEvents.RIDE_UPDATED, handleUpdate);
-    socketService.on(SocketEvents.BOOKING_CONFIRMED, handleUpdate);
-    socketService.on(SocketEvents.BOOKING_CANCELLED, handleUpdate);
+    // Retain shared-ride status updates for review eligibility, not active-trip tracking.
+    const completedPassenger = currentUser?.id === booking?.passengerId
+      && isPassengerJourneyCompleted({ status: booking?.status, isDroppedOff: booking?.isDroppedOff });
+    const events = completedPassenger ? [SocketEvents.RIDE_STATUS_UPDATED] : [
+      SocketEvents.BOOKING_DRIVER_ARRIVED, SocketEvents.BOOKING_PICKED_UP,
+      SocketEvents.BOOKING_COMPLETED, SocketEvents.RIDE_STATUS_UPDATED,
+      SocketEvents.RIDE_UPDATED, SocketEvents.BOOKING_CONFIRMED, SocketEvents.BOOKING_CANCELLED,
+    ];
+    events.forEach(event => socketService.on(event, handleUpdate));
 
     return () => {
-      socketService.off(SocketEvents.BOOKING_DRIVER_ARRIVED, handleUpdate);
-      socketService.off(SocketEvents.BOOKING_PICKED_UP, handleUpdate);
-      socketService.off(SocketEvents.BOOKING_COMPLETED, handleUpdate);
-      socketService.off(SocketEvents.RIDE_STATUS_UPDATED, handleUpdate);
-      socketService.off(SocketEvents.RIDE_UPDATED, handleUpdate);
-      socketService.off(SocketEvents.BOOKING_CONFIRMED, handleUpdate);
-      socketService.off(SocketEvents.BOOKING_CANCELLED, handleUpdate);
+      events.forEach(event => socketService.off(event, handleUpdate));
     };
-  }, [id, booking?.rideId, queryClient]);
+  }, [id, booking?.rideId, booking?.passengerId, booking?.status, booking?.isDroppedOff, currentUser?.id, queryClient]);
 
-  if (isLoading) {
+  if (isLoading || isCurrentUserLoading) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -182,8 +182,14 @@ export default function BookingManageScreen() {
       statusBarTranslucent
       onRequestClose={() => setCancelSheetVisible(false)}
     >
-      <Pressable style={styles.modalBackdrop} onPress={() => setCancelSheetVisible(false)}>
-        <Pressable style={styles.modalContentWrapper} onPress={(e) => e.stopPropagation()}>
+      <View style={styles.modalBackdrop}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Đóng bảng hủy"
+          style={StyleSheet.absoluteFill}
+          onPress={() => setCancelSheetVisible(false)}
+        />
+        <View style={styles.modalContentWrapper}>
           <BottomSheetSurface style={{ paddingBottom: Math.max(insets.bottom, spacing.lg), padding: spacing.xl }}>
             <AppText variant="h2" weight="bold" style={{ marginBottom: 8 }}>Hủy đặt chỗ chuyến đi?</AppText>
             <AppText variant="bodySmall" style={{ color: colors.textSecondary, marginBottom: 16, lineHeight: 20 }}>
@@ -232,10 +238,17 @@ export default function BookingManageScreen() {
               />
             </View>
           </BottomSheetSurface>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
+
+  if (isPassenger && isPassengerJourneyCompleted(booking)) {
+    return <CompletedBookingExperience
+      booking={booking}
+      onBack={() => router.back()}
+    />;
+  }
 
   if (isPassenger && isConfirmed && booking.ride.status === 'ONGOING') {
     return (

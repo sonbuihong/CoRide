@@ -1,5 +1,5 @@
 import React, { forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Navigation } from 'lucide-react-native';
 import { GoongNativeMap } from './GoongNativeMap';
@@ -154,8 +154,13 @@ const MapContent = forwardRef<ActiveRideMapHandle, ActiveRideMapProps>(function 
 
         {driverLocation ? (
           <Marker coordinate={driverLocation} title="Vị trí tài xế" anchor={{ x: 0.5, y: 0.5 }} flat>
-            <View style={styles.driverMarker}>
-              <Navigation size={18} color={colors.surface} fill={colors.surface} style={{ transform: [{ rotate: '-45deg' }] }} />
+            <View style={styles.driverMarkerWrapper}>
+              <View style={styles.driverBadge}>
+                <Text style={styles.driverBadgeText}>Tài xế</Text>
+              </View>
+              <View style={styles.driverMarker}>
+                <Navigation size={18} color={colors.surface} fill={colors.surface} style={{ transform: [{ rotate: '-45deg' }] }} />
+              </View>
             </View>
           </Marker>
         ) : null}
@@ -183,6 +188,28 @@ export const ActiveRideMap = GOONG_CONFIG.MAPTILES_KEY
 
 const styles = StyleSheet.create({
   container: { flex: 1, width: '100%' },
+  driverMarkerWrapper: {
+    alignItems: 'center',
+  },
+  driverBadge: {
+    backgroundColor: colors.info,
+    borderColor: colors.surface,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    marginBottom: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  driverBadgeText: {
+    color: colors.surface,
+    fontSize: 10,
+    fontWeight: '700',
+  },
   driverMarker: {
     alignItems: 'center', backgroundColor: colors.info, borderColor: colors.surface,
     borderRadius: 18, borderWidth: 3, height: 36, justifyContent: 'center',

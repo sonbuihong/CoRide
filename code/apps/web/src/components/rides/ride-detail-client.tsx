@@ -65,6 +65,7 @@ interface RideDetail {
   allowSmoking: boolean;
   allowPets: boolean;
   allowLuggage: boolean;
+  vehicle?: { type?: 'BIKE' | 'CAR' };
 }
 
 interface PassengerBooking {
@@ -293,6 +294,7 @@ export default function RideDetailClient({ rideId }: RideDetailClientProps) {
     : null;
 
   const departureDate = new Date(ride.departureTime);
+  const costShareSeats = ride.vehicle?.type === 'BIKE' ? 1 : 4;
   const rideRules = [
     {
       label: 'Đón khách dọc đường',
@@ -543,20 +545,30 @@ export default function RideDetailClient({ rideId }: RideDetailClientProps) {
             {/* ACTION BLOCK */}
             <div className="relative z-10 rounded-[24px] bg-white p-6 shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:bg-[#1d1d1f] dark:shadow-[0_8px_30px_rgba(0,0,0,0.6)] lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:p-5">
               <div className="mb-2 py-4 text-center lg:py-2">
-                <p className="text-xs font-semibold uppercase leading-4 tracking-[0.06em] text-black/45 dark:text-white/45">Giá mỗi chỗ</p>
+                <p className="text-xs font-semibold uppercase leading-4 tracking-[0.06em] text-black/45 dark:text-white/45">Giá mỗi ghế</p>
                 <div className="mt-1 flex items-baseline justify-center gap-1">
                   <span className="text-4xl font-semibold leading-none tracking-[-0.035em] text-[#0071e3] lg:text-3xl">{ride.pricePerSeat.toLocaleString('vi-VN')}</span>
                   <span className="text-xl font-semibold leading-7 text-[#0071e3] lg:text-lg lg:leading-6">đ</span>
                 </div>
+                <p className="mx-auto mt-2 max-w-xs text-xs leading-5 text-black/45 dark:text-white/45">
+                  {costShareSeats} ghế khách + 1 tài xế = chia {costShareSeats + 1} phần. Bạn đang mở bán {ride.offeredSeats} ghế; ghế còn lại do tài xế chịu.
+                </p>
               </div>
               
               <div className="mt-4 lg:mt-3">
                 <BookingButton 
                   rideId={ride.id} 
-                  availableSeats={ride.availableSeats} 
+                  availableSeats={ride.availableSeats}
+                  offeredSeats={ride.offeredSeats}
+                  costShareSeats={costShareSeats}
+                  pricePerSeat={ride.pricePerSeat}
                   driverId={ride.driverId ?? ''}
                   currentUserId={currentUser?.id}
-                  passengerDestination={passengerRoute?.destination}
+                  passengerDestination={passengerRoute?.destination ?? (
+                    isValidCoordinate(ride.destinationLat) && isValidCoordinate(ride.destinationLng)
+                      ? { lat: ride.destinationLat, lng: ride.destinationLng }
+                      : undefined
+                  )}
                 />
               </div>
 

@@ -25,6 +25,7 @@ type MapBootstrapConfig = {
   apiKey: string;
   origin: ActiveRideLatLng;
   destination: ActiveRideLatLng;
+  driverLocation?: ActiveRideLatLng | null;
   originLabel: string;
   destinationLabel: string;
   padding: { top: number; right: number; bottom: number; left: number };
@@ -51,7 +52,7 @@ function buildGoongMapHtml(config: MapBootstrapConfig) {
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body, #map { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #e8efec; }
     .maplibregl-canvas { outline: none; }
-    .maplibregl-ctrl-attrib, .maplibregl-ctrl-logo { display: none !important; }
+    .maplibregl-ctrl-attrib { font-size: 9px; opacity: .72; }
     .marker { display: grid; place-items: center; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(15, 23, 42, .28); }
     .marker-point { width: 28px; height: 28px; border-radius: 50%; }
     .marker-point::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
@@ -60,8 +61,15 @@ function buildGoongMapHtml(config: MapBootstrapConfig) {
     .marker-pickup { width: 24px; height: 24px; border-radius: 50%; background: #0f766e; }
     .marker-pickup.active { background: #10b981; }
     .marker-pickup.dropoff { background: #ef4444; }
-    .marker-driver { width: 38px; height: 38px; border-radius: 50%; background: #0071e3; box-shadow: 0 3px 10px rgba(0, 113, 227, .38); }
-    .marker-driver::after { content: ''; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 14px solid #fff; transform: translateY(-2px); }
+    .marker-driver-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+    .marker-driver-badge { background: #0071e3; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; margin-bottom: 4px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1.5px solid #fff; letter-spacing: 0.2px; }
+    .marker-driver-icon-box { position: relative; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; }
+    .marker-driver-pulse { position: absolute; inset: -6px; border-radius: 50%; background: #0071e3; opacity: 0.35; animation: driver-pulse 2s ease-out infinite; }
+    .marker-driver-circle { position: relative; width: 38px; height: 38px; border-radius: 50%; background: #0071e3; border: 3px solid #fff; box-shadow: 0 3px 10px rgba(0, 113, 227, .45); display: flex; align-items: center; justify-content: center; }
+    @keyframes driver-pulse {
+      0% { transform: scale(0.85); opacity: 0.5; }
+      100% { transform: scale(1.7); opacity: 0; }
+    }
     .marker-user { width: 20px; height: 20px; border-radius: 50%; background: #0071e3; box-shadow: 0 2px 8px rgba(0, 113, 227, .35); }
   </style>
 </head>
@@ -133,10 +141,30 @@ function buildGoongMapHtml(config: MapBootstrapConfig) {
       hasFittedRoute = true;
     };
 
+    const createDriverMarkerElement = () => {
+      const el = document.createElement('div');
+      el.className = 'marker-driver-wrapper';
+      el.innerHTML =
+        '<div class="marker-driver-badge">Tài xế</div>' +
+        '<div class="marker-driver-icon-box">' +
+          '<div class="marker-driver-pulse"></div>' +
+          '<div class="marker-driver-circle">' +
+            '<svg width="20" height="20" viewBox="0 0 24 24" fill="white">' +
+              '<path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.08 3.11H5.77L6.85 7zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z"/>' +
+              '<circle cx="7.5" cy="14.5" r="1.5"/>' +
+              '<circle cx="16.5" cy="14.5" r="1.5"/>' +
+            '</svg>' +
+          '</div>' +
+        '</div>';
+      return el;
+    };
+
     window.updateDriverLocation = (coordinate, shouldFocus) => {
       if (!mapReady || !coordinate) return;
       if (!driverMarker) {
-        driverMarker = addFixedMarker(coordinate, 'marker-driver', 'Vị trí tài xế');
+        driverMarker = new maplibregl.Marker({ element: createDriverMarkerElement(), anchor: 'center' })
+          .setLngLat([coordinate.longitude, coordinate.latitude])
+          .addTo(map);
       } else {
         driverMarker.setLngLat([coordinate.longitude, coordinate.latitude]);
       }
@@ -166,14 +194,18 @@ function buildGoongMapHtml(config: MapBootstrapConfig) {
         style: 'https://tiles.goong.io/assets/goong_map_web.json?api_key=' + encodeURIComponent(config.apiKey),
         center: [config.origin.longitude, config.origin.latitude],
         zoom: 15,
-        attributionControl: false,
+        attributionControl: true,
         dragRotate: false,
         pitchWithRotate: false,
       });
 
       map.on('dragstart', (event) => event.originalEvent && notify({ type: 'USER_INTERACTION' }));
       map.on('zoomstart', (event) => event.originalEvent && notify({ type: 'USER_INTERACTION' }));
-      map.on('error', (event) => notify({ type: 'MAP_ERROR', message: event.error && event.error.message }));
+      map.on('error', (event) => {
+        const message = event.error && event.error.message;
+        if (message && message.includes('does not exist on source')) return;
+        if (!mapReady) notify({ type: 'MAP_ERROR', message: message });
+      });
       map.on('load', () => {
         map.addSource('route', {
           type: 'geojson',
@@ -272,18 +304,25 @@ export const GoongNativeMap = memo(forwardRef<ActiveRideMapHandle, ActiveRideMap
     },
   }), [driverLocation, originCoords, userLocation]);
 
-  const syncMapState = useCallback(() => {
+  useEffect(() => {
+    if (!mapReady) return;
     injectCall(webViewRef, 'updateRouteCoordinates', routeCoords, autoFitRoute, fitRouteOnce);
-    injectCall(webViewRef, 'updatePickupMarkers', pickupMarkers);
-    if (driverLocation) {
-      injectCall(webViewRef, 'updateDriverLocation', driverLocation, autoFocusDriver && !autoFitRoute);
-    }
-    if (userLocation) injectCall(webViewRef, 'updateUserLocation', userLocation);
-  }, [autoFitRoute, autoFocusDriver, driverLocation, fitRouteOnce, pickupMarkers, routeCoords, userLocation]);
+  }, [autoFitRoute, fitRouteOnce, mapReady, routeCoords]);
 
   useEffect(() => {
-    if (mapReady) syncMapState();
-  }, [mapReady, syncMapState]);
+    if (!mapReady) return;
+    injectCall(webViewRef, 'updatePickupMarkers', pickupMarkers);
+  }, [mapReady, pickupMarkers]);
+
+  useEffect(() => {
+    if (!mapReady || !driverLocation) return;
+    injectCall(webViewRef, 'updateDriverLocation', driverLocation, autoFocusDriver && !autoFitRoute);
+  }, [autoFitRoute, autoFocusDriver, driverLocation, mapReady]);
+
+  useEffect(() => {
+    if (!mapReady || !userLocation) return;
+    injectCall(webViewRef, 'updateUserLocation', userLocation);
+  }, [mapReady, userLocation]);
 
   const handleMessage = useCallback((event: WebViewMessageEvent) => {
     try {

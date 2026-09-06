@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -31,13 +31,13 @@ import {
   Settings2,
   ShieldCheck,
   Sparkles,
-  Trash2,
   WalletCards,
   X,
   Zap,
 } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useRoleMode } from '@/components/providers/role-mode-provider';
 import { AddressAutocomplete } from '@/components/ui/address-autocomplete';
 import { cn } from '@/lib/utils';
 import { formatDuration, getDirections, reverseGeocodeStructured } from '@/lib/goong';
@@ -81,6 +81,16 @@ interface RouteInfo {
   durationMinutes: number;
   durationText: string;
   routePolyline: string;
+}
+
+interface CarpoolPriceDetails {
+  recommendedPricePerSeat: number;
+  minimumPricePerSeat: number;
+  maximumPricePerSeat: number;
+  offeredSeats: number;
+  costShareSeats?: number;
+  totalCostShares: number;
+  driverPriceAdjustmentRate: number;
 }
 
 interface StructuredAddress {
@@ -611,6 +621,12 @@ function StopsSection({
 export default function PostRidePage() {
   const router = useRouter();
   const { user, loading: authLoading, refreshUser } = useAuth();
+  const { setMode } = useRoleMode();
+
+  useEffect(() => {
+    setMode('driver');
+  }, [setMode]);
+
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [hasRefreshedAccess, setHasRefreshedAccess] = useState(false);
   const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
@@ -626,12 +642,13 @@ export default function PostRidePage() {
   const [routeError, setRouteError] = useState<string | null>(null);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
   const [vehicleId, setVehicleId] = useState('');
-  const [seatCount, setSeatCount] = useState(1);
+  const [seatCount, setSeatCount] = useState(4);
   const [allowRoutePickup, setAllowRoutePickup] = useState(true);
   const [allowSmoking, setAllowSmoking] = useState(false);
   const [allowPets, setAllowPets] = useState(false);
   const [allowLuggage, setAllowLuggage] = useState(true);
   const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
+  const [priceDetails, setPriceDetails] = useState<CarpoolPriceDetails | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
   const [isEstimatingPrice, setIsEstimatingPrice] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -686,7 +703,7 @@ export default function PostRidePage() {
       origin: '',
       destination: '',
       departureTime: toDateTimeLocal(new Date(Date.now() + 60 * 60_000)),
-      availableSeats: 1,
+      availableSeats: 4,
       pricePerSeat: 0,
       description: '',
       allowRoutePickup: true,
@@ -702,7 +719,13 @@ export default function PostRidePage() {
   const description = watch('description') || '';
   const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleId);
   const maxSeats = selectedVehicle?.type === 'BIKE' ? 1 : 4;
-  const maximumRevenue = (estimatedPrice || 0) * seatCount;
+  const costShareSeats = priceDetails?.costShareSeats ?? maxSeats;
+  const hasCurrentPriceDetails = Boolean(priceDetails && priceDetails.offeredSeats === seatCount);
+  const maximumRevenue = hasCurrentPriceDetails ? (estimatedPrice || 0) * seatCount : 0;
+  const priceOutsideRange = Boolean(
+    hasCurrentPriceDetails && priceDetails && estimatedPrice != null &&
+    (estimatedPrice < priceDetails.minimumPricePerSeat || estimatedPrice > priceDetails.maximumPricePerSeat)
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -788,11 +811,22 @@ export default function PostRidePage() {
     };
   }, [checkingAccess, user]);
 
+  const prevVehicleIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!selectedVehicle) return;
     const limit = selectedVehicle.type === 'BIKE' ? 1 : 4;
-    if (seatCount > limit) setSeatCount(limit);
-  }, [seatCount, selectedVehicle]);
+    // Khi chọn phương tiện mới hoặc khởi tạo lần đầu, mặc định đặt số ghế là tối đa
+    if (prevVehicleIdRef.current !== selectedVehicle.id) {
+      prevVehicleIdRef.current = selectedVehicle.id;
+      setSeatCount(limit);
+      setValue('availableSeats', limit, { shouldValidate: true });
+      return;
+    }
+    // Nếu số ghế hiện tại vượt quá số ghế tối đa của xe
+    if (seatCount > limit) {
+      setSeatCount(limit);
+    }
+  }, [seatCount, selectedVehicle, setValue]);
 
   useEffect(() => {
     setValue('availableSeats', seatCount, { shouldValidate: true });
@@ -886,15 +920,24 @@ export default function PostRidePage() {
   useEffect(() => {
     if (!originCoords || !destinationCoords || !selectedVehicle || !routeInfo) {
       setEstimatedPrice(null);
+      setPriceDetails(null);
       setPriceError(null);
+      setIsEstimatingPrice(false);
       setValue('pricePerSeat', 0);
       return;
     }
 
     const controller = new AbortController();
+    let cancelled = false;
+    // Invalidate the previous seat-count quote immediately. This prevents the
+    // 4-seat amount from remaining visible or being submitted while the new
+    // backend quote is being fetched.
+    setIsEstimatingPrice(true);
+    setEstimatedPrice(null);
+    setPriceDetails(null);
+    setPriceError(null);
+    setValue('pricePerSeat', 0, { shouldValidate: true });
     const timer = window.setTimeout(async () => {
-      setIsEstimatingPrice(true);
-      setPriceError(null);
       try {
         const response = await apiClient.get('/pricing/carpool-estimate', {
           params: {
@@ -907,10 +950,12 @@ export default function PostRidePage() {
           },
           signal: controller.signal,
         });
-        const price = Number(response.data?.data?.estimatedPrice);
+        const details = response.data?.data as CarpoolPriceDetails | undefined;
+        const price = Number(details?.recommendedPricePerSeat);
         if (!Number.isFinite(price) || price <= 0) {
           throw new Error('INVALID_PRICE');
         }
+        setPriceDetails(details ?? null);
         setEstimatedPrice(price);
         setValue('pricePerSeat', price, { shouldValidate: true });
       } catch (estimateError) {
@@ -919,14 +964,16 @@ export default function PostRidePage() {
           response?: { data?: { message?: string } };
         }).response?.data?.message;
         setEstimatedPrice(null);
+        setPriceDetails(null);
         setValue('pricePerSeat', 0);
         setPriceError(message || 'Chưa thể tính giá đề xuất cho chuyến đi này.');
       } finally {
-        setIsEstimatingPrice(false);
+        if (!cancelled) setIsEstimatingPrice(false);
       }
     }, 450);
 
     return () => {
+      cancelled = true;
       window.clearTimeout(timer);
       controller.abort();
     };
@@ -1055,7 +1102,11 @@ export default function PostRidePage() {
       setStepError('Cần có lộ trình hợp lệ trước khi tiếp tục.');
       return;
     }
-    if (step === 2 && (!estimatedPrice || priceError || isEstimatingPrice)) {
+    if (step === 2 && priceOutsideRange && priceDetails) {
+      setStepError(`Giá mỗi ghế phải từ ${formatCurrency(priceDetails.minimumPricePerSeat)} đến ${formatCurrency(priceDetails.maximumPricePerSeat)}.`);
+      return;
+    }
+    if (step === 2 && (!estimatedPrice || !hasCurrentPriceDetails || priceError || isEstimatingPrice)) {
       setStepError('Hệ thống cần tính được giá đề xuất trước khi xem lại chuyến.');
       return;
     }
@@ -1072,7 +1123,7 @@ export default function PostRidePage() {
   };
 
   const onSubmit = async (data: CreateRideInput) => {
-    if (!routeInfo || !originCoords || !destinationCoords || !estimatedPrice || !vehicleId) {
+    if (!routeInfo || !originCoords || !destinationCoords || !estimatedPrice || !hasCurrentPriceDetails || !vehicleId) {
       setSubmitError('Thông tin chuyến chưa đầy đủ. Vui lòng kiểm tra lại các bước trước.');
       return;
     }
@@ -1128,7 +1179,8 @@ export default function PostRidePage() {
         })
       );
       const createdRideId = response.data?.ride?.id;
-      router.push(createdRideId ? '/rides/' + createdRideId : '/my-rides');
+      setMode('driver');
+      router.push(createdRideId ? '/my-rides/' + createdRideId : '/my-rides');
     } catch (submitRequestError) {
       const message = (submitRequestError as {
         response?: { data?: { message?: string } };
@@ -1364,6 +1416,9 @@ export default function PostRidePage() {
                   type="button"
                   onClick={() => {
                     setVehicleId(vehicle.id);
+                    const limit = vehicle.type === 'BIKE' ? 1 : 4;
+                    setSeatCount(limit);
+                    setValue('availableSeats', limit, { shouldValidate: true });
                     setStepError(null);
                   }}
                   className={cn(
@@ -1555,8 +1610,11 @@ export default function PostRidePage() {
             </p>
 
             <div className="mt-6">
-              <label className={labelClass}>Số ghế còn trống</label>
+              <label className={labelClass}>Ghế dành cho hành khách</label>
               <SeatCounter value={seatCount} max={maxSeats} onChange={setSeatCount} />
+              <p className="mt-2 text-xs leading-5 text-black/50 dark:text-white/50">
+                {costShareSeats} ghế khách + 1 tài xế = chia {costShareSeats + 1} phần chi phí. Bạn đang mở bán {seatCount} ghế; ghế chưa mở bán do tài xế chịu.
+              </p>
             </div>
 
             <div className="mt-6 border-t border-black/[0.07] pt-5 dark:border-white/[0.08]">
@@ -1564,7 +1622,7 @@ export default function PostRidePage() {
                 <div>
                   <p className={labelClass}>Giá đề xuất mỗi ghế</p>
                   <p className="text-xs leading-5 text-black/45 dark:text-white/45">
-                    Backend tính theo tuyến, loại xe và số ghế mở bán.
+                    Backend tính theo tuyến và {priceDetails?.totalCostShares ?? seatCount + 1} phần; ghế trống không làm tăng giá của hành khách.
                   </p>
                 </div>
                 <Sparkles className="h-5 w-5 shrink-0 text-[#0071e3]" />
@@ -1582,18 +1640,39 @@ export default function PostRidePage() {
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#0071e3]/20 border-t-[#0071e3]" />
                     Đang tính giá...
                   </span>
-                ) : estimatedPrice ? (
-                  <>
-                    <span className="text-2xl font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
-                      {formatCurrency(estimatedPrice)}
-                    </span>
-                    <span className="text-xs text-black/45 dark:text-white/45">/ ghế</span>
-                  </>
+                ) : estimatedPrice && hasCurrentPriceDetails && priceDetails ? (
+                  <div className="flex w-full items-center gap-3">
+                    <input
+                      aria-label="Giá mỗi ghế"
+                      type="number"
+                      min={priceDetails.minimumPricePerSeat}
+                      max={priceDetails.maximumPricePerSeat}
+                      step={1000}
+                      value={estimatedPrice}
+                      onChange={(event) => {
+                        const value = Number(event.target.value);
+                        setEstimatedPrice(Number.isFinite(value) && value > 0 ? value : null);
+                        setValue('pricePerSeat', Number.isFinite(value) ? value : 0, { shouldValidate: true });
+                      }}
+                      className="min-w-0 flex-1 bg-transparent text-2xl font-semibold tracking-tight text-[#1d1d1f] outline-none dark:text-white"
+                    />
+                    <span className="shrink-0 text-xs text-black/45 dark:text-white/45">đ / ghế</span>
+                  </div>
                 ) : (
                   <span className="text-sm text-black/45 dark:text-white/45">Chưa có giá đề xuất</span>
                 )}
               </div>
               {priceError && <p className="mt-2 text-xs text-[#d93025]">{priceError}</p>}
+              {priceOutsideRange && priceDetails && (
+                <p className="mt-2 text-xs text-[#d93025]" role="alert">
+                  Giá mỗi ghế phải từ {formatCurrency(priceDetails.minimumPricePerSeat)} đến {formatCurrency(priceDetails.maximumPricePerSeat)}.
+                </p>
+              )}
+              {priceDetails && (
+                <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
+                  Mức đề xuất {formatCurrency(priceDetails.recommendedPricePerSeat)}; biên độ cấu hình tối đa ±{Math.round(priceDetails.driverPriceAdjustmentRate * 100)}%, có thể thấp hơn do trần chia sẻ chi phí.
+                </p>
+              )}
               {estimatedPrice && (
                 <div className="mt-3 flex items-center justify-between rounded-xl bg-[#0071e3]/[0.055] px-4 py-3">
                   <span className="text-xs text-black/50 dark:text-white/50">Tổng đóng góp tối đa</span>
@@ -1731,8 +1810,9 @@ export default function PostRidePage() {
             />
             <SummaryRow label="Khoảng cách" value={routeInfo ? routeInfo.distanceKm + ' km' : '—'} />
             <SummaryRow label="Thời gian dự kiến" value={routeInfo?.durationText || '—'} />
-            <SummaryRow label="Số ghế" value={seatCount + ' ghế'} />
-            <SummaryRow label="Giá mỗi ghế" value={estimatedPrice ? formatCurrency(estimatedPrice) : '—'} accent />
+            <SummaryRow label="Ghế dành cho hành khách" value={seatCount + ' ghế'} />
+            <SummaryRow label="Cách chia chi phí" value={`${costShareSeats} ghế khách + 1 tài xế = ${costShareSeats + 1} phần`} />
+            <SummaryRow label="Giá mỗi ghế" value={estimatedPrice && hasCurrentPriceDetails ? formatCurrency(estimatedPrice) : '—'} accent />
             <SummaryRow label="Đón khách dọc đường" value={allowRoutePickup ? 'Cho phép' : 'Không'} />
           </dl>
         </Surface>
@@ -1752,10 +1832,10 @@ export default function PostRidePage() {
             Tổng đóng góp tối đa
           </p>
           <p className="mt-1 text-3xl font-semibold tracking-tight text-[#0071e3]">
-            {formatCurrency(maximumRevenue)}
+            {maximumRevenue > 0 ? formatCurrency(maximumRevenue) : 'Đang cập nhật…'}
           </p>
           <p className="mt-2 text-xs leading-5 text-black/45 dark:text-white/45">
-            {seatCount} ghế × {estimatedPrice ? formatCurrency(estimatedPrice) : '—'}. Đây là số tiền tham khảo khi chuyến đủ chỗ.
+            {seatCount} ghế × {estimatedPrice && hasCurrentPriceDetails ? formatCurrency(estimatedPrice) : '—'}. Đây là số tiền tham khảo khi chuyến đủ chỗ.
           </p>
         </Surface>
 
@@ -1868,7 +1948,7 @@ export default function PostRidePage() {
             ) : (
               <button
                 type="submit"
-                disabled={isSubmitting || !estimatedPrice}
+                disabled={isSubmitting || !estimatedPrice || priceOutsideRange}
                 className="flex h-12 min-w-36 items-center justify-center gap-2 rounded-xl bg-[#0071e3] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0077ed] disabled:cursor-not-allowed disabled:opacity-55"
               >
                 {isSubmitting ? (

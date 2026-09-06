@@ -96,7 +96,7 @@ export function BookingModal({
           </div>
 
           <div className="flex justify-between items-center p-3 bg-muted rounded-lg font-semibold text-lg">
-            <span>Tổng tiền:</span>
+            <span>Tổng thanh toán:</span>
             <span className="text-primary">
               {(pricePerSeat * seats).toLocaleString('vi-VN')} đ
             </span>

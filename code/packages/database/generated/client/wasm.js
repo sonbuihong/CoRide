@@ -273,6 +273,7 @@ exports.Prisma.BookingScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   paymentStatus: 'paymentStatus',
+  paymentMethod: 'paymentMethod',
   sharedDistanceKm: 'sharedDistanceKm',
   detourKm: 'detourKm',
   priceBreakdown: 'priceBreakdown',
@@ -509,6 +510,13 @@ exports.PaymentStatus = exports.$Enums.PaymentStatus = {
   REFUNDED: 'REFUNDED'
 };
 
+exports.PaymentMethod = exports.$Enums.PaymentMethod = {
+  CASH: 'CASH',
+  QR: 'QR',
+  ZALOPAY: 'ZALOPAY',
+  WALLET: 'WALLET'
+};
+
 exports.ReviewType = exports.$Enums.ReviewType = {
   DRIVER: 'DRIVER',
   PASSENGER: 'PASSENGER'
@@ -523,13 +531,6 @@ exports.VerificationStatus = exports.$Enums.VerificationStatus = {
 exports.VehicleType = exports.$Enums.VehicleType = {
   BIKE: 'BIKE',
   CAR: 'CAR'
-};
-
-exports.PaymentMethod = exports.$Enums.PaymentMethod = {
-  CASH: 'CASH',
-  QR: 'QR',
-  ZALOPAY: 'ZALOPAY',
-  WALLET: 'WALLET'
 };
 
 exports.TripStatus = exports.$Enums.TripStatus = {

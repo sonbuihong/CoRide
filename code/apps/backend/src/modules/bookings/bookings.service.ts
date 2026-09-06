@@ -322,7 +322,7 @@ export class BookingsService {
       { type: 'BOOKING', id: booking.id }
     ).catch((err) => console.error('[Notification Error]:', err));
 
-    return booking;
+    return { ...booking, pricing };
   }
 
   /**
@@ -454,7 +454,7 @@ export class BookingsService {
       });
     }
 
-    return booking;
+    return { ...booking, pricing };
   }
 
   private static async calculateBookingContribution(
@@ -498,6 +498,7 @@ export class BookingsService {
       originalDistanceKm,
       detourKm: 0,
       offeredSeats: ride.offeredSeats,
+      costShareSeats: PricingService.getVehiclePassengerCapacity(vehicleType),
       tollCost: ride.tollCost,
     }, config);
     const priceFactor = fullRoute.recommendedPricePerSeat > 0
@@ -509,6 +510,7 @@ export class BookingsService {
       originalDistanceKm,
       detourKm: billableDetourKm,
       offeredSeats: ride.offeredSeats,
+      costShareSeats: PricingService.getVehiclePassengerCapacity(vehicleType),
       bookedSeats: seats,
       // Chưa có mô hình toll segment; phân bổ theo phần tuyến thực tế được dùng.
       tollCost: ride.tollCost * Math.min(1, sharedDistanceKm / originalDistanceKm),

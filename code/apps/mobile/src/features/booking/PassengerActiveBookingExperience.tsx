@@ -163,7 +163,14 @@ export function PassengerActiveBookingExperience({
     [rideQuery.data?.currentDriverLat, rideQuery.data?.currentDriverLng]
   );
 
-  const driverLocation = socketLocation ?? apiLocation;
+  const rawDriverLocation = socketLocation ?? apiLocation;
+  const driverLocation = useMemo(() => {
+    if (rawDriverLocation) return rawDriverLocation;
+    if (booking.ride.status === 'ONGOING') {
+      return toCoordinate(booking.ride.originLat, booking.ride.originLng);
+    }
+    return null;
+  }, [rawDriverLocation, booking.ride.status, booking.ride.originLat, booking.ride.originLng]);
 
   useEffect(() => {
     driverLocationRef.current = driverLocation;

@@ -542,7 +542,13 @@ function DriverRideView({ rideId }: DriverRideViewProps) {
         statusBarTranslucent
         onRequestClose={() => setMenuVisible(false)}
       >
-        <Pressable style={styles.menuBackdrop} onPress={() => setMenuVisible(false)}>
+        <View style={styles.menuBackdrop}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Đóng tùy chọn"
+            style={StyleSheet.absoluteFill}
+            onPress={() => setMenuVisible(false)}
+          />
           <View style={[styles.menuSheet, { paddingBottom: insets.bottom + 8 }]}>
             <View style={styles.menuHandle} />
             <AppText weight="semibold" style={styles.menuTitle}>Tùy chọn</AppText>
@@ -592,7 +598,7 @@ function DriverRideView({ rideId }: DriverRideViewProps) {
               </>
             )}
           </View>
-        </Pressable>
+        </View>
       </Modal>
 
       {/* ── Dialog xác nhận hủy ─────────────────────────────────────────── */}
@@ -746,6 +752,7 @@ function PassengerRideView() {
     queryFn: () => rideService.getRideById(id),
     enabled: Boolean(id),
   });
+  const baseRide = rideQuery.data;
 
   const passengerOrigin = useMemo<MapPoint | undefined>(() => {
     const latitude = routeParamNumber(params.passengerOriginLat);
@@ -758,18 +765,28 @@ function PassengerRideView() {
     return latitude != null && longitude != null ? { latitude, longitude } : undefined;
   }, [params.passengerDestinationLat, params.passengerDestinationLng]);
   const hasSearchContext = params.context === 'search' && Boolean(passengerOrigin && passengerDestination);
+  const selectedPickupStop = useMemo(
+    () => pickupStopId ? baseRide?.stops?.find((stop) => stop.id === pickupStopId) : undefined,
+    [baseRide?.stops, pickupStopId],
+  );
+  const quoteOrigin = passengerOrigin ?? (selectedPickupStop ? {
+    latitude: selectedPickupStop.latitude,
+    longitude: selectedPickupStop.longitude,
+  } : undefined);
+  const quoteDestination = passengerDestination ?? baseRide?.destinationCoords;
+  const hasQuoteContext = Boolean((hasSearchContext || selectedPickupStop) && quoteOrigin && quoteDestination);
 
   const offerQuery = useQuery({
-    queryKey: ['ride-offer', id, params.passengerDate, params.passengerOriginLat, params.passengerOriginLng, params.passengerDestinationLat, params.passengerDestinationLng, seats],
-    enabled: hasSearchContext,
+    queryKey: ['ride-offer', id, params.passengerDate, quoteOrigin?.latitude, quoteOrigin?.longitude, quoteDestination?.latitude, quoteDestination?.longitude, seats],
+    enabled: hasQuoteContext,
     queryFn: async () => {
       const offers = await rideService.getRides({
         origin: params.passengerOrigin,
         destination: params.passengerDestination,
-        originLat: passengerOrigin?.latitude,
-        originLng: passengerOrigin?.longitude,
-        destinationLat: passengerDestination?.latitude,
-        destinationLng: passengerDestination?.longitude,
+        originLat: quoteOrigin?.latitude,
+        originLng: quoteOrigin?.longitude,
+        destinationLat: quoteDestination?.latitude,
+        destinationLng: quoteDestination?.longitude,
         date: params.passengerDate,
         seats,
       });
@@ -778,7 +795,6 @@ function PassengerRideView() {
     retry: 1,
   });
 
-  const baseRide = rideQuery.data;
   const ride = useMemo(() => baseRide ? {
     ...baseRide,
     matchType: params.matchType,
@@ -947,12 +963,17 @@ function PassengerRideView() {
     );
   }
 
-  const offerUnavailable = hasSearchContext && !offerQuery.isPending && !offerQuery.data;
+  const offerUnavailable = hasQuoteContext && !offerQuery.isPending && !offerQuery.data;
   const canBookStatus = ride.status === 'SCHEDULED' || ride.status === 'ONGOING';
   const canBook = canBookStatus && !offerUnavailable && ride.availableSeats >= seats && (ride.status !== 'ONGOING' || hasSearchContext);
   const isInstant = ride.bookingPolicy === 'INSTANT';
-  const totalFare = ride.passengerFare ?? ((ride.passengerPricePerSeat ?? ride.price) * seats);
-  const pickupLabel = hasSearchContext ? params.passengerOrigin || ride.departure : ride.departure;
+  const pricePerSeat = offerQuery.data?.passengerPricePerSeat ?? ride.passengerPricePerSeat ?? ride.price;
+  const totalFare = hasQuoteContext
+    ? (offerQuery.data?.passengerFare ?? pricePerSeat * seats)
+    : pricePerSeat * seats;
+  const pickupLabel = hasSearchContext
+    ? params.passengerOrigin || ride.departure
+    : selectedPickupStop?.address || ride.departure;
   const dropoffLabel = hasSearchContext ? params.passengerDestination || ride.destination : ride.destination;
   const driverName = [ride.driver?.firstName, ride.driver?.lastName].filter(Boolean).join(' ') || 'Tài xế CoRide';
   const vehicle = ride.driver?.vehicle ?? ride.vehicle ?? undefined;
@@ -1142,9 +1163,10 @@ function PassengerRideView() {
             </View>
             <View style={styles.priceDivider} />
             {ride.sharedDistanceKm != null ? <View style={styles.priceRow}><AppText variant="bodySmall" style={styles.passengerMuted}>Đoạn đi chung</AppText><AppText variant="bodySmall" weight="semibold">{ride.sharedDistanceKm.toFixed(1).replace('.', ',')} km</AppText></View> : null}
-            <View style={styles.priceRow}><AppText variant="bodySmall" style={styles.passengerMuted}>{hasSearchContext ? 'Chi phí chia sẻ' : 'Giá mỗi ghế'}</AppText><AppText variant="bodySmall" weight="semibold">{formatVnd(hasSearchContext ? totalFare : ride.price)}</AppText></View>
+            <View style={styles.priceRow}><AppText variant="bodySmall" style={styles.passengerMuted}>Giá mỗi ghế</AppText><AppText variant="bodySmall" weight="semibold">{formatVnd(pricePerSeat)}</AppText></View>
+            <AppText variant="caption" style={styles.passengerMuted}>{ride.totalSeats ?? ride.availableSeats} ghế khách + 1 tài xế = chia {(ride.totalSeats ?? ride.availableSeats) + 1} phần. Ghế trống không làm tăng giá của bạn.</AppText>
             <View style={styles.priceDivider} />
-            <View style={styles.priceRow}><AppText weight="semibold">Tổng</AppText><AppText variant="h2" weight="semibold" style={styles.passengerPrice}>{formatVnd(totalFare)}</AppText></View>
+            <View style={styles.priceRow}><AppText weight="semibold">Tổng thanh toán</AppText><AppText variant="h2" weight="semibold" style={styles.passengerPrice}>{formatVnd(totalFare)}</AppText></View>
           </View>
 
           {!hasSearchContext && ride.stops?.length ? (
@@ -1172,8 +1194,14 @@ function PassengerRideView() {
       </View>
 
       <Modal visible={sheetState != null} transparent animationType="slide" statusBarTranslucent onRequestClose={() => setSheetState(null)}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Đóng bảng xác nhận" style={styles.confirmBackdrop} onPress={() => setSheetState(null)}>
-          <Pressable accessibilityRole="none" style={styles.confirmSheetPressable} onPress={(event) => event.stopPropagation()}>
+        <View style={styles.confirmModalContainer}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Đóng bảng xác nhận"
+            style={styles.confirmBackdrop}
+            onPress={() => setSheetState(null)}
+          />
+          <View style={styles.confirmSheetContainer}>
             <BottomSheetSurface style={{ paddingBottom: Math.max(insets.bottom, spacing.lg) }}>
               {sheetState === 'success' ? (
                 <View style={styles.confirmContent}>
@@ -1208,8 +1236,8 @@ function PassengerRideView() {
                 </View>
               )}
             </BottomSheetSurface>
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -1618,8 +1646,9 @@ const styles = StyleSheet.create({
   passengerCtaBar: { backgroundColor: colors.surface, borderTopColor: colors.border, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: StyleSheet.hairlineWidth, bottom: 0, elevation: 12, left: 0, paddingHorizontal: spacing.md, paddingTop: spacing.sm, position: 'absolute', right: 0, shadowColor: '#0F172A', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.1, shadowRadius: 18 },
   passengerCtaSummary: { alignItems: 'center', alignSelf: 'center', flexDirection: 'row', gap: spacing.sm, maxWidth: 720, width: '100%' },
   passengerCtaButton: { flex: 1 },
-  confirmBackdrop: { backgroundColor: colors.scrim, flex: 1, justifyContent: 'flex-end' },
-  confirmSheetPressable: { width: '100%' },
+  confirmModalContainer: { flex: 1, justifyContent: 'flex-end' },
+  confirmBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.scrim },
+  confirmSheetContainer: { width: '100%' },
   confirmContent: { gap: spacing.lg, paddingBottom: spacing.sm },
   confirmCentered: { textAlign: 'center' },
   confirmRoute: { alignItems: 'center', backgroundColor: colors.surfaceMuted, borderRadius: radius.input, flexDirection: 'row', gap: spacing.sm, justifyContent: 'center', padding: spacing.md },

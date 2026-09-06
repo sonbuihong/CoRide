@@ -43,6 +43,8 @@ export interface CarpoolContributionInput {
   originalDistanceKm: number;
   detourKm: number;
   offeredSeats: number;
+  /** Số ghế dùng để chia chi phí. Mặc định bằng offeredSeats để giữ tương thích. */
+  costShareSeats?: number;
   bookedSeats?: number;
   tollCost?: number;
   tripTollCost?: number;
@@ -51,6 +53,12 @@ export interface CarpoolContributionInput {
 }
 
 export interface CarpoolContribution {
+  pricingPolicy: 'FIXED_PER_SEAT';
+  offeredSeats: number;
+  costShareSeats: number;
+  totalCostShares: number;
+  bookedSeats: number;
+  driverPriceAdjustmentRate: number;
   fuelCostPerKm: number;
   vehicleCostPerKm: number;
   sharedDistanceKm: number;
@@ -62,6 +70,7 @@ export interface CarpoolContribution {
   recommendedPricePerSeat: number;
   minimumPricePerSeat: number;
   maximumPricePerSeat: number;
+  pricePerSeat: number;
   totalPrice: number;
   maximumPassengerContribution: number;
   remainingContributionCap: number;
@@ -143,6 +152,7 @@ export class PricingService {
       originalDistanceKm: distanceKm,
       detourKm: 0,
       offeredSeats,
+      costShareSeats: this.getVehiclePassengerCapacity(vehicleType),
       tollCost,
     }, config);
 
@@ -163,11 +173,24 @@ export class PricingService {
     return config;
   }
 
+  /**
+   * Xe vẫn có cùng sức chứa vật lý dù tài xế chỉ mở bán một phần số ghế.
+   * Ghế không mở bán/không được đặt là phần chi phí tài xế chịu, không dồn
+   * sang hành khách còn lại.
+   */
+  static getVehiclePassengerCapacity(vehicleType: VehicleType): number {
+    return vehicleType === 'CAR' ? 4 : 1;
+  }
+
   static calculateCarpoolContribution(
     input: CarpoolContributionInput,
     config: CarpoolPricingConfigLike
   ): CarpoolContribution {
     const offeredSeats = Math.max(1, Math.floor(input.offeredSeats));
+    const costShareSeats = Math.max(
+      offeredSeats,
+      Math.floor(input.costShareSeats ?? offeredSeats),
+    );
     const bookedSeats = Math.max(1, Math.floor(input.bookedSeats ?? 1));
     const sharedDistanceKm = Math.max(0, input.sharedDistanceKm);
     const originalDistanceKm = Math.max(0.001, input.originalDistanceKm);
@@ -183,7 +206,7 @@ export class PricingService {
 
     const fuelCostPerKm = config.fuelPrice * config.fuelConsumption / 100;
     const vehicleCostPerKm = fuelCostPerKm * (1 + config.vehicleOverheadRatio);
-    const shares = offeredSeats + 1;
+    const shares = costShareSeats + 1;
     const distanceContribution = sharedDistanceKm * vehicleCostPerKm / shares;
     const tollContribution = Math.max(0, input.tollCost ?? 0) / shares;
     const detourContribution = detourKm * vehicleCostPerKm * (1 - config.minimumDriverShare);
@@ -191,27 +214,47 @@ export class PricingService {
     const roundingUnit = Math.max(1, config.roundingUnit);
     const roundNearest = (value: number) => Math.round(value / roundingUnit) * roundingUnit;
     const roundDown = (value: number) => Math.floor(Math.max(0, value) / roundingUnit) * roundingUnit;
-    const recommendedPricePerSeat = roundNearest(rawPerSeat);
-    const minimumPricePerSeat = roundNearest(rawPerSeat * (1 - config.driverPriceAdjustment));
-    const configuredMaximum = roundNearest(rawPerSeat * (1 + config.driverPriceAdjustment));
-
     const tripCost = (originalDistanceKm + detourKm) * vehicleCostPerKm +
       Math.max(0, input.tripTollCost ?? input.tollCost ?? 0);
     const maximumPassengerContribution = tripCost * (1 - config.minimumDriverShare);
+    const fullOccupancyPriceCap = roundDown(maximumPassengerContribution / costShareSeats);
+    const recommendedPricePerSeat = Math.min(roundNearest(rawPerSeat), fullOccupancyPriceCap);
+    const minimumPricePerSeat = Math.min(
+      recommendedPricePerSeat,
+      roundNearest(rawPerSeat * (1 - config.driverPriceAdjustment))
+    );
+    const configuredMaximum = roundNearest(rawPerSeat * (1 + config.driverPriceAdjustment));
     const remainingContributionCap = Math.max(
       0,
       maximumPassengerContribution - Math.max(0, input.existingContributions ?? 0)
     );
-    const maximumPricePerSeat = Math.min(configuredMaximum, roundDown(remainingContributionCap / bookedSeats));
+    // Chặn giá ngay khi đăng chuyến theo toàn bộ phần chia của xe. Nếu chỉ
+    // chặn theo số ghế của từng booking, booking cuối có thể bị giảm giá khi
+    // chạm trần chống lợi nhuận và giá công bố sẽ không còn cố định.
+    const maximumPricePerSeat = Math.max(
+      recommendedPricePerSeat,
+      Math.min(configuredMaximum, fullOccupancyPriceCap)
+    );
     const requestedFactor = input.priceFactor ?? 1;
     const factor = Math.max(
       1 - config.driverPriceAdjustment,
       Math.min(1 + config.driverPriceAdjustment, requestedFactor)
     );
-    const adjustedPerSeat = roundNearest(rawPerSeat * factor);
-    const totalPrice = Math.min(adjustedPerSeat * bookedSeats, roundDown(remainingContributionCap));
+    const adjustedPerSeat = Math.min(
+      roundNearest(rawPerSeat * factor),
+      maximumPricePerSeat
+    );
+    const remainingPricePerSeatCap = roundDown(remainingContributionCap / bookedSeats);
+    const pricePerSeat = Math.min(adjustedPerSeat, remainingPricePerSeatCap);
+    const totalPrice = pricePerSeat * bookedSeats;
 
     return {
+      pricingPolicy: 'FIXED_PER_SEAT',
+      offeredSeats,
+      costShareSeats,
+      totalCostShares: shares,
+      bookedSeats,
+      driverPriceAdjustmentRate: config.driverPriceAdjustment,
       fuelCostPerKm,
       vehicleCostPerKm,
       sharedDistanceKm,
@@ -223,6 +266,7 @@ export class PricingService {
       recommendedPricePerSeat,
       minimumPricePerSeat,
       maximumPricePerSeat,
+      pricePerSeat,
       totalPrice,
       maximumPassengerContribution,
       remainingContributionCap,

@@ -441,12 +441,13 @@ export class RidesService {
           const config = configByVehicle.get(ride.vehicle?.type ?? 'CAR');
           if (!config) return null;
           try {
-            const fullRoutePricing = PricingService.calculateCarpoolContribution({
-              sharedDistanceKm: originalDistanceKm,
-              originalDistanceKm,
-              detourKm: 0,
-              offeredSeats: ride.offeredSeats,
-              tollCost: ride.tollCost,
+                    const fullRoutePricing = PricingService.calculateCarpoolContribution({
+                      sharedDistanceKm: originalDistanceKm,
+                      originalDistanceKm,
+                      detourKm: 0,
+                      offeredSeats: ride.offeredSeats,
+                      costShareSeats: PricingService.getVehiclePassengerCapacity(ride.vehicle?.type ?? 'CAR'),
+                      tollCost: ride.tollCost,
             }, config);
             const priceFactor = fullRoutePricing.recommendedPricePerSeat > 0
               ? ride.pricePerSeat / fullRoutePricing.recommendedPricePerSeat
@@ -454,9 +455,10 @@ export class RidesService {
             const pricing = PricingService.calculateCarpoolContribution({
               sharedDistanceKm: ride.sharedDistanceKm,
               originalDistanceKm,
-              detourKm: ride.detourKm,
-              offeredSeats: ride.offeredSeats,
-              bookedSeats: requestedSeats,
+                      detourKm: ride.detourKm,
+                      offeredSeats: ride.offeredSeats,
+                      costShareSeats: PricingService.getVehiclePassengerCapacity(ride.vehicle?.type ?? 'CAR'),
+                      bookedSeats: requestedSeats,
               tollCost: ride.tollCost * Math.min(1, ride.sharedDistanceKm / originalDistanceKm),
               tripTollCost: ride.tollCost,
               existingContributions: contributionByRide.get(ride.id) ?? 0,
@@ -465,7 +467,8 @@ export class RidesService {
             return {
               ...ride,
               passengerFare: pricing.totalPrice,
-              passengerPricePerSeat: pricing.totalPrice / requestedSeats,
+              passengerPricePerSeat: pricing.pricePerSeat,
+              pricing,
             };
           } catch {
             // Search and booking must enforce the same configured detour/pricing limits.

@@ -27,6 +27,7 @@ interface RideRouteMapProps {
   destination: GeoPoint;
   passengerOrigin?: GeoPoint | null;
   passengerDestination?: GeoPoint | null;
+  driverLocation?: GeoPoint | null;
   /** Callback trả về distance (km) và duration (giây) của tuyến tài xế. */
   onRouteCalculated?: (distanceKm: number, durationSeconds: number) => void;
 }
@@ -54,6 +55,7 @@ const RideRouteMap = ({
   destination,
   passengerOrigin,
   passengerDestination,
+  driverLocation,
   onRouteCalculated,
 }: RideRouteMapProps) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -208,6 +210,16 @@ const RideRouteMap = ({
           },
         ]
       : []),
+    ...(isValidPoint(driverLocation)
+      ? [
+          {
+            position: [driverLocation.lng, driverLocation.lat] as [number, number],
+            type: 'driver' as const,
+            color: '#0071e3',
+            renderMode: 'dom' as const,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -231,6 +243,14 @@ const RideRouteMap = ({
             <span className="block h-[4px] w-8 rounded-full bg-[#0066cc] ring-1 ring-white" aria-hidden="true" />
             Tuyến tài xế
           </div>
+          {isValidPoint(driverLocation) && (
+            <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#0071e3] dark:text-[#3894ff]">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#0071e3] text-[9px] text-white" aria-hidden="true">
+                🚗
+              </span>
+              Vị trí tài xế
+            </div>
+          )}
           {hasPassengerOrigin && (
             <div className="flex items-center gap-2 text-[12px] font-semibold text-[#1d1d1f] dark:text-white">
               {showPassengerRoute ? (

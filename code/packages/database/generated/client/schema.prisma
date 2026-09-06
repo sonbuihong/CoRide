@@ -203,15 +203,16 @@ model RideStop {
 }
 
 model Booking {
-  id               String        @id @default(uuid())
+  id               String         @id @default(uuid())
   rideId           String
   passengerId      String
   seats            Int
   totalPrice       Float
-  status           BookingStatus @default(PENDING)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  paymentStatus    PaymentStatus @default(UNPAID)
+  status           BookingStatus  @default(PENDING)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  paymentStatus    PaymentStatus  @default(UNPAID)
+  paymentMethod    PaymentMethod?
   sharedDistanceKm Float?
   detourKm         Float?
   priceBreakdown   Json?
@@ -219,20 +220,20 @@ model Booking {
   pickedUpAt       DateTime?
   droppedOffAt     DateTime?
   expiresAt        DateTime?
-  seatHeld         Boolean       @default(false)
+  seatHeld         Boolean        @default(false)
   pickupStopId     String?
   cancelReason     String?
   dropoffAddress   String?
   dropoffLat       Float?
   dropoffLng       Float?
-  isDroppedOff     Boolean       @default(false)
-  isPickedUp       Boolean       @default(false)
+  isDroppedOff     Boolean        @default(false)
+  isPickedUp       Boolean        @default(false)
   passengerLat     Float?
   passengerLng     Float?
   pickupAddress    String?
-  passenger        User          @relation("PassengerBookings", fields: [passengerId], references: [id])
-  pickupStop       RideStop?     @relation("BookingPickupStop", fields: [pickupStopId], references: [id])
-  ride             Ride          @relation(fields: [rideId], references: [id])
+  passenger        User           @relation("PassengerBookings", fields: [passengerId], references: [id])
+  pickupStop       RideStop?      @relation("BookingPickupStop", fields: [pickupStopId], references: [id])
+  ride             Ride           @relation(fields: [rideId], references: [id])
   transactions     Transaction[]
 
   @@index([status, expiresAt])

@@ -44,9 +44,17 @@ export function RoleModeProvider({ children }: { children: ReactNode }) {
     if (!pathname) return;
 
     const driverRoutes = ['/driver', '/rides/post', '/my-rides', '/booking-requests'];
-    const passengerRoutes = ['/rides', '/my-bookings', '/ride-hailing'];
+    const passengerRoutes = ['/my-bookings', '/ride-hailing'];
 
-    if (driverRoutes.some((route) => pathname.startsWith(route))) {
+    const isDriverRoute = driverRoutes.some((route) => pathname.startsWith(route));
+    // Chỉ coi là trang hành khách khi người dùng vào đúng trang tìm kiếm /rides,
+    // KHÔNG áp dụng cho trang chi tiết /rides/[id] vì tài xế cũng vào xem chuyến của mình.
+    const isPassengerRoute =
+      pathname === '/rides' ||
+      pathname.startsWith('/rides?') ||
+      passengerRoutes.some((route) => pathname.startsWith(route));
+
+    if (isDriverRoute) {
       setModeState((prev) => {
         if (prev !== 'driver') {
           localStorage.setItem(STORAGE_KEY, 'driver');
@@ -54,7 +62,7 @@ export function RoleModeProvider({ children }: { children: ReactNode }) {
         }
         return prev;
       });
-    } else if (passengerRoutes.some((route) => pathname.startsWith(route))) {
+    } else if (isPassengerRoute) {
       setModeState((prev) => {
         if (prev !== 'passenger') {
           localStorage.setItem(STORAGE_KEY, 'passenger');

@@ -190,6 +190,16 @@ export const PaymentStatus: {
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
 
+export const PaymentMethod: {
+  CASH: 'CASH',
+  QR: 'QR',
+  ZALOPAY: 'ZALOPAY',
+  WALLET: 'WALLET'
+};
+
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
+
+
 export const ReviewType: {
   DRIVER: 'DRIVER',
   PASSENGER: 'PASSENGER'
@@ -213,16 +223,6 @@ export const VehicleType: {
 };
 
 export type VehicleType = (typeof VehicleType)[keyof typeof VehicleType]
-
-
-export const PaymentMethod: {
-  CASH: 'CASH',
-  QR: 'QR',
-  ZALOPAY: 'ZALOPAY',
-  WALLET: 'WALLET'
-};
-
-export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
 
 
 export const TripStatus: {
@@ -291,6 +291,10 @@ export type PaymentStatus = $Enums.PaymentStatus
 
 export const PaymentStatus: typeof $Enums.PaymentStatus
 
+export type PaymentMethod = $Enums.PaymentMethod
+
+export const PaymentMethod: typeof $Enums.PaymentMethod
+
 export type ReviewType = $Enums.ReviewType
 
 export const ReviewType: typeof $Enums.ReviewType
@@ -302,10 +306,6 @@ export const VerificationStatus: typeof $Enums.VerificationStatus
 export type VehicleType = $Enums.VehicleType
 
 export const VehicleType: typeof $Enums.VehicleType
-
-export type PaymentMethod = $Enums.PaymentMethod
-
-export const PaymentMethod: typeof $Enums.PaymentMethod
 
 export type TripStatus = $Enums.TripStatus
 
@@ -13183,6 +13183,7 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     paymentStatus: $Enums.PaymentStatus | null
+    paymentMethod: $Enums.PaymentMethod | null
     sharedDistanceKm: number | null
     detourKm: number | null
     driverArrivedAt: Date | null
@@ -13212,6 +13213,7 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     paymentStatus: $Enums.PaymentStatus | null
+    paymentMethod: $Enums.PaymentMethod | null
     sharedDistanceKm: number | null
     detourKm: number | null
     driverArrivedAt: Date | null
@@ -13241,6 +13243,7 @@ export namespace Prisma {
     createdAt: number
     updatedAt: number
     paymentStatus: number
+    paymentMethod: number
     sharedDistanceKm: number
     detourKm: number
     priceBreakdown: number
@@ -13295,6 +13298,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     paymentStatus?: true
+    paymentMethod?: true
     sharedDistanceKm?: true
     detourKm?: true
     driverArrivedAt?: true
@@ -13324,6 +13328,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     paymentStatus?: true
+    paymentMethod?: true
     sharedDistanceKm?: true
     detourKm?: true
     driverArrivedAt?: true
@@ -13353,6 +13358,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     paymentStatus?: true
+    paymentMethod?: true
     sharedDistanceKm?: true
     detourKm?: true
     priceBreakdown?: true
@@ -13470,6 +13476,7 @@ export namespace Prisma {
     createdAt: Date
     updatedAt: Date
     paymentStatus: $Enums.PaymentStatus
+    paymentMethod: $Enums.PaymentMethod | null
     sharedDistanceKm: number | null
     detourKm: number | null
     priceBreakdown: JsonValue | null
@@ -13519,6 +13526,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     paymentStatus?: boolean
+    paymentMethod?: boolean
     sharedDistanceKm?: boolean
     detourKm?: boolean
     priceBreakdown?: boolean
@@ -13554,6 +13562,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     paymentStatus?: boolean
+    paymentMethod?: boolean
     sharedDistanceKm?: boolean
     detourKm?: boolean
     priceBreakdown?: boolean
@@ -13587,6 +13596,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     paymentStatus?: boolean
+    paymentMethod?: boolean
     sharedDistanceKm?: boolean
     detourKm?: boolean
     priceBreakdown?: boolean
@@ -13638,6 +13648,7 @@ export namespace Prisma {
       createdAt: Date
       updatedAt: Date
       paymentStatus: $Enums.PaymentStatus
+      paymentMethod: $Enums.PaymentMethod | null
       sharedDistanceKm: number | null
       detourKm: number | null
       priceBreakdown: Prisma.JsonValue | null
@@ -14062,6 +14073,7 @@ export namespace Prisma {
     readonly createdAt: FieldRef<"Booking", 'DateTime'>
     readonly updatedAt: FieldRef<"Booking", 'DateTime'>
     readonly paymentStatus: FieldRef<"Booking", 'PaymentStatus'>
+    readonly paymentMethod: FieldRef<"Booking", 'PaymentMethod'>
     readonly sharedDistanceKm: FieldRef<"Booking", 'Float'>
     readonly detourKm: FieldRef<"Booking", 'Float'>
     readonly priceBreakdown: FieldRef<"Booking", 'Json'>
@@ -24053,6 +24065,7 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     paymentStatus: 'paymentStatus',
+    paymentMethod: 'paymentMethod',
     sharedDistanceKm: 'sharedDistanceKm',
     detourKm: 'detourKm',
     priceBreakdown: 'priceBreakdown',
@@ -24463,6 +24476,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'PaymentMethod'
+   */
+  export type EnumPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentMethod'>
+    
+
+
+  /**
+   * Reference to a field of type 'PaymentMethod[]'
+   */
+  export type ListEnumPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentMethod[]'>
+    
+
+
+  /**
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -24508,20 +24535,6 @@ export namespace Prisma {
    * Reference to a field of type 'VehicleType[]'
    */
   export type ListEnumVehicleTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VehicleType[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'PaymentMethod'
-   */
-  export type EnumPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentMethod'>
-    
-
-
-  /**
-   * Reference to a field of type 'PaymentMethod[]'
-   */
-  export type ListEnumPaymentMethodFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentMethod[]'>
     
 
 
@@ -25522,6 +25535,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
+    paymentMethod?: EnumPaymentMethodNullableFilter<"Booking"> | $Enums.PaymentMethod | null
     sharedDistanceKm?: FloatNullableFilter<"Booking"> | number | null
     detourKm?: FloatNullableFilter<"Booking"> | number | null
     priceBreakdown?: JsonNullableFilter<"Booking">
@@ -25556,6 +25570,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     paymentStatus?: SortOrder
+    paymentMethod?: SortOrderInput | SortOrder
     sharedDistanceKm?: SortOrderInput | SortOrder
     detourKm?: SortOrderInput | SortOrder
     priceBreakdown?: SortOrderInput | SortOrder
@@ -25593,6 +25608,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
+    paymentMethod?: EnumPaymentMethodNullableFilter<"Booking"> | $Enums.PaymentMethod | null
     sharedDistanceKm?: FloatNullableFilter<"Booking"> | number | null
     detourKm?: FloatNullableFilter<"Booking"> | number | null
     priceBreakdown?: JsonNullableFilter<"Booking">
@@ -25627,6 +25643,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     paymentStatus?: SortOrder
+    paymentMethod?: SortOrderInput | SortOrder
     sharedDistanceKm?: SortOrderInput | SortOrder
     detourKm?: SortOrderInput | SortOrder
     priceBreakdown?: SortOrderInput | SortOrder
@@ -25665,6 +25682,7 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"Booking"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Booking"> | Date | string
     paymentStatus?: EnumPaymentStatusWithAggregatesFilter<"Booking"> | $Enums.PaymentStatus
+    paymentMethod?: EnumPaymentMethodNullableWithAggregatesFilter<"Booking"> | $Enums.PaymentMethod | null
     sharedDistanceKm?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     detourKm?: FloatNullableWithAggregatesFilter<"Booking"> | number | null
     priceBreakdown?: JsonNullableWithAggregatesFilter<"Booking">
@@ -27619,6 +27637,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -27652,6 +27671,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -27681,6 +27701,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -27714,6 +27735,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -27745,6 +27767,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -27773,6 +27796,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -27802,6 +27826,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -29792,6 +29817,13 @@ export namespace Prisma {
     notIn?: $Enums.PaymentStatus[] | ListEnumPaymentStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumPaymentStatusFilter<$PrismaModel> | $Enums.PaymentStatus
   }
+
+  export type EnumPaymentMethodNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPaymentMethodNullableFilter<$PrismaModel> | $Enums.PaymentMethod | null
+  }
   export type JsonNullableFilter<$PrismaModel = never> = 
     | PatchUndefined<
         Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -29830,6 +29862,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     paymentStatus?: SortOrder
+    paymentMethod?: SortOrder
     sharedDistanceKm?: SortOrder
     detourKm?: SortOrder
     priceBreakdown?: SortOrder
@@ -29871,6 +29904,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     paymentStatus?: SortOrder
+    paymentMethod?: SortOrder
     sharedDistanceKm?: SortOrder
     detourKm?: SortOrder
     driverArrivedAt?: SortOrder
@@ -29900,6 +29934,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     paymentStatus?: SortOrder
+    paymentMethod?: SortOrder
     sharedDistanceKm?: SortOrder
     detourKm?: SortOrder
     driverArrivedAt?: SortOrder
@@ -29948,6 +29983,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumPaymentStatusFilter<$PrismaModel>
     _max?: NestedEnumPaymentStatusFilter<$PrismaModel>
+  }
+
+  export type EnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel> | $Enums.PaymentMethod | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
+    _max?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
   }
   export type JsonNullableWithAggregatesFilter<$PrismaModel = never> = 
     | PatchUndefined<
@@ -30212,13 +30257,6 @@ export namespace Prisma {
     not?: NestedEnumVehicleTypeFilter<$PrismaModel> | $Enums.VehicleType
   }
 
-  export type EnumPaymentMethodNullableFilter<$PrismaModel = never> = {
-    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumPaymentMethodNullableFilter<$PrismaModel> | $Enums.PaymentMethod | null
-  }
-
   export type EnumTripStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.TripStatus | EnumTripStatusFieldRefInput<$PrismaModel>
     in?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
@@ -30360,16 +30398,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumVehicleTypeFilter<$PrismaModel>
     _max?: NestedEnumVehicleTypeFilter<$PrismaModel>
-  }
-
-  export type EnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel> | $Enums.PaymentMethod | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
-    _max?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
   }
 
   export type EnumTripStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -31913,6 +31941,10 @@ export namespace Prisma {
     set?: $Enums.PaymentStatus
   }
 
+  export type NullableEnumPaymentMethodFieldUpdateOperationsInput = {
+    set?: $Enums.PaymentMethod | null
+  }
+
   export type UserUpdateOneRequiredWithoutBookingsNestedInput = {
     create?: XOR<UserCreateWithoutBookingsInput, UserUncheckedCreateWithoutBookingsInput>
     connectOrCreate?: UserCreateOrConnectWithoutBookingsInput
@@ -32105,10 +32137,6 @@ export namespace Prisma {
 
   export type EnumVehicleTypeFieldUpdateOperationsInput = {
     set?: $Enums.VehicleType
-  }
-
-  export type NullableEnumPaymentMethodFieldUpdateOperationsInput = {
-    set?: $Enums.PaymentMethod | null
   }
 
   export type EnumTripStatusFieldUpdateOperationsInput = {
@@ -32674,6 +32702,13 @@ export namespace Prisma {
     not?: NestedEnumPaymentStatusFilter<$PrismaModel> | $Enums.PaymentStatus
   }
 
+  export type NestedEnumPaymentMethodNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPaymentMethodNullableFilter<$PrismaModel> | $Enums.PaymentMethod | null
+  }
+
   export type NestedEnumBookingStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.BookingStatus | EnumBookingStatusFieldRefInput<$PrismaModel>
     in?: $Enums.BookingStatus[] | ListEnumBookingStatusFieldRefInput<$PrismaModel>
@@ -32692,6 +32727,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumPaymentStatusFilter<$PrismaModel>
     _max?: NestedEnumPaymentStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel> | $Enums.PaymentMethod | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
+    _max?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
   }
   export type NestedJsonNullableFilter<$PrismaModel = never> = 
     | PatchUndefined<
@@ -32757,13 +32802,6 @@ export namespace Prisma {
     not?: NestedEnumVehicleTypeFilter<$PrismaModel> | $Enums.VehicleType
   }
 
-  export type NestedEnumPaymentMethodNullableFilter<$PrismaModel = never> = {
-    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumPaymentMethodNullableFilter<$PrismaModel> | $Enums.PaymentMethod | null
-  }
-
   export type NestedEnumTripStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.TripStatus | EnumTripStatusFieldRefInput<$PrismaModel>
     in?: $Enums.TripStatus[] | ListEnumTripStatusFieldRefInput<$PrismaModel>
@@ -32779,16 +32817,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumVehicleTypeFilter<$PrismaModel>
     _max?: NestedEnumVehicleTypeFilter<$PrismaModel>
-  }
-
-  export type NestedEnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.PaymentMethod | EnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    in?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    notIn?: $Enums.PaymentMethod[] | ListEnumPaymentMethodFieldRefInput<$PrismaModel> | null
-    not?: NestedEnumPaymentMethodNullableWithAggregatesFilter<$PrismaModel> | $Enums.PaymentMethod | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
-    _max?: NestedEnumPaymentMethodNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumTripStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -32843,6 +32871,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -32874,6 +32903,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -33566,6 +33596,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Booking"> | Date | string
     updatedAt?: DateTimeFilter<"Booking"> | Date | string
     paymentStatus?: EnumPaymentStatusFilter<"Booking"> | $Enums.PaymentStatus
+    paymentMethod?: EnumPaymentMethodNullableFilter<"Booking"> | $Enums.PaymentMethod | null
     sharedDistanceKm?: FloatNullableFilter<"Booking"> | number | null
     detourKm?: FloatNullableFilter<"Booking"> | number | null
     priceBreakdown?: JsonNullableFilter<"Booking">
@@ -34287,6 +34318,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -34319,6 +34351,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -34457,6 +34490,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -34489,6 +34523,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -35475,6 +35510,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -35506,6 +35542,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -36324,6 +36361,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -36356,6 +36394,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -39385,6 +39424,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -39619,6 +39659,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -39650,6 +39691,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -39680,6 +39722,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -40405,6 +40448,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -40476,6 +40520,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -40507,6 +40552,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -40537,6 +40583,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -40884,6 +40931,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentStatus?: $Enums.PaymentStatus
+    paymentMethod?: $Enums.PaymentMethod | null
     sharedDistanceKm?: number | null
     detourKm?: number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -40911,6 +40959,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -40943,6 +40992,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue
@@ -40973,6 +41023,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentStatus?: EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
+    paymentMethod?: NullableEnumPaymentMethodFieldUpdateOperationsInput | $Enums.PaymentMethod | null
     sharedDistanceKm?: NullableFloatFieldUpdateOperationsInput | number | null
     detourKm?: NullableFloatFieldUpdateOperationsInput | number | null
     priceBreakdown?: NullableJsonNullValueInput | InputJsonValue

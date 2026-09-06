@@ -7,17 +7,12 @@ export class WalletService {
    * Lấy ví của người dùng, nếu chưa có thì tạo mới.
    */
   static async getOrCreateWallet(userId: string) {
-    let wallet = await prisma.wallet.findUnique({
+    // Concurrent simulator confirmations may both reach this before claiming a booking.
+    return prisma.wallet.upsert({
       where: { userId },
+      create: { userId, rideBalance: 0, driverEarnings: 0 },
+      update: {},
     });
-
-    if (!wallet) {
-      wallet = await prisma.wallet.create({
-        data: { userId, rideBalance: 0, driverEarnings: 0 },
-      });
-    }
-
-    return wallet;
   }
 
   /**
