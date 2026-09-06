@@ -738,6 +738,7 @@ function PassengerRideView() {
   const params = useLocalSearchParams<PassengerRideParams>();
   const { id } = params;
   const router = useRouter();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const mapRef = useRef<MapView>(null);
@@ -766,13 +767,23 @@ function PassengerRideView() {
   const passengerOrigin = useMemo<MapPoint | undefined>(() => {
     const latitude = routeParamNumber(params.passengerOriginLat);
     const longitude = routeParamNumber(params.passengerOriginLng);
-    return latitude != null && longitude != null ? { latitude, longitude } : undefined;
-  }, [params.passengerOriginLat, params.passengerOriginLng]);
+    if (latitude != null && longitude != null) return { latitude, longitude };
+    const userBooking = baseRide?.bookings?.find((b: any) => b.passengerId === user?.id);
+    if (userBooking?.pickupLat != null && userBooking?.pickupLng != null) {
+      return { latitude: userBooking.pickupLat, longitude: userBooking.pickupLng };
+    }
+    return undefined;
+  }, [params.passengerOriginLat, params.passengerOriginLng, baseRide?.bookings, user?.id]);
   const passengerDestination = useMemo<MapPoint | undefined>(() => {
     const latitude = routeParamNumber(params.passengerDestinationLat);
     const longitude = routeParamNumber(params.passengerDestinationLng);
-    return latitude != null && longitude != null ? { latitude, longitude } : undefined;
-  }, [params.passengerDestinationLat, params.passengerDestinationLng]);
+    if (latitude != null && longitude != null) return { latitude, longitude };
+    const userBooking = baseRide?.bookings?.find((b: any) => b.passengerId === user?.id);
+    if (userBooking?.dropoffLat != null && userBooking?.dropoffLng != null) {
+      return { latitude: userBooking.dropoffLat, longitude: userBooking.dropoffLng };
+    }
+    return undefined;
+  }, [params.passengerDestinationLat, params.passengerDestinationLng, baseRide?.bookings, user?.id]);
   const hasSearchContext = params.context === 'search' && Boolean(passengerOrigin && passengerDestination);
   const selectedPickupStop = useMemo(
     () => pickupStopId ? baseRide?.stops?.find((stop) => stop.id === pickupStopId) : undefined,
@@ -1014,7 +1025,7 @@ function PassengerRideView() {
             showsMyLocationButton={false}
             accessibilityLabel="Bản đồ tuyến tài xế và đoạn đi chung của bạn"
           >
-            {driverRoute.length > 1 ? <Polyline coordinates={driverRoute} strokeColor="#94A3B8" strokeWidth={4} zIndex={1} /> : null}
+            {driverRoute.length > 1 ? <Polyline coordinates={driverRoute} strokeColor="#475569" strokeWidth={4} zIndex={1} /> : null}
             {sharedRoute.length > 1 ? <Polyline coordinates={sharedRoute} strokeColor={colors.primary} strokeWidth={8} zIndex={2} /> : null}
             {ride.departureCoords ? <Marker coordinate={ride.departureCoords} title="Điểm đầu tuyến tài xế" pinColor="#64748B" /> : null}
             {ride.destinationCoords ? <Marker coordinate={ride.destinationCoords} title="Điểm cuối tuyến tài xế" pinColor="#475569" /> : null}
@@ -1047,7 +1058,7 @@ function PassengerRideView() {
           </View>
           <View pointerEvents="none" style={styles.mapLegend}>
             <View style={styles.legendItem}><View style={styles.driverLegendLine} /><AppText variant="caption">Tuyến tài xế</AppText></View>
-            {hasSearchContext ? <View style={styles.legendItem}><View style={styles.sharedLegendLine} /><AppText variant="caption" weight="semibold">Đoạn bạn đi chung</AppText></View> : null}
+            {sharedRoute.length > 1 ? <View style={styles.legendItem}><View style={styles.sharedLegendLine} /><AppText variant="caption" weight="semibold">Đoạn bạn đi chung</AppText></View> : null}
             <View style={styles.legendItem}><View style={styles.driverLegendMarker} /><AppText variant="caption">Vị trí tài xế</AppText></View>
           </View>
         </View>
@@ -1682,7 +1693,7 @@ const styles = StyleSheet.create({
   passengerMapButtonPressed: { opacity: 0.72 },
   mapLegend: { backgroundColor: 'rgba(255,255,255,0.96)', borderRadius: radius.pill, bottom: spacing.lg, flexDirection: 'row', gap: spacing.sm, left: spacing.md, paddingHorizontal: spacing.sm, paddingVertical: 9, position: 'absolute', shadowColor: '#0F172A', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 8 },
   legendItem: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
-  driverLegendLine: { backgroundColor: '#94A3B8', borderRadius: radius.pill, height: 4, width: 22 },
+  driverLegendLine: { backgroundColor: '#475569', borderRadius: radius.pill, height: 4, width: 22 },
   sharedLegendLine: { backgroundColor: colors.primary, borderRadius: radius.pill, height: 7, width: 22 },
   driverMarkerOuter: { alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0, 113, 227, 0.25)' },
   driverMarkerInner: { alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 11, backgroundColor: colors.navigationPassenger || '#0071E3', borderWidth: 2, borderColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3, elevation: 4 },

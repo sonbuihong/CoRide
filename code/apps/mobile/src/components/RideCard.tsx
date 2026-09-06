@@ -179,7 +179,7 @@ export const RideCard: React.FC<RideCardProps> = memo(({
             </AppText>
           ) : null}
 
-          {showMatch ? <MatchExplanation ride={ride} compact={!featured} featured={featured} /> : null}
+          {showMatch ? <MatchExplanation ride={ride} compact /> : null}
 
           <DriverSummary ride={ride} />
 

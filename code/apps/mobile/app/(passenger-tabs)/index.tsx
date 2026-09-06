@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { ArrowRight, Bike, RefreshCw, Search, Users } from 'lucide-react-native';
+import { ArrowRight, RefreshCw, Search } from 'lucide-react-native';
 import { Animated, Easing, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SocketEvents } from '@repo/shared';
 
@@ -156,28 +156,7 @@ export default function PassengerHomeScreen() {
             </Pressable>
           </View>
 
-          {/* Quick service switcher */}
-          <View style={styles.quickServiceRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Tìm xe đi chung"
-              onPress={() => router.push('/search' as any)}
-              style={({ pressed }) => [styles.quickServiceItem, pressed && styles.quickServicePressed]}
-            >
-              <Users size={16} color={colors.surface} />
-              <AppText variant="caption" weight="semibold" style={styles.quickServiceText}>Đi chung xe</AppText>
-            </Pressable>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Đặt xe riêng đi ngay"
-              onPress={() => router.push('/(passenger-tabs)/ride-hailing' as any)}
-              style={({ pressed }) => [styles.quickServiceItem, styles.quickServiceHailing, pressed && styles.quickServicePressed]}
-            >
-              <Bike size={16} color={colors.primary} />
-              <AppText variant="caption" weight="semibold" style={styles.quickServiceHailingText}>Đặt xe đi ngay</AppText>
-            </Pressable>
-          </View>
         </View>
       </View>
 
@@ -288,34 +267,5 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.5,
   },
-  quickServiceRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    justifyContent: 'center',
-    marginTop: spacing.md,
-  },
-  quickServiceItem: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.14)',
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 8,
-  },
-  quickServiceHailing: {
-    backgroundColor: colors.surface,
-    borderColor: colors.surface,
-  },
-  quickServiceText: {
-    color: colors.surface,
-  },
-  quickServiceHailingText: {
-    color: colors.primary,
-  },
-  quickServicePressed: {
-    opacity: 0.8,
-  },
+
 });
