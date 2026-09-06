@@ -9,6 +9,7 @@ import { AppInput } from '../../src/components/ui/AppInput';
 import { AppButton } from '../../src/components/ui/AppButton';
 import { AppText } from '../../src/components/ui/AppText';
 import { ArrowLeft, CheckCircle, Mail, KeyRound, Lock, EyeOff, Eye } from 'lucide-react-native';
+import { layout } from '../../src/theme/tokens';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function ForgotPasswordScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-background" keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ alignSelf: 'center', flexGrow: 1, maxWidth: layout.maxContentWidth, width: '100%' }} className="bg-background" keyboardShouldPersistTaps="handled">
         <View className="flex-1 px-6 pt-16 pb-8">
           
           {errorMsg && step !== 3 && (

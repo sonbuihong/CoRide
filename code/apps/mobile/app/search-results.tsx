@@ -159,7 +159,7 @@ export default function SearchResultsScreen() {
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  header: { alignItems: 'center', backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 64, paddingHorizontal: spacing.sm },
+  header: { alignSelf: 'center', alignItems: 'center', backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', maxWidth: layout.maxContentWidth, minHeight: 64, paddingHorizontal: spacing.sm, width: '100%' },
   headerButton: { alignItems: 'center', borderRadius: radius.pill, height: layout.minTouchTarget, justifyContent: 'center', width: layout.minTouchTarget },
   headerTitle: { flex: 1, textAlign: 'center' },
   content: { alignSelf: 'center', maxWidth: layout.maxContentWidth, padding: spacing.md, paddingBottom: spacing.xxxl, width: '100%' },

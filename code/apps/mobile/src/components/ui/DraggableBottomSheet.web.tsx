@@ -7,7 +7,7 @@
  */
 import React, { forwardRef, useImperativeHandle, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { colors, spacing } from '../../theme/tokens';
+import { colors, layout, spacing } from '../../theme/tokens';
 
 import type { SharedValue } from 'react-native-reanimated';
 
@@ -88,14 +88,17 @@ export const DraggableBottomSheet = forwardRef<
 
 const styles = StyleSheet.create({
   container: {
+    alignSelf: 'center',
     backgroundColor: colors.surface,
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     bottom: 0,
     left: 0,
+    maxWidth: layout.maxContentWidth,
     overflow: 'hidden',
     position: 'absolute',
     right: 0,
+    width: '100%',
     // Đổ bóng phía trên để giống bottom-sheet native
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },

@@ -4,7 +4,7 @@ import { ArrowLeft, MoreHorizontal } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '../../components/ui/AppText';
-import { colors, radius, spacing } from '../../theme/tokens';
+import { colors, layout, radius, spacing } from '../../theme/tokens';
 
 export function TripScreen({ children }: { children: React.ReactNode }) {
   return (
@@ -59,9 +59,9 @@ export const tripScreenStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  canvas: { alignItems: 'center', backgroundColor: colors.driverSurface, flex: 1 },
-  viewport: { backgroundColor: colors.background, flex: 1, maxWidth: 480, width: '100%' },
-  header: { alignItems: 'center', backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 56, paddingHorizontal: spacing.sm },
+  canvas: { alignItems: 'center', backgroundColor: 'transparent', flex: 1, width: '100%' },
+  viewport: { backgroundColor: colors.background, flex: 1, maxWidth: layout.maxContentWidth, width: '100%' },
+  header: { alignItems: 'center', alignSelf: 'center', backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', maxWidth: layout.maxContentWidth, minHeight: 56, paddingHorizontal: spacing.sm, width: '100%' },
   headerButton: { alignItems: 'center', borderRadius: radius.full, height: 48, justifyContent: 'center', width: 48 },
   headerTitle: { flex: 1, textAlign: 'center' },
   scrollContent: { padding: spacing.screen, paddingBottom: spacing['2xl'] },

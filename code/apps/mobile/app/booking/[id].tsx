@@ -19,7 +19,7 @@ import { CompletedBookingExperience } from '../../src/features/booking/Completed
 import { isPassengerJourneyCompleted } from '../../src/features/booking/completed-booking';
 import { useBookingPaymentSync } from '../../src/features/payment/useBookingPaymentSync';
 import { Star, Phone, ArrowLeft, MessageSquare, MapPin, CheckCircle2, Clock3, Navigation, CreditCard, AlertCircle } from 'lucide-react-native';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { colors, layout, radius, spacing } from '../../src/theme/tokens';
 import { nativeShadows } from '../../src/theme/shadows';
 
 const CANCEL_REASONS = [
@@ -638,11 +638,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
+    alignSelf: 'center',
     paddingBottom: 14,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
+    maxWidth: layout.maxContentWidth,
+    width: '100%',
     ...nativeShadows.card,
     zIndex: 10,
   },
@@ -660,9 +663,12 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   scrollContent: {
+    alignSelf: 'center',
+    maxWidth: layout.maxContentWidth,
     paddingHorizontal: 16,
     paddingTop: 24,
     paddingBottom: 40,
+    width: '100%',
   },
   heroSection: {
     marginBottom: 24,
@@ -788,17 +794,23 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   driverActionsBar: {
+    alignSelf: 'center',
     flexDirection: 'row',
+    maxWidth: layout.maxContentWidth,
     padding: 16,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
+    width: '100%',
   },
   bottomCtaBar: {
+    alignSelf: 'center',
+    maxWidth: layout.maxContentWidth,
     padding: 16,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
+    width: '100%',
   },
   mapContainer: {
     height: 280, // Increased map size for ongoing ride

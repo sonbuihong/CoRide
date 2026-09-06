@@ -136,17 +136,20 @@ export function MobileAppHeader({ mode }: MobileAppHeaderProps) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: colors.surface },
+  safeArea: { backgroundColor: colors.surface, width: '100%' },
   header: {
     alignItems: 'center',
+    alignSelf: 'center',
     backgroundColor: colors.surface,
     borderBottomColor: colors.border,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
+    maxWidth: layout.maxContentWidth,
     minHeight: 64,
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xxs,
+    width: '100%',
   },
   compactHeader: { paddingHorizontal: spacing.md },
   brand: {

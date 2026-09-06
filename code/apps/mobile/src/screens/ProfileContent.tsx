@@ -10,6 +10,7 @@ import { AppText } from '../../src/components/ui/AppText';
 import { KYCStatusCard } from '../../src/components/ui/KYCStatusCard';
 import { useAppStore } from '../stores/useAppStore';
 import { getDriverEligibility, getKycStatusMapper } from '../utils/mode-checker';
+import { layout } from '../theme/tokens';
 import * as SecureStore from '../services/secure-store';
 
 export interface ProfileContentProps {
@@ -112,7 +113,11 @@ export default function ProfileContent({ user, isPrototype = false, onLogout }: 
   };
 
   return (
-    <ScrollView className="flex-1 bg-background pb-10" showsVerticalScrollIndicator={false}>
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerStyle={{ alignSelf: 'center', maxWidth: layout.maxContentWidth, paddingBottom: 40, width: '100%' }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* 1. Header Area */}
       <View className="bg-surface p-6 pb-8 items-center rounded-b-[32px] shadow-sm mb-6 border-b border-border z-10">
         <TouchableOpacity 

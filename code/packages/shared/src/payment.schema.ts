@@ -3,6 +3,8 @@ import { z } from 'zod';
 export const transactionStatusSchema = z.enum(['PENDING', 'SUCCESS', 'FAILED']);
 export const transactionTypeSchema = z.enum(['DEPOSIT', 'WITHDRAWAL', 'PAYMENT', 'RECEIVE_PAYMENT', 'REFUND']);
 export const paymentStatusSchema = z.enum(['UNPAID', 'PAID', 'REFUNDED']);
+export const paymentMethodSchema = z.enum(['WALLET', 'CASH', 'QR', 'ZALOPAY']);
+
 
 export const createTransactionSchema = z.object({
   amount: z.number().positive("Số tiền phải lớn hơn 0"),
@@ -39,3 +41,5 @@ export type TransactionResponse = z.infer<typeof transactionResponseSchema>;
 export type TransactionStatus = z.infer<typeof transactionStatusSchema>;
 export type TransactionType = z.infer<typeof transactionTypeSchema>;
 export type PaymentStatus = z.infer<typeof paymentStatusSchema>;
+export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
+

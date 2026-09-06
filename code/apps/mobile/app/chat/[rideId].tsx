@@ -14,7 +14,7 @@ import { rideService } from '../../src/services/ride.service';
 import { socketService } from '../../src/services/socket.service';
 import { useAuth } from '../../src/hooks/useAuth';
 import { useSocketConnection } from '../../src/hooks/useSocketConnection';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { colors, layout, radius, spacing } from '../../src/theme/tokens';
 import { TripScreen } from '../../src/features/trip-flow/TripScreen';
 
 const dayLabel = (value: string) => {
@@ -206,7 +206,7 @@ function MessageBubble({ message, isMine, showDay, showTime }: { message: ChatMe
 
 const styles = StyleSheet.create({
   flex: { backgroundColor: '#F4F7FB', flex: 1 },
-  header: { alignItems: 'center', backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', minHeight: 72, paddingHorizontal: spacing.sm },
+  header: { alignSelf: 'center', alignItems: 'center', backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', maxWidth: layout.maxContentWidth, minHeight: 72, paddingHorizontal: spacing.sm, width: '100%' },
   headerButton: { alignItems: 'center', borderRadius: radius.full, height: 48, justifyContent: 'center', width: 48 },
   headerCopy: { flex: 1, marginLeft: spacing.sm },
   avatar: { alignItems: 'center', backgroundColor: colors.navigationPassengerSoft, borderRadius: radius.full, height: 44, justifyContent: 'center', position: 'relative', width: 44 },
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   presenceText: { color: colors.success },
   presenceTextOffline: { color: colors.warning },
   loading: { flex: 1, padding: spacing.screen },
-  messages: { flexGrow: 1, paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: spacing.xl },
+  messages: { alignSelf: 'center', flexGrow: 1, maxWidth: layout.maxContentWidth, paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: spacing.xl, width: '100%' },
   empty: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: spacing.xl },
   emptyIcon: { alignItems: 'center', backgroundColor: colors.navigationPassengerSoft, borderRadius: radius.full, height: 60, justifyContent: 'center', marginBottom: spacing.md, width: 60 },
   emptyText: { color: colors.textSecondary, marginTop: spacing.xs, maxWidth: 260, textAlign: 'center' },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   messageOther: { color: colors.textPrimary },
   time: { color: colors.textTertiary, marginTop: 5, paddingHorizontal: 3 },
   timeMine: { textAlign: 'right' },
-  composer: { alignItems: 'center', backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  composer: { alignSelf: 'center', alignItems: 'center', backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: spacing.sm, maxWidth: layout.maxContentWidth, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, width: '100%' },
   sendError: { backgroundColor: colors.dangerSoft, color: colors.danger, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, textAlign: 'center' },
   input: { backgroundColor: '#F8FAFC', borderColor: colors.border, borderRadius: 24, borderWidth: 1, color: colors.textPrimary, flex: 1, fontSize: 16, height: 48, lineHeight: 22, paddingHorizontal: spacing.md, paddingVertical: Platform.OS === 'ios' ? 12 : 8 },
   send: { alignItems: 'center', backgroundColor: colors.navigationPassenger, borderRadius: radius.full, elevation: 2, height: 48, justifyContent: 'center', shadowColor: colors.navigationPassenger, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.22, shadowRadius: 8, width: 48 },

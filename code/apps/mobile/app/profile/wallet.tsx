@@ -5,6 +5,7 @@ import { ArrowDownLeft, ArrowUpRight, WalletCards } from 'lucide-react-native';
 import { paymentService } from '../../src/services/payment.service';
 import { AppText } from '../../src/components/ui/AppText';
 import { EmptyState } from '../../src/components/ui/EmptyState';
+import { layout } from '../../src/theme/tokens';
 
 interface Transaction {
   id: string;
@@ -29,7 +30,8 @@ export default function WalletScreen() {
   return (
     <View className="flex-1 bg-background">
       <Stack.Screen options={{ title: 'Ví CoRide' }} />
-      <View className="m-5 rounded-3xl bg-slate-950 p-6">
+      <View style={{ alignSelf: 'center', flex: 1, maxWidth: layout.maxContentWidth, width: '100%' }}>
+        <View className="m-5 rounded-3xl bg-slate-950 p-6">
         <View className="mb-5 h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
           <WalletCards color="#FFFFFF" size={24} />
         </View>
@@ -60,6 +62,7 @@ export default function WalletScreen() {
           );
         }}
       />
+      </View>
     </View>
   );
 }

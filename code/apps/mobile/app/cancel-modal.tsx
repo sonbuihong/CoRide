@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { rideService } from '../src/services/ride.service';
 import { bookingService } from '../src/services/booking.service';
 import { XCircle, X } from 'lucide-react-native';
+import { layout } from '../src/theme/tokens';
 
 export default function CancelModalScreen() {
   const { id, type } = useLocalSearchParams<{ id: string; type: 'ride' | 'booking' }>();
@@ -53,7 +54,7 @@ export default function CancelModalScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       className="flex-1 bg-white"
     >
-      <View className="flex-row justify-between items-center p-4 border-b border-gray-100">
+      <View style={{ alignSelf: 'center', maxWidth: layout.maxContentWidth, width: '100%' }} className="flex-row justify-between items-center p-4 border-b border-gray-100">
         <Text className="text-lg font-bold text-gray-900">
           {type === 'ride' ? 'Hủy chuyến đi' : 'Hủy đặt chỗ'}
         </Text>
@@ -62,7 +63,7 @@ export default function CancelModalScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ alignSelf: 'center', maxWidth: layout.maxContentWidth, padding: 20, width: '100%' }} keyboardShouldPersistTaps="handled">
         <View className="items-center mb-6">
           <View className="w-16 h-16 bg-red-100 rounded-full items-center justify-center mb-4">
             <XCircle size={32} color="#dc2626" />

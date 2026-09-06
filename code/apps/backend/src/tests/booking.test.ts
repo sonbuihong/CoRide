@@ -30,6 +30,14 @@ jest.mock('@repo/database', () => {
       aggregate: jest.fn(),
       updateMany: jest.fn(),
     },
+    wallet: {
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
+      update: jest.fn(),
+    },
+    transaction: {
+      create: jest.fn(),
+    },
     pricingConfig: {
       findUnique: jest.fn(),
     },
@@ -53,6 +61,23 @@ jest.mock('@repo/database', () => {
       CANCELLED: 'CANCELLED',
       REJECTED: 'REJECTED'
     },
+    PaymentMethod: {
+      WALLET: 'WALLET',
+      CASH: 'CASH',
+      QR: 'QR',
+    },
+    PaymentStatus: {
+      UNPAID: 'UNPAID',
+      PAID: 'PAID',
+      REFUNDED: 'REFUNDED',
+    },
+    TransactionType: {
+      PAYMENT: 'PAYMENT',
+      REFUND: 'REFUND',
+    },
+    TransactionStatus: {
+      SUCCESS: 'SUCCESS',
+    },
   };
 });
 
@@ -63,7 +88,24 @@ jest.mock('@prisma/client', () => ({
     CONFIRMED: 'CONFIRMED',
     CANCELLED: 'CANCELLED',
     REJECTED: 'REJECTED'
-  }
+  },
+  PaymentMethod: {
+    WALLET: 'WALLET',
+    CASH: 'CASH',
+    QR: 'QR',
+  },
+  PaymentStatus: {
+    UNPAID: 'UNPAID',
+    PAID: 'PAID',
+    REFUNDED: 'REFUNDED',
+  },
+  TransactionType: {
+    PAYMENT: 'PAYMENT',
+    REFUND: 'REFUND',
+  },
+  TransactionStatus: {
+    SUCCESS: 'SUCCESS',
+  },
 }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-fallback-key';
@@ -109,9 +151,9 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
   });
 
   describe('5.1 Test API Đặt xe (POST /api/bookings)', () => {
-    const bookingData = { rideId, seats: 2 };
+    const bookingData = { rideId, seats: 2, paymentMethod: 'CASH' };
 
-    it('API_BKG_001 & 002: Happy Case - Hành khách đặt ghế thành công (PENDING)', async () => {
+    it('API_BKG_001 & 002: Happy Case - Hành khách đặt ghế thành công (PENDING, CASH)', async () => {
       (prisma.ride.findUnique as jest.Mock).mockResolvedValue({
         id: rideId,
         driverId: driverId,
@@ -141,6 +183,7 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
       (prisma.booking.create as jest.Mock).mockResolvedValue({
         id: bookingId,
         status: BookingStatus.PENDING,
+        paymentStatus: 'UNPAID',
         passenger: { id: passengerId, firstName: 'Pass', lastName: 'A' },
         ride: { origin: 'A', destination: 'B' },
         ...bookingData,
@@ -169,7 +212,7 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
       const response = await request(app)
         .post('/api/bookings')
         .set('Authorization', `Bearer ${passengerToken}`)
-        .send({ seats: 1 });
+        .send({ seats: 1, paymentMethod: 'CASH' });
 
       expect(response.status).toBe(400);
       expect(JSON.stringify(response.body)).toMatch(/Mã chuyến đi/i);
@@ -179,10 +222,149 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
       const response = await request(app)
         .post('/api/bookings')
         .set('Authorization', `Bearer ${passengerToken}`)
-        .send({ rideId, seats: 0 });
+        .send({ rideId, seats: 0, paymentMethod: 'CASH' });
 
       expect(response.status).toBe(400);
       expect(JSON.stringify(response.body)).toMatch(/ghế/i);
+    });
+
+    it('API_BKG_005: Validation - Lỗi do thiếu phương thức thanh toán', async () => {
+      const response = await request(app)
+        .post('/api/bookings')
+        .set('Authorization', `Bearer ${passengerToken}`)
+        .send({ rideId, seats: 1 });
+
+      expect(response.status).toBe(400);
+      expect(JSON.stringify(response.body)).toMatch(/phương thức thanh toán/i);
+    });
+
+    it('API_BKG_WALLET_001: Happy Case - Hành khách đặt ghế thành công với WALLET (đủ tiền)', async () => {
+      const walletBookingData = { rideId, seats: 2, paymentMethod: 'WALLET' };
+      (prisma.ride.findUnique as jest.Mock).mockResolvedValue({
+        id: rideId,
+        driverId: driverId,
+        status: 'SCHEDULED',
+        availableSeats: 4,
+        pricePerSeat: 100000,
+        offeredSeats: 4,
+        tollCost: 0,
+        distance: 16,
+        duration: 30,
+        departureTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+        origin: 'A',
+        destination: 'B',
+        originLat: 21,
+        originLng: 105,
+        destinationLat: 21.1,
+        destinationLng: 105.1,
+        bookingPolicy: 'DRIVER_APPROVAL',
+        vehicle: { type: 'CAR' },
+        stops: [],
+        driver: { id: driverId, firstName: 'Driver', lastName: 'A' },
+        bookings: []
+      });
+      (prisma.ride.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.wallet.upsert as jest.Mock).mockResolvedValue({
+        id: 'wallet-123',
+        userId: passengerId,
+        rideBalance: 500000,
+      });
+      (prisma.wallet.findUnique as jest.Mock).mockResolvedValue({
+        id: 'wallet-123',
+        userId: passengerId,
+        rideBalance: 500000,
+      });
+      (prisma.wallet.update as jest.Mock).mockResolvedValue({
+        id: 'wallet-123',
+        rideBalance: 300000,
+      });
+      (prisma.transaction.create as jest.Mock).mockResolvedValue({
+        id: 'tx-123',
+        amount: 200000,
+        type: 'PAYMENT',
+        status: 'SUCCESS',
+      });
+      (prisma.booking.create as jest.Mock).mockResolvedValue({
+        id: bookingId,
+        status: BookingStatus.PENDING,
+        paymentStatus: 'PAID',
+        passenger: { id: passengerId, firstName: 'Pass', lastName: 'A' },
+        ride: { origin: 'A', destination: 'B' },
+        ...walletBookingData,
+      });
+
+      const response = await request(app)
+        .post('/api/bookings')
+        .set('Authorization', `Bearer ${passengerToken}`)
+        .send(walletBookingData);
+
+      expect(response.status).toBe(201);
+      expect(response.body.booking?.status).toBe(BookingStatus.PENDING);
+      expect(response.body.booking?.paymentStatus).toBe('PAID');
+      expect(response.body.booking?.paymentMethod).toBe('WALLET');
+      expect(prisma.wallet.update).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: 'wallet-123' },
+        data: { rideBalance: { decrement: expect.any(Number) } },
+      }));
+      expect(prisma.transaction.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          walletId: 'wallet-123',
+          bookingId,
+          type: 'PAYMENT',
+          status: 'SUCCESS',
+        }),
+      }));
+    });
+
+    it('API_BKG_WALLET_002: Business Rule - Thất bại khi số dư ví CoRide không đủ', async () => {
+      const walletBookingData = { rideId, seats: 2, paymentMethod: 'WALLET' };
+      (prisma.ride.findUnique as jest.Mock).mockResolvedValue({
+        id: rideId,
+        driverId: driverId,
+        status: 'SCHEDULED',
+        availableSeats: 4,
+        pricePerSeat: 100000,
+        offeredSeats: 4,
+        tollCost: 0,
+        distance: 16,
+        duration: 30,
+        departureTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+        origin: 'A',
+        destination: 'B',
+        originLat: 21,
+        originLng: 105,
+        destinationLat: 21.1,
+        destinationLng: 105.1,
+        bookingPolicy: 'DRIVER_APPROVAL',
+        vehicle: { type: 'CAR' },
+        stops: [],
+        driver: { id: driverId, firstName: 'Driver', lastName: 'A' },
+        bookings: []
+      });
+      (prisma.ride.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.booking.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.wallet.upsert as jest.Mock).mockResolvedValue({
+        id: 'wallet-123',
+        userId: passengerId,
+        rideBalance: 500, // < totalPrice
+      });
+      (prisma.wallet.findUnique as jest.Mock).mockResolvedValue({
+        id: 'wallet-123',
+        userId: passengerId,
+        rideBalance: 500, // < totalPrice
+      });
+
+      const response = await request(app)
+        .post('/api/bookings')
+        .set('Authorization', `Bearer ${passengerToken}`)
+        .send(walletBookingData);
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toMatch(/không đủ/i);
+      expect(prisma.booking.create).not.toHaveBeenCalled();
     });
 
     it('API_BKG_006: Business Rule - Thất bại do chuyến xe đã hết chỗ trống', async () => {
@@ -199,7 +381,7 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
       const response = await request(app)
         .post('/api/bookings')
         .set('Authorization', `Bearer ${passengerToken}`)
-        .send({ rideId, seats: 1 });
+        .send({ rideId, seats: 1, paymentMethod: 'CASH' });
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('không đủ');
@@ -219,7 +401,7 @@ describe('Booking API (Giai đoạn 1 Test Cases)', () => {
       const response = await request(app)
         .post('/api/bookings')
         .set('Authorization', `Bearer ${passengerToken}`)
-        .send({ rideId, seats: 2 }); // Đặt 2 ghế
+        .send({ rideId, seats: 2, paymentMethod: 'CASH' }); // Đặt 2 ghế
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('không đủ');

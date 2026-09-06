@@ -24,6 +24,7 @@ interface PassengerBookingDetailsProps {
     seats: number;
     totalPrice?: number | null;
     paymentStatus?: string | null;
+    paymentMethod?: string | null;
     createdAt?: string | null;
     pickupAddress?: string | null;
     dropoffAddress?: string | null;
@@ -180,6 +181,20 @@ export const PassengerBookingDetails = memo(function PassengerBookingDetails({
             {totalPrice.toLocaleString('vi-VN')}đ
           </AppText>
         </View>
+        {Boolean(booking.paymentMethod) && (
+          <View style={styles.detailRow}>
+            <AppText variant="bodySmall" style={styles.detailLabel}>Phương thức</AppText>
+            <AppText variant="bodySmall" weight="semibold" style={styles.detailValue}>
+              {booking.paymentMethod === 'WALLET'
+                ? 'Ví CoRide'
+                : booking.paymentMethod === 'CASH'
+                  ? 'Tiền mặt'
+                  : booking.paymentMethod === 'QR'
+                    ? 'Quét mã QR'
+                    : booking.paymentMethod}
+            </AppText>
+          </View>
+        )}
         <View style={styles.detailRow}>
           <AppText variant="bodySmall" style={styles.detailLabel}>Trạng thái</AppText>
           {isPaid ? (

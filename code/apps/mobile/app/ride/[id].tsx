@@ -16,9 +16,11 @@ import { SocketEvents } from '@repo/shared';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   BadgeCheck,
+  Banknote,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
@@ -49,8 +51,9 @@ import { BottomSheetSurface } from '../../src/components/ui/BottomSheetSurface';
 import { MatchExplanation } from '../../src/components/MatchExplanation';
 import { bookingService, type DriverBookingSummary } from '../../src/services/booking.service';
 import { rideService } from '../../src/services/ride.service';
+import { paymentService } from '../../src/services/payment.service';
 import { useAuth } from '../../src/hooks/useAuth';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { colors, layout, radius, spacing } from '../../src/theme/tokens';
 import { decodePolyline, getDirections } from '../../src/services/direction.service';
 import { socketService } from '../../src/services/socket.service';
 
@@ -742,6 +745,12 @@ function PassengerRideView() {
   const [seats, setSeats] = useState(initialSeats);
   const [pickupStopId, setPickupStopId] = useState<string>();
   const [sheetState, setSheetState] = useState<'confirm' | 'success' | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'WALLET' | 'CASH'>('WALLET');
+
+  const walletQuery = useQuery({
+    queryKey: ['wallet'],
+    queryFn: () => paymentService.getWallet(),
+  });
   const [timelineExpanded, setTimelineExpanded] = useState(false);
   const [bookingError, setBookingError] = useState<string>();
   const [createdBooking, setCreatedBooking] = useState<{ id?: string; status?: string; totalPrice?: number }>();
@@ -918,6 +927,7 @@ function PassengerRideView() {
       dropoffLat: passengerDestination?.latitude,
       dropoffLng: passengerDestination?.longitude,
       dropoffAddress: params.passengerDestination,
+      paymentMethod: selectedPaymentMethod,
     }),
     onSuccess: async (result) => {
       const booking = result.booking ?? result;
@@ -971,6 +981,9 @@ function PassengerRideView() {
   const totalFare = hasQuoteContext
     ? (offerQuery.data?.passengerFare ?? pricePerSeat * seats)
     : pricePerSeat * seats;
+  const walletData = (walletQuery.data as any)?.wallet ?? walletQuery.data;
+  const walletBalance = Number(walletData?.rideBalance ?? walletData?.balance ?? 0);
+  const isWalletInsufficient = selectedPaymentMethod === 'WALLET' && walletBalance < totalFare;
   const pickupLabel = hasSearchContext
     ? params.passengerOrigin || ride.departure
     : selectedPickupStop?.address || ride.departure;
@@ -1231,8 +1244,91 @@ function PassengerRideView() {
                   <View style={styles.confirmRoute}><AppText variant="bodySmall" weight="semibold">{pickupLabel}</AppText><ArrowRight size={18} color={colors.textTertiary} /><AppText variant="bodySmall" weight="semibold">{dropoffLabel}</AppText></View>
                   <View style={styles.confirmMeta}><AppText variant="bodySmall">{ride.expectedPickupTime ? format(new Date(ride.expectedPickupTime), 'HH:mm') : format(new Date(ride.departureTime), 'HH:mm')} · {seats} ghế</AppText><AppText variant="h3" weight="semibold" style={styles.passengerPrice}>{formatVnd(totalFare)}</AppText></View>
                   <AppText variant="bodySmall" style={styles.passengerMuted}>{isInstant ? 'Chỗ của bạn sẽ được xác nhận ngay nếu backend kiểm tra vẫn còn đủ ghế.' : 'Tài xế sẽ xác nhận yêu cầu của bạn trước khi chuyến được đặt.'}</AppText>
+
+                  {/* ── Section: PHƯƠNG THỨC THANH TOÁN (Bắt buộc chọn trước khi xác nhận) ── */}
+                  <View style={styles.paymentSection}>
+                    <AppText variant="caption" weight="bold" style={styles.paymentSectionHeader}>
+                      PHƯƠNG THỨC THANH TOÁN
+                    </AppText>
+
+                    {/* Lựa chọn 1: Ví CoRide */}
+                    <Pressable
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: selectedPaymentMethod === 'WALLET' }}
+                      onPress={() => setSelectedPaymentMethod('WALLET')}
+                      style={[
+                        styles.paymentCard,
+                        selectedPaymentMethod === 'WALLET' && styles.paymentCardSelected,
+                      ]}
+                    >
+                      <View style={[styles.paymentIconWrap, selectedPaymentMethod === 'WALLET' && styles.paymentIconWrapSelected]}>
+                        <Wallet size={20} color={selectedPaymentMethod === 'WALLET' ? colors.primary : colors.textSecondary} />
+                      </View>
+                      <View style={styles.flex1}>
+                        <View style={styles.paymentTitleRow}>
+                          <AppText variant="bodySmall" weight="semibold">Ví CoRide</AppText>
+                          <AppText
+                            variant="caption"
+                            weight="bold"
+                            style={walletBalance >= totalFare ? styles.balanceOk : styles.balanceWarning}
+                          >
+                            Số dư: {formatVnd(walletBalance)}
+                          </AppText>
+                        </View>
+                        <AppText variant="caption" style={styles.passengerMuted}>
+                          Trừ trực tiếp số dư ví CoRide ngay khi đặt chỗ
+                        </AppText>
+                        {isWalletInsufficient && (
+                          <View style={styles.insufficientRow}>
+                            <AlertTriangle size={13} color={colors.danger} />
+                            <AppText variant="caption" style={styles.insufficientText}>
+                              {`Số dư không đủ (${formatVnd(walletBalance)} < ${formatVnd(totalFare)}). Vui lòng nạp thêm hoặc chọn Tiền mặt.`}
+                            </AppText>
+                          </View>
+                        )}
+                      </View>
+                    </Pressable>
+
+                    {/* Lựa chọn 2: Tiền mặt */}
+                    <Pressable
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: selectedPaymentMethod === 'CASH' }}
+                      onPress={() => setSelectedPaymentMethod('CASH')}
+                      style={[
+                        styles.paymentCard,
+                        selectedPaymentMethod === 'CASH' && styles.paymentCardSelected,
+                      ]}
+                    >
+                      <View style={[styles.paymentIconWrap, selectedPaymentMethod === 'CASH' && styles.paymentIconWrapSelected]}>
+                        <Banknote size={20} color={selectedPaymentMethod === 'CASH' ? colors.primary : colors.textSecondary} />
+                      </View>
+                      <View style={styles.flex1}>
+                        <AppText variant="bodySmall" weight="semibold">Tiền mặt</AppText>
+                        <AppText variant="caption" style={styles.passengerMuted}>
+                          Thanh toán trực tiếp cho tài xế khi kết thúc chuyến đi
+                        </AppText>
+                      </View>
+                    </Pressable>
+                  </View>
+
                   {bookingError ? <View accessibilityRole="alert" style={styles.bookingError}><AppText variant="bodySmall" style={styles.bookingErrorText}>{bookingError}</AppText></View> : null}
-                  <View style={styles.confirmActions}><AppButton title="Quay lại" variant="outline" onPress={() => setSheetState(null)} style={styles.confirmAction} /><AppButton title={isInstant ? 'Đặt chỗ' : 'Gửi yêu cầu'} variant="passenger" isLoading={bookingMutation.isPending} disabled={bookingMutation.isPending} onPress={() => bookingMutation.mutate()} style={styles.confirmAction} /></View>
+                  <View style={styles.confirmActions}>
+                    <AppButton title="Quay lại" variant="outline" onPress={() => setSheetState(null)} style={styles.confirmAction} />
+                    <AppButton
+                      title={
+                        isWalletInsufficient
+                          ? 'Số dư ví không đủ'
+                          : isInstant
+                            ? 'Đặt chỗ'
+                            : 'Gửi yêu cầu'
+                      }
+                      variant="passenger"
+                      isLoading={bookingMutation.isPending}
+                      disabled={bookingMutation.isPending || isWalletInsufficient}
+                      onPress={() => bookingMutation.mutate()}
+                      style={styles.confirmAction}
+                    />
+                  </View>
                 </View>
               )}
             </BottomSheetSurface>
@@ -1591,7 +1687,7 @@ const styles = StyleSheet.create({
   driverMarkerOuter: { alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0, 113, 227, 0.25)' },
   driverMarkerInner: { alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 11, backgroundColor: colors.navigationPassenger || '#0071E3', borderWidth: 2, borderColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3, elevation: 4 },
   driverLegendMarker: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.navigationPassenger || '#0071E3', borderWidth: 2, borderColor: '#FFFFFF' },
-  passengerBody: { alignSelf: 'center', gap: spacing.md, marginTop: -20, maxWidth: 720, paddingBottom: spacing.lg, paddingHorizontal: spacing.md, width: '100%', zIndex: 2 },
+  passengerBody: { alignSelf: 'center', gap: spacing.md, marginTop: -20, maxWidth: layout.maxContentWidth, paddingBottom: spacing.lg, paddingHorizontal: spacing.md, width: '100%', zIndex: 2 },
   passengerHero: { backgroundColor: colors.surface, borderRadius: 24, elevation: 5, gap: spacing.md, padding: spacing.lg, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.1, shadowRadius: 20 },
   passengerHeroTopRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, justifyContent: 'space-between' },
   passengerDatePill: { alignItems: 'center', backgroundColor: colors.primarySoft, borderRadius: radius.pill, flexDirection: 'row', gap: 6, minHeight: 34, paddingHorizontal: 11 },
@@ -1644,7 +1740,7 @@ const styles = StyleSheet.create({
   soldOutNotice: { backgroundColor: colors.dangerSoft, borderRadius: radius.card, gap: spacing.xs, padding: spacing.md },
   soldOutTitle: { color: colors.danger },
   passengerCtaBar: { backgroundColor: colors.surface, borderTopColor: colors.border, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: StyleSheet.hairlineWidth, bottom: 0, elevation: 12, left: 0, paddingHorizontal: spacing.md, paddingTop: spacing.sm, position: 'absolute', right: 0, shadowColor: '#0F172A', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.1, shadowRadius: 18 },
-  passengerCtaSummary: { alignItems: 'center', alignSelf: 'center', flexDirection: 'row', gap: spacing.sm, maxWidth: 720, width: '100%' },
+  passengerCtaSummary: { alignItems: 'center', alignSelf: 'center', flexDirection: 'row', gap: spacing.sm, maxWidth: layout.maxContentWidth, width: '100%' },
   passengerCtaButton: { flex: 1 },
   confirmModalContainer: { flex: 1, justifyContent: 'flex-end' },
   confirmBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.scrim },
@@ -1658,4 +1754,51 @@ const styles = StyleSheet.create({
   bookingError: { backgroundColor: colors.dangerSoft, borderRadius: radius.input, padding: spacing.sm },
   bookingErrorText: { color: colors.danger },
   successIcon: { alignItems: 'center', alignSelf: 'center', backgroundColor: colors.successSoft, borderRadius: radius.pill, height: 64, justifyContent: 'center', width: 64 },
+  paymentSection: { gap: spacing.xs, marginVertical: spacing.xs },
+  paymentSectionHeader: { color: colors.textSecondary, letterSpacing: 0.5, marginBottom: 4 },
+  paymentCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderRadius: radius.card || 12,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  paymentCardSelected: {
+    borderColor: colors.primary,
+    backgroundColor: '#F0F7FF',
+  },
+  paymentIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  paymentIconWrapSelected: {
+    backgroundColor: '#DBEAFE',
+  },
+  paymentTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  balanceOk: { color: colors.success },
+  balanceWarning: { color: colors.danger },
+  insufficientRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+    backgroundColor: colors.dangerSoft,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  insufficientText: { color: colors.danger, flex: 1 },
 });

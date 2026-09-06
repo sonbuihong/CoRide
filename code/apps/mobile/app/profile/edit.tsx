@@ -9,6 +9,7 @@ import { authService } from '../../src/services/auth.service';
 import { AppInput } from '../../src/components/ui/AppInput';
 import { User, Phone, FileText } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import { layout } from '../../src/theme/tokens';
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -47,7 +48,7 @@ export default function EditProfileScreen() {
       style={{ flex: 1 }} 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-white px-6 pt-6 pb-10">
+      <ScrollView contentContainerStyle={{ alignSelf: 'center', flexGrow: 1, maxWidth: layout.maxContentWidth, width: '100%' }} className="bg-white px-6 pt-6 pb-10">
         
         {errorMsg && (
           <View className="bg-red-50 p-3 rounded-xl mb-4 border border-red-200">

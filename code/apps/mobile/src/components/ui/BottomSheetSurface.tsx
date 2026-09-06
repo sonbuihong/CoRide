@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, ViewProps } from 'react-native';
 
-import { colors, radius, spacing } from '../../theme/tokens';
+import { colors, layout, radius, spacing } from '../../theme/tokens';
 
 export function BottomSheetSurface({ children, style, ...props }: ViewProps) {
   return (
@@ -14,13 +14,16 @@ export function BottomSheetSurface({ children, style, ...props }: ViewProps) {
 
 const styles = StyleSheet.create({
   sheet: {
+    alignSelf: 'center',
     backgroundColor: colors.surface,
     borderTopLeftRadius: radius.sheet,
     borderTopRightRadius: radius.sheet,
     borderColor: colors.border,
     borderWidth: StyleSheet.hairlineWidth,
+    maxWidth: layout.maxContentWidth,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
+    width: '100%',
   },
   handle: {
     alignSelf: 'center',

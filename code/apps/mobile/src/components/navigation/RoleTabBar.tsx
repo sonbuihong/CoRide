@@ -35,10 +35,9 @@ export function getRoleTabColor(mode: NavigationMode) {
 
 export function RoleBottomTabBar({ mode, state, descriptors, navigation, insets }: BottomTabBarProps & { mode: NavigationMode }) {
   const visibleRoutes = state.routes.slice(0, 4);
-  const { width } = useWindowDimensions();
 
   return (
-    <View style={[styles.bottomBar, width >= 768 && styles.bottomBarExpanded, { height: layout.tabBarHeight + insets.bottom, paddingBottom: insets.bottom }]}>
+    <View style={[styles.bottomBar, { height: layout.tabBarHeight + insets.bottom, paddingBottom: insets.bottom }]}>
       {visibleRoutes.map((route) => {
         const index = state.routes.indexOf(route);
         const focused = state.index === index;
@@ -159,12 +158,13 @@ export const roleTabBarStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   bottomBar: {
     alignItems: 'flex-start',
-    alignSelf: 'stretch',
+    alignSelf: 'center',
     backgroundColor: colors.surface,
     borderTopColor: colors.navigationDivider,
     borderTopWidth: StyleSheet.hairlineWidth,
     elevation: 4,
     flexDirection: 'row',
+    maxWidth: layout.maxContentWidth,
     paddingHorizontal: layout.tabBarHorizontalInset,
     paddingTop: spacing.xxs,
     shadowColor: colors.textPrimary,
@@ -173,9 +173,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     width: '100%',
   },
-  // The brief keeps four bottom destinations on every target. Expanded layouts
-  // center and cap the bar rather than changing its navigation semantics.
-  bottomBarExpanded: { alignSelf: 'center', borderRadius: radius.card, marginBottom: spacing.xs, maxWidth: 720 },
   bottomButton: {
     alignItems: 'center',
     borderRadius: radius.button,

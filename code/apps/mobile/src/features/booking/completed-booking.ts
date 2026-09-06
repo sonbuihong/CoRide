@@ -91,7 +91,14 @@ export function completedSummary(booking: CompletedBookingData) {
         : undefined,
     paid: booking.paymentStatus === 'PAID',
     canPay: booking.status === 'COMPLETED' && booking.paymentStatus === 'UNPAID',
-    paymentMethodLabel: booking.paymentMethod === 'QR' ? 'QR' : undefined,
+    paymentMethodLabel:
+      booking.paymentMethod === 'WALLET'
+        ? 'Ví CoRide'
+        : booking.paymentMethod === 'CASH'
+          ? 'Tiền mặt'
+          : booking.paymentMethod === 'QR'
+            ? 'QR'
+            : undefined,
     paymentLabel:
       booking.paymentStatus === 'PAID'
         ? 'Đã thanh toán'

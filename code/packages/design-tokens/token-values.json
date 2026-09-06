@@ -59,7 +59,7 @@
     "touchTarget": 48,
     "control": 48,
     "tabBar": 64,
-    "maxMobileContent": 560
+    "maxMobileContent": 480
   },
   "zIndex": { "base": 0, "dropdown": 100, "overlay": 200, "modal": 300, "toast": 400 },
   "motion": { "fast": 150, "standard": 220, "slow": 300 }

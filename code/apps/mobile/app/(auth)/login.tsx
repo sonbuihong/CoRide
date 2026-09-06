@@ -10,7 +10,7 @@ import { AppButton } from '../../src/components/ui/AppButton';
 import { AppText } from '../../src/components/ui/AppText';
 import { AppCheckbox } from '../../src/components/ui/AppCheckbox';
 import { Eye, EyeOff } from 'lucide-react-native';
-import { colors } from '../../src/theme/tokens';
+import { colors, layout } from '../../src/theme/tokens';
 import * as SecureStore from '../../src/services/secure-store';
 
 export default function LoginScreen() {
@@ -56,7 +56,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView 
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 40 }}
+        contentContainerStyle={{ alignSelf: 'center', flexGrow: 1, justifyContent: 'center', maxWidth: layout.maxContentWidth, paddingHorizontal: 20, paddingVertical: 40, width: '100%' }}
         className="bg-background"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

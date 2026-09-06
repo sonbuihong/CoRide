@@ -3,6 +3,8 @@ import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import '../global.css';
 
@@ -11,8 +13,7 @@ import { useAppStore } from '../src/stores/useAppStore';
 import { QueryProvider } from '../src/providers/query-provider';
 import { RideTrackingProvider } from '../src/providers/ride-tracking-provider';
 import { OfflineBanner } from '../src/components/ui/OfflineBanner';
-import { View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { colors, layout } from '../src/theme/tokens';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -86,37 +87,64 @@ function RootLayoutNav() {
   }, [isAuthenticated, segments, router, appMode]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={{ flex: 1 }}>
-      <OfflineBanner />
-      <Stack>
-      <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)/register" options={{ headerShown: false, title: 'Đăng ký' }} />
-      <Stack.Screen name="(passenger-tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(driver-tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="ride/create" options={{ headerShown: false }} />
-      <Stack.Screen name="dev/mode-prototype" options={{ headerShown: true, title: 'Dev Prototype' }} />
-      <Stack.Screen name="ride/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="ride/passenger/[bookingId]" options={{ headerShown: false }} />
-      <Stack.Screen name="ride/route-detail" options={{ headerShown: false }} />
-      <Stack.Screen name="ride/completed" options={{ headerShown: false, gestureEnabled: false }} />
-      <Stack.Screen name="ride/history" options={{ headerShown: false }} />
-      <Stack.Screen name="ride/history/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="ride/active-ride" options={{ headerShown: false, title: 'Chuyến đi' }} />
-      <Stack.Screen name="ride/manage" options={{ headerShown: false }} />
-      <Stack.Screen name="booking/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="driver/trips/[id]" options={{ headerShown: false }} />
-      <Stack.Screen name="driver/register" options={{ headerShown: false }} />
-      <Stack.Screen name="driver/active-trip" options={{ headerShown: false }} />
-      <Stack.Screen name="search" options={{ headerShown: false }} />
-      <Stack.Screen name="search-results" options={{ headerShown: false }} />
-      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="report-modal" options={{ presentation: 'modal', headerShown: false }} />
-      <Stack.Screen name="review-modal" options={{ presentation: 'transparentModal', headerShown: false }} />
-      <Stack.Screen name="cancel-modal" options={{ presentation: 'modal', headerShown: false }} />
-      <Stack.Screen name="chat/[rideId]" options={{ headerShown: false }} />
-      </Stack>
+    <GestureHandlerRootView style={styles.rootBackground}>
+      <View style={styles.phoneContainer}>
+        <OfflineBanner />
+        <Stack screenOptions={{ contentStyle: { backgroundColor: colors.background } }}>
+          <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)/register" options={{ headerShown: false, title: 'Đăng ký' }} />
+          <Stack.Screen name="(passenger-tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(driver-tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="ride/create" options={{ headerShown: false }} />
+          <Stack.Screen name="dev/mode-prototype" options={{ headerShown: true, title: 'Dev Prototype' }} />
+          <Stack.Screen name="ride/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="ride/passenger/[bookingId]" options={{ headerShown: false }} />
+          <Stack.Screen name="ride/route-detail" options={{ headerShown: false }} />
+          <Stack.Screen name="ride/completed" options={{ headerShown: false, gestureEnabled: false }} />
+          <Stack.Screen name="ride/history" options={{ headerShown: false }} />
+          <Stack.Screen name="ride/history/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="ride/active-ride" options={{ headerShown: false, title: 'Chuyến đi' }} />
+          <Stack.Screen name="ride/manage" options={{ headerShown: false }} />
+          <Stack.Screen name="booking/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="driver/trips/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="driver/register" options={{ headerShown: false }} />
+          <Stack.Screen name="driver/active-trip" options={{ headerShown: false }} />
+          <Stack.Screen name="search" options={{ headerShown: false }} />
+          <Stack.Screen name="search-results" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="report-modal" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="review-modal" options={{ presentation: 'transparentModal', headerShown: false }} />
+          <Stack.Screen name="cancel-modal" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="chat/[rideId]" options={{ headerShown: false }} />
+        </Stack>
       </View>
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  rootBackground: {
+    flex: 1,
+    backgroundColor: '#0B0F19',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  phoneContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: layout.maxContentWidth,
+    alignSelf: 'center',
+    backgroundColor: colors.background,
+    overflow: 'hidden',
+    ...Platform.select({
+      web: {
+        boxShadow: '0 0 48px rgba(0, 0, 0, 0.45)',
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.08)',
+      },
+      default: {},
+    }),
+  },
+});

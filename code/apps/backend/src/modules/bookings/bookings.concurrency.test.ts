@@ -17,6 +17,23 @@ jest.mock('@repo/database', () => ({
     PENDING: 'PENDING', CONFIRMED: 'CONFIRMED', CANCELLED: 'CANCELLED',
     REJECTED: 'REJECTED', EXPIRED: 'EXPIRED', COMPLETED: 'COMPLETED',
   },
+  PaymentMethod: {
+    WALLET: 'WALLET',
+    CASH: 'CASH',
+    QR: 'QR',
+  },
+  PaymentStatus: {
+    UNPAID: 'UNPAID',
+    PAID: 'PAID',
+    REFUNDED: 'REFUNDED',
+  },
+  TransactionType: {
+    PAYMENT: 'PAYMENT',
+    REFUND: 'REFUND',
+  },
+  TransactionStatus: {
+    SUCCESS: 'SUCCESS',
+  },
   Prisma: {},
 }));
 
@@ -30,6 +47,7 @@ jest.mock('../pricing/pricing.service', () => ({
   PricingService: {
     getActiveConfig: jest.fn().mockResolvedValue({}),
     calculateCarpoolContribution: mockCalculateCarpoolContribution,
+    getVehiclePassengerCapacity: jest.fn().mockReturnValue(4),
   },
 }));
 jest.mock('../rides/ride-matching.service', () => ({
@@ -147,7 +165,7 @@ describe('BookingsService concurrent reservation', () => {
   });
 
   it('chỉ cho một trong hai hành khách giữ ghế cuối', async () => {
-    const data = { rideId: rideSnapshot.id, seats: 1 };
+    const data = { rideId: rideSnapshot.id, seats: 1, paymentMethod: 'CASH' as const };
     const results = await Promise.allSettled([
       BookingsService.createBooking('passenger-a', data),
       BookingsService.createBooking('passenger-b', data),
@@ -161,7 +179,7 @@ describe('BookingsService concurrent reservation', () => {
 
   it('khóa theo passenger để chặn hai booking active đồng thời', async () => {
     availableSeats = 2;
-    const data = { rideId: rideSnapshot.id, seats: 1 };
+    const data = { rideId: rideSnapshot.id, seats: 1, paymentMethod: 'CASH' as const };
     const results = await Promise.allSettled([
       BookingsService.createBooking('passenger-a', data),
       BookingsService.createBooking('passenger-a', data),
@@ -178,6 +196,7 @@ describe('BookingsService concurrent reservation', () => {
     await BookingsService.createBooking('passenger-a', {
       rideId: rideSnapshot.id,
       seats: 1,
+      paymentMethod: 'CASH',
     });
 
     expect(mockCalculateCarpoolContribution).toHaveBeenLastCalledWith(

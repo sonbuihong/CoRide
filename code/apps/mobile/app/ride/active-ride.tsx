@@ -18,7 +18,7 @@ import { bookingService, type DriverBookingSummary } from '../../src/services/bo
 import { getDirections, getDirectionsThroughStops } from '../../src/services/direction.service';
 import { rideService } from '../../src/services/ride.service';
 import { socketService } from '../../src/services/socket.service';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { colors, layout, radius, spacing } from '../../src/theme/tokens';
 import { showInfoDialog } from '../../src/utils/dialog';
 import {
   type ActiveRideViewModel,
@@ -454,11 +454,11 @@ function SupportAction({ icon, label, onPress }: { icon: React.ReactNode; label:
 }
 
 const styles = StyleSheet.create({
-  desktopCanvas: { alignItems: 'center', backgroundColor: colors.driverSurface, flex: 1 },
-  phoneViewport: { backgroundColor: colors.background, flex: 1, maxWidth: 480, overflow: 'hidden', width: '100%' },
-  centeredPage: { alignSelf: 'center', backgroundColor: colors.background, flex: 1, maxWidth: 480, width: '100%' },
+  desktopCanvas: { alignItems: 'center', backgroundColor: 'transparent', flex: 1, width: '100%' },
+  phoneViewport: { backgroundColor: colors.background, flex: 1, maxWidth: layout.maxContentWidth, overflow: 'hidden', width: '100%' },
+  centeredPage: { alignSelf: 'center', backgroundColor: colors.background, flex: 1, maxWidth: layout.maxContentWidth, width: '100%' },
   loadingSheet: { alignItems: 'center', backgroundColor: colors.surface, borderTopLeftRadius: radius.sheet, borderTopRightRadius: radius.sheet, flex: 1, padding: spacing.screen },
-  emptyPage: { alignItems: 'center', alignSelf: 'center', backgroundColor: colors.background, flex: 1, justifyContent: 'center', maxWidth: 480, padding: spacing.screen, width: '100%' },
+  emptyPage: { alignItems: 'center', alignSelf: 'center', backgroundColor: colors.background, flex: 1, justifyContent: 'center', maxWidth: layout.maxContentWidth, padding: spacing.screen, width: '100%' },
   emptyTitle: { marginTop: spacing.lg, textAlign: 'center' },
   emptyCopy: { color: colors.textSecondary, marginTop: spacing.sm, textAlign: 'center' },
   emptyButton: { marginTop: spacing.xl, minWidth: 220 },

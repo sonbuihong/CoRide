@@ -1,6 +1,6 @@
 import { extendedPrisma as prisma } from '@repo/database';
 import { CreateBookingInput, UpdateBookingStatusInput, SocketEvents } from '@repo/shared';
-import { BookingStatus, Prisma } from '@repo/database';
+import { BookingStatus, PaymentStatus, PaymentMethod, TransactionType, TransactionStatus, Prisma } from '@repo/database';
 import { AppError } from '../../shared/errors/AppError';
 import { NotificationsService } from '../notifications/notifications.service';
 import { getDriverLocation, isDriverOnline } from '../../shared/lib/redis';
@@ -38,6 +38,79 @@ export class BookingsService {
       throw new AppError('Vị trí của tài xế không còn khả dụng. Vui lòng tìm chuyến khác.', 409);
     }
     return location;
+  }
+
+  /**
+   * Trừ tiền ví CoRide của hành khách và ghi nhận Transaction (Atomic).
+   * Đảm bảo tính toàn vẹn dữ liệu: nếu số dư không đủ hoặc lỗi, toàn bộ transaction rollback.
+   */
+  private static async processWalletPayment(
+    tx: any,
+    passengerId: string,
+    totalPrice: number,
+    rideId: string,
+    bookingId: string
+  ) {
+    const wallet = await tx.wallet.upsert({
+      where: { userId: passengerId },
+      create: { userId: passengerId, rideBalance: 0, driverEarnings: 0 },
+      update: {},
+    });
+
+    if (wallet.rideBalance < totalPrice) {
+      throw new AppError(
+        `Số dư ví CoRide (${wallet.rideBalance.toLocaleString('vi-VN')}đ) không đủ để thanh toán ${totalPrice.toLocaleString('vi-VN')}đ. Vui lòng nạp thêm tiền hoặc chọn tiền mặt.`,
+        400
+      );
+    }
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: { rideBalance: { decrement: totalPrice } },
+    });
+
+    const transaction = await tx.transaction.create({
+      data: {
+        walletId: wallet.id,
+        amount: totalPrice,
+        type: TransactionType.PAYMENT,
+        status: TransactionStatus.SUCCESS,
+        description: `Thanh toán đặt chỗ chuyến đi #${rideId.slice(0, 8)}`,
+        bookingId,
+      },
+    });
+
+    return { wallet, transaction };
+  }
+
+  /**
+   * Hoàn tiền ví CoRide khi hủy/từ chối/hết hạn đặt chỗ đã thanh toán bằng WALLET.
+   */
+  private static async processWalletRefund(
+    tx: any,
+    passengerId: string,
+    totalPrice: number,
+    bookingId: string,
+    reason: string
+  ) {
+    const wallet = await tx.wallet.findUnique({ where: { userId: passengerId } });
+    if (!wallet) return null;
+
+    await tx.wallet.update({
+      where: { id: wallet.id },
+      data: { rideBalance: { increment: totalPrice } },
+    });
+
+    return tx.transaction.create({
+      data: {
+        walletId: wallet.id,
+        amount: totalPrice,
+        type: TransactionType.REFUND,
+        status: TransactionStatus.SUCCESS,
+        description: `Hoàn tiền: ${reason} #${bookingId.slice(0, 8)}`,
+        bookingId,
+      },
+    });
   }
 
   private static async assertPassengerCanReserve(
@@ -242,6 +315,22 @@ export class BookingsService {
     if (!routeMatch) throw new AppError('Điểm đón/trả không thỏa giới hạn lệch tuyến carpool', 400);
     const pricing = await this.calculateBookingContribution(data, ride, seats, routeMatch.detourKm);
 
+    const paymentMethod = (data.paymentMethod as PaymentMethod) ?? PaymentMethod.CASH;
+
+    if (paymentMethod === PaymentMethod.WALLET) {
+      const wallet = await prisma.wallet.findUnique({
+        where: { userId: passengerId },
+        select: { rideBalance: true },
+      });
+      const balance = wallet?.rideBalance ?? 0;
+      if (balance < pricing.totalPrice) {
+        throw new AppError(
+          `Số dư ví CoRide (${balance.toLocaleString('vi-VN')}đ) không đủ để thanh toán ${pricing.totalPrice.toLocaleString('vi-VN')}đ. Vui lòng nạp thêm tiền hoặc chọn tiền mặt.`,
+          400
+        );
+      }
+    }
+
     const instant = ride.bookingPolicy === 'INSTANT';
     const booking = await prisma.$transaction(async (tx) => {
       await this.assertPassengerCanReserve(tx, passengerId);
@@ -256,7 +345,7 @@ export class BookingsService {
       });
       if (reserved.count !== 1) throw new AppError('Chuyến đi không còn đủ ghế để giữ chỗ', 409);
       await this.syncScheduledRideAvailability(tx, rideId);
-      return tx.booking.create({
+      const createdBooking = await tx.booking.create({
         data: {
           rideId, passengerId, seats,
           totalPrice: pricing.totalPrice,
@@ -266,6 +355,8 @@ export class BookingsService {
           status: instant ? BookingStatus.CONFIRMED : BookingStatus.PENDING,
           expiresAt: instant ? null : new Date(Date.now() + SCHEDULED_APPROVAL_TIMEOUT_MS),
           seatHeld: true,
+          paymentMethod,
+          paymentStatus: paymentMethod === PaymentMethod.WALLET ? PaymentStatus.PAID : PaymentStatus.UNPAID,
           passengerLat: data.passengerLat ?? null,
           passengerLng: data.passengerLng ?? null,
           pickupAddress: data.pickupAddress ?? null,
@@ -279,6 +370,12 @@ export class BookingsService {
           passenger: { select: { id: true, firstName: true, lastName: true } },
         },
       });
+
+      if (paymentMethod === PaymentMethod.WALLET) {
+        await this.processWalletPayment(tx, passengerId, pricing.totalPrice, rideId, createdBooking.id);
+      }
+
+      return createdBooking;
     });
 
     // Emit socket popup realtime cho tài xế — không await (không block response)
@@ -394,6 +491,22 @@ export class BookingsService {
 
     await this.assertOngoingRideAcceptingBookings(ride);
 
+    const paymentMethod = (data.paymentMethod as PaymentMethod) ?? PaymentMethod.CASH;
+
+    if (paymentMethod === PaymentMethod.WALLET) {
+      const wallet = await prisma.wallet.findUnique({
+        where: { userId: passengerId },
+        select: { rideBalance: true },
+      });
+      const balance = wallet?.rideBalance ?? 0;
+      if (balance < pricing.totalPrice) {
+        throw new AppError(
+          `Số dư ví CoRide (${balance.toLocaleString('vi-VN')}đ) không đủ để thanh toán ${pricing.totalPrice.toLocaleString('vi-VN')}đ. Vui lòng nạp thêm tiền hoặc chọn tiền mặt.`,
+          400
+        );
+      }
+    }
+
     const instant = ride.bookingPolicy === 'INSTANT';
     const booking = await prisma.$transaction(async (tx) => {
       await this.assertPassengerCanReserve(tx, passengerId);
@@ -409,7 +522,7 @@ export class BookingsService {
       });
       if (reserved.count !== 1) throw new AppError('Chuyến đi không còn đủ ghế để giữ chỗ', 409);
       await this.syncScheduledRideAvailability(tx, rideId);
-      return tx.booking.create({
+      const createdBooking = await tx.booking.create({
         data: {
           rideId, passengerId, seats,
           totalPrice: pricing.totalPrice,
@@ -419,6 +532,8 @@ export class BookingsService {
           status: instant ? BookingStatus.CONFIRMED : BookingStatus.PENDING,
           expiresAt: instant ? null : new Date(Date.now() + SCHEDULED_APPROVAL_TIMEOUT_MS),
           seatHeld: true,
+          paymentMethod,
+          paymentStatus: paymentMethod === PaymentMethod.WALLET ? PaymentStatus.PAID : PaymentStatus.UNPAID,
           passengerLat: data.passengerLat,
           passengerLng: data.passengerLng,
           pickupAddress: data.pickupAddress ?? null,
@@ -434,6 +549,12 @@ export class BookingsService {
           },
         },
       });
+
+      if (paymentMethod === PaymentMethod.WALLET) {
+        await this.processWalletPayment(tx, passengerId, pricing.totalPrice, rideId, createdBooking.id);
+      }
+
+      return createdBooking;
     });
 
     if (instant) {
@@ -652,18 +773,32 @@ export class BookingsService {
     }
 
     const updatedBooking = await prisma.$transaction(async (tx) => {
+      const isWalletPaid = booking.paymentMethod === PaymentMethod.WALLET && booking.paymentStatus === PaymentStatus.PAID;
       const claimed = await tx.booking.updateMany({
         where: { id: bookingId, status: BookingStatus.PENDING, seatHeld: booking.seatHeld },
-        data: { status: BookingStatus.REJECTED, expiresAt: null, seatHeld: false },
+        data: {
+          status: BookingStatus.REJECTED,
+          expiresAt: null,
+          seatHeld: false,
+          ...(isWalletPaid ? { paymentStatus: PaymentStatus.REFUNDED } : {}),
+        },
       });
       if (claimed.count !== 1) throw new AppError('Yêu cầu này đã được xử lý', 409);
       if (booking.seatHeld) {
         await tx.ride.update({ where: { id: booking.rideId }, data: { availableSeats: { increment: booking.seats } } });
         await this.syncScheduledRideAvailability(tx, booking.rideId);
       }
+      if (isWalletPaid) {
+        await this.processWalletRefund(tx, booking.passenger.id, booking.totalPrice, bookingId, 'Tài xế từ chối ghép chuyến');
+      }
       return tx.booking.update({
         where: { id: bookingId },
-        data: { status: BookingStatus.REJECTED, expiresAt: null, seatHeld: false },
+        data: {
+          status: BookingStatus.REJECTED,
+          expiresAt: null,
+          seatHeld: false,
+          ...(isWalletPaid ? { paymentStatus: PaymentStatus.REFUNDED } : {}),
+        },
       });
     });
 
@@ -806,18 +941,32 @@ export class BookingsService {
       }
 
       const updatedBooking = await prisma.$transaction(async (tx) => {
+        const isWalletPaid = booking.paymentMethod === PaymentMethod.WALLET && booking.paymentStatus === PaymentStatus.PAID;
         const claimed = await tx.booking.updateMany({
           where: { id: bookingId, status: BookingStatus.PENDING, seatHeld: booking.seatHeld },
-          data: { status: BookingStatus.REJECTED, expiresAt: null, seatHeld: false },
+          data: {
+            status: BookingStatus.REJECTED,
+            expiresAt: null,
+            seatHeld: false,
+            ...(isWalletPaid ? { paymentStatus: PaymentStatus.REFUNDED } : {}),
+          },
         });
         if (claimed.count !== 1) throw new AppError('Yêu cầu này đã được xử lý', 409);
         if (booking.seatHeld) {
           await tx.ride.update({ where: { id: booking.rideId }, data: { availableSeats: { increment: booking.seats } } });
           await this.syncScheduledRideAvailability(tx, booking.rideId);
         }
+        if (isWalletPaid) {
+          await this.processWalletRefund(tx, booking.passengerId, booking.totalPrice, bookingId, 'Tài xế từ chối yêu cầu');
+        }
         return tx.booking.update({
           where: { id: bookingId },
-          data: { status: BookingStatus.REJECTED, expiresAt: null, seatHeld: false },
+          data: {
+            status: BookingStatus.REJECTED,
+            expiresAt: null,
+            seatHeld: false,
+            ...(isWalletPaid ? { paymentStatus: PaymentStatus.REFUNDED } : {}),
+          },
         });
       });
 
@@ -972,6 +1121,9 @@ export class BookingsService {
 
     // Multi-Passenger: đánh dấu trả khách + hoàn thành booking trong cùng transaction
     // Hoàn lại 1 ghế trống sau khi trả khách (khách đã xuống xe = chỗ ngồi được giải phóng)
+    // Nếu chọn Tiền mặt (CASH), chuyển paymentStatus thành PAID khi chuyến đi hoàn tất
+    const shouldMarkCashPaid = booking.paymentMethod === PaymentMethod.CASH && booking.paymentStatus === PaymentStatus.UNPAID;
+
     const [updatedBooking] = await prisma.$transaction(async (tx) => {
       const dropped = await tx.booking.update({
         where: { id: bookingId },
@@ -979,6 +1131,7 @@ export class BookingsService {
           isDroppedOff: true,
           droppedOffAt: new Date(),
           status: BookingStatus.COMPLETED,
+          ...(shouldMarkCashPaid ? { paymentStatus: PaymentStatus.PAID } : {}),
         },
         include: { passenger: { select: { id: true } } },
       });
@@ -1004,6 +1157,14 @@ export class BookingsService {
       SocketEventService.emitToUser(booking.passengerId, SocketEvents.BOOKING_COMPLETED, completedPayload);
       // Emit tới ride room để Driver cũng biết đã hoàn thành
       SocketEventService.emitToRoom(`ride:${booking.rideId}`, SocketEvents.BOOKING_COMPLETED, completedPayload);
+
+      if (shouldMarkCashPaid) {
+        SocketEventService.emitToRooms(
+          [`user:${booking.passengerId}`, `user:${booking.ride.driverId}`, `ride:${booking.rideId}`],
+          SocketEvents.PAYMENT_STATUS_CHANGED,
+          { bookingId, rideId: booking.rideId, paymentStatus: PaymentStatus.PAID, paymentMethod: PaymentMethod.CASH }
+        );
+      }
 
       // Broadcast ghế được hoàn lại — các client xem danh sách có thể thấy chuyến lại
       SocketEventService.emitGlobal(SocketEvents.RIDE_SEATS_UPDATED, {
@@ -1042,8 +1203,8 @@ export class BookingsService {
       throw new AppError('Không thể hủy chuyến xe đã hoàn thành', 400);
     }
 
-    if (booking.isPickedUp) {
-      throw new AppError('Không thể hủy chuyến khi bạn đã lên xe. Vui lòng liên hệ tài xế hoặc hotline.', 400);
+    if (booking.ride.status === 'ONGOING' || booking.isPickedUp) {
+      throw new AppError('Không thể hủy chuyến khi xe đang chạy hoặc bạn đã lên xe. Vui lòng liên hệ tài xế hoặc hotline.', 400);
     }
 
     if (!cancelReason) {
@@ -1054,11 +1215,19 @@ export class BookingsService {
     // Các booking cũ tạo trước migration chưa có cờ seatHeld nhưng CONFIRMED/PENDING
     // đã chiếm ghế theo quy tắc cũ. Xem chúng là đang giữ ghế để không làm mất chỗ.
     const shouldRestoreSeat = booking.seatHeld || booking.status === BookingStatus.CONFIRMED || booking.status === BookingStatus.PENDING;
+    const isWalletPaid = booking.paymentMethod === PaymentMethod.WALLET && booking.paymentStatus === PaymentStatus.PAID;
+
     if (shouldRestoreSeat) {
       const [cancelledBooking, restoredRide] = await prisma.$transaction(async (tx) => {
         const claimed = await tx.booking.updateMany({
           where: { id: bookingId, status: booking.status, seatHeld: booking.seatHeld },
-          data: { status: BookingStatus.CANCELLED, cancelReason, expiresAt: null, seatHeld: false },
+          data: {
+            status: BookingStatus.CANCELLED,
+            cancelReason,
+            expiresAt: null,
+            seatHeld: false,
+            ...(isWalletPaid ? { paymentStatus: PaymentStatus.REFUNDED } : {}),
+          },
         });
         if (claimed.count !== 1) throw new AppError('Yêu cầu đã được xử lý ở thiết bị khác', 409);
         const rideAfterRestore = await tx.ride.update({
@@ -1067,9 +1236,20 @@ export class BookingsService {
           select: { id: true, availableSeats: true },
         });
         await this.syncScheduledRideAvailability(tx, booking.rideId);
+
+        if (isWalletPaid) {
+          await this.processWalletRefund(tx, booking.passengerId, booking.totalPrice, bookingId, 'Hủy đặt chỗ');
+        }
+
         const cancelled = await tx.booking.update({
           where: { id: bookingId },
-          data: { status: BookingStatus.CANCELLED, cancelReason, expiresAt: null, seatHeld: false },
+          data: {
+            status: BookingStatus.CANCELLED,
+            cancelReason,
+            expiresAt: null,
+            seatHeld: false,
+            ...(isWalletPaid ? { paymentStatus: PaymentStatus.REFUNDED } : {}),
+          },
         });
         return [cancelled, rideAfterRestore];
       });
@@ -1105,9 +1285,20 @@ export class BookingsService {
       return cancelledBooking;
     }
 
-    const cancelledBooking = await prisma.booking.update({
-      where: { id: bookingId },
-      data: { status: BookingStatus.CANCELLED, cancelReason, expiresAt: null, seatHeld: false },
+    const cancelledBooking = await prisma.$transaction(async (tx) => {
+      if (isWalletPaid) {
+        await this.processWalletRefund(tx, booking.passengerId, booking.totalPrice, bookingId, 'Hủy đặt chỗ');
+      }
+      return tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: BookingStatus.CANCELLED,
+          cancelReason,
+          expiresAt: null,
+          seatHeld: false,
+          ...(isWalletPaid ? { paymentStatus: PaymentStatus.REFUNDED } : {}),
+        },
+      });
     });
     RideRouteOptimizerService.refreshInBackground(booking.rideId);
     return cancelledBooking;
@@ -1123,14 +1314,23 @@ export class BookingsService {
     const results = [];
     for (const booking of expired) {
       const updated = await prisma.$transaction(async (tx) => {
+        const isWalletPaid = booking.paymentMethod === PaymentMethod.WALLET && booking.paymentStatus === PaymentStatus.PAID;
         const claimed = await tx.booking.updateMany({
           where: { id: booking.id, status: BookingStatus.PENDING, expiresAt: { lte: new Date() } },
-          data: { status: BookingStatus.EXPIRED, expiresAt: null, seatHeld: false },
+          data: {
+            status: BookingStatus.EXPIRED,
+            expiresAt: null,
+            seatHeld: false,
+            ...(isWalletPaid ? { paymentStatus: PaymentStatus.REFUNDED } : {}),
+          },
         });
         if (claimed.count !== 1) return null;
         if (booking.seatHeld) {
           await tx.ride.update({ where: { id: booking.rideId }, data: { availableSeats: { increment: booking.seats } } });
           await this.syncScheduledRideAvailability(tx, booking.rideId);
+        }
+        if (isWalletPaid) {
+          await this.processWalletRefund(tx, booking.passengerId, booking.totalPrice, booking.id, 'Hết hạn xác nhận');
         }
         return tx.booking.findUnique({ where: { id: booking.id } });
       });

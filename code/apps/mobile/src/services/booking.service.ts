@@ -87,6 +87,7 @@ export interface CreateBookingOptions {
   dropoffLat?: number;
   dropoffLng?: number;
   dropoffAddress?: string;
+  paymentMethod?: 'WALLET' | 'CASH' | 'QR';
 }
 
 export const bookingService = {

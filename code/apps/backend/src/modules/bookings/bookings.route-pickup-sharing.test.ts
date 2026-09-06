@@ -35,7 +35,7 @@ describe('BookingsService ongoing route pickup sharing guard', () => {
     });
 
     await expect(BookingsService.createBooking('passenger-1', {
-      rideId: 'ride-1', seats: 1, passengerLat: 21.01, passengerLng: 105.01,
+      rideId: 'ride-1', seats: 1, passengerLat: 21.01, passengerLng: 105.01, paymentMethod: 'CASH',
     })).rejects.toMatchObject({
       statusCode: 409,
       message: 'Tài xế đã tắt nhận thêm khách dọc đường',

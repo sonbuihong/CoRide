@@ -4,6 +4,7 @@ import { Stack } from 'expo-router';
 import { apiClient as api } from '../../src/api/client';
 import { Plus, Trash2, Car, Bike, X } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { layout } from '../../src/theme/tokens';
 
 interface Vehicle {
   id: string;
@@ -115,7 +116,7 @@ export default function VehiclesScreen() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-gray-50">
+    <ScrollView className="flex-1 bg-gray-50" contentContainerStyle={{ alignSelf: 'center', maxWidth: layout.maxContentWidth, width: '100%' }}>
       <Stack.Screen options={{ title: 'Phương tiện của bạn', headerBackTitle: 'Quay lại' }} />
       
       <View className="p-4">

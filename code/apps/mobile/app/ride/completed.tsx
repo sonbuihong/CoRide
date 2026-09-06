@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '../../src/components/ui/AppButton';
 import { AppText } from '../../src/components/ui/AppText';
-import { colors, radius, spacing } from '../../src/theme/tokens';
+import { colors, layout, radius, spacing } from '../../src/theme/tokens';
 import { formatCurrency, formatRideDistance, formatRideDuration } from '../../src/features/trip-flow/trip-flow';
 
 export default function TripCompletedScreen() {
@@ -62,8 +62,8 @@ function SummaryRow({ icon, label, value, emphasis }: { icon: React.ReactNode; l
 }
 
 const styles = StyleSheet.create({
-  canvas: { alignItems: 'center', backgroundColor: colors.driverSurface, flex: 1 },
-  viewport: { backgroundColor: colors.background, flex: 1, justifyContent: 'space-between', maxWidth: 480, width: '100%' },
+  canvas: { alignItems: 'center', backgroundColor: 'transparent', flex: 1 },
+  viewport: { backgroundColor: colors.background, flex: 1, justifyContent: 'space-between', maxWidth: layout.maxContentWidth, width: '100%' },
   content: { alignItems: 'center', flexGrow: 1, padding: spacing.screen, paddingTop: spacing['2xl'] },
   successIcon: { alignItems: 'center', backgroundColor: colors.driverAccent, borderRadius: 42, height: 84, justifyContent: 'center', shadowColor: colors.success, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 12, width: 84 },
   title: { marginTop: spacing.xl, textAlign: 'center' },

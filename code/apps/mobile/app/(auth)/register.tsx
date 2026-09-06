@@ -9,7 +9,7 @@ import { AppInput } from '../../src/components/ui/AppInput';
 import { AppButton } from '../../src/components/ui/AppButton';
 import { AppText } from '../../src/components/ui/AppText';
 import { Eye, EyeOff } from 'lucide-react-native';
-import { colors } from '../../src/theme/tokens';
+import { colors, layout } from '../../src/theme/tokens';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -43,7 +43,7 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView 
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingVertical: 40 }}
+        contentContainerStyle={{ alignSelf: 'center', flexGrow: 1, maxWidth: layout.maxContentWidth, paddingHorizontal: 20, paddingVertical: 40, width: '100%' }}
         className="bg-background"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
