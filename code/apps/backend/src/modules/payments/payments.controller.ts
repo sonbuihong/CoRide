@@ -284,4 +284,70 @@ export class PaymentsController {
       next(error);
     }
   }
+
+  /**
+   * Nạp tiền vào ví người dùng
+   * @route POST /api/payments/wallet/deposit
+   */
+  static async deposit(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) throw new AppError('Không xác định được người dùng', 401);
+
+      const { amount, method } = req.body;
+      const parsedAmount = Number(amount);
+
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new AppError('Số tiền nạp không hợp lệ', 400);
+      }
+
+      const result = await WalletService.depositToWallet(userId, parsedAmount, method);
+
+      res.status(200).json({
+        status: 'success',
+        message: `Nạp thành công ${parsedAmount.toLocaleString('vi-VN')}đ vào ví CoRide`,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Rút tiền từ ví về tài khoản ngân hàng
+   * @route POST /api/payments/wallet/withdraw
+   */
+  static async withdraw(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) throw new AppError('Không xác định được người dùng', 401);
+
+      const { amount, source, bankName, accountNumber, accountHolder } = req.body;
+      const parsedAmount = Number(amount);
+
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new AppError('Số tiền rút không hợp lệ', 400);
+      }
+
+      if (source !== 'driverEarnings' && source !== 'rideBalance') {
+        throw new AppError('Nguồn rút tiền không hợp lệ (chọn thu nhập tài xế hoặc số dư ví)', 400);
+      }
+
+      const result = await WalletService.withdrawFromWallet(userId, {
+        amount: parsedAmount,
+        source,
+        bankName,
+        accountNumber,
+        accountHolder,
+      });
+
+      res.status(200).json({
+        status: 'success',
+        message: `Đã xử lý rút ${parsedAmount.toLocaleString('vi-VN')}đ về tài khoản ngân hàng`,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

@@ -11,6 +11,20 @@ const router = Router();
  */
 router.get('/wallet', authenticate, PaymentsController.getMyWallet);
 
+/**
+ * @route POST /api/payments/wallet/deposit
+ * @desc Nạp tiền vào ví CoRide
+ * @access Private
+ */
+router.post('/wallet/deposit', authenticate, PaymentsController.deposit);
+
+/**
+ * @route POST /api/payments/wallet/withdraw
+ * @desc Rút tiền từ ví về tài khoản ngân hàng
+ * @access Private
+ */
+router.post('/wallet/withdraw', authenticate, PaymentsController.withdraw);
+
 
 /**
  * @route GET /api/payments/simulator/qr/:tripId

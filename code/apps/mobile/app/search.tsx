@@ -233,8 +233,16 @@ export default function SearchScreen() {
         address: detail?.formatted_address || prediction.address,
         coords: { latitude: point.lat, longitude: point.lng },
       };
-      setMapPickerMode(editingOrigin ? 'origin' : 'destination');
-      setMapPickerInitial(selected.coords);
+      if (editingOrigin) {
+        setOrigin(selected);
+        setMapPickerMode('origin');
+        setMapPickerInitial(selected.coords);
+      } else {
+        setDestination(selected);
+        setQuery(selected.name);
+        setMapPickerMode('origin');
+        setMapPickerInitial(origin?.coords || selected.coords);
+      }
       Keyboard.dismiss();
       setMapPickerOpen(true);
       setPredictions([]);
@@ -333,7 +341,7 @@ export default function SearchScreen() {
   };
 
   const focusNewPlace = () => {
-    setOriginUtilityNotice(`Nhập tên hoặc địa chỉ ${editingOrigin ? 'điểm đi' : 'điểm đến'} ở ô phía trên, sau đó chọn một gợi ý để xác định chính xác vị trí.`);
+    setOriginUtilityNotice(`Nhập tên hoặc địa chỉ ${editingOrigin ? 'điểm đón' : 'điểm đến'} ở ô phía trên, sau đó chọn một gợi ý để xác định chính xác vị trí.`);
     changeQuery('');
     requestAnimationFrame(() => (editingOrigin ? originInputRef : destinationInputRef).current?.focus());
   };
@@ -353,17 +361,17 @@ export default function SearchScreen() {
         <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           {editingOrigin ? (
             <View style={styles.originEditHeader}>
-              <Pressable accessibilityRole="button" accessibilityLabel="Đóng chọn điểm đi" onPress={exitOriginEdit} style={styles.backButton}>
+              <Pressable accessibilityRole="button" accessibilityLabel="Đóng chọn điểm đón" onPress={exitOriginEdit} style={styles.backButton}>
                 <ArrowLeft size={25} color={colors.textPrimary} strokeWidth={2.2} />
               </Pressable>
               <View style={[styles.searchBox, styles.originSearchBox, searchFocused && styles.searchBoxSelected]}>
                 <View style={styles.originDot}><View style={styles.originDotCenter} /></View>
                 <TextInput ref={originInputRef} autoFocus value={query} onChangeText={changeQuery} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)}
-                  placeholder="Nhập điểm đi" placeholderTextColor={colors.textTertiary} accessibilityLabel="Nhập điểm đi"
+                  placeholder="Nhập điểm đón" placeholderTextColor={colors.textTertiary} accessibilityLabel="Nhập điểm đón"
                   accessibilityHint={suggestionError} returnKeyType="search" selectTextOnFocus
                   style={[styles.searchInput, Platform.OS === 'web' && styles.searchInputWeb]} />
                 {suggestionLoading ? <ActivityIndicator color={colors.primary} /> : query.length > 0 ? (
-                  <Pressable accessibilityRole="button" accessibilityLabel="Xóa điểm đi" onPress={() => changeQuery('')} style={styles.clearButton}>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Xóa điểm đón" onPress={() => changeQuery('')} style={styles.clearButton}>
                     <X size={17} color={colors.textSecondary} />
                   </Pressable>
                 ) : null}
@@ -374,9 +382,9 @@ export default function SearchScreen() {
               <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={() => router.back()} style={styles.backButton}>
                 <ArrowLeft size={25} color={colors.textPrimary} strokeWidth={2.2} />
               </Pressable>
-              <Pressable accessibilityRole="button" accessibilityLabel="Thay đổi điểm đi" onPress={beginOriginEdit}
+              <Pressable accessibilityRole="button" accessibilityLabel="Thay đổi điểm đón" onPress={beginOriginEdit}
                 cssInterop={false} style={({ pressed }) => [styles.locationCopy, pressed && styles.pressed]}>
-                <AppText variant="bodySmall" style={styles.locationLabel}>Vị trí của bạn</AppText>
+                <AppText variant="bodySmall" style={styles.locationLabel}>Điểm đón của bạn</AppText>
                 <View style={styles.locationNameRow}>
                   {originLoading ? <ActivityIndicator size="small" color={colors.primary} /> : (
                     <AppText variant="h2" weight="semibold" numberOfLines={1} style={originError ? styles.errorText : undefined}>
@@ -420,7 +428,7 @@ export default function SearchScreen() {
 
           {displayRows ? (
             <View style={styles.listSection}>
-              <AppText variant="h3" weight="semibold" style={styles.sectionTitle}>{editingOrigin ? 'Chọn điểm đi' : 'Địa điểm'}</AppText>
+              <AppText variant="h3" weight="semibold" style={styles.sectionTitle}>{editingOrigin ? 'Chọn điểm đón' : 'Địa điểm'}</AppText>
               {predictions.map((prediction) => <PredictionRow key={prediction.id} prediction={prediction} onPress={() => selectPrediction(prediction)} />)}
               {!suggestionLoading && !suggestionError && predictions.length === 0 && <AppText variant="bodySmall" style={styles.emptyCopy}>Không tìm thấy địa điểm phù hợp.</AppText>}
             </View>
@@ -432,7 +440,7 @@ export default function SearchScreen() {
                 <RecentRow key={place.id} place={place} onPress={() => selectOriginPlace(place)} />
               ))}
               {!historyQuery.isLoading && recentPlaces.length === 0 && !origin && (
-                <AppText variant="bodySmall" style={styles.emptyCopy}>Nhập ít nhất 2 ký tự để tìm một điểm đi khác.</AppText>
+                <AppText variant="bodySmall" style={styles.emptyCopy}>Nhập ít nhất 2 ký tự để tìm một điểm đón khác.</AppText>
               )}
             </View>
           ) : destination ? (
@@ -460,21 +468,34 @@ export default function SearchScreen() {
               ) : historyQuery.isLoading ? <ActivityIndicator color={colors.primary} style={styles.historyLoader} /> : historyQuery.isError ? (
                 <AppText accessibilityRole="alert" variant="bodySmall" style={styles.errorMessage}>Không thể tải các điểm đến đã đi. Hãy kiểm tra kết nối.</AppText>
               ) : recentPlaces.length > 0 ? (
-                recentPlaces.map((place) => <RecentRow key={place.id} place={place} onPress={() => { setDestination(place); setQuery(place.name); }} />)
+                recentPlaces.map((place) => (
+                  <RecentRow
+                    key={place.id}
+                    place={place}
+                    onPress={() => {
+                      setDestination(place);
+                      setQuery(place.name);
+                      setMapPickerMode('origin');
+                      setMapPickerInitial(origin?.coords || place.coords);
+                      Keyboard.dismiss();
+                      setMapPickerOpen(true);
+                    }}
+                  />
+                ))
               ) : <AppText variant="bodySmall" style={styles.emptyCopy}>Chưa có chuyến hoàn thành trước đây. Hãy nhập tên địa điểm ở ô tìm kiếm.</AppText>}
             </View>
           )}
 
           {(editingOrigin || !destination) && (
             <OriginUtilitySection
-              mode={editingOrigin ? 'origin' : 'destination'}
+              mode={editingOrigin ? 'origin' : 'origin'}
               showMergedAddress={showMergedAddress}
               onToggleMergedAddress={changeAddressVersion}
               notice={originUtilityNotice}
               onSavedAddresses={() => setOriginUtilityNotice('Bạn chưa có địa chỉ đã lưu. Các địa điểm đã đi gần đây vẫn hiển thị ở phía trên.')}
               onMap={() => {
-                setMapPickerMode(editingOrigin ? 'origin' : 'destination');
-                setMapPickerInitial((editingOrigin ? origin : destination)?.coords || origin?.coords);
+                setMapPickerMode('origin');
+                setMapPickerInitial((editingOrigin ? origin : undefined)?.coords || origin?.coords);
                 Keyboard.dismiss();
                 setMapPickerOpen(true);
               }}
@@ -485,7 +506,7 @@ export default function SearchScreen() {
       </KeyboardAvoidingView>
       <PlaceSelectionMapModal
         visible={mapPickerOpen}
-        title={`Chọn ${mapPickerMode === 'origin' ? 'điểm đi' : 'điểm đến'}`}
+        title={`Chọn ${mapPickerMode === 'origin' ? 'điểm đón' : 'điểm đến'}`}
         initialCoordinates={mapPickerInitial}
         onClose={() => {
           setMapPickerOpen(false);
@@ -553,7 +574,7 @@ function RecentRow({ place, onPress }: { place: RecentPlace; onPress: () => void
 
 function OriginPlaceRow({ place, onPress }: { place: SelectedPlace; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`Dùng ${place.name} làm điểm đi`} onPress={onPress}
+    <Pressable accessibilityRole="button" accessibilityLabel={`Dùng ${place.name} làm điểm đón`} onPress={onPress}
       cssInterop={false} style={({ pressed }) => [styles.placeRow, pressed && styles.placeRowPressed]}>
       {({ pressed }) => <>
         <View style={styles.placeIconColumn}>
@@ -562,7 +583,7 @@ function OriginPlaceRow({ place, onPress }: { place: SelectedPlace; onPress: () 
           </View>
         </View>
         <View style={styles.placeCopy}>
-          <AppText variant="bodySmall" style={[styles.currentLocationLabel, pressed && styles.primaryText]}>Vị trí hiện tại</AppText>
+          <AppText variant="bodySmall" style={[styles.currentLocationLabel, pressed && styles.primaryText]}>Điểm đón hiện tại</AppText>
           <AppText variant="body" weight="semibold" numberOfLines={1} style={pressed && styles.primaryText}>{place.name}</AppText>
           <AppText variant="caption" numberOfLines={2} style={[styles.secondaryText, pressed && styles.selectedSecondaryText]}>{place.address}</AppText>
         </View>
@@ -589,7 +610,7 @@ function OriginUtilitySection({ mode, showMergedAddress, onToggleMergedAddress, 
         subtitle="Lưu địa chỉ để tìm chuyến nhanh hơn."
         onPress={onSavedAddresses}
       />
-      <OriginUtilityRow Icon={Map} title={`Chọn ${mode === 'origin' ? 'điểm đi' : 'điểm đến'} trên bản đồ`} onPress={onMap} />
+      <OriginUtilityRow Icon={Map} title="Chọn điểm đón trên bản đồ" onPress={onMap} />
       <View style={styles.utilityRow}>
         <View style={styles.utilityIcon}><Lightbulb size={23} color={colors.textPrimary} strokeWidth={1.9} /></View>
         <View style={styles.utilityCopy}>
@@ -612,7 +633,7 @@ function OriginUtilitySection({ mode, showMergedAddress, onToggleMergedAddress, 
       <AppText variant="h3" weight="semibold" style={styles.missingPlaceTitle}>Không thấy địa điểm bạn cần?</AppText>
       <OriginUtilityRow
         Icon={Plus}
-        title={`Thêm địa điểm ${mode === 'origin' ? 'đi' : 'đến'} mới để chuyến đi luôn chuẩn xác!`}
+        title={`Thêm địa điểm ${mode === 'origin' ? 'đón' : 'đến'} mới để chuyến đi luôn chuẩn xác!`}
         onPress={onAddPlace}
       />
     </View>

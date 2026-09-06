@@ -574,7 +574,7 @@ export default function BookingManageScreen() {
         {renderPaymentCard()}
         {renderBookingInfoCard()}
 
-        {isPassenger && (isConfirmed || isPending) && !isCancelled && (
+        {isPassenger && (isConfirmed || isPending) && !isCancelled && !booking.isPickedUp && (
           <TouchableOpacity
             style={styles.cancelButton}
             accessibilityRole="button"

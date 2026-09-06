@@ -105,4 +105,80 @@ export class WalletService {
       return { wallet: updatedWallet, transaction };
     });
   }
+
+  /**
+   * Nạp tiền vào số dư đi xe (rideBalance) của người dùng.
+   */
+  static async depositToWallet(userId: string, amount: number, method: string = 'SIMULATOR') {
+    if (!amount || amount < 10000) {
+      throw new AppError('Số tiền nạp tối thiểu là 10.000đ', 400);
+    }
+    if (amount > 100000000) {
+      throw new AppError('Số tiền nạp tối đa mỗi lần là 100.000.000đ', 400);
+    }
+
+    const wallet = await this.getOrCreateWallet(userId);
+    const externalId = `DEP-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    const description = `Nạp tiền vào ví CoRide qua ${method === 'QR' ? 'VietQR' : method === 'ATM' ? 'Thẻ ATM/Ngân hàng' : 'Cổng thanh toán CoRide'}`;
+
+    return this.updateRideBalance(
+      wallet.id,
+      amount,
+      TransactionType.DEPOSIT,
+      description,
+      externalId
+    );
+  }
+
+  /**
+   * Rút tiền từ ví về tài khoản ngân hàng.
+   * Hỗ trợ rút từ thu nhập tài xế (driverEarnings) hoặc số dư chuyến đi (rideBalance).
+   */
+  static async withdrawFromWallet(
+    userId: string,
+    data: {
+      amount: number;
+      source: 'driverEarnings' | 'rideBalance';
+      bankName: string;
+      accountNumber: string;
+      accountHolder: string;
+    }
+  ) {
+    const { amount, source, bankName, accountNumber, accountHolder } = data;
+
+    if (!amount || amount < 50000) {
+      throw new AppError('Số tiền rút tối thiểu là 50.000đ', 400);
+    }
+    if (!bankName || !bankName.trim()) {
+      throw new AppError('Vui lòng chọn hoặc nhập tên ngân hàng nhận tiền', 400);
+    }
+    if (!accountNumber || !accountNumber.trim()) {
+      throw new AppError('Vui lòng nhập số tài khoản ngân hàng nhận tiền', 400);
+    }
+    if (!accountHolder || !accountHolder.trim()) {
+      throw new AppError('Vui lòng nhập tên chủ tài khoản ngân hàng', 400);
+    }
+
+    const wallet = await this.getOrCreateWallet(userId);
+    const externalId = `WDR-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    const description = `Rút tiền về ${bankName.trim()} - ${accountNumber.trim()} (${accountHolder.trim().toUpperCase()})`;
+
+    if (source === 'driverEarnings') {
+      return this.updateDriverEarnings(
+        wallet.id,
+        -amount,
+        TransactionType.WITHDRAWAL,
+        description,
+        externalId
+      );
+    } else {
+      return this.updateRideBalance(
+        wallet.id,
+        -amount,
+        TransactionType.WITHDRAWAL,
+        description,
+        externalId
+      );
+    }
+  }
 }

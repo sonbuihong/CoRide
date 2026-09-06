@@ -261,7 +261,7 @@ export default function SearchResultsScreen() {
               icon={<Search size={44} color={colors.textTertiary} />}
               title="Chưa có chuyến đi chung phù hợp"
               description="Hiện chưa có tài xế nào có hành trình phù hợp với tuyến đường và thời gian của bạn."
-              actionTitle="Sửa điểm đi / điểm đến"
+              actionTitle="Sửa điểm đón / điểm đến"
               onAction={() => router.back()}
             />
 

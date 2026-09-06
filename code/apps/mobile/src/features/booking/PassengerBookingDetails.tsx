@@ -310,7 +310,7 @@ export const PassengerBookingDetails = memo(function PassengerBookingDetails({
       </View>
 
       {/* ── Section: HỦY CHUYẾN ĐI (Bên dưới cùng của trang) ── */}
-      {Boolean(onCancelBooking) && !isCompleted && (
+      {Boolean(onCancelBooking) && !isCompleted && !booking.isPickedUp && (
         <>
           <View style={styles.divider} />
           <View style={styles.cancelSection}>
@@ -335,11 +335,6 @@ export const PassengerBookingDetails = memo(function PassengerBookingDetails({
                 </View>
               )}
             </TouchableOpacity>
-            <AppText variant="caption" style={styles.cancelNote}>
-              {booking.isPickedUp
-                ? 'Bạn đã lên xe. Nếu muốn xuống xe sớm, vui lòng trao đổi trực tiếp với tài xế hoặc gọi hotline 1900 6868.'
-                : 'Bạn có thể hủy trước khi tài xế đón bạn. Ghế sẽ được hoàn lại cho chuyến đi.'}
-            </AppText>
           </View>
         </>
       )}

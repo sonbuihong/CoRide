@@ -20,4 +20,20 @@ export const paymentService = {
     const response = await api.post('/payments/simulator/confirm', { id });
     return response.data;
   },
+
+  async deposit(amount: number, method: string = 'SIMULATOR') {
+    const response = await api.post('/payments/wallet/deposit', { amount, method });
+    return response.data;
+  },
+
+  async withdraw(data: {
+    amount: number;
+    source: 'driverEarnings' | 'rideBalance';
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+  }) {
+    const response = await api.post('/payments/wallet/withdraw', data);
+    return response.data;
+  },
 };

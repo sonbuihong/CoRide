@@ -6,8 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   loginSchema,
   registerSchema,
+  registerFormSchema,
   type LoginInput,
   type RegisterInput,
+  type RegisterFormInput,
+  splitFullName,
 } from '@repo/shared';
 import { Label } from '@/components/ui/label';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
@@ -205,12 +208,21 @@ export function RegisterForm() {
     handleSubmit,
     formState: { errors },
     setError,
-  } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) });
+  } = useForm<RegisterFormInput>({ resolver: zodResolver(registerFormSchema) });
 
-  const onSubmit = async (data: RegisterInput) => {
+  const onSubmit = async (data: RegisterFormInput) => {
     setLoading(true);
     try {
-      await apiClient.post('/auth/register', data);
+      const { firstName, lastName } = splitFullName(data.fullName);
+      await apiClient.post('/auth/register', {
+        email: data.email,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+        fullName: data.fullName,
+        firstName,
+        lastName,
+        phone: data.phone || undefined,
+      });
       toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
       router.push('/login');
     } catch (err: unknown) {
@@ -232,32 +244,17 @@ export function RegisterForm() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <Label htmlFor="lastName" className={appleLabelClass}>Họ</Label>
-            <input
-              id="lastName"
-              placeholder="Nguyễn"
-              className={`w-full ${appleInputClass}`}
-              {...register('lastName')}
-            />
-            {errors.lastName && (
-              <p className="text-[12px] text-[#d93025] mt-1 ml-1">{errors.lastName.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="firstName" className={appleLabelClass}>Tên</Label>
-            <input 
-              id="firstName" 
-              placeholder="An" 
-              className={`w-full ${appleInputClass}`}
-              {...register('firstName')} 
-            />
-            {errors.firstName && (
-              <p className="text-[12px] text-[#d93025] mt-1 ml-1">{errors.firstName.message}</p>
-            )}
-          </div>
+        <div className="space-y-1">
+          <Label htmlFor="fullName" className={appleLabelClass}>Họ và tên</Label>
+          <input
+            id="fullName"
+            placeholder="Ví dụ: Nguyễn Văn A"
+            className={`w-full ${appleInputClass}`}
+            {...register('fullName')}
+          />
+          {errors.fullName && (
+            <p className="text-[12px] text-[#d93025] mt-1 ml-1">{errors.fullName.message}</p>
+          )}
         </div>
 
         <div className="space-y-1 text-left">

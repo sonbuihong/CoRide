@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, KeyboardAvoidingView, Platform, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { registerSchema, RegisterInput } from '@repo/shared';
+import { registerFormSchema, RegisterFormInput, splitFullName } from '@repo/shared';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/hooks/useAuth';
 import { AppInput } from '../../src/components/ui/AppInput';
@@ -18,16 +18,24 @@ export default function RegisterScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterInput>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phone: '' },
+  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterFormInput>({
+    resolver: zodResolver(registerFormSchema),
+    defaultValues: { fullName: '', email: '', phone: '', password: '', confirmPassword: '' },
   });
 
-  const onSubmit = async (data: RegisterInput) => {
+  const onSubmit = async (data: RegisterFormInput) => {
     try {
       setErrorMsg(null);
-      const { confirmPassword, ...payload } = data;
-      await register(payload as any);
+      const { firstName, lastName } = splitFullName(data.fullName);
+      await register({
+        email: data.email,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+        fullName: data.fullName,
+        firstName,
+        lastName,
+        phone: data.phone || undefined,
+      });
       
       Alert.alert('Thành công', 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.', [
         { text: 'OK', onPress: () => router.replace('/(auth)/login') }
@@ -62,40 +70,22 @@ export default function RegisterScreen() {
         )}
 
         <View>
-          <View className="flex-row mb-1">
-            <View className="flex-1 mr-2">
-              <Controller
-                control={control}
-                name="lastName"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <AppInput
-                    label="Họ"
-                    placeholder="Họ"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={errors.lastName?.message}
-                  />
-                )}
+          <Controller
+            control={control}
+            name="fullName"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <AppInput
+                label="Họ và tên"
+                placeholder="Ví dụ: Nguyễn Văn A"
+                autoCapitalize="words"
+                autoComplete="name"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={errors.fullName?.message}
               />
-            </View>
-            <View className="flex-1 ml-2">
-              <Controller
-                control={control}
-                name="firstName"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <AppInput
-                    label="Tên"
-                    placeholder="Tên"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    error={errors.firstName?.message}
-                  />
-                )}
-              />
-            </View>
-          </View>
+            )}
+          />
 
           <Controller
             control={control}

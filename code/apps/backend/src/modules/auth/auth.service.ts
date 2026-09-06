@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import * as jose from 'jose';
 import crypto from 'crypto';
 import { extendedPrisma as prisma } from '@repo/database';
-import { RegisterInput, LoginInput } from '@repo/shared';
+import { RegisterInput, LoginInput, splitFullName } from '@repo/shared';
 import { AppError } from '../../shared/errors/AppError';
 
 const ACCESS_TOKEN_EXPIRES = '15m';
@@ -30,12 +30,20 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(data.password, BCRYPT_SALT_ROUNDS);
 
+    let firstName = data.firstName;
+    let lastName = data.lastName;
+    if (!firstName && data.fullName) {
+      const { firstName: fName, lastName: lName } = splitFullName(data.fullName);
+      firstName = fName;
+      lastName = lName;
+    }
+
     const user = await prisma.user.create({
       data: {
         email: data.email,
         password: hashedPassword,
-        firstName: data.firstName,
-        lastName: data.lastName,
+        firstName: firstName || '',
+        lastName: lastName || '',
         phone: data.phone ?? null,
       },
     });

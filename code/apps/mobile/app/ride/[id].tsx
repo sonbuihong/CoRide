@@ -768,22 +768,22 @@ function PassengerRideView() {
     const latitude = routeParamNumber(params.passengerOriginLat);
     const longitude = routeParamNumber(params.passengerOriginLng);
     if (latitude != null && longitude != null) return { latitude, longitude };
-    const userBooking = baseRide?.bookings?.find((b: any) => b.passengerId === user?.id);
+    const userBooking = (baseRide as any)?.bookings?.find((b: any) => b.passengerId === user?.id);
     if (userBooking?.pickupLat != null && userBooking?.pickupLng != null) {
       return { latitude: userBooking.pickupLat, longitude: userBooking.pickupLng };
     }
     return undefined;
-  }, [params.passengerOriginLat, params.passengerOriginLng, baseRide?.bookings, user?.id]);
+  }, [params.passengerOriginLat, params.passengerOriginLng, (baseRide as any)?.bookings, user?.id]);
   const passengerDestination = useMemo<MapPoint | undefined>(() => {
     const latitude = routeParamNumber(params.passengerDestinationLat);
     const longitude = routeParamNumber(params.passengerDestinationLng);
     if (latitude != null && longitude != null) return { latitude, longitude };
-    const userBooking = baseRide?.bookings?.find((b: any) => b.passengerId === user?.id);
+    const userBooking = (baseRide as any)?.bookings?.find((b: any) => b.passengerId === user?.id);
     if (userBooking?.dropoffLat != null && userBooking?.dropoffLng != null) {
       return { latitude: userBooking.dropoffLat, longitude: userBooking.dropoffLng };
     }
     return undefined;
-  }, [params.passengerDestinationLat, params.passengerDestinationLng, baseRide?.bookings, user?.id]);
+  }, [params.passengerDestinationLat, params.passengerDestinationLng, (baseRide as any)?.bookings, user?.id]);
   const hasSearchContext = params.context === 'search' && Boolean(passengerOrigin && passengerDestination);
   const selectedPickupStop = useMemo(
     () => pickupStopId ? baseRide?.stops?.find((stop) => stop.id === pickupStopId) : undefined,
