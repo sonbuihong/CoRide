@@ -115,6 +115,33 @@ export default function ReviewModal() {
               </Pressable>
             ))}
           </View>
+
+          {/* Quick feedback tags */}
+          <View className="mb-4 flex-row flex-wrap justify-center gap-2">
+            {['Lái xe an toàn', 'Xe sạch sẽ', 'Thân thiện, lịch sự', 'Đón đúng giờ'].map((tag) => {
+              const active = comment.includes(tag);
+              return (
+                <Pressable
+                  key={tag}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Gắn nhận xét ${tag}`}
+                  onPress={() => {
+                    if (active) {
+                      setComment(comment.replace(tag, '').replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '').trim());
+                    } else {
+                      setComment(comment.trim() ? `${comment.trim()}, ${tag}` : tag);
+                    }
+                  }}
+                  className={`rounded-full px-3 py-1.5 border ${active ? 'bg-passenger/15 border-passenger' : 'bg-background border-border'}`}
+                >
+                  <AppText variant="caption" weight="medium" style={{ color: active ? colors.primary : colors.textSecondary }}>
+                    {tag}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+
           <TextInput
             className="mb-5 min-h-28 rounded-2xl border border-border bg-background p-4 text-text-primary"
             multiline

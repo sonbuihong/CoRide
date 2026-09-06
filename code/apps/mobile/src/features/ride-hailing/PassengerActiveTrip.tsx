@@ -1,12 +1,15 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';
+import { useQuery } from '@tanstack/react-query';
 import {
   Check,
   CircleHelp,
   Clock3,
   MapPin,
   Phone,
+  QrCode,
+  Radio,
   Route,
   ShieldCheck,
   Star,
@@ -20,6 +23,7 @@ import { DraggableBottomSheet } from '../../components/ui/DraggableBottomSheet';
 import { FloatingMyLocation } from '../../components/ui/FloatingMyLocation';
 import { usePassengerTrackDriver } from '../../hooks/useDriverLocation';
 import { getDirections } from '../../services/direction.service';
+import { paymentService } from '../../services/payment.service';
 import type { RideHailingTrip } from '../../services/trip.service';
 import { colors, layout, radius, spacing } from '../../theme/tokens';
 
@@ -33,6 +37,8 @@ interface PassengerActiveTripProps {
   onAdjustPickup: () => void;
   onRate: () => void;
   onDone: () => void;
+  onViewDetail?: () => void;
+  onSwitchToCarpool?: () => void;
 }
 
 const STATUS_COPY: Record<TripStatus, { title: string; description: string }> = {
@@ -116,9 +122,13 @@ export function PassengerActiveTrip({
   onAdjustPickup,
   onRate,
   onDone,
+  onViewDetail,
+  onSwitchToCarpool,
 }: PassengerActiveTripProps) {
   const sheetPosition = useSharedValue(0);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
+  const [matchingStartedAt] = useState(() => Date.now());
+  const isMatching = trip.status === 'MATCHING' || trip.status === 'PENDING';
   const copy = STATUS_COPY[trip.status];
   const driverName = [trip.driver?.firstName, trip.driver?.lastName].filter(Boolean).join(' ') || 'Tài xế CoRide';
   const vehicle = trip.driver?.vehicles?.[0];
@@ -127,10 +137,23 @@ export function PassengerActiveTrip({
     : false;
 
   useEffect(() => {
-    if (trip.status !== 'ARRIVED' || !trip.arrivedAt) return;
+    if ((trip.status !== 'ARRIVED' || !trip.arrivedAt) && !isMatching) return;
     const interval = setInterval(() => setNow(Date.now()), 1_000);
     return () => clearInterval(interval);
-  }, [trip.arrivedAt, trip.status]);
+  }, [isMatching, trip.arrivedAt, trip.status]);
+
+  const searchSeconds = isMatching
+    ? Math.max(0, Math.floor((now - matchingStartedAt) / 1000))
+    : 0;
+  const searchElapsedText = `${String(Math.floor(searchSeconds / 60)).padStart(2, '0')}:${String(searchSeconds % 60).padStart(2, '0')}`;
+
+  const isWaitingPayment = trip.status === 'WAITING_PAYMENT';
+  const qrQuery = useQuery({
+    queryKey: ['simulator-qr', trip.id],
+    queryFn: () => paymentService.getSimulatorQr(trip.id),
+    enabled: isWaitingPayment,
+    staleTime: 60_000,
+  });
 
   const waitingSeconds = trip.arrivedAt
     ? Math.max(0, Math.floor((now - Date.parse(trip.arrivedAt)) / 1000))
@@ -139,18 +162,42 @@ export function PassengerActiveTrip({
   const canCancel = ['PENDING', 'MATCHING', 'ACCEPTED', 'ARRIVING', 'ARRIVED'].includes(trip.status);
 
   const footer = trip.status === 'WAITING_PAYMENT' ? (
-    <AppButton title="THANH TOÁN" variant="passenger" isLoading={action === 'payment'} onPress={onPayment} />
+    <AppButton
+      title="TÔI ĐÃ THANH TOÁN"
+      variant="passenger"
+      isLoading={action === 'payment'}
+      disabled={action === 'payment'}
+      onPress={onPayment}
+    />
   ) : trip.status === 'COMPLETED' ? (
-    alreadyRated || !trip.driverId
-      ? <AppButton title="XONG" variant="passenger" onPress={onDone} />
-      : <AppButton title="GỬI ĐÁNH GIÁ" variant="passenger" onPress={onRate} />
+    <View style={styles.footerStack}>
+      {!alreadyRated && trip.driverId ? (
+        <AppButton title="ĐÁNH GIÁ TÀI XẾ" variant="passenger" onPress={onRate} />
+      ) : null}
+      {onViewDetail ? (
+        <AppButton title="XEM CHI TIẾT BIÊN LAI" variant="outline" onPress={onViewDetail} />
+      ) : null}
+      <AppButton
+        title="VỀ TRANG CHỦ"
+        variant={alreadyRated || !trip.driverId ? 'passenger' : 'ghost'}
+        onPress={onDone}
+      />
+    </View>
   ) : trip.status === 'NO_DRIVER' ? (
     <View style={styles.footerStack}>
-      <AppButton title="TÌM LẠI" variant="passenger" isLoading={action === 'retry'} onPress={onRetry} />
-      <AppButton title="ĐIỀU CHỈNH ĐIỂM ĐÓN" variant="ghost" onPress={onAdjustPickup} />
+      <AppButton title="TÌM LẠI TÀI XẾ" variant="passenger" isLoading={action === 'retry'} onPress={onRetry} />
+      <AppButton title="ĐIỀU CHỈNH ĐIỂM ĐÓN" variant="outline" onPress={onAdjustPickup} />
+      {onSwitchToCarpool ? (
+        <AppButton title="TÌM XE ĐI CHUNG (CARPOOLING)" variant="ghost" onPress={onSwitchToCarpool} />
+      ) : null}
     </View>
   ) : trip.status === 'CANCELLED' ? (
-    <AppButton title="ĐẶT CHUYẾN MỚI" variant="passenger" onPress={onDone} />
+    <View style={styles.footerStack}>
+      {onViewDetail ? (
+        <AppButton title="XEM CHI TIẾT CHUYẾN ĐI" variant="outline" onPress={onViewDetail} />
+      ) : null}
+      <AppButton title="ĐẶT CHUYẾN MỚI" variant="passenger" onPress={onDone} />
+    </View>
   ) : canCancel ? (
     <AppButton
       title={trip.driverId ? 'HỦY CHUYẾN' : 'HỦY TÌM KIẾM'}
@@ -165,7 +212,7 @@ export function PassengerActiveTrip({
       <PassengerTripMap trip={trip} sheetPosition={sheetPosition} />
       <DraggableBottomSheet
         animatedPosition={sheetPosition}
-        snapPoints={[0.36, 0.62, 0.92]}
+        snapPoints={trip.status === 'WAITING_PAYMENT' ? [0.68, 0.94] : [0.38, 0.64, 0.92]}
         initialSnapIndex={0}
         footer={footer}
       >
@@ -184,9 +231,19 @@ export function PassengerActiveTrip({
 
           {trip.status === 'MATCHING' || trip.status === 'PENDING' ? (
             <View style={styles.searchProgress}>
-              {['Đang kiểm tra hướng tuyến', 'Đang tìm tài xế gần bạn', 'Đang gửi yêu cầu theo từng nhóm'].map((label, index) => (
+              <View style={styles.radarHeader}>
+                <View style={styles.radarPulse}>
+                  <Radio size={20} color={colors.primary} />
+                </View>
+                <View style={styles.flex}>
+                  <AppText weight="bold" style={styles.radarTitle}>Đang quét tìm tài xế gần bạn</AppText>
+                  <AppText variant="caption" style={styles.secondary}>Thời gian tìm kiếm: {searchElapsedText}</AppText>
+                </View>
+              </View>
+              <View style={styles.searchDivider} />
+              {['Kiểm tra tuyến đường và bán kính', 'Kết nối mạng lưới tài xế CoRide', 'Gửi lời mời đón tới tài xế phù hợp'].map((label, index) => (
                 <View key={label} style={styles.progressRow}>
-                  <View style={styles.check}><Check size={15} color={colors.surface} /></View>
+                  <View style={styles.check}><Check size={14} color={colors.surface} /></View>
                   <AppText variant="bodySmall">{label}{index === 2 ? '…' : ''}</AppText>
                 </View>
               ))}
@@ -194,22 +251,56 @@ export function PassengerActiveTrip({
           ) : null}
 
           {trip.status === 'ARRIVED' ? (
-            <View style={styles.waitingRow}>
-              <Clock3 size={20} color={colors.warning} />
-              <View><AppText variant="caption">Thời gian chờ</AppText><AppText variant="h3" weight="semibold">{waitingText}</AppText></View>
+            <View style={styles.arrivedBanner}>
+              <View style={styles.arrivedBannerHeader}>
+                <Clock3 size={20} color={colors.success} />
+                <AppText weight="bold" style={styles.arrivedBannerTitle}>TÀI XẾ ĐÃ ĐẾN ĐIỂM ĐÓN</AppText>
+              </View>
+              <AppText variant="bodySmall" style={styles.arrivedBannerText}>
+                Tài xế đang chờ bạn tại điểm đón. Thời gian chờ: <AppText weight="bold" style={{ color: colors.success }}>{waitingText}</AppText>
+              </AppText>
+              {vehicle?.licensePlate ? (
+                <View style={styles.arrivedPlateRow}>
+                  <AppText variant="caption" style={styles.secondary}>Đối chiếu biển số xe:</AppText>
+                  <View style={styles.plateBadgeSmall}>
+                    <AppText weight="bold" style={styles.plateTextSmall}>{vehicle.licensePlate}</AppText>
+                  </View>
+                </View>
+              ) : null}
             </View>
           ) : null}
 
           {trip.driver ? (
             <View style={styles.driverRow}>
-              <View style={styles.avatar}><AppText variant="h3" weight="semibold">{driverName.charAt(0).toUpperCase()}</AppText></View>
+              <View style={styles.avatar}>
+                <AppText variant="h3" weight="semibold">{driverName.charAt(0).toUpperCase()}</AppText>
+              </View>
               <View style={styles.flex}>
-                <AppText weight="semibold">{driverName}</AppText>
-                <View style={styles.rating}><Star size={14} color={colors.warning} fill={colors.warning} /><AppText variant="caption">{trip.driver.driverRating?.toFixed(1) || 'Mới'}</AppText></View>
-                {vehicle ? <AppText variant="bodySmall" style={styles.secondary}>{vehicle.color ? `${vehicle.color} · ` : ''}{vehicle.licensePlate}</AppText> : null}
+                <AppText weight="semibold" numberOfLines={1}>{driverName}</AppText>
+                <View style={styles.rating}>
+                  <Star size={14} color={colors.warning} fill={colors.warning} />
+                  <AppText variant="caption" weight="semibold">{trip.driver.driverRating?.toFixed(1) || '5.0'}</AppText>
+                </View>
+                {vehicle ? (
+                  <View style={styles.vehicleInfoRow}>
+                    <View style={styles.plateBadge}>
+                      <AppText weight="bold" style={styles.plateText}>{vehicle.licensePlate}</AppText>
+                    </View>
+                    <AppText variant="caption" style={styles.secondary} numberOfLines={1}>
+                      {vehicle.color ? `${vehicle.color} · ` : ''}{vehicle.type === 'CAR' ? 'Ô tô 4 chỗ' : 'Xe máy'}
+                    </AppText>
+                  </View>
+                ) : null}
               </View>
               {trip.driver.phone ? (
-                <Pressable accessibilityRole="button" accessibilityLabel="Gọi tài xế" onPress={() => void Linking.openURL(`tel:${trip.driver?.phone}`)} style={styles.iconButton}><Phone size={20} color={colors.primary} /></Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Gọi tài xế"
+                  onPress={() => void Linking.openURL(`tel:${trip.driver?.phone}`)}
+                  style={styles.iconButton}
+                >
+                  <Phone size={20} color={colors.primary} />
+                </Pressable>
               ) : null}
             </View>
           ) : null}
@@ -224,6 +315,39 @@ export function PassengerActiveTrip({
               <View><AppText variant="caption">Thời gian dự kiến</AppText><AppText weight="semibold">{trip.estimatedDuration} phút</AppText></View>
               <View><AppText variant="caption">Quãng đường</AppText><AppText weight="semibold">{trip.estimatedDistance.toFixed(1)} km</AppText></View>
               <View style={styles.support}><ShieldCheck size={18} color={colors.success} /><AppText variant="bodySmall">Hành trình được theo dõi realtime</AppText></View>
+            </View>
+          ) : null}
+
+          {trip.status === 'WAITING_PAYMENT' ? (
+            <View style={styles.qrSection}>
+              <View style={styles.qrHeader}>
+                <QrCode size={20} color={colors.primary} />
+                <AppText weight="semibold">Quét mã QR để thanh toán</AppText>
+              </View>
+              {qrQuery.isLoading ? (
+                <View style={styles.qrLoading}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <AppText variant="caption" style={styles.secondary}>Đang tạo mã thanh toán…</AppText>
+                </View>
+              ) : qrQuery.isError ? (
+                <View style={styles.qrError}>
+                  <AppText variant="caption" style={styles.errorText}>Không thể tải mã QR.</AppText>
+                  <Pressable accessibilityRole="button" onPress={() => void qrQuery.refetch()} style={styles.qrRetry}>
+                    <AppText variant="caption" weight="semibold" style={{ color: colors.primary }}>Thử lại</AppText>
+                  </Pressable>
+                </View>
+              ) : qrQuery.data?.data?.qrUrl ? (
+                <View style={styles.qrBox}>
+                  <Image
+                    source={{ uri: qrQuery.data.data.qrUrl }}
+                    style={styles.qrImage}
+                    resizeMode="contain"
+                  />
+                  <AppText variant="caption" style={styles.qrDesc}>
+                    {qrQuery.data.data.description}
+                  </AppText>
+                </View>
+              ) : null}
             </View>
           ) : null}
 
@@ -272,4 +396,90 @@ const styles = StyleSheet.create({
   help: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, justifyContent: 'center', minHeight: 44 },
   error: { color: colors.danger },
   footerStack: { gap: spacing.xs },
+  radarHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
+  radarPulse: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  radarTitle: { color: colors.textPrimary, fontSize: 14 },
+  searchDivider: {
+    backgroundColor: colors.border,
+    height: StyleSheet.hairlineWidth,
+    marginVertical: spacing.xs,
+  },
+  arrivedBanner: {
+    backgroundColor: colors.successSoft,
+    borderColor: colors.success,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    gap: spacing.xs,
+    padding: spacing.md,
+  },
+  arrivedBannerHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  arrivedBannerTitle: {
+    color: colors.success,
+    fontSize: 14,
+    letterSpacing: 0.5,
+  },
+  arrivedBannerText: {
+    color: colors.textPrimary,
+  },
+  arrivedPlateRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: 2,
+  },
+  plateBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#0F172A',
+    borderRadius: 4,
+    borderWidth: 1.5,
+    marginVertical: 2,
+    paddingHorizontal: 7,
+    paddingVertical: 1,
+  },
+  plateText: {
+    color: '#0F172A',
+    fontSize: 12,
+    letterSpacing: 0.8,
+  },
+  plateBadgeSmall: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#0F172A',
+    borderRadius: 4,
+    borderWidth: 1.2,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  plateTextSmall: {
+    color: '#0F172A',
+    fontSize: 11,
+    letterSpacing: 0.6,
+  },
+  vehicleInfoRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: 2,
+  },
+  qrSection: { alignItems: 'center', backgroundColor: colors.surfaceSecondary, borderRadius: radius.card, gap: spacing.sm, padding: spacing.md },
+  qrHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
+  qrLoading: { alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.lg },
+  qrError: { alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.md },
+  errorText: { color: colors.danger },
+  qrRetry: { minHeight: layout.minTouchTarget, justifyContent: 'center', paddingHorizontal: spacing.sm },
+  qrBox: { alignItems: 'center', gap: spacing.xs },
+  qrImage: { backgroundColor: colors.surface, borderRadius: radius.input, height: 190, width: 190 },
+  qrDesc: { color: colors.textSecondary, textAlign: 'center' },
 });

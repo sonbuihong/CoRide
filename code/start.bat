@@ -43,7 +43,7 @@ echo.
 echo [INFO] Dang khoi dong Docker Backend + Web + Prisma...
 call :ensure_docker_stack
 if errorlevel 1 goto startup_failed
-wt -w CoRideDev --title "CR_SVC_Prisma" -d "%~dp0packages\database" cmd /c "title CR_SVC_Prisma && pnpm.cmd exec prisma studio --port 5555 --browser none" ; new-tab --title "CR_SVC_Web" -d "%~dp0apps\web" cmd /c "title CR_SVC_Web && pnpm.cmd dev"
+wt -w CoRideDev --title "CR_SVC_Prisma" -d "%~dp0packages\database" cmd /k "title CR_SVC_Prisma && pnpm.cmd exec prisma studio --port 5555 --browser none" ; new-tab --title "CR_SVC_Web" -d "%~dp0apps\web" cmd /k "title CR_SVC_Web && pnpm.cmd dev"
 timeout /t 10 /nobreak > nul 2>&1
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
@@ -57,7 +57,7 @@ echo.
 echo [INFO] Dang khoi dong tat ca cac dich vu (1 Cua so, nhieu tab)...
 call :ensure_docker_stack
 if errorlevel 1 goto startup_failed
-wt -w CoRideDev --title "CR_SVC_Prisma" -d "%~dp0packages\database" cmd /c "title CR_SVC_Prisma && pnpm.cmd exec prisma studio --port 5555 --browser none" ; new-tab --title "CR_SVC_Web" -d "%~dp0apps\web" cmd /c "title CR_SVC_Web && pnpm.cmd dev" ; new-tab --title "CR_SVC_Mobile" -d "%~dp0apps\mobile" cmd /c "title CR_SVC_Mobile && pnpm.cmd start:expo -- --clear"
+wt -w CoRideDev --title "CR_SVC_Prisma" -d "%~dp0packages\database" cmd /k "title CR_SVC_Prisma && pnpm.cmd exec prisma studio --port 5555 --browser none" ; new-tab --title "CR_SVC_Web" -d "%~dp0apps\web" cmd /k "title CR_SVC_Web && pnpm.cmd dev" ; new-tab --title "CR_SVC_Mobile" -d "%~dp0apps\mobile" cmd /k "title CR_SVC_Mobile && pnpm.cmd start:expo -- --clear"
 timeout /t 10 /nobreak > nul 2>&1
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:3000
@@ -71,7 +71,7 @@ echo.
 echo [INFO] Dang khoi dong Docker Backend + Mobile + Prisma (Khong Web)...
 call :ensure_docker_stack
 if errorlevel 1 goto startup_failed
-wt -w CoRideDev --title "CR_SVC_Prisma" -d "%~dp0packages\database" cmd /c "title CR_SVC_Prisma && pnpm.cmd exec prisma studio --port 5555 --browser none" ; new-tab --title "CR_SVC_Mobile" -d "%~dp0apps\mobile" cmd /c "title CR_SVC_Mobile && pnpm.cmd start:expo -- --clear"
+wt -w CoRideDev --title "CR_SVC_Prisma" -d "%~dp0packages\database" cmd /k "title CR_SVC_Prisma && pnpm.cmd exec prisma studio --port 5555 --browser none" ; new-tab --title "CR_SVC_Mobile" -d "%~dp0apps\mobile" cmd /k "title CR_SVC_Mobile && pnpm.cmd start:expo -- --clear"
 timeout /t 10 /nobreak > nul 2>&1
 start "" http://localhost:5001/api/docs/
 start "" http://localhost:5555
@@ -136,6 +136,6 @@ exit /b 0
 :cleanup_services
 echo.
 echo [INFO] Dang dong Web, Mobile va Prisma Studio...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$ports = @(3000, 5555, 8081, 8082, 19000, 19001, 19002, 19006); $pidsToKill = [System.Collections.Generic.HashSet[int]]::new(); $allProcs = Get-CimInstance Win32_Process; $procMap = @{}; foreach ($p in $allProcs) { $procMap[$p.ProcessId] = $p }; $cmdPid = $procMap[$PID].ParentProcessId; $excludePids = [System.Collections.Generic.HashSet[int]]::new(); [void]$excludePids.Add($PID); if ($cmdPid) { [void]$excludePids.Add($cmdPid); $parentCmd = $procMap[$cmdPid].ParentProcessId; if ($parentCmd) { [void]$excludePids.Add($parentCmd) } }; foreach ($port in $ports) { try { $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue; if ($conns) { foreach ($c in $conns) { $ownerPid = $c.OwningProcess; if ($ownerPid -and $ownerPid -gt 4 -and -not $excludePids.Contains($ownerPid)) { [void]$pidsToKill.Add($ownerPid); $parent = $procMap[$ownerPid].ParentProcessId; if ($parent -and $parent -gt 4 -and -not $excludePids.Contains($parent)) { [void]$pidsToKill.Add($parent) } } } } } catch {} }; foreach ($p in $allProcs) { $cmd = $p.CommandLine; if ($cmd -and -not $excludePids.Contains($p.ProcessId)) { if ($cmd -like '*CR_SVC_Prisma*' -or $cmd -like '*CR_SVC_Web*' -or $cmd -like '*CR_SVC_Mobile*' -or $cmd -like '*prisma studio*' -or $cmd -like '*expo start*' -or $cmd -like '*next dev -p 3000*') { [void]$pidsToKill.Add($p.ProcessId); $parent = $p.ParentProcessId; if ($parent -and $parent -gt 4 -and -not $excludePids.Contains($parent)) { [void]$pidsToKill.Add($parent) } } } }; foreach ($targetPid in $pidsToKill) { if (-not $excludePids.Contains($targetPid)) { try { Start-Process -FilePath 'taskkill.exe' -ArgumentList '/F', '/T', '/PID', \"$targetPid\" -NoNewWindow -Wait -ErrorAction SilentlyContinue } catch {} } }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ports = @(3000, 5555, 8081, 8082, 19000, 19001, 19002, 19006); $pidsToKill = [System.Collections.Generic.HashSet[int]]::new(); $allProcs = Get-CimInstance Win32_Process; $procMap = @{}; foreach ($p in $allProcs) { $procMap[$p.ProcessId] = $p }; $cmdPid = $procMap[$PID].ParentProcessId; $excludePids = [System.Collections.Generic.HashSet[int]]::new(); [void]$excludePids.Add($PID); if ($cmdPid) { [void]$excludePids.Add($cmdPid); $parentCmd = $procMap[$cmdPid].ParentProcessId; if ($parentCmd) { [void]$excludePids.Add($parentCmd) } }; foreach ($port in $ports) { try { $conns = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue; if ($conns) { foreach ($c in $conns) { $ownerPid = $c.OwningProcess; if ($ownerPid -and $ownerPid -gt 4 -and -not $excludePids.Contains($ownerPid)) { [void]$pidsToKill.Add($ownerPid); $parent = $procMap[$ownerPid].ParentProcessId; if ($parent -and $parent -gt 4 -and -not $excludePids.Contains($parent)) { [void]$pidsToKill.Add($parent) } } } } } catch {} }; foreach ($p in $allProcs) { $cmd = $p.CommandLine; if ($cmd -and -not $excludePids.Contains($p.ProcessId)) { if ($cmd -like '*CR_SVC_Prisma*' -or $cmd -like '*CR_SVC_Web*' -or $cmd -like '*CR_SVC_Mobile*' -or $cmd -like '*prisma studio*' -or $cmd -like '*expo start*' -or $cmd -like '*next dev*') { [void]$pidsToKill.Add($p.ProcessId); $parent = $p.ParentProcessId; if ($parent -and $parent -gt 4 -and -not $excludePids.Contains($parent)) { [void]$pidsToKill.Add($parent) } } } }; foreach ($targetPid in $pidsToKill) { if (-not $excludePids.Contains($targetPid)) { try { Start-Process -FilePath 'taskkill.exe' -ArgumentList '/F', '/T', '/PID', \"$targetPid\" -NoNewWindow -Wait -ErrorAction SilentlyContinue } catch {} } }"
 taskkill /F /FI "WINDOWTITLE eq CR_SVC_*" > nul 2>&1
 goto :eof

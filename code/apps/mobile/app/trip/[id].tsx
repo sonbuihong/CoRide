@@ -20,16 +20,143 @@ export default function RideHailingDetailScreen() {
   const router = useRouter();
   const query = useQuery({ queryKey: ['trip-detail', id], queryFn: () => tripService.getTripById(id), enabled: Boolean(id) });
   const trip = query.data;
-  return <View style={styles.screen}><Stack.Screen options={{ headerShown: false }}><></></Stack.Screen><View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={() => router.back()} style={styles.back}><ArrowLeft size={22} color={colors.textPrimary} /></Pressable><AppText variant="h3" weight="semibold">Chi tiết chuyến đặt xe</AppText><View style={styles.back} /></View>
-    {query.isLoading ? <View style={styles.body}><View style={styles.skeleton} /><View style={styles.skeleton} /></View> : query.isError || !trip ? <View style={styles.state}><AppText variant="h3" weight="semibold">Không thể tải chuyến đi</AppText><Pressable onPress={() => void query.refetch()} style={styles.action}><AppText style={styles.actionText} weight="semibold">Thử lại</AppText></Pressable></View> : <ScrollView contentContainerStyle={styles.body}>
-      <View style={styles.statusRow}><View style={styles.type}><AppText variant="caption" weight="semibold" style={styles.blue}>ĐẶT XE</AppText></View><AppText weight="semibold" style={styles.blue}>{labels[trip.status] || trip.status}</AppText></View>
-      <View style={styles.card}><View style={styles.route}><View style={styles.rail}><View style={styles.start} /><View style={styles.line} /><View style={styles.end} /></View><View style={styles.copy}><AppText>{trip.originAddress}</AppText><View style={styles.gap} /><AppText>{trip.destAddress}</AppText></View></View></View>
-      <View style={styles.card}><Info icon={<CalendarClock size={19} color={colors.textMuted} />} label="Thời gian" value={formatDate(trip.createdAt)} /><Info icon={trip.vehicleType === 'CAR' ? <Car size={19} color={colors.textMuted} /> : <Bike size={19} color={colors.textMuted} />} label="Loại xe" value={trip.vehicleType === 'CAR' ? 'Ô tô' : 'Xe máy'} /><Info label="Chi phí" value={formatPrice(trip.finalPrice ?? trip.estimatedPrice)} /><Info label="Thanh toán" value={trip.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'} /></View>
-      {trip.driver && <View style={styles.card}><AppText variant="caption">Tài xế</AppText><AppText weight="semibold">{[trip.driver.firstName, trip.driver.lastName].filter(Boolean).join(' ') || 'Tài xế CoRide'}</AppText></View>}
-    </ScrollView>}
-  </View>;
+
+  const handleRebook = () => {
+    if (!trip) return;
+    router.push({
+      pathname: '/(passenger-tabs)/ride-hailing',
+      params: {
+        pickup: trip.originAddress,
+        dropoff: trip.destAddress,
+        pickupLat: String(trip.originLat),
+        pickupLng: String(trip.originLng),
+        dropoffLat: String(trip.destLat),
+        dropoffLng: String(trip.destLng),
+      },
+    } as never);
+  };
+
+  return (
+    <View style={styles.screen}>
+      <Stack.Screen options={{ headerShown: false }}><></></Stack.Screen>
+      <View style={styles.header}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Quay lại" onPress={() => router.back()} style={styles.back}>
+          <ArrowLeft size={22} color={colors.textPrimary} />
+        </Pressable>
+        <AppText variant="h3" weight="semibold">Chi tiết chuyến đặt xe</AppText>
+        <View style={styles.back} />
+      </View>
+      {query.isLoading ? (
+        <View style={styles.body}>
+          <View style={styles.skeleton} />
+          <View style={styles.skeleton} />
+        </View>
+      ) : query.isError || !trip ? (
+        <View style={styles.state}>
+          <AppText variant="h3" weight="semibold">Không thể tải chuyến đi</AppText>
+          <Pressable onPress={() => void query.refetch()} style={styles.action}>
+            <AppText style={styles.actionText} weight="semibold">Thử lại</AppText>
+          </Pressable>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.body}>
+          <View style={styles.statusRow}>
+            <View style={styles.type}>
+              <AppText variant="caption" weight="semibold" style={styles.blue}>ĐẶT XE</AppText>
+            </View>
+            <AppText weight="semibold" style={styles.blue}>{labels[trip.status] || trip.status}</AppText>
+          </View>
+          <View style={styles.card}>
+            <View style={styles.route}>
+              <View style={styles.rail}>
+                <View style={styles.start} />
+                <View style={styles.line} />
+                <View style={styles.end} />
+              </View>
+              <View style={styles.copy}>
+                <AppText weight="semibold">{trip.originAddress}</AppText>
+                <View style={styles.gap} />
+                <AppText weight="semibold">{trip.destAddress}</AppText>
+              </View>
+            </View>
+          </View>
+          <View style={styles.card}>
+            <Info icon={<CalendarClock size={19} color={colors.textMuted} />} label="Thời gian tạo" value={formatDate(trip.createdAt)} />
+            <Info icon={trip.vehicleType === 'CAR' ? <Car size={19} color={colors.textMuted} /> : <Bike size={19} color={colors.textMuted} />} label="Loại xe" value={trip.vehicleType === 'CAR' ? 'Ô tô 4 chỗ' : 'Xe máy'} />
+            <Info label="Chi phí" value={formatPrice(trip.finalPrice ?? trip.estimatedPrice)} />
+            <Info label="Thanh toán" value={trip.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'} />
+          </View>
+          {trip.driver ? (
+            <View style={styles.card}>
+              <AppText variant="caption">Tài xế phục vụ</AppText>
+              <AppText weight="semibold">
+                {[trip.driver.firstName, trip.driver.lastName].filter(Boolean).join(' ') || 'Tài xế CoRide'}
+              </AppText>
+              {trip.driver.vehicles?.[0] ? (
+                <View style={styles.plateRow}>
+                  <View style={styles.plateBadge}>
+                    <AppText weight="bold" style={styles.plateText}>{trip.driver.vehicles[0].licensePlate}</AppText>
+                  </View>
+                  <AppText variant="caption" style={{ color: colors.textSecondary }}>
+                    {trip.driver.vehicles[0].color ? `${trip.driver.vehicles[0].color} · ` : ''}{trip.driver.vehicles[0].type === 'CAR' ? 'Ô tô 4 chỗ' : 'Xe máy'}
+                  </AppText>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          <View style={styles.bottomActions}>
+            <Pressable accessibilityRole="button" onPress={handleRebook} style={styles.rebookButton}>
+              <AppText style={styles.actionText} weight="semibold">ĐẶT LẠI CHUYẾN NÀY</AppText>
+            </Pressable>
+            {trip.driverId && trip.status === 'COMPLETED' ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push({
+                  pathname: '/review-modal',
+                  params: { tripRequestId: trip.id, revieweeId: trip.driverId! },
+                } as never)}
+                style={styles.reviewButton}
+              >
+                <AppText style={styles.reviewButtonText} weight="semibold">ĐÁNH GIÁ TÀI XẾ</AppText>
+              </Pressable>
+            ) : null}
+          </View>
+        </ScrollView>
+      )}
+    </View>
+  );
 }
 function Info({ icon, label, value }: { icon?: React.ReactNode; label: string; value: string }) { return <View style={styles.info}>{icon}<View style={styles.infoCopy}><AppText variant="caption">{label}</AppText><AppText weight="medium">{value}</AppText></View></View>; }
 function formatDate(value?: string) { if (!value) return 'Chưa xác định'; const date = new Date(value); return isValid(date) ? format(date, 'HH:mm · dd/MM/yyyy') : 'Chưa xác định'; }
 function formatPrice(value?: number | null) { return typeof value === 'number' ? `${value.toLocaleString('vi-VN')}đ` : 'Chưa có giá'; }
-const styles = StyleSheet.create({ screen: { backgroundColor: colors.background, flex: 1 }, header: { alignSelf: 'center', alignItems: 'center', backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', maxWidth: layout.maxContentWidth, minHeight: 60, paddingHorizontal: spacing.md, width: '100%' }, back: { alignItems: 'center', justifyContent: 'center', minHeight: layout.minTouchTarget, width: layout.minTouchTarget }, body: { alignSelf: 'center', gap: spacing.md, maxWidth: layout.maxContentWidth, padding: spacing.screen, width: '100%' }, statusRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }, type: { backgroundColor: colors.primarySoft, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs }, blue: { color: colors.primary }, card: { backgroundColor: colors.surface, borderRadius: radius.card, gap: spacing.lg, padding: spacing.lg }, route: { flexDirection: 'row' }, rail: { alignItems: 'center', width: 20 }, start: { backgroundColor: colors.success, borderRadius: 6, height: 12, width: 12 }, line: { backgroundColor: colors.borderStrong, flex: 1, marginVertical: 3, width: 2 }, end: { backgroundColor: colors.danger, borderRadius: 6, height: 12, width: 12 }, copy: { flex: 1, paddingLeft: spacing.sm }, gap: { height: spacing.xl }, info: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, minHeight: 44 }, infoCopy: { flex: 1 }, state: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: spacing.xl }, action: { backgroundColor: colors.primary, borderRadius: radius.button, marginTop: spacing.lg, minHeight: layout.minTouchTarget, paddingHorizontal: spacing.xl, justifyContent: 'center' }, actionText: { color: colors.surface }, skeleton: { backgroundColor: colors.border, borderRadius: radius.card, height: 160 } });
+const styles = StyleSheet.create({
+  screen: { backgroundColor: colors.background, flex: 1 },
+  header: { alignSelf: 'center', alignItems: 'center', backgroundColor: colors.surface, borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', maxWidth: layout.maxContentWidth, minHeight: 60, paddingHorizontal: spacing.md, width: '100%' },
+  back: { alignItems: 'center', justifyContent: 'center', minHeight: layout.minTouchTarget, width: layout.minTouchTarget },
+  body: { alignSelf: 'center', gap: spacing.md, maxWidth: layout.maxContentWidth, padding: spacing.screen, width: '100%', paddingBottom: spacing.xxxl },
+  statusRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  type: { backgroundColor: colors.primarySoft, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
+  blue: { color: colors.primary },
+  card: { backgroundColor: colors.surface, borderRadius: radius.card, gap: spacing.sm, padding: spacing.lg },
+  route: { flexDirection: 'row' },
+  rail: { alignItems: 'center', width: 20 },
+  start: { backgroundColor: colors.success, borderRadius: 6, height: 12, width: 12 },
+  line: { backgroundColor: colors.borderStrong, flex: 1, marginVertical: 3, width: 2 },
+  end: { backgroundColor: colors.danger, borderRadius: 6, height: 12, width: 12 },
+  copy: { flex: 1, paddingLeft: spacing.sm },
+  gap: { height: spacing.xl },
+  info: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, minHeight: 44 },
+  infoCopy: { flex: 1 },
+  plateRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
+  plateBadge: { backgroundColor: '#FFFFFF', borderColor: '#0F172A', borderRadius: 4, borderWidth: 1.2, paddingHorizontal: 7, paddingVertical: 2 },
+  plateText: { color: '#0F172A', fontSize: 12, letterSpacing: 0.8 },
+  bottomActions: { gap: spacing.sm, marginTop: spacing.md },
+  rebookButton: { alignItems: 'center', backgroundColor: colors.primary, borderRadius: radius.button, justifyContent: 'center', minHeight: 52, paddingHorizontal: spacing.xl },
+  reviewButton: { alignItems: 'center', backgroundColor: colors.primarySoft, borderColor: colors.primary, borderRadius: radius.button, borderWidth: 1, justifyContent: 'center', minHeight: 48, paddingHorizontal: spacing.xl },
+  reviewButtonText: { color: colors.primary },
+  state: { alignItems: 'center', flex: 1, justifyContent: 'center', padding: spacing.xl },
+  action: { backgroundColor: colors.primary, borderRadius: radius.button, marginTop: spacing.lg, minHeight: layout.minTouchTarget, paddingHorizontal: spacing.xl, justifyContent: 'center' },
+  actionText: { color: colors.surface },
+  skeleton: { backgroundColor: colors.border, borderRadius: radius.card, height: 160 }
+});

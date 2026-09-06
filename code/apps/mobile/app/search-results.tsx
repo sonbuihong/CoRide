@@ -4,7 +4,7 @@ import { SocketEvents } from '@repo/shared';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, CalendarDays, Clock3, RefreshCw, Search, Users, WifiOff } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, Bike, CalendarDays, Clock3, RefreshCw, Search, Sparkles, Users, WifiOff } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -87,6 +87,20 @@ export default function SearchResultsScreen() {
     router.setParams({ date: new Date(departure.getTime() + minutes * 60_000).toISOString() });
   };
 
+  const handleGoToRideHailing = () => {
+    router.push({
+      pathname: '/(passenger-tabs)/ride-hailing',
+      params: {
+        pickup: filters.origin || '',
+        dropoff: filters.destination || '',
+        pickupLat: filters.originLat != null ? String(filters.originLat) : '',
+        pickupLng: filters.originLng != null ? String(filters.originLng) : '',
+        dropoffLat: filters.destinationLat != null ? String(filters.destinationLat) : '',
+        dropoffLng: filters.destinationLng != null ? String(filters.destinationLng) : '',
+      },
+    } as never);
+  };
+
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
@@ -126,6 +140,23 @@ export default function SearchResultsScreen() {
           <EmptyState icon={<WifiOff size={44} color={colors.danger} />} title="Không thể tải danh sách chuyến" description="Kiểm tra kết nối mạng rồi thử lại." actionTitle="Thử lại" onAction={() => query.refetch()} />
         ) : query.data?.length ? (
           <View>
+            {/* Quick Hailing banner when carpool rides exist */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Đặt xe riêng đi ngay"
+              onPress={handleGoToRideHailing}
+              style={({ pressed }) => [styles.quickHailingBanner, pressed && styles.bannerPressed]}
+            >
+              <View style={styles.quickHailingIcon}>
+                <Bike size={20} color={colors.primary} />
+              </View>
+              <View style={styles.flex}>
+                <AppText variant="bodySmall" weight="semibold">Cần đi gấp? Đặt xe đón ngay</AppText>
+                <AppText variant="caption" style={styles.secondaryText}>Đi xe riêng · Không cần chờ ghép chuyến</AppText>
+              </View>
+              <ArrowRight size={18} color={colors.primary} />
+            </Pressable>
+
             <View style={styles.resultHeading}>
               <AppText accessibilityRole="header" variant="h2" weight="semibold">{query.data.length} chuyến phù hợp với hành trình của bạn</AppText>
               <AppText variant="bodySmall" style={styles.secondaryText}>Xếp theo độ phù hợp, thời gian đón, khoảng cách và độ lệch tuyến.</AppText>
@@ -136,9 +167,28 @@ export default function SearchResultsScreen() {
           </View>
         ) : (
           <View>
+            {/* Prominent Ride-Hailing Callout Card when no carpool ride found */}
+            <View style={styles.hailingHeroCard}>
+              <View style={styles.hailingHeroBadge}>
+                <Sparkles size={14} color={colors.primary} />
+                <AppText variant="caption" weight="semibold" style={styles.primaryText}>DỊCH VỤ ĐẶT XE ĐI NGAY</AppText>
+              </View>
+              <AppText variant="h2" weight="semibold" style={styles.hailingHeroTitle}>Không có xe ghép? Đặt xe đi ngay!</AppText>
+              <AppText variant="bodySmall" style={styles.hailingHeroDesc}>
+                Tài xế CoRide (Xe máy / Ô tô) sẽ đến đón bạn trực tiếp theo đúng lộ trình này mà không cần chờ đợi.
+              </AppText>
+              <AppButton
+                title="ĐẶT XE NGAY (RIDE-HAILING)"
+                variant="passenger"
+                leftIcon={<Bike size={20} color={colors.surface} />}
+                onPress={handleGoToRideHailing}
+                style={styles.hailingHeroButton}
+              />
+            </View>
+
             <EmptyState
               icon={<Search size={44} color={colors.textTertiary} />}
-              title="Chưa có chuyến phù hợp"
+              title="Chưa có chuyến đi chung phù hợp"
               description="Hiện chưa có tài xế nào có hành trình phù hợp với tuyến đường và thời gian của bạn."
               actionTitle="Sửa điểm đi / điểm đến"
               onAction={() => router.back()}
@@ -181,4 +231,61 @@ const styles = StyleSheet.create({
   suggestionTitle: { marginBottom: spacing.sm },
   suggestionActions: { flexDirection: 'row', gap: spacing.sm, width: '100%' },
   suggestionButton: { flex: 1 },
+  flex: { flex: 1 },
+  quickHailingBanner: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+    padding: spacing.md,
+  },
+  quickHailingIcon: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  bannerPressed: {
+    opacity: 0.82,
+  },
+  hailingHeroCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    elevation: 3,
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
+    padding: spacing.lg,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+  },
+  hailingHeroBadge: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.pill,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+  },
+  hailingHeroTitle: {
+    letterSpacing: -0.3,
+  },
+  hailingHeroDesc: {
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  hailingHeroButton: {
+    marginTop: spacing.xs,
+  },
 });

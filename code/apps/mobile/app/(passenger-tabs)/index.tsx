@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { ArrowRight, RefreshCw, Search } from 'lucide-react-native';
+import { ArrowRight, Bike, RefreshCw, Search, Users } from 'lucide-react-native';
 import { Animated, Easing, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SocketEvents } from '@repo/shared';
 
@@ -25,19 +25,20 @@ export default function PassengerHomeScreen() {
   const appMode = useAppStore((state) => state.appMode);
   const queryEnabled = isAuthenticated && appMode === 'passenger';
   const socketConnected = useSocketConnection();
-  const spinValue = useRef(new Animated.Value(0)).current;
+  const [spinValue] = useState(() => new Animated.Value(0));
 
   const { data: rides = [], isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: QUERY_KEY,
     queryFn: () => rideService.getRides({}),
     enabled: queryEnabled,
+    refetchInterval: getRealtimeRefetchInterval(socketConnected),
   });
 
-  const refetchSummary = () => {
+  const refetchSummary = React.useCallback(() => {
     if (queryEnabled) {
       queryClient.invalidateQueries({ queryKey: ['trip-summary'] });
     }
-  };
+  }, [queryClient, queryEnabled]);
 
   useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
@@ -61,10 +62,10 @@ export default function PassengerHomeScreen() {
     };
   }, [isRefetching, spinValue]);
 
-  const spin = spinValue.interpolate({
+  const spin = React.useMemo(() => spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
-  });
+  }), [spinValue]);
 
   useEffect(() => {
     if (!queryEnabled) return;
@@ -104,7 +105,7 @@ export default function PassengerHomeScreen() {
       socketService.off('ride:status', updateStatus);
       socketService.off(SocketEvents.TRIP_UPDATED, refetchSummary);
     };
-  }, [queryClient, queryEnabled, refetch]);
+  }, [queryClient, queryEnabled, refetch, refetchSummary]);
 
   return (
     <ScrollView
@@ -152,6 +153,29 @@ export default function PassengerHomeScreen() {
                   <ArrowRight size={18} color="#FFFFFF" strokeWidth={2.2} />
                 </View>
               </View>
+            </Pressable>
+          </View>
+
+          {/* Quick service switcher */}
+          <View style={styles.quickServiceRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Tìm xe đi chung"
+              onPress={() => router.push('/search' as any)}
+              style={({ pressed }) => [styles.quickServiceItem, pressed && styles.quickServicePressed]}
+            >
+              <Users size={16} color={colors.surface} />
+              <AppText variant="caption" weight="semibold" style={styles.quickServiceText}>Đi chung xe</AppText>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Đặt xe riêng đi ngay"
+              onPress={() => router.push('/(passenger-tabs)/ride-hailing' as any)}
+              style={({ pressed }) => [styles.quickServiceItem, styles.quickServiceHailing, pressed && styles.quickServicePressed]}
+            >
+              <Bike size={16} color={colors.primary} />
+              <AppText variant="caption" weight="semibold" style={styles.quickServiceHailingText}>Đặt xe đi ngay</AppText>
             </Pressable>
           </View>
         </View>
@@ -263,5 +287,35 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.5,
+  },
+  quickServiceRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    marginTop: spacing.md,
+  },
+  quickServiceItem: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+  },
+  quickServiceHailing: {
+    backgroundColor: colors.surface,
+    borderColor: colors.surface,
+  },
+  quickServiceText: {
+    color: colors.surface,
+  },
+  quickServiceHailingText: {
+    color: colors.primary,
+  },
+  quickServicePressed: {
+    opacity: 0.8,
   },
 });

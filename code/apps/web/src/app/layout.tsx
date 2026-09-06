@@ -11,6 +11,7 @@ import { SocketProvider } from "@/components/providers/socket-provider";
 import { BookingRequestPopup } from "@/components/booking/booking-request-popup";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { PageLoadingIndicator } from "@/components/ui/page-loading-indicator";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -46,6 +47,7 @@ export default function RootLayout({
             <RoleModeProvider>
               {/* SocketProvider nằm trong AuthProvider — cần token từ localStorage */}
               <SocketProvider>
+                <PageLoadingIndicator />
                 <Toaster position="top-center" richColors closeButton />
                 {/* BookingRequestPopup luôn active toàn ứng dụng — tài xế nhận popup ngay khi có yêu cầu */}
                 <BookingRequestPopup />

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import * as Location from 'expo-location';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Bike, Car, LocateFixed, Route } from 'lucide-react-native';
+import { ArrowLeft, Bike, Car, LocateFixed, Route } from 'lucide-react-native';
 
 import { ActiveRideMap, type ActiveRideMapHandle, type ActiveRideLatLng } from '../../components/ActiveRideMap';
 import { LocationPicker } from '../../components/LocationPicker';
@@ -23,17 +24,38 @@ interface PassengerRideRequestProps {
 const DEFAULT_CENTER: ActiveRideLatLng = { latitude: 21.0285, longitude: 105.8542 };
 
 export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRequestProps) {
+  const router = useRouter();
+  const routeParams = useLocalSearchParams<{
+    pickup?: string;
+    dropoff?: string;
+    pickupLat?: string;
+    pickupLng?: string;
+    dropoffLat?: string;
+    dropoffLng?: string;
+  }>();
+
   const mapRef = useRef<ActiveRideMapHandle>(null);
-  const [pickup, setPickup] = useState(initialTrip?.originAddress ?? '');
-  const [dropoff, setDropoff] = useState(initialTrip?.destAddress ?? '');
-  const [pickupCoords, setPickupCoords] = useState<ActiveRideLatLng | undefined>(initialTrip ? {
-    latitude: initialTrip.originLat,
-    longitude: initialTrip.originLng,
-  } : undefined);
-  const [dropoffCoords, setDropoffCoords] = useState<ActiveRideLatLng | undefined>(initialTrip ? {
-    latitude: initialTrip.destLat,
-    longitude: initialTrip.destLng,
-  } : undefined);
+  const [pickup, setPickup] = useState(
+    initialTrip?.originAddress ?? (typeof routeParams.pickup === 'string' ? routeParams.pickup : ''),
+  );
+  const [dropoff, setDropoff] = useState(
+    initialTrip?.destAddress ?? (typeof routeParams.dropoff === 'string' ? routeParams.dropoff : ''),
+  );
+
+  const [pickupCoords, setPickupCoords] = useState<ActiveRideLatLng | undefined>(() => {
+    if (initialTrip) return { latitude: initialTrip.originLat, longitude: initialTrip.originLng };
+    const lat = Number(routeParams.pickupLat);
+    const lng = Number(routeParams.pickupLng);
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { latitude: lat, longitude: lng } : undefined;
+  });
+
+  const [dropoffCoords, setDropoffCoords] = useState<ActiveRideLatLng | undefined>(() => {
+    if (initialTrip) return { latitude: initialTrip.destLat, longitude: initialTrip.destLng };
+    const lat = Number(routeParams.dropoffLat);
+    const lng = Number(routeParams.dropoffLng);
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { latitude: lat, longitude: lng } : undefined;
+  });
+
   const [vehicleType, setVehicleType] = useState<'BIKE' | 'CAR'>(initialTrip?.vehicleType ?? 'BIKE');
   const [currentLocation, setCurrentLocation] = useState<ActiveRideLatLng>();
   const [routeCoords, setRouteCoords] = useState<ActiveRideLatLng[]>([]);
@@ -58,41 +80,62 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
 
   useEffect(() => {
     let cancelled = false;
-    if (!pickupCoords || !dropoffCoords) {
-      setRouteCoords([]);
-      return;
-    }
-    setRouteError(undefined);
+    if (!pickupCoords || !dropoffCoords) return;
     void getDirections(pickupCoords, dropoffCoords, vehicleType === 'CAR' ? 'car' : 'bike')
       .then((result) => {
         if (cancelled) return;
+        setRouteError(result ? undefined : 'Không tải được đường đi chi tiết; hãy kiểm tra kết nối.');
         setRouteCoords(result?.polylineCoords.length
           ? result.polylineCoords
           : [pickupCoords, dropoffCoords]);
-        if (!result) setRouteError('Không tải được đường đi chi tiết; hãy kiểm tra kết nối.');
       });
     return () => { cancelled = true; };
   }, [dropoffCoords, pickupCoords, vehicleType]);
 
-  const estimateQuery = useQuery({
+  const bikeEstimateQuery = useQuery({
     queryKey: [
       'ride-hailing-estimate',
       pickupCoords?.latitude,
       pickupCoords?.longitude,
       dropoffCoords?.latitude,
       dropoffCoords?.longitude,
-      vehicleType,
+      'BIKE',
     ],
     queryFn: () => pricingService.estimateRideHailing({
       originLat: pickupCoords!.latitude,
       originLng: pickupCoords!.longitude,
       destLat: dropoffCoords!.latitude,
       destLng: dropoffCoords!.longitude,
-      vehicleType,
+      vehicleType: 'BIKE',
     }),
     enabled: Boolean(pickupCoords && dropoffCoords),
+    staleTime: 30_000,
     retry: 1,
   });
+
+  const carEstimateQuery = useQuery({
+    queryKey: [
+      'ride-hailing-estimate',
+      pickupCoords?.latitude,
+      pickupCoords?.longitude,
+      dropoffCoords?.latitude,
+      dropoffCoords?.longitude,
+      'CAR',
+    ],
+    queryFn: () => pricingService.estimateRideHailing({
+      originLat: pickupCoords!.latitude,
+      originLng: pickupCoords!.longitude,
+      destLat: dropoffCoords!.latitude,
+      destLng: dropoffCoords!.longitude,
+      vehicleType: 'CAR',
+    }),
+    enabled: Boolean(pickupCoords && dropoffCoords),
+    staleTime: 30_000,
+    retry: 1,
+  });
+
+  const activeEstimateQuery = vehicleType === 'CAR' ? carEstimateQuery : bikeEstimateQuery;
+  const estimate = activeEstimateQuery.data;
 
   const createMutation = useMutation({
     mutationFn: () => tripService.createTrip({
@@ -113,7 +156,7 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
 
   const canSubmit = Boolean(
     pickupCoords && dropoffCoords && pickup.trim() && dropoff.trim() &&
-    estimateQuery.data && !estimateQuery.isError,
+    estimate && !activeEstimateQuery.isError,
   );
   const mapOrigin = pickupCoords ?? currentLocation ?? DEFAULT_CENTER;
   const mapDestination = dropoffCoords ?? mapOrigin;
@@ -123,7 +166,6 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
   const locationBias = currentLocation
     ? `${currentLocation.latitude},${currentLocation.longitude}`
     : undefined;
-  const estimate = estimateQuery.data;
 
   const submit = () => {
     setFormError(undefined);
@@ -139,9 +181,28 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
   };
 
   const vehicleOptions = useMemo(() => [
-    { type: 'BIKE' as const, label: 'Xe máy', Icon: Bike },
-    { type: 'CAR' as const, label: 'Ô tô', Icon: Car },
-  ], []);
+    {
+      type: 'BIKE' as const,
+      name: 'CoBike',
+      desc: 'Xe máy · 1 chỗ',
+      Icon: Bike,
+      price: bikeEstimateQuery.data?.estimatedPrice,
+      loading: bikeEstimateQuery.isLoading,
+    },
+    {
+      type: 'CAR' as const,
+      name: 'CoCar',
+      desc: 'Ô tô · 4 chỗ',
+      Icon: Car,
+      price: carEstimateQuery.data?.estimatedPrice,
+      loading: carEstimateQuery.isLoading,
+    },
+  ], [
+    bikeEstimateQuery.data?.estimatedPrice,
+    bikeEstimateQuery.isLoading,
+    carEstimateQuery.data?.estimatedPrice,
+    carEstimateQuery.isLoading,
+  ]);
 
   return (
     <View style={styles.screen}>
@@ -153,6 +214,20 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
         originLabel={pickup || 'Điểm đón'}
         destinationLabel={dropoff || 'Điểm đến'}
       />
+
+      {/* Floating Back Button to return to search or home */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Quay lại tìm kiếm"
+        onPress={() => {
+          if (router.canGoBack()) router.back();
+          else router.replace('/(passenger-tabs)' as never);
+        }}
+        style={({ pressed }) => [styles.floatingBack, pressed && styles.pressed]}
+      >
+        <ArrowLeft size={22} color={colors.textPrimary} />
+      </Pressable>
+
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Đưa bản đồ về vị trí hiện tại"
@@ -164,10 +239,16 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
 
       <DraggableBottomSheet
         initialSnapIndex={1}
-        snapPoints={[0.4, 0.72, 0.94]}
+        snapPoints={[0.42, 0.74, 0.95]}
         footer={(
           <AppButton
-            title="TÌM TÀI XẾ"
+            title={
+              createMutation.isPending
+                ? 'ĐANG TÌM TÀI XẾ…'
+                : vehicleType === 'BIKE'
+                  ? 'TÌM TÀI XẾ COBIKE'
+                  : 'TÌM TÀI XẾ COCAR'
+            }
             variant="passenger"
             disabled={!canSubmit}
             isLoading={createMutation.isPending}
@@ -177,8 +258,8 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
       >
         <View style={styles.content}>
           <View>
-            <AppText variant="h2" weight="semibold">Bạn muốn đi đâu?</AppText>
-            <AppText variant="bodySmall" style={styles.subtitle}>Chọn chính xác hai điểm để hệ thống tìm tài xế thuận tuyến.</AppText>
+            <AppText variant="h2" weight="semibold">Đặt chuyến xe CoRide</AppText>
+            <AppText variant="bodySmall" style={styles.subtitle}>Chọn loại phương tiện và điểm đón/trả phù hợp với bạn.</AppText>
           </View>
 
           <LocationPicker
@@ -207,9 +288,9 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
           />
 
           <View>
-            <AppText variant="bodySmall" weight="semibold" style={styles.sectionLabel}>PHƯƠNG TIỆN</AppText>
+            <AppText variant="bodySmall" weight="semibold" style={styles.sectionLabel}>LỰA CHỌN LOẠI XE</AppText>
             <View style={styles.vehicleRow}>
-              {vehicleOptions.map(({ type, label, Icon }) => {
+              {vehicleOptions.map(({ type, name, desc, Icon, price, loading }) => {
                 const selected = vehicleType === type;
                 return (
                   <Pressable
@@ -217,10 +298,28 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
                     onPress={() => setVehicleType(type)}
-                    style={({ pressed }) => [styles.vehicle, selected && styles.vehicleSelected, pressed && styles.pressed]}
+                    style={({ pressed }) => [
+                      styles.vehicle,
+                      selected && styles.vehicleSelected,
+                      pressed && styles.pressed,
+                    ]}
                   >
-                    <Icon size={24} color={selected ? colors.primary : colors.textSecondary} />
-                    <AppText weight="semibold" style={selected ? styles.selectedText : undefined}>{label}</AppText>
+                    <View style={[styles.vehicleIconBox, selected && styles.vehicleIconBoxSelected]}>
+                      <Icon size={24} color={selected ? colors.primary : colors.textSecondary} />
+                    </View>
+                    <View style={styles.vehicleInfo}>
+                      <AppText weight="semibold" style={selected ? styles.selectedText : undefined}>{name}</AppText>
+                      <AppText variant="caption" style={styles.vehicleDesc}>{desc}</AppText>
+                      {loading ? (
+                        <ActivityIndicator size="small" color={colors.primary} style={styles.priceLoader} />
+                      ) : price ? (
+                        <AppText weight="bold" style={styles.vehiclePrice}>
+                          {price.toLocaleString('vi-VN')}đ
+                        </AppText>
+                      ) : (
+                        <AppText variant="caption" style={styles.vehiclePriceEmpty}>--</AppText>
+                      )}
+                    </View>
                   </Pressable>
                 );
               })}
@@ -231,14 +330,14 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
             <View style={styles.summary}>
               <View style={styles.summaryTitle}>
                 <Route size={20} color={colors.primary} />
-                <AppText weight="semibold">Đi ngay</AppText>
+                <AppText weight="semibold">Chi tiết hành trình</AppText>
               </View>
-              {estimateQuery.isLoading ? (
+              {activeEstimateQuery.isLoading ? (
                 <View style={styles.inlineState}><ActivityIndicator color={colors.primary} /><AppText variant="bodySmall">Đang tính tuyến và giá…</AppText></View>
-              ) : estimateQuery.isError ? (
+              ) : activeEstimateQuery.isError ? (
                 <View>
                   <AppText accessibilityRole="alert" variant="bodySmall" style={styles.error}>Không thể tính giá hoặc lộ trình.</AppText>
-                  <Pressable accessibilityRole="button" onPress={() => void estimateQuery.refetch()} style={styles.retry}><AppText weight="semibold" style={styles.selectedText}>Thử lại</AppText></Pressable>
+                  <Pressable accessibilityRole="button" onPress={() => void activeEstimateQuery.refetch()} style={styles.retry}><AppText weight="semibold" style={styles.selectedText}>Thử lại</AppText></Pressable>
                 </View>
               ) : estimate ? (
                 <View style={styles.estimateRow}>
@@ -258,13 +357,94 @@ export function PassengerRideRequest({ initialTrip, onCreated }: PassengerRideRe
 
 const styles = StyleSheet.create({
   screen: { backgroundColor: colors.background, flex: 1 },
-  recenter: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.full, borderWidth: 1, height: layout.minTouchTarget, justifyContent: 'center', position: 'absolute', right: spacing.md, top: spacing.md, width: layout.minTouchTarget },
+  floatingBack: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    elevation: 4,
+    height: layout.minTouchTarget,
+    justifyContent: 'center',
+    left: spacing.md,
+    position: 'absolute',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    top: spacing.md,
+    width: layout.minTouchTarget,
+    zIndex: 10,
+  },
+  recenter: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    elevation: 4,
+    height: layout.minTouchTarget,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: spacing.md,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    top: spacing.md,
+    width: layout.minTouchTarget,
+    zIndex: 10,
+  },
   content: { gap: spacing.md, paddingHorizontal: layout.screenGutter, paddingTop: spacing.sm },
   subtitle: { color: colors.textSecondary, marginTop: spacing.xs },
   sectionLabel: { color: colors.textSecondary, letterSpacing: 0.6, marginBottom: spacing.sm },
   vehicleRow: { flexDirection: 'row', gap: spacing.sm },
-  vehicle: { alignItems: 'center', backgroundColor: colors.surfaceSecondary, borderColor: colors.border, borderRadius: radius.input, borderWidth: 1, flex: 1, flexDirection: 'row', gap: spacing.sm, minHeight: 52, paddingHorizontal: spacing.md },
+  vehicle: {
+    alignItems: 'center',
+    backgroundColor: colors.surfaceSecondary,
+    borderColor: colors.border,
+    borderRadius: radius.card,
+    borderWidth: 1.5,
+    flex: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    minHeight: 70,
+    padding: spacing.sm,
+  },
   vehicleSelected: { backgroundColor: colors.primarySoft, borderColor: colors.primary },
+  vehicleIconBox: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  vehicleIconBoxSelected: {
+    backgroundColor: colors.surface,
+  },
+  vehicleInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  vehicleDesc: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    marginTop: 1,
+  },
+  vehiclePrice: {
+    color: colors.primary,
+    fontSize: 13,
+    marginTop: 2,
+  },
+  vehiclePriceEmpty: {
+    color: colors.textTertiary,
+    marginTop: 2,
+  },
+  priceLoader: {
+    alignSelf: 'flex-start',
+    marginTop: 2,
+  },
   selectedText: { color: colors.primary },
   summary: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.card, gap: spacing.sm, padding: spacing.md },
   summaryTitle: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },

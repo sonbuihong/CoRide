@@ -92,6 +92,7 @@ export const useDriverTracking = (rideId: string | null) => {
   }, [rideId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void startTracking().catch((error) => {
       console.warn('[DriverTracking] Unable to start location tracking:', error);
     });
@@ -140,10 +141,11 @@ export const usePassengerTrackDriver = (rideId: string | null) => {
 
     return () => {
       mounted = false;
+      setDriverLocation(null);
       socketService.emit(SocketEvents.TRIP_LEAVE_ROOM, rideId);
       socketService.off(SocketEvents.TRIP_LOCATION_UPDATED, handleLocationUpdate);
     };
   }, [rideId]);
 
-  return driverLocation;
+  return rideId ? driverLocation : null;
 };

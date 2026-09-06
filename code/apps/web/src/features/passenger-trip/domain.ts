@@ -20,7 +20,8 @@ export interface PassengerTrip {
   destAddress: string; destLat: number; destLng: number;
   estimatedDistance: number; estimatedDuration: number; estimatedPrice: number;
   finalPrice?: number | null; paymentStatus?: string | null; createdAt?: string;
-  completedAt?: string | null; cancelReason?: string | null; driver?: TripDriver | null;
+  completedAt?: string | null; cancelReason?: string | null;
+  driverId?: string | null; driver?: TripDriver | null;
   transactions?: Array<{ id: string; amount: number; status: string; createdAt: string }>;
 }
 export interface TripEstimate {
@@ -46,6 +47,64 @@ const STATUS_COPY: Record<TripStatus, { phase: PassengerPhase; title: string; de
 
 export const getPassengerStatus = (status: TripStatus) => STATUS_COPY[status];
 export const canCancelTrip = (status: TripStatus) => ['PENDING', 'MATCHING', 'ACCEPTED', 'ARRIVING', 'ARRIVED'].includes(status);
+export const isTerminalTripStatus = (status: TripStatus) => status === 'COMPLETED' || status === 'NO_DRIVER' || status === 'CANCELLED';
+
+export const TRIP_STATUS_ORDER: Record<TripStatus, number> = {
+  PENDING: 10,
+  MATCHING: 20,
+  ACCEPTED: 30,
+  ARRIVING: 40,
+  ARRIVED: 50,
+  IN_PROGRESS: 60,
+  WAITING_PAYMENT: 70,
+  COMPLETED: 80,
+  NO_DRIVER: 90,
+  CANCELLED: 90,
+};
+
+export function isMonotonicStatusTransition(from: TripStatus, to: TripStatus): boolean {
+  if (from === to) return true;
+  if (isTerminalTripStatus(from)) return false;
+
+  if (to === 'CANCELLED') {
+    return canCancelTrip(from);
+  }
+  if (to === 'NO_DRIVER') {
+    return from === 'PENDING' || from === 'MATCHING';
+  }
+  if (to === 'COMPLETED') {
+    return from === 'WAITING_PAYMENT';
+  }
+
+  // Đối với luồng thông thường, trạng thái không được phép quay lùi
+  return (TRIP_STATUS_ORDER[to] ?? 0) >= (TRIP_STATUS_ORDER[from] ?? 0);
+}
+
+export function mergePassengerTrip(
+  current?: PassengerTrip | null,
+  incoming?: PassengerTrip | null,
+): PassengerTrip | null | undefined {
+  if (!current) return incoming;
+  if (!incoming) return current;
+  if (current.id !== incoming.id) return incoming;
+
+  // Nếu incoming có status lùi về quá khứ so với current, giữ status của current
+  const allowed = isMonotonicStatusTransition(current.status, incoming.status);
+  const resolvedStatus = allowed ? incoming.status : current.status;
+  const resolvedDriver = incoming.driver ?? current.driver;
+  const resolvedFinalPrice = incoming.finalPrice ?? current.finalPrice;
+  const resolvedPaymentStatus = incoming.paymentStatus ?? current.paymentStatus;
+
+  return {
+    ...current,
+    ...incoming,
+    status: resolvedStatus,
+    driver: resolvedDriver,
+    finalPrice: resolvedFinalPrice,
+    paymentStatus: resolvedPaymentStatus,
+  };
+}
+
 export const formatPrice = (value?: number | null) => value == null ? '—' : new Intl.NumberFormat('vi-VN').format(value) + 'đ';
 export const formatEta = (seconds?: number | null) => {
   if (seconds == null) return '—';

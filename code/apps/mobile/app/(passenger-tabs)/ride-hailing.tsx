@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -55,41 +55,31 @@ export default function PassengerRideHailingScreen() {
   };
 
   const confirmPayment = async (trip: RideHailingTrip) => {
+    if (action === 'payment') return;
     setAction('payment');
     setError(undefined);
     try {
       const result = await paymentService.confirmSimulatorPayment(trip.id);
       const completedTrip = result?.data?.trip as RideHailingTrip | undefined;
-      active.rememberTerminalTrip(completedTrip ?? { ...trip, status: 'COMPLETED', paymentStatus: 'PAID' });
+      const finalTrip = completedTrip ?? { ...trip, status: 'COMPLETED', paymentStatus: 'PAID' };
+      active.rememberTerminalTrip(finalTrip);
       queryClient.setQueryData(rideHailingKeys.active('passenger'), null);
+      queryClient.setQueryData(rideHailingKeys.detail(trip.id), finalTrip);
       showInfoDialog('Thanh toán thành công', 'Chuyến đi đã hoàn tất. Hãy đánh giá tài xế của bạn.');
-    } catch (caught) {
+    } catch (caught: any) {
+      const status = caught?.response?.status;
+      const code = caught?.response?.data?.code || caught?.response?.data?.message;
+      if (status === 409 || (typeof code === 'string' && code.includes('PAYMENT_ALREADY_PROCESSED'))) {
+        const finalTrip: RideHailingTrip = { ...trip, status: 'COMPLETED', paymentStatus: 'PAID' };
+        active.rememberTerminalTrip(finalTrip);
+        queryClient.setQueryData(rideHailingKeys.active('passenger'), null);
+        queryClient.setQueryData(rideHailingKeys.detail(trip.id), finalTrip);
+        showInfoDialog('Thanh toán thành công', 'Thanh toán của bạn đã được ghi nhận.');
+        return;
+      }
       setError(getApiErrorMessage(caught, 'Không thể xác nhận thanh toán. Vui lòng thử lại.'));
     } finally {
       setAction(null);
-    }
-  };
-
-  const payTrip = async () => {
-    const trip = active.trip;
-    if (!trip || action) return;
-    setAction('payment');
-    setError(undefined);
-    try {
-      const qr = await paymentService.getSimulatorQr(trip.id);
-      if (!qr?.data?.qrUrl) throw new Error('Không nhận được mã QR thanh toán');
-      await Linking.openURL(qr.data.qrUrl);
-      setAction(null);
-      showConfirmDialog(
-        'Xác nhận thanh toán',
-        `Xác nhận bạn đã thanh toán ${(trip.finalPrice ?? trip.estimatedPrice).toLocaleString('vi-VN')}đ.`,
-        () => void confirmPayment(trip),
-        'Tôi đã thanh toán',
-        'Để sau',
-      );
-    } catch (caught) {
-      setAction(null);
-      setError(getApiErrorMessage(caught, 'Không thể mở mã QR thanh toán.'));
     }
   };
 
@@ -150,7 +140,7 @@ export default function PassengerRideHailingScreen() {
         action={action}
         error={error}
         onCancel={cancelTrip}
-        onPayment={() => void payTrip()}
+        onPayment={() => void confirmPayment(active.trip!)}
         onRetry={() => void retryTrip()}
         onAdjustPickup={adjustPickup}
         onRate={() => router.push({
@@ -158,6 +148,24 @@ export default function PassengerRideHailingScreen() {
           params: { tripRequestId: active.trip!.id, revieweeId: active.trip!.driverId! },
         } as never)}
         onDone={finish}
+        onViewDetail={() => router.push(`/trip/${active.trip!.id}` as never)}
+        onSwitchToCarpool={() => {
+          const trip = active.trip!;
+          finish();
+          router.push({
+            pathname: '/search-results',
+            params: {
+              origin: trip.originAddress,
+              destination: trip.destAddress,
+              originLat: String(trip.originLat),
+              originLng: String(trip.originLng),
+              destinationLat: String(trip.destLat),
+              destinationLng: String(trip.destLng),
+              date: new Date().toISOString(),
+              seats: '1',
+            },
+          } as never);
+        }}
       />
     );
   }

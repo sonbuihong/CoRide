@@ -26,13 +26,38 @@ function NotificationIcon({ type, color }: { type: string; color: string }) {
 }
 
 function groupTitle(date: Date) {
+  if (isNaN(date.getTime())) return 'Trước đó';
   if (isToday(date)) return 'Hôm nay';
   if (isYesterday(date)) return 'Hôm qua';
   return 'Trước đó';
 }
 
+function formatNotificationDate(dateString?: string | Date) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+  try {
+    return format(date, 'HH:mm · dd MMM', { locale: vi });
+  } catch {
+    return '';
+  }
+}
+
 function SkeletonList() {
-  return <View accessibilityLabel="Đang tải thông báo" style={styles.skeletonList}>{[0, 1, 2].map((key) => <View key={key} style={styles.skeletonCard}><View style={styles.skeletonIcon} /><View style={styles.skeletonCopy}><View style={styles.skeletonTitle} /><View style={styles.skeletonLine} /><View style={styles.skeletonDate} /></View></View>)}</View>;
+  return (
+    <View accessibilityLabel="Đang tải thông báo" style={styles.skeletonList}>
+      {[0, 1, 2].map((key) => (
+        <View key={key} style={styles.skeletonCard}>
+          <View style={styles.skeletonIcon} />
+          <View style={styles.skeletonCopy}>
+            <View style={styles.skeletonTitle} />
+            <View style={styles.skeletonLine} />
+            <View style={styles.skeletonDate} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
 }
 
 export function NotificationsScreen({ mode }: { mode: 'passenger' | 'driver' }) {
@@ -51,87 +76,396 @@ export function NotificationsScreen({ mode }: { mode: 'passenger' | 'driver' }) 
   const deleteActionWidth = Math.max(layout.minTouchTarget, listWidth * 0.2);
   useNotificationRealtime();
 
-  const { data = [], isLoading, isError, refetch, isRefetching } = useQuery({ queryKey: QUERY_KEY, queryFn: notificationService.getNotifications });
+  const { data = [], isLoading, isError, refetch, isRefetching } = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: notificationService.getNotifications,
+  });
   const unreadCount = data.filter((item) => !item.isRead).length;
   const rows = useMemo<ListRow[]>(() => {
     const visible = filter === 'unread' ? data.filter((item) => !item.isRead) : data;
     const result: ListRow[] = [];
     let previous = '';
     visible.forEach((item) => {
-      const title = groupTitle(new Date(item.createdAt));
-      if (title !== previous) { result.push({ kind: 'section', id: `section-${title}`, title }); previous = title; }
+      const parsedDate = item.createdAt ? new Date(item.createdAt) : new Date();
+      const title = groupTitle(parsedDate);
+      if (title !== previous) {
+        result.push({ kind: 'section', id: `section-${title}`, title });
+        previous = title;
+      }
       result.push({ kind: 'notification', id: item.id, item });
     });
     return result;
   }, [data, filter]);
 
-  useEffect(() => () => { if (undoTimer.current) clearTimeout(undoTimer.current); }, []);
+  useEffect(() => () => {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+  }, []);
+
   const showUndo = (value: DeletedNotification) => {
     if (undoTimer.current) clearTimeout(undoTimer.current);
     setDeleted(value);
-    undoTimer.current = setTimeout(() => setDeleted((current) => current?.item.id === value.item.id ? null : current), UNDO_DURATION);
+    undoTimer.current = setTimeout(
+      () => setDeleted((current) => (current?.item.id === value.item.id ? null : current)),
+      UNDO_DURATION,
+    );
   };
 
   const markRead = useMutation({
     mutationFn: notificationService.markAsRead,
-    onMutate: (id) => queryClient.setQueryData<Notification[]>(QUERY_KEY, (current = []) => current.map((item) => item.id === id ? { ...item, isRead: true } : item)),
-    onError: () => { queryClient.invalidateQueries({ queryKey: QUERY_KEY }); Alert.alert('Không thể cập nhật', 'Vui lòng thử lại.'); },
+    onMutate: (id) =>
+      queryClient.setQueryData<Notification[]>(QUERY_KEY, (current = []) =>
+        current.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
+      ),
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      Alert.alert('Không thể cập nhật', 'Vui lòng thử lại.');
+    },
   });
+
   const remove = useMutation({
     mutationFn: notificationService.deleteNotification,
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEY });
       const previous = queryClient.getQueryData<Notification[]>(QUERY_KEY) ?? [];
       const index = previous.findIndex((item) => item.id === id);
-      if (index >= 0) { queryClient.setQueryData<Notification[]>(QUERY_KEY, previous.filter((item) => item.id !== id)); showUndo({ item: previous[index], index }); }
+      if (index >= 0) {
+        queryClient.setQueryData<Notification[]>(
+          QUERY_KEY,
+          previous.filter((item) => item.id !== id),
+        );
+        showUndo({ item: previous[index], index });
+      }
       openSwipeable.current?.close();
       return { previous, id };
     },
-    onError: (_error, _id, context) => { if (context?.previous) queryClient.setQueryData(QUERY_KEY, context.previous); setDeleted(null); Alert.alert('Không thể xóa thông báo', 'Thông báo đã được khôi phục. Vui lòng thử lại.'); },
+    onError: (_error, _id, context) => {
+      if (context?.previous) queryClient.setQueryData(QUERY_KEY, context.previous);
+      setDeleted(null);
+      Alert.alert('Không thể xóa thông báo', 'Thông báo đã được khôi phục. Vui lòng thử lại.');
+    },
   });
+
   const restore = useMutation({
     mutationFn: ({ item }: DeletedNotification) => notificationService.restoreNotification(item.id),
     onMutate: async (value) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEY });
-      queryClient.setQueryData<Notification[]>(QUERY_KEY, (current = []) => { const next = [...current]; next.splice(Math.min(value.index, next.length), 0, value.item); return next; });
-      if (undoTimer.current) clearTimeout(undoTimer.current); setDeleted(null); return value;
+      queryClient.setQueryData<Notification[]>(QUERY_KEY, (current = []) => {
+        const next = [...current];
+        next.splice(Math.min(value.index, next.length), 0, value.item);
+        return next;
+      });
+      if (undoTimer.current) clearTimeout(undoTimer.current);
+      setDeleted(null);
+      return value;
     },
-    onError: (_error, value) => { queryClient.setQueryData<Notification[]>(QUERY_KEY, (current = []) => current.filter((item) => item.id !== value.item.id)); Alert.alert('Không thể hoàn tác', 'Vui lòng thử lại.'); },
+    onError: (_error, value) => {
+      queryClient.setQueryData<Notification[]>(QUERY_KEY, (current = []) =>
+        current.filter((item) => item.id !== value.item.id),
+      );
+      Alert.alert('Không thể hoàn tác', 'Vui lòng thử lại.');
+    },
   });
 
   const markAllAsRead = async () => {
     const previous = queryClient.getQueryData<Notification[]>(QUERY_KEY) ?? [];
-    queryClient.setQueryData<Notification[]>(QUERY_KEY, previous.map((item) => ({ ...item, isRead: true })));
-    try { await notificationService.markAllAsRead(); } catch { queryClient.setQueryData(QUERY_KEY, previous); Alert.alert('Không thể cập nhật', 'Vui lòng thử lại.'); }
+    queryClient.setQueryData<Notification[]>(
+      QUERY_KEY,
+      previous.map((item) => ({ ...item, isRead: true })),
+    );
+    try {
+      await notificationService.markAllAsRead();
+    } catch {
+      queryClient.setQueryData(QUERY_KEY, previous);
+      Alert.alert('Không thể cập nhật', 'Vui lòng thử lại.');
+    }
   };
+
   const openTarget = (item: Notification) => {
     if (!item.isRead) markRead.mutate(item.id);
     if (!item.targetId || !item.targetType) return;
-    const route = item.targetType === 'BOOKING' ? `/booking/${item.targetId}` : item.targetType === 'TRIP' ? `/trip/${item.targetId}` : `/ride/${item.targetId}`;
+    const route =
+      item.targetType === 'BOOKING'
+        ? `/booking/${item.targetId}`
+        : item.targetType === 'TRIP'
+        ? `/trip/${item.targetId}`
+        : `/ride/${item.targetId}`;
     router.push(route as never);
   };
 
   const renderNotification = (item: Notification) => {
     let swipeable: NotificationSwipeRowHandle | null = null;
-    const deleteItem = () => { if (!remove.isPending) pendingDelete.current = remove.mutateAsync(item.id).catch(() => undefined); };
-    const onAccessibilityAction = (event: AccessibilityActionEvent) => { if (event.nativeEvent.actionName === 'delete') deleteItem(); };
-    const deleteButton = <Pressable accessibilityRole="button" accessibilityLabel={`Xóa thông báo ${item.title}`} disabled={remove.isPending} onPress={deleteItem} cssInterop={false} style={({ pressed }) => [styles.deleteAction, pressed && styles.deleteActionPressed, Platform.OS === 'web' && ({ cursor: 'pointer' } as any)]}><Trash2 size={22} color="#FFFFFF" /></Pressable>;
-    const webKeyboardProps = Platform.OS === 'web' ? { onKeyDown: (event: any) => { if (event.nativeEvent?.key === 'Delete') { event.preventDefault?.(); deleteItem(); } } } : {};
-    const card = <Pressable {...webKeyboardProps} accessibilityRole="button" accessibilityLabel={`${item.title}. ${item.message}. ${item.isRead ? 'Đã đọc' : 'Chưa đọc'}`} accessibilityHint={item.targetId ? 'Mở nội dung liên quan' : 'Đánh dấu đã đọc'} accessibilityActions={[{ name: 'delete', label: 'Xóa thông báo' }]} onAccessibilityAction={onAccessibilityAction} onPress={() => openTarget(item)} cssInterop={false} style={({ pressed }) => [styles.card, !item.isRead && styles.unreadCard, pressed && styles.cardPressed, Platform.OS === 'web' && ({ cursor: 'pointer' } as any)]}>
-      <View style={[styles.iconBox, { backgroundColor: item.isRead ? colors.surfaceSecondary : accentSoft }]}><NotificationIcon type={item.type} color={item.isRead ? colors.textSecondary : accent} /></View>
-      <View style={styles.copy}><View style={styles.titleRow}><Text numberOfLines={2} style={[styles.title, !item.isRead && styles.unreadTitle]}>{item.title}</Text>{!item.isRead ? <View style={[styles.unreadDot, { backgroundColor: accent }]} /> : null}</View><Text numberOfLines={3} style={styles.message}>{item.message}</Text><Text style={styles.date}>{format(new Date(item.createdAt), 'HH:mm · dd MMM', { locale: vi })}</Text></View>
-      {item.targetId ? <ChevronRight accessibilityElementsHidden size={18} color={colors.textTertiary} style={styles.chevron} /> : null}
-    </Pressable>;
-    return <View style={styles.rowShell}><NotificationSwipeRow ref={(value) => { swipeable = value; }} actionWidth={deleteActionWidth} rightAction={deleteButton} onWillOpen={() => { if (openSwipeable.current && openSwipeable.current !== swipeable) openSwipeable.current.close(); openSwipeable.current = swipeable; }} onClose={() => { if (openSwipeable.current === swipeable) openSwipeable.current = null; }}>{card}</NotificationSwipeRow></View>;
+
+    const deleteItem = () => {
+      if (!remove.isPending) {
+        pendingDelete.current = remove.mutateAsync(item.id).catch(() => undefined);
+      }
+    };
+
+    const onAccessibilityAction = (event: AccessibilityActionEvent) => {
+      if (event.nativeEvent.actionName === 'delete') {
+        deleteItem();
+      }
+    };
+
+    const title = item.title ?? '';
+    const message = item.message ?? '';
+    const formattedDate = formatNotificationDate(item.createdAt);
+
+    const deleteButton = (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Xóa thông báo ${title}`}
+        disabled={remove.isPending}
+        onPress={deleteItem}
+        style={({ pressed }) => [
+          styles.deleteAction,
+          pressed && styles.deleteActionPressed,
+          Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
+        ]}
+      >
+        <Trash2 size={22} color="#FFFFFF" />
+      </Pressable>
+    );
+
+    const webKeyboardProps =
+      Platform.OS === 'web'
+        ? {
+            onKeyDown: (event: any) => {
+              if (event.nativeEvent?.key === 'Delete') {
+                event.preventDefault?.();
+                deleteItem();
+              }
+            },
+          }
+        : {};
+
+    const cardAccessibilityProps =
+      Platform.OS === 'web'
+        ? {
+            'aria-label': `${title}. ${message}. ${item.isRead ? 'Đã đọc' : 'Chưa đọc'}`,
+          }
+        : {
+            accessibilityLabel: `${title}. ${message}. ${item.isRead ? 'Đã đọc' : 'Chưa đọc'}`,
+            accessibilityHint: item.targetId ? 'Mở nội dung liên quan' : 'Đánh dấu đã đọc',
+            accessibilityActions: [{ name: 'delete', label: 'Xóa thông báo' }],
+            onAccessibilityAction,
+          };
+
+    const card = (
+      <Pressable
+        {...webKeyboardProps}
+        {...cardAccessibilityProps}
+        accessibilityRole="button"
+        onPress={() => openTarget(item)}
+        style={({ pressed }) => [
+          styles.card,
+          !item.isRead && styles.unreadCard,
+          pressed && styles.cardPressed,
+          Platform.OS === 'web' && ({ cursor: 'pointer' } as any),
+        ]}
+      >
+        <View
+          style={[
+            styles.iconBox,
+            { backgroundColor: item.isRead ? colors.surfaceSecondary : accentSoft },
+          ]}
+        >
+          <NotificationIcon
+            type={item.type ?? 'INFO'}
+            color={item.isRead ? colors.textSecondary : accent}
+          />
+        </View>
+
+        <View style={styles.copy}>
+          <View style={styles.titleRow}>
+            <Text
+              numberOfLines={2}
+              style={[styles.title, !item.isRead && styles.unreadTitle]}
+            >
+              {title}
+            </Text>
+            {!item.isRead ? (
+              <View style={[styles.unreadDot, { backgroundColor: accent }]} />
+            ) : null}
+          </View>
+          <Text numberOfLines={3} style={styles.message}>
+            {message}
+          </Text>
+          {formattedDate ? (
+            <Text style={styles.date}>{formattedDate}</Text>
+          ) : null}
+        </View>
+
+        {item.targetId ? (
+          <View
+            style={styles.chevron}
+            {...(Platform.OS === 'web'
+              ? { 'aria-hidden': true }
+              : { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' })}
+          >
+            <ChevronRight size={18} color={colors.textTertiary} />
+          </View>
+        ) : null}
+      </Pressable>
+    );
+
+    return (
+      <View style={styles.rowShell}>
+        <NotificationSwipeRow
+          ref={(value) => {
+            swipeable = value;
+          }}
+          actionWidth={deleteActionWidth}
+          rightAction={deleteButton}
+          onWillOpen={() => {
+            if (openSwipeable.current && openSwipeable.current !== swipeable) {
+              openSwipeable.current.close();
+            }
+            openSwipeable.current = swipeable;
+          }}
+          onClose={() => {
+            if (openSwipeable.current === swipeable) {
+              openSwipeable.current = null;
+            }
+          }}
+        >
+          {card}
+        </NotificationSwipeRow>
+      </View>
+    );
   };
 
-  const empty = filter === 'unread' ? { title: 'Bạn đã đọc hết thông báo', body: 'Thông báo chưa đọc mới sẽ xuất hiện tại đây.' } : { title: 'Bạn chưa có thông báo nào', body: 'Các cập nhật về chuyến đi sẽ xuất hiện tại đây.' };
-  return <View style={styles.screen}>
-    <View style={styles.header}><View><Text accessibilityRole="header" style={styles.heading}>Thông báo</Text><Text style={styles.subtitle}>{unreadCount ? `${unreadCount} thông báo chưa đọc` : 'Bạn đã cập nhật tất cả'}</Text></View>{unreadCount > 0 ? <Pressable accessibilityRole="button" onPress={markAllAsRead} cssInterop={false} style={({ pressed }) => [styles.markAll, { backgroundColor: accentSoft }, pressed && styles.cardPressed]}><CheckCircle2 size={16} color={accent} /><Text style={[styles.markAllLabel, { color: accent }]}>Đọc tất cả</Text></Pressable> : null}</View>
-    <View accessibilityRole="tablist" style={styles.filters}>{(['all', 'unread'] as Filter[]).map((value) => { const selected = filter === value; return <Pressable key={value} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => setFilter(value)} style={[styles.filterButton, selected && { backgroundColor: accent }]}><Text style={[styles.filterLabel, selected && styles.filterLabelSelected]}>{value === 'all' ? 'Tất cả' : `Chưa đọc${unreadCount ? ` (${unreadCount})` : ''}`}</Text></Pressable>; })}</View>
-    {isLoading ? <SkeletonList /> : isError ? <View style={styles.empty}><View style={styles.emptyIcon}><Bell size={32} color={colors.error} /></View><Text style={styles.emptyTitle}>Không thể tải thông báo</Text><Text style={styles.emptyBody}>Kiểm tra kết nối rồi thử lại.</Text><Pressable accessibilityRole="button" onPress={() => refetch()} style={[styles.retryButton, { backgroundColor: accent }]}><Text style={styles.retryText}>Thử lại</Text></Pressable></View> : rows.length === 0 ? <View style={styles.empty}><View style={styles.emptyIcon}><Bell size={34} color={colors.textTertiary} /></View><Text style={styles.emptyTitle}>{empty.title}</Text><Text style={styles.emptyBody}>{empty.body}</Text></View> : <FlatList data={rows} keyExtractor={(row) => row.id} style={styles.listFrame} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false} onScrollBeginDrag={() => openSwipeable.current?.close()} refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={accent} />} renderItem={({ item }) => item.kind === 'section' ? <Text style={styles.sectionTitle}>{item.title}</Text> : renderNotification(item.item)} />}
-    {deleted ? <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={[styles.snackbar, { bottom: Math.max(spacing.sm, insets.bottom) }]}><Text style={styles.snackbarText}>Đã xóa thông báo</Text><Pressable accessibilityRole="button" disabled={restore.isPending} onPress={async () => { await pendingDelete.current; restore.mutate(deleted); }} style={styles.undoButton}><Text style={styles.undoText}>{restore.isPending ? 'Đang hoàn tác…' : 'Hoàn tác'}</Text></Pressable></View> : null}
-  </View>;
+  const empty =
+    filter === 'unread'
+      ? {
+          title: 'Bạn đã đọc hết thông báo',
+          body: 'Thông báo chưa đọc mới sẽ xuất hiện tại đây.',
+        }
+      : {
+          title: 'Bạn chưa có thông báo nào',
+          body: 'Các cập nhật về chuyến đi sẽ xuất hiện tại đây.',
+        };
+
+  return (
+    <View style={styles.screen}>
+      <View style={styles.header}>
+        <View>
+          <Text accessibilityRole="header" style={styles.heading}>
+            Thông báo
+          </Text>
+          <Text style={styles.subtitle}>
+            {unreadCount ? `${unreadCount} thông báo chưa đọc` : 'Bạn đã cập nhật tất cả'}
+          </Text>
+        </View>
+        {unreadCount > 0 ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={markAllAsRead}
+            style={({ pressed }) => [
+              styles.markAll,
+              { backgroundColor: accentSoft },
+              pressed && styles.cardPressed,
+            ]}
+          >
+            <CheckCircle2 size={16} color={accent} />
+            <Text style={[styles.markAllLabel, { color: accent }]}>Đọc tất cả</Text>
+          </Pressable>
+        ) : null}
+      </View>
+
+      <View accessibilityRole="tablist" style={styles.filters}>
+        {(['all', 'unread'] as Filter[]).map((value) => {
+          const selected = filter === value;
+          return (
+            <Pressable
+              key={value}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              onPress={() => setFilter(value)}
+              style={[styles.filterButton, selected && { backgroundColor: accent }]}
+            >
+              <Text style={[styles.filterLabel, selected && styles.filterLabelSelected]}>
+                {value === 'all' ? 'Tất cả' : `Chưa đọc${unreadCount ? ` (${unreadCount})` : ''}`}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {isLoading ? (
+        <SkeletonList />
+      ) : isError ? (
+        <View style={styles.empty}>
+          <View style={styles.emptyIcon}>
+            <Bell size={32} color={colors.error} />
+          </View>
+          <Text style={styles.emptyTitle}>Không thể tải thông báo</Text>
+          <Text style={styles.emptyBody}>Kiểm tra kết nối rồi thử lại.</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => refetch()}
+            style={[styles.retryButton, { backgroundColor: accent }]}
+          >
+            <Text style={styles.retryText}>Thử lại</Text>
+          </Pressable>
+        </View>
+      ) : rows.length === 0 ? (
+        <View style={styles.empty}>
+          <View style={styles.emptyIcon}>
+            <Bell size={34} color={colors.textTertiary} />
+          </View>
+          <Text style={styles.emptyTitle}>{empty.title}</Text>
+          <Text style={styles.emptyBody}>{empty.body}</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={rows}
+          keyExtractor={(row) => row.id}
+          style={styles.listFrame}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          onScrollBeginDrag={() => openSwipeable.current?.close()}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor={accent}
+            />
+          }
+          renderItem={({ item }) =>
+            item.kind === 'section' ? (
+              <Text style={styles.sectionTitle}>{item.title}</Text>
+            ) : (
+              renderNotification(item.item)
+            )
+          }
+        />
+      )}
+
+      {deleted ? (
+        <View
+          accessibilityLiveRegion="polite"
+          accessibilityRole="alert"
+          style={[styles.snackbar, { bottom: Math.max(spacing.sm, insets.bottom) }]}
+        >
+          <Text style={styles.snackbarText}>Đã xóa thông báo</Text>
+          <Pressable
+            accessibilityRole="button"
+            disabled={restore.isPending}
+            onPress={async () => {
+              await pendingDelete.current;
+              restore.mutate(deleted);
+            }}
+            style={styles.undoButton}
+          >
+            <Text style={styles.undoText}>
+              {restore.isPending ? 'Đang hoàn tác…' : 'Hoàn tác'}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
