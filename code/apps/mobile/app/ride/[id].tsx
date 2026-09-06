@@ -965,8 +965,8 @@ function PassengerRideView() {
       }
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || 'Không thể thực hiện đặt chỗ. Vui lòng thử lại.';
-      const stale = error.response?.status === 409 || /không còn đủ ghế|hết chỗ/i.test(message);
+      const message = error.message || error.response?.data?.message || 'Không thể thực hiện đặt chỗ. Vui lòng thử lại.';
+      const stale = error.status === 409 || error.response?.status === 409 || /không còn đủ ghế|hết chỗ/i.test(message);
       setBookingError(stale ? 'Chuyến này vừa hết chỗ. Hãy quay lại danh sách để chọn chuyến khác.' : message);
     },
   });
@@ -1025,8 +1025,8 @@ function PassengerRideView() {
             showsMyLocationButton={false}
             accessibilityLabel="Bản đồ tuyến tài xế và đoạn đi chung của bạn"
           >
-            {driverRoute.length > 1 ? <Polyline coordinates={driverRoute} strokeColor="#475569" strokeWidth={4} zIndex={1} /> : null}
-            {sharedRoute.length > 1 ? <Polyline coordinates={sharedRoute} strokeColor={colors.primary} strokeWidth={8} zIndex={2} /> : null}
+            {driverRoute.length > 1 ? <Polyline coordinates={driverRoute} strokeColor="#475569" strokeWidth={12} zIndex={1} /> : null}
+            {sharedRoute.length > 1 ? <Polyline coordinates={sharedRoute} strokeColor={colors.primary} strokeWidth={6} zIndex={2} /> : null}
             {ride.departureCoords ? <Marker coordinate={ride.departureCoords} title="Điểm đầu tuyến tài xế" pinColor="#64748B" /> : null}
             {ride.destinationCoords ? <Marker coordinate={ride.destinationCoords} title="Điểm cuối tuyến tài xế" pinColor="#475569" /> : null}
             {passengerOrigin ? <Marker coordinate={passengerOrigin} title="Điểm đón của bạn" pinColor={colors.mapPickup} /> : null}
