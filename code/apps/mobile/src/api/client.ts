@@ -71,7 +71,7 @@ apiClient.interceptors.response.use(
     // 4xx từ form đăng nhập/đăng ký là phản hồi nghiệp vụ dự kiến và đã được
     // hiển thị trên UI; không đẩy thành console.error với stack trace rất dài.
     if (!error.response || (error.response.status ?? 0) >= 500) {
-      console.error(`[API Error] ${originalRequest?.baseURL || ''}${requestUrl} -> ${error.message} (code: ${error.code}, status: ${error.response?.status})`);
+      console.error(`[API Error] ${originalRequest?.baseURL || ''}${requestUrl} -> ${error.message} (code: ${error.code}, status: ${error.response?.status})`, error.response?.data);
     }
 
     // A HTTP error still proves that the server is reachable. Only requests

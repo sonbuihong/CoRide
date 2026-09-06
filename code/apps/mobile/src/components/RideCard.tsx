@@ -173,14 +173,7 @@ export const RideCard: React.FC<RideCardProps> = memo(({
           </View>
 
           <RouteSummary origin={primaryOrigin} destination={primaryDestination} />
-          {showMatch && passengerRoute ? (
-            <AppText variant="caption" numberOfLines={2} style={styles.driverRoute}>
-              Tài xế đi: {ride.departure} → {ride.destination}
-            </AppText>
-          ) : null}
-
-          {showMatch ? <MatchExplanation ride={ride} compact /> : null}
-
+          
           <DriverSummary ride={ride} />
 
           <View style={styles.footer}>
@@ -202,7 +195,6 @@ export const RideCard: React.FC<RideCardProps> = memo(({
     </View>
   );
 });
-
 RideCard.displayName = 'RideCard';
 
 export const RideCardSkeleton = memo(() => (

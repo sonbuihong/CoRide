@@ -1025,9 +1025,9 @@ function PassengerRideView() {
             showsMyLocationButton={false}
             accessibilityLabel="Bản đồ tuyến tài xế và đoạn đi chung của bạn"
           >
-            {driverRoute.length > 1 ? <Polyline coordinates={driverRoute} strokeColor="#475569" strokeWidth={12} zIndex={1} /> : null}
+            {driverRoute.length > 1 ? <Polyline coordinates={driverRoute} strokeColor="#CBD5E1" strokeWidth={10} zIndex={1} /> : null}
             {sharedRoute.length > 1 ? <Polyline coordinates={sharedRoute} strokeColor={colors.primary} strokeWidth={6} zIndex={2} /> : null}
-            {ride.departureCoords ? <Marker coordinate={ride.departureCoords} title="Điểm đầu tuyến tài xế" pinColor="#64748B" /> : null}
+            {ride.departureCoords ? <Marker coordinate={ride.departureCoords} title="Điểm đầu tuyến tài xế" pinColor="#94A3B8" /> : null}
             {ride.destinationCoords ? <Marker coordinate={ride.destinationCoords} title="Điểm cuối tuyến tài xế" pinColor="#475569" /> : null}
             {passengerOrigin ? <Marker coordinate={passengerOrigin} title="Điểm đón của bạn" pinColor={colors.mapPickup} /> : null}
             {passengerDestination ? <Marker coordinate={passengerDestination} title="Điểm xuống của bạn" pinColor={colors.mapDestination} /> : null}

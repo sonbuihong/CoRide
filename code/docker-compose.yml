@@ -71,6 +71,8 @@ services:
     restart: "no"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-root}:${POSTGRES_PASSWORD:-rootpassword}@postgres:5432/${POSTGRES_DB:-coride_db}?schema=public
+    volumes:
+      - ./packages/database/prisma:/app/packages/database/prisma
     command:
       - pnpm
       - --filter
